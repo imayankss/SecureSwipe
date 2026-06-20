@@ -1,0 +1,33 @@
+project:
+  name: "Credit Card Fraud Detection & Risk Scoring System"
+  version: "0.1.0"
+  random_state: 42
+
+data:
+  raw_path: "data/raw/creditcard.csv"
+  interim_dir: "data/interim"
+  processed_dir: "data/processed"
+  target_column: "Class"
+  test_size: 0.15
+  validation_size: 0.15
+
+models:
+  output_dir: "models"
+  baseline_model: "logistic_regression"
+  advanced_models:
+    - "random_forest"
+    - "xgboost"
+    - "lightgbm"
+
+evaluation:
+  primary_metric: "pr_auc"
+  secondary_metric: "roc_auc"
+  default_threshold: 0.5
+
+risk_scoring:
+  low_risk_threshold: 0.2
+  high_risk_threshold: 0.6
+
+reports:
+  figures_dir: "reports/figures"
+  metrics_dir: "reports/metrics"
