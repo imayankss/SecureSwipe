@@ -88,6 +88,28 @@ python3 -m compileall src scripts tests
 pytest
 ```
 
+## SecureSwipe Dashboard
+
+A modern Next.js dashboard is included in `web/` to present the project results:
+class imbalance, ML pipeline, model comparison, threshold tuning, final
+confusion matrix, SHAP explainability, and a risk score demo.
+
+Run locally:
+
+```bash
+cd web
+npm install
+npm run dev
+```
+
+Open:
+
+```text
+http://localhost:3000
+```
+
+For Vercel, import the GitHub repository and set the root directory to `web`.
+
 ## Modeling Summary
 
 Day 4 trained Dummy, Logistic Regression, and Random Forest baselines. Day 5
