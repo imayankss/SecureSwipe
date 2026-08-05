@@ -1,0 +1,45 @@
+import { GitBranch, ShieldCheck } from "lucide-react";
+import { dashboardData } from "@/data/metrics";
+
+const navItems = [
+  ["Overview", "#overview"],
+  ["Performance", "#performance"],
+  ["Thresholds", "#thresholds"],
+  ["Explainability", "#shap"],
+  ["Methodology", "#methodology"],
+];
+
+export function Navigation() {
+  return (
+    <header className="sticky top-0 z-50 border-b border-white/10 bg-slate-950/85 backdrop-blur-xl">
+      <nav
+        className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-6 px-4 sm:px-6 lg:px-8"
+        aria-label="Primary navigation"
+      >
+        <a href="#overview" className="flex items-center gap-2 font-semibold text-white">
+          <span className="grid h-8 w-8 place-items-center rounded-lg border border-cyan-200/25 bg-cyan-300/10">
+            <ShieldCheck className="h-4 w-4 text-cyan-200" aria-hidden="true" />
+          </span>
+          SecureSwipe
+        </a>
+        <div className="hidden items-center gap-5 text-sm text-slate-300 lg:flex">
+          {navItems.map(([label, href]) => (
+            <a key={href} className="transition hover:text-cyan-200" href={href}>
+              {label}
+            </a>
+          ))}
+        </div>
+        <a
+          href={dashboardData.project.repository}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-sm font-medium text-white transition hover:border-cyan-200/30 hover:bg-white/[0.06]"
+          aria-label="Open SecureSwipe GitHub repository"
+        >
+          <GitBranch className="h-4 w-4" aria-hidden="true" />
+          <span className="hidden sm:inline">GitHub</span>
+        </a>
+      </nav>
+    </header>
+  );
+}

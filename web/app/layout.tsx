@@ -1,21 +1,34 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "SecureSwipe Dashboard",
+  title: "SecureSwipe | Fraud Detection & Risk Analytics",
   description:
-    "A modern fraud detection dashboard for the Credit Card Fraud Detection & Risk Scoring System.",
+    "Explore verified XGBoost fraud-detection results, threshold trade-offs, confusion matrices, and SHAP explainability from the SecureSwipe ML pipeline.",
+  applicationName: "SecureSwipe",
+  keywords: [
+    "fraud detection",
+    "machine learning",
+    "XGBoost",
+    "risk analytics",
+    "SHAP",
+    "portfolio project",
+  ],
+  authors: [{ name: "Mayank Suryavanshi" }],
+  openGraph: {
+    type: "website",
+    title: "SecureSwipe | Fraud Detection & Risk Analytics",
+    description:
+      "A deployment-safe view of verified fraud-model evaluation, threshold analysis, and explainability artifacts.",
+    siteName: "SecureSwipe",
+  },
+  twitter: {
+    card: "summary",
+    title: "SecureSwipe | Fraud Detection & Risk Analytics",
+    description:
+      "Verified fraud-model evaluation, threshold analysis, and explainability artifacts.",
+  },
+  robots: { index: true, follow: true },
 };
 
 export default function RootLayout({
@@ -24,10 +37,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang="en" className="h-full antialiased">
       <body className="min-h-full bg-slate-950">{children}</body>
     </html>
   );

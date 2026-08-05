@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { shapFeatures } from "@/data/metrics";
+import { dashboardData, shapFeatures } from "@/data/metrics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import { Section } from "@/components/Section";
@@ -13,13 +13,13 @@ export function ShapSection() {
       id="shap"
       eyebrow="Explainability"
       title="Top factors influencing fraud predictions"
-      description="SHAP summarizes how the locked XGBoost model used anonymized transformed features on a validation sample."
+      description={`SHAP summarizes how the selected XGBoost model used transformed features on a ${dashboardData.explainability.split}. It explains model behavior, not causality.`}
     >
       <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
         <Card>
           <CardHeader>
             <CardTitle>SHAP feature importance</CardTitle>
-            <CardDescription>Mean absolute SHAP value by feature.</CardDescription>
+            <CardDescription>Top 10 by mean absolute SHAP value.</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="h-80">
@@ -46,7 +46,7 @@ export function ShapSection() {
           <CardHeader>
             <CardTitle>Generated SHAP plot</CardTitle>
             <CardDescription>
-              V1-V28 are anonymized PCA features, so explanations are model-behavior signals.
+              {dashboardData.explainability.caveat}
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
@@ -55,6 +55,7 @@ export function ShapSection() {
               alt="SHAP summary bar chart"
               width={900}
               height={520}
+              unoptimized
               className="rounded-lg border border-white/10"
             />
             <Table>
