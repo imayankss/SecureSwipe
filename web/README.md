@@ -1,36 +1,50 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SecureSwipe Web Dashboard
+
+This Next.js application is the deployment-safe presentation layer for the
+SecureSwipe fraud-detection project. It renders only aggregate, precomputed
+evaluation artifacts from `public/data/dashboard.json`; it does not load Python
+models, process transaction rows, or perform live inference.
 
 ## Getting Started
 
-First, run the development server:
+From the repository root, refresh and verify the public data:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+python3 scripts/export_web_data.py
+python3 scripts/export_web_data.py --check
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Then install and run the frontend:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+cd web
+npm ci
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Open [http://localhost:3000](http://localhost:3000).
 
-## Learn More
+## Verification
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run data:check
+npm run lint
+npm run typecheck
+npm run test
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The production dependency audit should also remain clean:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm audit --omit=dev
+```
 
-## Deploy on Vercel
+## Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+Use this folder as the dedicated Vercel project root. Framework detection should
+select Next.js, with `npm ci`/the committed lockfile and `npm run build`. The
+current static deployment requires no environment variables.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See the repository-level README for the full architecture, data refresh,
+security, Git, and deployment workflow.

@@ -1,42 +1,38 @@
-"use client";
-
-import { motion } from "framer-motion";
-import { ArrowRight, GitBranch, ShieldCheck } from "lucide-react";
-import { heroMetrics } from "@/data/metrics";
+import { ArrowRight, DatabaseZap, GitBranch, ShieldCheck } from "lucide-react";
+import { dashboardData, heroMetrics } from "@/data/metrics";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MetricCard } from "@/components/MetricCard";
 
 export function Hero() {
   return (
-    <section className="relative overflow-hidden px-4 py-14 sm:px-6 lg:px-8">
+    <section id="overview" className="relative overflow-hidden px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
       <div className="mx-auto grid max-w-7xl gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
-        <motion.div
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
+        <div>
           <Badge>
             <ShieldCheck className="h-3.5 w-3.5" />
-            Day 8 SecureSwipe Dashboard
+            Verified artifacts · Safe demonstration mode
           </Badge>
-          <h1 className="mt-6 max-w-4xl text-5xl font-semibold text-white sm:text-7xl">
-            SecureSwipe
+          <h1 className="mt-6 max-w-4xl text-5xl font-semibold tracking-tight text-white sm:text-7xl">
+            Fraud decisions,
+            <span className="block bg-gradient-to-r from-cyan-200 to-emerald-200 bg-clip-text text-transparent">
+              made inspectable.
+            </span>
           </h1>
           <p className="mt-4 max-w-3xl text-xl font-medium text-cyan-100">
-            Credit Card Fraud Detection & Risk Scoring System
+            SecureSwipe fraud detection and transaction risk analytics
           </p>
           <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300">
-            AI-powered fraud detection for highly imbalanced transaction data.
-            Built with XGBoost, threshold tuning, PR-AUC focused evaluation, and
-            SHAP explainability.
+            Explore an end-to-end XGBoost workflow through real validation and test
+            outputs: model comparison, threshold trade-offs, PR-focused evaluation,
+            and SHAP explainability.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button href="#performance">
               View Results <ArrowRight className="h-4 w-4" />
             </Button>
             <Button
-              href="https://github.com/imayankss/Credit-Card-Fraud-Detection"
+              href={dashboardData.project.repository}
               target="_blank"
               rel="noreferrer"
               variant="secondary"
@@ -45,36 +41,27 @@ export function Hero() {
               GitHub Repository
             </Button>
           </div>
-          <motion.div
-            className="signal-strip mt-8 max-w-xl rounded-lg border border-white/10 bg-slate-950/45 p-4"
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.18 }}
-          >
+          <div className="signal-strip mt-8 max-w-xl rounded-lg border border-white/10 bg-slate-950/45 p-4">
             <div className="flex items-center justify-between gap-4 text-xs text-slate-400">
-              <span>locked threshold</span>
-              <span className="font-medium text-cyan-100">0.53</span>
+              <span>deployment architecture</span>
+              <span className="font-medium text-cyan-100">precomputed · static</span>
             </div>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full w-[83%] rounded-full bg-gradient-to-r from-cyan-200 via-emerald-200 to-cyan-200" />
+              <div className="h-full w-full rounded-full bg-gradient-to-r from-cyan-200 via-emerald-200 to-cyan-200" />
             </div>
             <div className="mt-3 flex items-center gap-2 text-xs text-slate-300">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 [animation:softPulse_1.8s_ease-in-out_infinite]" />
-              model signal: high-recall fraud review mode
+              <DatabaseZap className="h-3.5 w-3.5 text-cyan-200" aria-hidden="true" />
+              no transaction data, retraining, or model loading in web requests
             </div>
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
 
-        <motion.div
-          className="grid grid-cols-1 gap-3 sm:grid-cols-2"
-          initial={{ opacity: 0, x: 24 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.55, delay: 0.1 }}
-        >
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           {heroMetrics.map((metric) => (
             <MetricCard key={metric.label} {...metric} />
           ))}
-        </motion.div>
+        </div>
       </div>
     </section>
   );

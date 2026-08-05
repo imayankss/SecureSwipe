@@ -7,6 +7,8 @@ __pycache__/
 
 # Virtual environments
 .env
+.env.*
+!.env.example
 .venv/
 venv/
 env/
@@ -56,3 +58,15 @@ mlruns/
 .pytest_cache/
 .coverage
 htmlcov/
+
+# JavaScript / Next.js / Vercel
+node_modules/
+.next/
+.vercel/
+dist/
+build/
+*.tsbuildinfo
+
+# Temporary exports and logs
+web/public/data/*.tmp
+*.log

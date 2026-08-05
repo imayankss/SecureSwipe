@@ -1,6 +1,3 @@
-"use client";
-
-import { motion } from "framer-motion";
 import type { ReactNode } from "react";
 
 export function Section({
@@ -17,13 +14,9 @@ export function Section({
   children: ReactNode;
 }) {
   return (
-    <motion.section
+    <section
       id={id}
       className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8"
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-100px" }}
-      transition={{ duration: 0.5 }}
     >
       <div className="mb-8 max-w-3xl">
         {eyebrow ? (
@@ -39,6 +32,6 @@ export function Section({
         ) : null}
       </div>
       {children}
-    </motion.section>
+    </section>
   );
 }
