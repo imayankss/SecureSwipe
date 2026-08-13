@@ -79,6 +79,7 @@ evaluation/service parity, finite/bounded API contracts, redacted logs, atomic
 evidence, forward/calibration/cost protocols, monitoring, and a production
 Chromium WCAG/static-boundary scan.
 
-Close with the honest blockers: original-data analysis needs the local Kaggle
-CSV; container smoke/scan/SBOM needs Docker Desktop; remote CI or deployment
-needs explicit push/deployment approval.
+Close with the honest blockers: real decision evidence needs a genuinely new
+authorized dataset (the Kaggle corpus is historical reference-only); container
+smoke/scan/SBOM needs Docker Desktop; remote CI or deployment needs explicit
+push/deployment approval.

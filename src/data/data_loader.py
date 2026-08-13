@@ -122,14 +122,16 @@ def validate_dataset_schema(
             )
 
 
-def fingerprint_dataframe(df: pd.DataFrame) -> str:
+def fingerprint_dataframe(
+    df: pd.DataFrame, *, reject_duplicate_rows: bool = True
+) -> str:
     """Return a deterministic SHA-256 fingerprint of schema, dtypes, and rows.
 
     The digest contains no raw values and can be recorded in a manifest. Row
     order is significant because the dataset's ``Time`` ordering matters for
     future blocked evaluation.
     """
-    validate_dataset_schema(df)
+    validate_dataset_schema(df, reject_duplicate_rows=reject_duplicate_rows)
     digest = hashlib.sha256()
     digest.update("\x1f".join(map(str, df.columns)).encode("utf-8"))
     digest.update(b"\x00")

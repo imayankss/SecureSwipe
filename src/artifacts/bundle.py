@@ -272,6 +272,10 @@ def save_model_bundle(bundle: ModelBundle, output_dir: str | Path) -> Path:
     bundle.validate()
     golden_probe = _golden_probe(bundle)
     directory = Path(output_dir).resolve()
+    if directory.is_symlink() or (
+        directory.exists() and (not directory.is_dir() or any(directory.iterdir()))
+    ):
+        raise FileExistsError(f"Refusing to overwrite non-empty bundle directory: {directory}")
     directory.mkdir(parents=True, exist_ok=True)
 
     payloads: dict[str, Any] = {"preprocessor": bundle.preprocessor, "model": bundle.model}

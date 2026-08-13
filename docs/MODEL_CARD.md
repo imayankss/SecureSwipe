@@ -37,12 +37,13 @@ The signal is not an approval, decline, or payment authorization.
 
 ## Evaluation and selection policy
 
-New evidence uses forward blocked development folds with preprocessing refit in
-each fold. Model comparisons use unrounded AP, paired stratified bootstrap
-uncertainty, constrained recall/precision/FPR metrics, calibration diagnostics,
-and explicit cost scenarios. A simpler model is preferred inside a predeclared
-performance margin. Only a new untouched evaluation protocol could support a
-future final claim.
+New evidence must use a genuinely new authorized corpus. The executable workflow
+uses chronological model-training, calibration-fit, operating-point-selection,
+and untouched-evaluation roles with content-hash isolation. Model comparisons
+use unrounded AP, a paired stratified bootstrap, a predeclared simplicity margin,
+calibration diagnostics, and a threshold selected before untouched evaluation.
+Cost scenarios remain a separate explicit analysis; no example scenario is a
+business policy.
 
 ## Limitations and risks
 

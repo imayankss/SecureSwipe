@@ -5,7 +5,7 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 
 | Category | Available | Initial | Current | Evidence |
 |---|---:|---:|---:|---|
-| ML correctness and scientific validity | 20 | 5 | 15 | Strict contracts/isolation, historical quarantine, forward folds, uncertainty, simplicity rule, calibration, constrained/cost metrics, and raw-margin SHAP additivity/cohort evidence are tested; original OOT/model comparison/calibration and historical SHAP execution remain blocked. |
+| ML correctness and scientific validity | 20 | 5 | 17 | Historical-corpus quarantine, deterministic curation, four chronological content-hash-isolated roles, random diagnostic, paired uncertainty/simplicity selection, calibration, untouched fixed-threshold evaluation, constrained/cost metrics, and raw-margin SHAP protocols are synthetic-tested; real new-data and historical SHAP execution remain external blockers. |
 | Reproducibility and data lineage | 15 | 2 | 15 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, atomic timestamp-free manifests for development and every legacy stage, typed configuration, historical lock, and read-only export verification are tested. |
 | Architecture and maintainability | 15 | 4 | 15 | Offline/static, blocked-development, reference-stage, and verified serving paths have explicit boundaries; direct partial legacy CLIs fail closed; mounted bundles, current audit, workflow separation, typed configuration, and governance are tested. |
 | Testing and quality gates | 15 | 6 | 15 | 323 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain/wheel-inventory tests, clean package proof, four component tests, and two production Chromium keyboard/mobile/WCAG/static-boundary tests pass; Docker execution remains explicitly blocked. |
@@ -13,7 +13,7 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean API/quality/resolver/npm audits, pip-free runtime policy, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
 | Observability and operations | 10 | 0 | 8 | Bounded metrics, runtime JSON/redaction evidence, deterministic schema/feature/score/delayed-label monitoring, shifted demo, repeated M2 load evidence, local objectives, and incident/rollback guides pass; container/provider operations remain unmeasured. |
 | Documentation and developer experience | 5 | 3 | 5 | Persistent controls, architecture/data flow, API/container/scientific/monitoring protocols, data/model cards, threat/limitations/deployment/reproducibility guides, interview defense, demo, and local incident guidance are explicit and link-checked. |
-| **Total** | **100** | **23** | **90** | **Local scientific protocols, reproducibility, architecture, API, monitoring, and behavioral/static frontend gates are evidence-backed; container, remote CI, and original-data execution remain.** |
+| **Total** | **100** | **23** | **92** | **Local scientific protocols, reproducibility, architecture, API, monitoring, and behavioral/static frontend gates are evidence-backed; real new-data, container, and remote CI execution remain external blockers.** |
 
 ## Evidence ledger
 
@@ -108,5 +108,12 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   executes a checksummed canonical probe before readiness. Workflow policy now
   scans non-verified history candidates and specifies exact golden response,
   UID, and pip-free container checks; remote/container execution remains blocked.
+- Scientific-lineage batch: 339 tests collect and the focused 33-test
+  curation/development/bundle/config suite passes with Ruff and mypy. Two
+  separate synthetic runs are byte-identical, including fitted bundle bytes and
+  manifests. Conflicting duplicates, known historical signature/path, renamed
+  row fingerprints, source-label mismatch, chronology violations, reference-
+  only curation, and partial/overwrite paths fail closed. Untouched evaluation,
+  reloaded bundle, and API service score hashes match exactly.
 
 The score will be updated only after each batch's acceptance commands pass.

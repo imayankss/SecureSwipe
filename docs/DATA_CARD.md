@@ -8,9 +8,11 @@ commonly distributed as `creditcard.csv`. Committed historical reports record
 and was unavailable during the 2026-08-13 audit, so those source counts are a
 historical observation rather than a fresh local verification.
 
-Before any new run, obtain the file through Kaggle's official authentication and
-download flow, place it at `data/raw/creditcard.csv`, and verify its terms and
-fingerprint. Never commit the CSV or `kaggle.json`.
+To reproduce reference stages, obtain the file through Kaggle's official
+authentication/download flow, place it at `data/raw/creditcard.csv`, and verify
+its terms and fingerprint. Never commit the CSV or `kaggle.json`. This exact
+corpus is already test-observed and cannot support new decisions; those require
+a separate authorized dataset whose provenance is recorded locally.
 
 ## Schema and meaning
 
@@ -21,9 +23,11 @@ fingerprint. Never commit the CSV or `kaggle.json`.
 | `Amount` | finite number, >= 0 | transaction amount in the source dataset's undisclosed operating context |
 | `Class` | integer 0 or 1 | source binary label; 1 denotes fraud in this project |
 
-Exact order is required. Missing, extra, non-numeric, NaN, infinite, negative
-Time/Amount, and duplicate transaction-feature rows fail closed. The manifest
-records an order-sensitive dataset fingerprint without storing raw rows.
+Exact order is required. Missing, extra, non-numeric, NaN, infinite, and
+negative Time/Amount values fail closed. The curation command fails on
+conflicting-label feature duplicates, keeps the first otherwise identical vector
+in stable source order, and records raw/curated hashes and removed class counts.
+Downstream commands reject any unresolved duplicate.
 
 ## Intended and prohibited use
 
@@ -39,8 +43,9 @@ time period. Do not send real customer/card data to the reference API.
 - No declared protected attributes are present, so protected-group fairness
   cannot be measured. This is missing evidence, not evidence of fairness.
 - The historical repository report found 1,081 duplicate rows. Their original
-  split overlap cannot be measured until the CSV is restored. New runs reject
-  duplicates before splitting.
+  split overlap cannot be recovered because holdout row identities were never
+  retained. Curation can make reference reruns leakage-safe but cannot upgrade or
+  recreate the already-observed result.
 - `Time` is relative, so blocked evaluation measures ordering within this sample
   rather than contemporary calendar drift.
 - Label creation, delay, disputes, recovery, and investigation processes are not

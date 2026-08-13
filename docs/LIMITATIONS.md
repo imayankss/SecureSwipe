@@ -9,12 +9,13 @@ are release controls, not a roadmap that can be waived by changing wording.
   out-of-time or real-world performance estimate. The raw CSV, fitted artifact,
   score vector, and original runtime manifest are absent.
 - Historical EDA recorded 1,081 exact duplicate rows. The original split did not
-  group or reject them, so cross-split overlap cannot be measured without the
-  local CSV. New contracts reject exact duplicates.
+  group or reject them, and holdout row identities were not retained, so its
+  cross-split overlap cannot be reconstructed even after restoring the CSV. The
+  exact corpus is reference-only; new data uses manifested curation.
 - XGBoost's recorded validation average-precision advantage over Random Forest
   is about 0.0004 on one split. That does not establish material superiority;
-  the implemented paired blocked/bootstrap and simplicity rule still requires
-  original development scores.
+  it remains historical only. The executable rule is proved with synthetic
+  new-data fixtures but has not run on a real new authorized corpus.
 - The historical `0.53` threshold met a point recall constraint on one validation
   sample. It is not a business policy, guarantee, or cost optimum. Cost examples
   in code use explicit synthetic unitless assumptions.

@@ -19,7 +19,7 @@ demonstration interactions**. It does not perform live transaction inference.
 
 ```mermaid
 flowchart LR
-    A["Private Kaggle CSV — local only"] --> B["Python training and evaluation pipeline"]
+    A["Authorized local CSV — never committed"] --> B["Manifested curation + scoped ML pipeline"]
     B --> C["Trained models — local artifacts, not deployed"]
     B --> D["Tracked aggregate reports and figures"]
     D --> E["Validated web-data export"]
@@ -59,6 +59,11 @@ The project uses the Kaggle Credit Card Fraud Detection dataset. The `V1` to
 `V28` fields are anonymized PCA-transformed features, with `Time`, `Amount`,
 and `Class` as additional columns. The raw `creditcard.csv` file is not meant
 to be committed; place it in `data/raw/creditcard.csv`.
+
+That exact 284,807-row/492-fraud corpus is already test-observed and is therefore
+reference-only: restoring or renaming it does not make it eligible for new model
+decisions. New selection and bundle evidence requires a separately sourced,
+authorized development dataset under the same contract.
 
 ## Technology
 
@@ -117,7 +122,13 @@ must not be used for new model or threshold decisions.
 ```bash
 python3 scripts/run_reference_stage.py --stage day2 --skip-figures \
   --output-dir artifacts/runs/reference-day2
+python3 scripts/curate_dataset.py \
+  --source data/raw/creditcard.csv \
+  --source-kind historical_kaggle_reference \
+  --source-reference kaggle-creditcard-historical-reference \
+  --output-dir artifacts/runs/historical-curated
 python3 scripts/run_reference_stage.py --stage day3 \
+  --data-path artifacts/runs/historical-curated/curated.csv \
   --output-dir artifacts/runs/reference-day3
 python3 scripts/run_reference_stage.py --stage day4 \
   --processed-dir artifacts/runs/reference-day3/data/processed \
@@ -153,6 +164,40 @@ python3 -m pytest
 The model and preprocessor files written under `artifacts/` remain local and are
 ignored by Git. Ordinary web updates do not require running these training
 commands again.
+
+## New Development-to-Bundle Workflow
+
+Use only a genuinely new, authorized dataset—not the already-observed Kaggle
+corpus. The curation step preserves raw input, rejects conflicting-label
+duplicates, deterministically keeps the first exact feature vector, and records
+raw/curated hashes plus removed class counts. The training command uses four
+chronological roles, applies the predeclared simplicity rule and paired AP
+bootstrap, fits calibration, selects a threshold, evaluates once on the
+untouched role, and atomically emits a real verified bundle plus service parity.
+
+```bash
+python3 scripts/curate_dataset.py \
+  --source /path/to/new-authorized-development.csv \
+  --source-kind new_authorized_development \
+  --source-reference owner-approved-source-version \
+  --output-dir artifacts/development/curated-v1
+python3 scripts/run_development_training.py \
+  --curated-data artifacts/development/curated-v1/curated.csv \
+  --curation-record artifacts/development/curated-v1/curation.json \
+  --output-dir artifacts/development/run-v1
+```
+
+For configurable cost-scenario analysis of that run's three isolated score
+roles:
+
+```bash
+python3 scripts/run_development_analysis.py \
+  --scores artifacts/development/run-v1/development_scores.csv \
+  --curated-data artifacts/development/curated-v1/curated.csv \
+  --curation-record artifacts/development/curated-v1/curation.json \
+  --cost-scenarios configs/cost_scenarios.example.yaml \
+  --output-dir artifacts/development/cost-analysis-v1
+```
 
 ## Refresh Deployment Artifacts
 

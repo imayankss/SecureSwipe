@@ -7,8 +7,10 @@ error:
    the repository. Its metrics are preserved, but it is unavailable for every
    new model, calibration, feature, and threshold choice. The source dataset and
    score vector are absent, so AP/ROC cannot currently be independently rerun.
-2. `development_validation` is used for fitting and choosing models,
-   calibrators, thresholds, and cost assumptions. Decisions here are provisional.
+2. New authorized development data uses four ordered roles: model training,
+   calibration fit, operating-point selection, and untouched evaluation.
+   Fingerprint intersections are prohibited and only the final role receives
+   fixed-operating-point intervals.
 3. `development_blocked` uses expanding training windows and later validation
    blocks. Equal timestamps stay together; preprocessing and the estimator are
    refit inside each fold. It measures temporal robustness on development data,
@@ -21,9 +23,18 @@ is unavailable and no new blocked run has been executed on it.
 
 The canonical contract is `Time`, `V1`–`V28`, `Amount`, then `Class`. Columns
 must be numeric, finite, ordered, and complete; Time and Amount are non-negative.
-Unknown columns and duplicate transaction feature vectors are rejected, including
-identical features carrying conflicting labels. Feature-only row hashes must be
-disjoint across splits. Scaling is fit on training rows only.
+Unknown columns and unresolved duplicate transaction feature vectors are
+rejected. `curate_dataset.py` fails on identical features carrying conflicting
+labels and otherwise keeps the first exact feature vector in source order while
+recording raw/curated fingerprints and removed class counts. Content-derived row
+hashes—not caller IDs—must be disjoint across roles. Scaling is fit on model-
+training rows only.
+
+The exact known Kaggle corpus is already test-observed. Its original historical
+holdout identities were not retained, so exclusion cannot be reconstructed
+honestly. It is permanently reference-only by configured path and known
+284,807-row/492-fraud signature; genuinely new authorized data is required for
+decision-eligible evidence.
 
 ## Uncertainty and model selection
 
@@ -61,12 +72,17 @@ owner must supply currency, time horizon, review capacity, recovery definition,
 and sensitivity bounds before a cost-selected threshold can be approved.
 
 The executable development analysis accepts an exact CSV schema of
-`row_id,partition,y_true,raw_score`. Row IDs must be globally unique and the
-only permitted partitions are `calibration_train` and `development_validation`:
+`row_fingerprint,partition,y_true,raw_score`. Fingerprints must be global,
+content-derived SHA-256 values. The permitted roles are disjoint
+`calibration_fit`, `operating_point_selection`, and
+`untouched_development_evaluation`; the last role alone receives intervals for
+the already-selected operating point:
 
 ```bash
 .venv/bin/python scripts/run_development_analysis.py \
   --scores artifacts/development/scores.csv \
+  --curated-data artifacts/development/curated-v1/curated.csv \
+  --curation-record artifacts/development/curated-v1/curation.json \
   --cost-scenarios configs/cost_scenarios.example.yaml \
   --output-dir reports/development/run-001 \
   --minimum-brier-improvement 0.001

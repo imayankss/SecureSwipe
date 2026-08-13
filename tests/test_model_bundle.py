@@ -71,6 +71,14 @@ def test_model_bundle_roundtrip_preserves_golden_scores(tmp_path: Path) -> None:
     assert len(payload["golden_probe"]["sha256"]) == 64
 
 
+def test_model_bundle_never_overwrites_existing_directory(tmp_path: Path) -> None:
+    bundle, _ = _bundle()
+    destination = tmp_path / "trusted" / "fixture-1"
+    save_model_bundle(bundle, destination)
+    with pytest.raises(FileExistsError, match="Refusing to overwrite"):
+        save_model_bundle(bundle, destination)
+
+
 def test_corrupt_bundle_fails_before_any_deserialization(tmp_path: Path) -> None:
     bundle, _ = _bundle()
     manifest = save_model_bundle(bundle, tmp_path / "trusted" / "fixture-1")

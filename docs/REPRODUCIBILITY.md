@@ -71,16 +71,22 @@ disabled because the test result has already been observed.
 
 ## New development evidence
 
-Obtain Kaggle's Credit Card Fraud Detection `creditcard.csv` through Kaggle's
-official process and place it at `data/raw/creditcard.csv`. Never commit the CSV
-or `kaggle.json`. Validate the canonical schema and duplicate policy before any
-split. New decisions must use development/forward scopes:
+The known Kaggle `creditcard.csv` may be restored through the official process
+at `data/raw/creditcard.csv` for reference curation/stages only. Never commit it
+or `kaggle.json`. Its holdout was already observed and original row identities
+were not retained, so renaming/restoring it cannot make it new evidence.
+
+New decisions require a separately authorized corpus. First run
+`scripts/curate_dataset.py --source-kind new_authorized_development`, then run
+the four-role training/bundle workflow:
 
 ```bash
+.venv/bin/python scripts/run_development_training.py --help
 .venv/bin/python scripts/run_development_analysis.py --help
 ```
 
-The command requires explicit, disjoint development inputs and writes a
+These commands require a checksum-matched, decision-eligible curation record and
+content-derived row fingerprints. They write
 deterministic run manifest containing the Git commit/dirty digest, parameters,
 seed, runtime versions, input hashes, and output hashes. It rejects names that
 claim test or historical scope. The original historical AP/ROC-AUC cannot be

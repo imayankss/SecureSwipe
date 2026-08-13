@@ -71,10 +71,10 @@ not justified by rounded leaderboard rank.
 
 ### How is leakage controlled?
 
-Preprocessing fits on training rows only; new duplicates are rejected; row hashes
-must be disjoint; equal times stay together in forward folds; calibration fit and
-evaluation row IDs must be disjoint; and the already-observed test namespace is
-verify-only.
+Preprocessing fits on model-training rows only; duplicates undergo manifested
+curation; content hashes must be disjoint across chronological roles; calibration
+fit, operating-point selection, and untouched evaluation are separate; and the
+already-observed Kaggle corpus is reference-only.
 
 ### Why use joblib at all if pickle is unsafe?
 
@@ -93,8 +93,8 @@ infrastructure would add operational claims without evidence.
 
 ### What would you do next with the missing inputs?
 
-Restore the authorized Kaggle CSV locally, measure historical duplicate overlap,
-execute forward/paired model evaluation and calibration without touching the
-historical test, build a reviewed bundle, then start Docker and pass image smoke,
-scan, SBOM, parity, and repeated quality gates. Public provider evaluation comes
-only after those steps and owner approval.
+Restore the Kaggle CSV only for reference curation; its historical overlap cannot
+be reconstructed. Obtain a genuinely new authorized corpus, run manifested
+curation and four-role training/bundle evaluation, then start Docker and pass
+image smoke, scan, SBOM, parity, and repeated quality gates. Public provider
+evaluation comes only after those steps and owner approval.

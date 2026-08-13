@@ -13,19 +13,21 @@ provenance.
 
 ## D-002 — Development decisions use blocked time protocols
 
-Status: accepted, original-data execution blocked
+Status: accepted, real new-data execution blocked
 
-New model, calibration, and threshold decisions will use training/development
-data with forward/blocked evaluation. A comparison with the old random
-development protocol will quantify optimism. The historical test is not used.
+New model, calibration, and threshold decisions use genuinely new authorized
+data with four chronological roles and an untouched evaluation. A random-split
+diagnostic is recorded but cannot choose a model. The historical Kaggle corpus
+and its observed test are ineligible.
 
-## D-003 — Duplicate rows fail the canonical dataset contract
+## D-003 — Duplicates require manifested deterministic curation
 
 Status: accepted
 
-Exact duplicates are rejected before splitting. This is easier to audit than
-allowing row-level duplicates and prevents identical rows crossing boundaries.
-The manifest records duplicate count/policy and deterministic fingerprints.
+Conflicting-label feature duplicates fail. Otherwise, curation keeps the first
+exact feature vector in stable source order and records raw/curated hashes,
+removed class counts, and decision eligibility; downstream contracts reject any
+unresolved duplicate. This prevents identical rows crossing boundaries.
 If a future domain owner needs repeated legitimate events, that requires an
 explicit entity/event identifier and grouped policy rather than indistinguishable
 row duplication.
@@ -60,12 +62,13 @@ threshold explicitly.
 
 ## D-007 — Prefer simpler models within an uncertainty/tolerance margin
 
-Status: accepted, protocol implementation pending
+Status: accepted and implemented
 
-A complex model is not selected for a rounded 0.0004 AP advantage. Paired
-blocked evaluation and uncertainty intervals will be used. When operationally
-relevant constrained metrics are comparable within a predeclared margin, the
-simpler model wins.
+A complex model is not selected for a rounded 0.0004 AP advantage. The new-data
+workflow uses unrounded chronological-selection AP, paired stratified bootstrap,
+and a recorded margin. Candidate order encodes simplicity; the first candidate
+within the predeclared margin of the best AP wins and is freshly refit on the
+model-training role only.
 
 ## D-008 — Static dashboard remains the safe default
 
@@ -118,9 +121,9 @@ new container with another versioned bundle; bundles are never edited in place.
 
 Status: accepted
 
-The calibrator-training and calibration-evaluation partitions supply globally
-meaningful row IDs. The comparison rejects duplicates within either side and
-any cross-partition intersection before fitting. Platt/isotonic are compared
+The calibration-fit and operating-point-selection partitions supply
+content-derived row fingerprints verified against the curated source. The
+workflow rejects duplicates or any cross-role intersection. Platt/isotonic are compared
 against identity using Brier score and calibration error; identity wins ties and
 an explicitly recorded improvement margin controls whether calibration is used.
 
@@ -321,3 +324,23 @@ checks within a fixed numerical tolerance before the bundle can become ready.
 The probe contains no source transaction. Container CI compares the complete
 synthetic response and checks the final UID and absence of pip; this workflow is
 still intent, not execution evidence, until Docker/GitHub run it.
+
+## D-032 — The observed Kaggle corpus is reference-only; new data uses four roles
+
+Status: accepted
+
+The historical holdout row identities were not retained, so the old test cannot
+be reconstructed and quarantined row-by-row. The configured Kaggle path and its
+known 284,807-row/492-fraud signature are therefore permanently ineligible for
+new decisions, including renamed copies. Reference reruns first perform atomic
+deterministic duplicate curation; conflicting labels fail and removed class
+counts plus raw/curated lineage are recorded.
+
+Decision-eligible evidence requires a separately authorized source and four
+chronological, content-hash-isolated roles: model training, calibration fit,
+operating-point selection, and untouched development evaluation. Candidate
+selection includes a random-split diagnostic, paired AP bootstrap, and recorded
+simplicity margin. The selected candidate is freshly refit on model-training
+rows only, then calibration and threshold choices are fixed before untouched
+evaluation. Publication atomically couples metrics, lineage, scores, the fitted
+bundle, and direct/reloaded/API parity.

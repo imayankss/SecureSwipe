@@ -13,9 +13,13 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 
 ## P1 — scientific validity
 
-- [B] Measure duplicate overlap in the original historical split; requires the local Kaggle CSV.
-- [B] Execute deterministic blocked/out-of-time development evaluation and compare it with random development splits; synthetic-tested forward protocol is implemented, original CSV is absent.
-- [B] Execute paired uncertainty analysis for Random Forest versus XGBoost; bootstrap and simplicity/tie policy are implemented, paired original scores are absent.
+- [x] Record that historical duplicate overlap is irrecoverable without retained
+  row identities and make the entire observed corpus reference-only.
+- [x] Implement and synthetic-test chronological versus random diagnostic evidence.
+- [x] Execute synthetic paired uncertainty/simplicity selection through the
+  development-to-bundle command.
+- [B] Execute the same protocol on a genuinely new authorized real dataset;
+  none is available in this workspace.
 - [x] Add bootstrap/Wilson confidence intervals for core classification metrics.
 - [x] Implement Brier score, reliability data, ECE, and leakage-safe Platt/isotonic comparison.
 - [x] Implement configurable FP/FN/review/recovery cost scenarios and threshold sensitivity.
@@ -40,10 +44,10 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Protect historical test outputs from accidental overwrite and separate result namespaces.
 - [x] Record/verify positive-class semantics, SciPy/XGBoost runtime, and a
   checksummed full-path startup probe in bundle format 2.
-- [ ] Add deterministic manifested duplicate curation with conflicting-label failure.
-- [ ] Enforce source-row fingerprint isolation across calibration, selection,
+- [x] Add deterministic manifested duplicate curation with conflicting-label failure.
+- [x] Enforce source-row fingerprint isolation across calibration, selection,
   untouched evaluation, and the already-observed historical namespace.
-- [ ] Add a real development training-to-bundle command that persists the selected
+- [x] Add a real development training-to-bundle command that persists the selected
   calibrator/threshold and evaluation/service golden parity evidence.
 
 ## P1 — API/container/operations
@@ -103,9 +107,10 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 
 - [B] No open locally actionable P0/P1; original data/model, Docker, remote CI,
   and public integration prerequisites are documented external blockers.
-- [ ] Evidence score >= 92/100 and every category >= 80%.
+- [x] Evidence score >= 92/100 and every category >= 80%.
 - [ ] Two consecutive full quality-gate runs pass with no code changes between them.
-- [ ] Golden predictions identical in evaluation and API service paths.
+- [x] Golden predictions identical in evaluation and API service paths on the
+  deterministic new-development fixture; real-data execution is externally blocked.
 - [ ] Container startup/readiness/inference pass.
 - [ ] Security/dependency scans have no unresolved high/critical issue or justified exception.
 - [ ] Independent adversarial re-audit finds no new P0/P1.

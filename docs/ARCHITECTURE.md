@@ -7,8 +7,9 @@ serving, and a static public dashboard. It is not a bank authorization system.
 ```mermaid
 flowchart LR
     subgraph Local["Local, authorized workspace"]
-      Raw["Kaggle creditcard.csv\nignored by Git"] --> Contract["Strict dataset contract\nduplicate + finite checks"]
-      Contract --> Dev["Forward development folds\ntraining and validation only"]
+      Raw["Authorized local CSV\nignored by Git"] --> Curate["Manifested curation\nraw + curated lineage"]
+      Curate --> Contract["Strict dataset contract\nfinite + duplicate-free"]
+      Contract --> Dev["Four chronological roles\nuntouched evaluation"]
       Dev --> Evidence["Atomic run directory\nmanifest + hashes"]
       Dev --> Bundle["Versioned ModelBundle\npreprocessor + model + optional calibrator"]
       Bundle --> Verify["Trusted-root and checksum verification\nbefore deserialization"]
@@ -35,10 +36,11 @@ flowchart LR
 
 | Concern | Canonical implementation | Evidence/failure boundary |
 |---|---|---|
-| Dataset schema and fingerprint | `src/data/data_loader.py` | Rejects wrong order/type, missing/non-finite values, negative Time/Amount, invalid Class, and exact duplicates |
+| Dataset curation and lineage | `src/data/curation.py` and `scripts/curate_dataset.py` | Conflicting labels fail; stable exact-duplicate removal records raw/curated fingerprints and decision eligibility |
+| Dataset schema and fingerprint | `src/data/data_loader.py` | Rejects wrong order/type, missing/non-finite values, negative Time/Amount, invalid Class, and unresolved exact duplicates |
 | Split isolation | `src/data/split_data.py` | Pairwise row-hash intersections must be empty |
 | Feature preprocessing | `src/preprocessing/preprocessors.py` | Fits scaling only on training rows and preserves the canonical 30-feature order |
-| New scientific decisions | `src/evaluation/temporal_validation.py` and `scripts/run_development_analysis.py` | Development/forward scopes only; historical/test names are rejected |
+| New scientific decisions | `scripts/run_development_training.py` and `scripts/run_development_analysis.py` | New authorized data only; four content-hash-isolated roles; atomic bundle and untouched evaluation |
 | Historical observation | `src/evaluation/historical_lock.py` | Verify-only three-file SHA-256 lock; no evaluation execution path |
 | Artifact persistence | `src/artifacts/bundle.py` | Trusted local root, complete manifest, sizes, hashes, runtime/dependency/schema/type checks before load |
 | Batch scoring | `src/inference/batch_scoring.py` | One ordered, finite scoring path shared by serving and monitoring |
@@ -54,8 +56,9 @@ The names are part of the scientific control, not presentation labels:
 - `historical_reported_test` is the one already-observed random holdout. Its
   confusion-derived values are internally consistent, but the original score
   vector/runtime is absent and duplicate contamination cannot be measured.
-- `development_validation` is for calibration, operating-point, cost, and model
-  decisions made without the historical test.
+- `new_authorized_three_way_development` packages a model trained on the first
+  chronological role, calibration fit/selection evidence, and one untouched
+  development evaluation; content fingerprints enforce isolation.
 - forward/blocked development evidence estimates temporal sensitivity by keeping
   equal timestamps together and refitting inside each fold.
 - `legacy_random_*_reference` exists only to reproduce the old stage structure;

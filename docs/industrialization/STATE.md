@@ -266,35 +266,42 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
   runtime to its CI job, and removed the export path's third-party import.
 - Replaced above-fold/public “verified/final/hosted” claims with locked historical
   and deployable-static wording; component tests enforce the visible caveats.
+- Added atomic duplicate curation with raw/curated checksums, removed-class
+  counts, conflict failure, stable source-order retention, and decision scope.
+- Made the known test-observed Kaggle corpus reference-only by configured path
+  and 284,807-row/492-fraud signature because holdout identities are irrecoverable.
+- Added an end-to-end new-authorized-data workflow with chronological model-
+  training/calibration/selection/untouched roles, content-hash isolation, random
+  diagnostics, paired AP bootstrap, simplicity selection, fresh selected-model
+  refit, calibration, thresholding, fixed-point intervals, and atomic bundle.
+- Proved byte-deterministic synthetic run evidence plus identical direct,
+  serialized-bundle, and `ModelService` raw/decision scores; standalone cost
+  analysis now consumes the same curated lineage and rejects renamed identities,
+  label mismatch, chronology violations, and historical/reference scope.
 
 ## Current issues
 
 ### P0
 
 No open locally actionable P0 remains after the first batch. Historical
-cross-split duplicate overlap cannot be measured without the original CSV; the
-recorded result is now explicitly quarantined/caveated and is not used for any
-new decision.
+cross-split duplicate overlap cannot be reconstructed because its row identities
+were not retained; the recorded result is explicitly quarantined/caveated and
+the entire known corpus is ineligible for new decisions.
 
 ### P1
 
-- The historical holdout has no retained row identities, so exclusion from new
-  decisions is not technically enforceable. Until an executable lineage policy
-  exists, the original Kaggle dataset is historically tainted for new model
-  selection rather than protected by caller-authored IDs.
-- The known Kaggle file contains duplicate rows, but no manifested deterministic
-  curation command currently connects it to a safe scientific workflow.
-- No executable development selection/calibration/threshold workflow emits a
-  real API-eligible bundle; the synthetic fixture is not model evidence.
-- Calibration-method and threshold selection currently reuse the same
-  development-validation rows later used for descriptive intervals.
+No open locally actionable P1 remains. The deterministic curation command and
+four-role development workflow are synthetic-fixture tested, including paired
+selection evidence, calibration, fixed-threshold untouched evaluation, atomic
+real-bundle packaging, and direct/reloaded/API parity. The known Kaggle corpus is
+reference-only by path and known row/fraud signature, so a renamed copy cannot
+be used by the decision workflow.
 
-- Original-data blocked evaluation and random-vs-forward comparison are not
-  executable until the CSV is restored; the tested protocol is now implemented.
-- Original Random Forest/XGBoost paired comparison is blocked by absent score
-  vectors/artifacts; the recorded 0.0004 AP difference remains insufficient.
-- No original-data calibration result or domain-approved cost assumptions exist;
-  the tested analysis engines do not retroactively justify threshold 0.53.
+External evidence blockers remain:
+
+- No genuinely new authorized development dataset is available, so no real
+  forward/random comparison, candidate choice, calibration, threshold, or
+  serving bundle is claimed. Example cost assumptions remain non-policy.
 - Applying the verified SHAP protocol to the historical ranking is blocked by
   the absent original model and aligned sample row identities.
 - Optional synthetic live-demo mode remains deliberately disabled until the API
@@ -312,21 +319,20 @@ architecture, and secret requirements are time-sensitive selection inputs.
 
 ## Next executable action
 
-Implement a deterministic manifested duplicate-curation and lineage boundary,
-then connect an untouched-development evaluation protocol to atomic real-bundle
-packaging without permitting the already-observed historical namespace.
+Commit the completed scientific-lineage workflow, then run two unchanged full
+data-free quality cycles and repeat the independent adversarial audit at the new
+commit.
 
-Acceptance: conflicting-label duplicates fail; exact duplicates are resolved by
-one recorded policy with raw/curated fingerprints and class counts; renamed IDs
-cannot cross calibration/selection/evaluation roles; the historical Kaggle
-namespace cannot create a decision-eligible bundle; a synthetic new-development
-fixture produces a verified bundle and exact evaluation/service golden parity.
+Acceptance: all 339 Python tests, lint, both mypy scopes, evidence checks,
+dependency audits, clean wheel proof, and frontend unit/build/browser/audit gates
+pass twice with no code change; the final re-audit finds no new local P0/P1.
 
 ## External blockers and user action
 
-- Original-data evaluation: obtain Kaggle Credit Card Fraud Detection
-  `creditcard.csv` through Kaggle's official authentication/download flow and
-  place it at `data/raw/creditcard.csv`. Never commit the CSV or `kaggle.json`.
+- Historical reference: optionally obtain Kaggle `creditcard.csv` through its
+  official flow and place it at `data/raw/creditcard.csv`; it remains
+  reference-only. Real decision evidence requires a separate authorized corpus.
+  Never commit either data file or `kaggle.json`.
 - Container validation: start Docker Desktop. No paid service is needed.
 - Push, PR, release, public deployment, DNS, or paid infrastructure: not
   authorized and will require explicit confirmation immediately before action.

@@ -114,3 +114,12 @@ def test_main_runs_safely() -> None:
     result = main_module.main()
     assert isinstance(result, dict)
     assert "project" in result
+
+
+def test_readme_separates_reference_corpus_new_development_and_audit_modes() -> None:
+    readme = (get_project_root() / "README.md").read_text(encoding="utf-8")
+    assert "--source-kind historical_kaggle_reference" in readme
+    assert "--source-kind new_authorized_development" in readme
+    assert "scripts/run_development_training.py" in readme
+    assert "scripts.run_project_audit --allow-missing-model --check" in readme
+    assert "run `python3 -m scripts.run_project_audit` without `--allow-missing-model`" in readme
