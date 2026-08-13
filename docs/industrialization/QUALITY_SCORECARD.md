@@ -8,7 +8,7 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | ML correctness and scientific validity | 20 | 5 | 15 | Strict contracts/isolation, historical quarantine, forward folds, uncertainty, simplicity rule, calibration, constrained/cost metrics, and raw-margin SHAP additivity/cohort evidence are tested; original OOT/model comparison/calibration and historical SHAP execution remain blocked. |
 | Reproducibility and data lineage | 15 | 2 | 15 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, atomic timestamp-free manifests for development and every legacy stage, typed configuration, historical lock, and read-only export verification are tested. |
 | Architecture and maintainability | 15 | 4 | 15 | Offline/static, blocked-development, reference-stage, and verified serving paths have explicit boundaries; direct partial legacy CLIs fail closed; mounted bundles, current audit, workflow separation, typed configuration, and governance are tested. |
-| Testing and quality gates | 15 | 6 | 15 | 320 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain tests, package proof, four component tests, and two production Chromium keyboard/mobile/WCAG/static-boundary tests pass; Docker execution remains explicitly blocked. |
+| Testing and quality gates | 15 | 6 | 15 | 323 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain/wheel-inventory tests, clean package proof, four component tests, and two production Chromium keyboard/mobile/WCAG/static-boundary tests pass; Docker execution remains explicitly blocked. |
 | API/container reliability | 10 | 0 | 8 | Versioned API, readiness, limits, OpenAPI, exact parity, threadpool offload, runtime log evidence, health responsiveness, and 500-request loopback behavior pass; container remains unverified. |
 | Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean API/quality/resolver/npm audits, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
 | Observability and operations | 10 | 0 | 8 | Bounded metrics, runtime JSON/redaction evidence, deterministic schema/feature/score/delayed-label monitoring, shifted demo, repeated M2 load evidence, local objectives, and incident/rollback guides pass; container/provider operations remain unmeasured. |
@@ -91,5 +91,11 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   encoded script bytes across six scripts and 329,437 total bytes across ten
   requests. Chromium now enforces 350,000/8 script and 450,000/12 total budgets;
   timings are recorded for context but not asserted as a local-run SLO.
+- Adversarial artifact review rejected the first nominally green cycle because a
+  direct wheel build contained 16 deleted modules from ignored `build/lib`.
+  Release gates now build wheel-from-sdist without isolation/network resolution,
+  then compare all packaged `api/` and `src/` Python modules with current source.
+  Three failure-mode tests and the corrected 49-source-module/54-member wheel
+  inventory pass.
 
 The score will be updated only after each batch's acceptance commands pass.
