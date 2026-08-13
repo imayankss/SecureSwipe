@@ -295,3 +295,14 @@ silently package modules deleted from the worktree. Release gates therefore run
 from its fresh temporary extraction using the already locked build backend. A
 second executable gate compares every packaged `api/` and `src/` Python member
 against the current source tree and rejects either missing or unexpected files.
+
+## D-030 — The runtime image has no package installer
+
+Status: accepted, Docker execution still blocked
+
+The final API image never installs packages after construction, so it removes
+the Python base image's pip before switching to the non-root user. This avoids
+shipping an unnecessary installer and its advisory surface. Dependencies remain
+installed only in the build stage from the hash-locked API closure. A clean
+pip-free virtual-environment proof imports the wheel successfully; final image
+behavior and vulnerability evidence still require the Docker smoke/scan gate.

@@ -37,6 +37,10 @@ COPY --chown=10001:10001 src/artifacts ./src/artifacts
 COPY --chown=10001:10001 src/inference ./src/inference
 COPY --chown=10001:10001 src/preprocessing ./src/preprocessing
 
+# Serving never installs packages; omit the base image's packaging installer and
+# its avoidable runtime attack/vulnerability surface.
+RUN python -m pip uninstall --yes pip
+
 USER 10001:10001
 EXPOSE 8000
 

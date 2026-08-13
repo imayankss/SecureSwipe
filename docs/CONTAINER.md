@@ -23,6 +23,11 @@ stage, and runs as UID/GID 10001. A single
 Uvicorn worker avoids duplicating the in-memory model. Scale and concurrency
 claims require measurement; none are implied by this configuration.
 
+The final runtime removes pip after copying the locked dependency prefix because
+serving never installs packages. The build stage retains its installer only long
+enough to resolve the hash-locked API closure; it is not copied into the final
+image.
+
 ## Generate the synthetic smoke bundle
 
 ```bash

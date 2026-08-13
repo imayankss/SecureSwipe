@@ -75,6 +75,7 @@ jobs:
           python -m venv /tmp/secureswipe-api-proof
           /tmp/secureswipe-api-proof/bin/python -m pip install --require-hashes -r requirements/api.lock
           /tmp/secureswipe-api-proof/bin/python -m pip install --no-deps dist/*.whl
+          /tmp/secureswipe-api-proof/bin/python -m pip uninstall --yes pip
           cd /tmp
           /tmp/secureswipe-api-proof/bin/python -c "import api.main; from src.artifacts.bundle import ModelBundle"
 

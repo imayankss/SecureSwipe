@@ -29,6 +29,10 @@ def test_dockerfile_has_restricted_reproducible_runtime_contract() -> None:
     assert "USER 10001:10001" in dockerfile
     assert "/health/live" in dockerfile
     assert '"--workers", "1"' in dockerfile
+    assert "RUN python -m pip uninstall --yes pip" in dockerfile
+    assert dockerfile.index("RUN python -m pip uninstall --yes pip") < dockerfile.index(
+        "USER 10001:10001"
+    )
     assert "COPY ." not in dockerfile
     assert "apt-get" not in dockerfile
 
