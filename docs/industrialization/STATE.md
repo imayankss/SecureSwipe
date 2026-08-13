@@ -53,6 +53,9 @@ not included in the service or required quality runtime.
 | `.venv/bin/python -m pytest` | PASS | 196 passed, 12 upstream deprecation warnings, 5.68 s |
 | `.venv/bin/python -m build --wheel` | PASS | Package includes `api` and `src`; isolated build uses setuptools 84.0.0 |
 | frontend data/lint/type/test/build sequence | PASS | Static production build completed in the same post-API cycle |
+| synthetic container fixture + compile/lint/type/full test gate | PASS | deterministic fixture digest `22855031e66951f84cbbfe211c6563519a8481cc007643992ec13e9951abc438`; 211 tests passed, 19 upstream warnings, 4.34 s |
+| `docker info --format '{{json .ServerVersion}}'` | BLOCKED | Docker daemon socket unavailable after the container implementation |
+| `docker buildx imagetools inspect python:3.12.10-slim-bookworm` | PASS | Multi-architecture index pinned to `sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db` |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -93,6 +96,17 @@ This is baseline evidence only; a dedicated secret scanner remains required.
   dependency vulnerability audit.
 - Full Python suite after the API batch: 196 passed in 5.68 s; frontend data,
   lint, type, current test, and production-build gates also passed.
+- Replaced the placeholder Dockerfile with a two-stage Python 3.12.10 CPU image,
+  hash-locked install, selected runtime source only, non-root UID/GID 10001,
+  single worker, and liveness health check; the image never copies artifacts/data.
+- Added a strict Docker context exclusion policy and documented a read-only,
+  capability-dropped local runtime with a read-only model mount.
+- Added a deterministic synthetic-only smoke bundle and daemon-independent
+  tests for image policy, context exclusions, overwrite refusal, bundle
+  determinism, and evaluation/service score parity.
+- Added exact linux/arm64 build, liveness/readiness/inference, Docker Scout,
+  SPDX SBOM, artifact replacement, and rollback commands. Docker execution
+  remains blocked rather than claimed because the local daemon is stopped.
 
 ## Current issues
 
@@ -110,7 +124,7 @@ new decision.
   simpler Random Forest (validation AP difference is approximately 0.0004).
 - No calibration evaluation and no implemented cost model.
 - No reproducible training run manifest or authoritative typed training configuration.
-- Docker, offline monitoring, and operational runbooks remain unimplemented.
+- Offline monitoring, measured SLO/load evidence, and broader operational runbooks remain unimplemented.
 - Historical test outputs are rerunnable/overwriteable and reports contain hardcoded decision metadata.
 - Export `--check` is mutating and does not checksum public figures or fully cross-check metrics.
 - No GitHub Actions, Dependabot, container scan, secret scan, or release-quality controls.
@@ -126,14 +140,14 @@ new decision.
 
 ## Next executable action
 
-Implement the next P1 batch: replace the placeholder container definition with
-a minimal pinned Python image, hash-locked install, non-root runtime, liveness
-health check, explicit artifact mount contract, deterministic synthetic smoke
-bundle, and container-oriented contract tests. Add a strict `.dockerignore`.
+Implement the next P1 batch: statistically valid development-only evaluation
+utilities for confidence intervals, calibration/reliability diagnostics,
+constrained metrics, and configurable cost scenarios. Add blocked time splits
+and tests using deterministic synthetic data without consulting the historical test.
 
-Acceptance: static Dockerfile policy tests pass now; when Docker Desktop is
-available, linux/arm64 build, startup, liveness, readiness, golden inference,
-vulnerability scan, and SBOM generation must pass before the container item is closed.
+Acceptance: edge/property tests reject non-finite and degenerate inputs;
+synthetic blocked evaluation is deterministic; calibration is fitted only on
+development folds; threshold/cost outputs derive entirely from explicit inputs.
 
 ## External blockers and user action
 

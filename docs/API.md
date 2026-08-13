@@ -84,3 +84,6 @@ Errors use a stable envelope:
 The interactive OpenAPI description is available at `/docs`; the machine
 contract is `/openapi.json`. `/metrics` uses Prometheus text exposition with
 bounded route/status and fixed histogram buckets.
+
+Container build, restricted runtime, smoke-test, scan, SBOM, and model-replacement
+commands are documented in [`CONTAINER.md`](CONTAINER.md).

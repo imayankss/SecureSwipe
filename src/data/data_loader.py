@@ -90,13 +90,13 @@ def validate_dataset_schema(
         raise ValueError(f"Expected numeric columns are not numeric: {non_numeric_columns}.")
 
     missing_counts = df[required].isna().sum()
-    missing_columns = {
+    missing_value_counts = {
         str(column): int(count) for column, count in missing_counts.items() if count
     }
-    if missing_columns:
+    if missing_value_counts:
         raise ValueError(
             "Dataset contains missing values in required columns: "
-            f"{missing_columns}."
+            f"{missing_value_counts}."
         )
 
     feature_values = df[required].to_numpy(dtype=float, copy=False)

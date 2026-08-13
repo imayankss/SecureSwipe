@@ -103,3 +103,13 @@ An image or developer process may start without a model so liveness and
 diagnostics remain available, but readiness and inference return 503. Once a
 bundle path is explicitly configured, any trust, provenance, checksum, schema,
 or runtime failure aborts startup. This avoids silently serving a fallback model.
+
+## D-012 — Model bundles are mounted, not baked into the service image
+
+Status: accepted
+
+The image and model have independent immutable identities. Production source,
+dependencies, and user privileges are testable without distributing a private
+dataset or artifact in the build context. A reviewed bundle is mounted read-only
+and selected by a server-side manifest path. Replacement or rollback starts a
+new container with another versioned bundle; bundles are never edited in place.

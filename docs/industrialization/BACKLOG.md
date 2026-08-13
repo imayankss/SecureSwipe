@@ -42,13 +42,13 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Unknown/non-finite/malformed/oversized/batch-limit/unavailable-model/concurrency tests.
 - [x] Structured redacted JSON logs with request IDs and no transaction vectors.
 - [x] Configurable explicit CORS allowlist and request-body cap.
-- [ ] Replace Dockerfile, add `.dockerignore`, non-root user, pinned runtime, and health check.
+- [x] Replace Dockerfile, add `.dockerignore`, non-root user, pinned runtime, and health check.
 - [B] Test linux/arm64 image startup/readiness/inference; Docker Desktop must be started.
 - [B] Scan image and produce SBOM; Docker Desktop must be started.
 - [x] Add bounded latency/request/error/score-distribution metrics.
 - [ ] Implement deterministic offline drift monitor with synthetic shifted demonstration.
 - [ ] Run local load test and record p50/p95/p99/error rate.
-- [ ] Create measured SLO guidance, alert/incident/rollback/model-replacement runbooks.
+- [~] Create measured SLO guidance, alert/incident/rollback/model-replacement runbooks (container replacement/rollback procedure complete; measurement and incident guidance pending).
 
 ## P1 — frontend/QA/supply chain
 
