@@ -21,6 +21,8 @@ from sklearn.dummy import DummyClassifier
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 
+from src.artifacts.bundle import load_verified_joblib, write_checksum_sidecar
+
 RANDOM_STATE: int = 42
 DEFAULT_MODELS_DIR: Path = Path("artifacts/models")
 
@@ -226,6 +228,7 @@ def save_model(
 
     output_path = output_dir / f"{model_name}.joblib"
     joblib.dump(model, output_path)
+    write_checksum_sidecar(output_path)
     return output_path
 
 
@@ -266,7 +269,12 @@ def load_model(model_path: str | Path) -> Any:
             f"Model file not found at {model_path}. "
             "Please check the path or train and save the model first."
         )
-    return joblib.load(model_path)
+    trusted_root = model_path.parent.parent if model_path.parent.name == "models" else model_path.parent
+    return load_verified_joblib(
+        model_path,
+        trusted_root=trusted_root,
+        required_attributes=("predict",),
+    )
 
 
 def get_model_summary(models: Dict[str, Any]) -> Dict[str, Any]:

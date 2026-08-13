@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pandas as pd
 import pytest
+import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -12,6 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.data.data_loader import (  # noqa: E402
     get_required_columns,
+    fingerprint_dataframe,
     summarize_dataset,
     validate_dataset_schema,
 )
@@ -118,6 +120,47 @@ def test_validate_dataset_schema_rejects_non_numeric_amount(
         validate_dataset_schema(df_non_numeric_amount)
 
     assert "Amount" in str(exc_info.value)
+
+
+@pytest.mark.parametrize("invalid_value", [np.nan, np.inf, -np.inf])
+def test_validate_dataset_schema_rejects_non_finite_features(
+    synthetic_credit_card_df: pd.DataFrame,
+    invalid_value: float,
+) -> None:
+    invalid = synthetic_credit_card_df.copy()
+    invalid.loc[0, "V10"] = invalid_value
+    with pytest.raises(ValueError, match="missing|non-finite"):
+        validate_dataset_schema(invalid)
+
+
+def test_validate_dataset_schema_rejects_exact_duplicate_rows(
+    synthetic_credit_card_df: pd.DataFrame,
+) -> None:
+    duplicated = pd.concat(
+        [synthetic_credit_card_df, synthetic_credit_card_df.iloc[[0]]],
+        ignore_index=True,
+    )
+    with pytest.raises(ValueError, match="duplicate"):
+        validate_dataset_schema(duplicated)
+
+
+def test_validate_dataset_schema_rejects_wrong_order(
+    synthetic_credit_card_df: pd.DataFrame,
+) -> None:
+    reordered = synthetic_credit_card_df[["Amount", *synthetic_credit_card_df.columns[:-2], "Class"]]
+    with pytest.raises(ValueError, match="order"):
+        validate_dataset_schema(reordered)
+
+
+def test_dataset_fingerprint_is_deterministic_and_order_sensitive(
+    synthetic_credit_card_df: pd.DataFrame,
+) -> None:
+    first = fingerprint_dataframe(synthetic_credit_card_df)
+    second = fingerprint_dataframe(synthetic_credit_card_df.copy())
+    reordered = synthetic_credit_card_df.iloc[::-1].reset_index(drop=True)
+    assert first == second
+    assert len(first) == 64
+    assert first != fingerprint_dataframe(reordered)
 
 
 def test_summarize_dataset_returns_expected_keys(

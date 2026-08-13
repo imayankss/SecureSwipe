@@ -17,8 +17,9 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import joblib
 import pandas as pd
+
+from src.artifacts.bundle import load_verified_joblib
 
 from src.explainability.shap_explainer import (
     build_shap_feature_importance,
@@ -62,7 +63,11 @@ def load_champion_model(model_path: str | Path = DEFAULT_MODEL_PATH) -> Any:
             "train and save the XGBoost model."
         )
 
-    model = joblib.load(model_path)
+    model = load_verified_joblib(
+        model_path,
+        trusted_root=Path(__file__).resolve().parents[1] / "artifacts",
+        required_attributes=("predict_proba",),
+    )
     logger.info("Loaded champion model from %s.", model_path)
     return model
 

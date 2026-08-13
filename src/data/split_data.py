@@ -13,11 +13,13 @@ model training happen in this file. Those concerns belong to
 
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Union
 
+import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 
@@ -124,6 +126,68 @@ def validate_split_inputs(
             "must be present to perform a stratified split."
         )
 
+    expected_columns = list(feature_cols) + [target_col]
+    if list(df.columns) != expected_columns:
+        raise ValueError(
+            "Split input columns must exactly match the canonical ordered "
+            f"schema. Expected {expected_columns}; found {list(df.columns)}."
+        )
+
+    missing_counts = df[expected_columns].isna().sum()
+    if int(missing_counts.sum()) > 0:
+        raise ValueError("Split inputs contain missing feature or target values.")
+
+    numeric_values = df[expected_columns].to_numpy(dtype=float, copy=False)
+    if not np.isfinite(numeric_values).all():
+        raise ValueError("Split inputs contain non-finite values.")
+
+    duplicate_count = int(df.duplicated(subset=expected_columns, keep=False).sum())
+    if duplicate_count:
+        raise ValueError(
+            "Split inputs contain exact duplicate rows; resolve duplicates "
+            f"before splitting ({duplicate_count} duplicated row occurrences)."
+        )
+
+
+def fingerprint_rows(X: pd.DataFrame, y: Optional[pd.Series] = None) -> pd.Series:
+    """Return stable SHA-256 row identifiers without exposing transaction values."""
+    if y is not None:
+        if len(X) != len(y):
+            raise ValueError("Cannot fingerprint rows with mismatched X/y lengths.")
+        frame = X.copy()
+        frame[TARGET_COLUMN] = y.to_numpy()
+    else:
+        frame = X
+
+    def _digest(raw_hash: int) -> str:
+        return hashlib.sha256(str(int(raw_hash)).encode("ascii")).hexdigest()
+
+    raw_hashes = pd.util.hash_pandas_object(frame, index=False, categorize=True)
+    return raw_hashes.map(_digest)
+
+
+def assert_disjoint_split_rows(
+    splits: dict[str, Union[pd.DataFrame, pd.Series]],
+) -> dict[str, str]:
+    """Fail if any exact feature+target row appears in more than one split."""
+    row_hashes = {
+        "train": set(fingerprint_rows(splits["X_train"], splits["y_train"])),
+        "validation": set(fingerprint_rows(splits["X_val"], splits["y_val"])),
+        "test": set(fingerprint_rows(splits["X_test"], splits["y_test"])),
+    }
+    pairs = (("train", "validation"), ("train", "test"), ("validation", "test"))
+    for left, right in pairs:
+        overlap = row_hashes[left] & row_hashes[right]
+        if overlap:
+            raise ValueError(
+                f"Exact-row leakage detected between {left} and {right}: "
+                f"{len(overlap)} overlapping row fingerprint(s)."
+            )
+    return {
+        name: hashlib.sha256("".join(sorted(values)).encode("ascii")).hexdigest()
+        for name, values in row_hashes.items()
+    }
+
 
 # ---------------------------------------------------------------------------
 # Feature / target separation
@@ -221,6 +285,10 @@ def create_train_val_test_split(
             f"and len(y)={len(y)}."
         )
 
+    combined = X.copy()
+    combined[TARGET_COLUMN] = y.to_numpy()
+    validate_split_inputs(combined)
+
     # Stage 1: split into train vs. temp (validation + test combined).
     X_train, X_temp, y_train, y_temp = train_test_split(
         X,
@@ -254,8 +322,7 @@ def create_train_val_test_split(
                 f"The {split_name} split does not contain both target classes. "
                 "Use a larger dataset or adjust the split sizes."
             )
-
-    return {
+    splits = {
         "X_train": X_train,
         "X_val": X_val,
         "X_test": X_test,
@@ -263,6 +330,8 @@ def create_train_val_test_split(
         "y_val": y_val,
         "y_test": y_test,
     }
+    assert_disjoint_split_rows(splits)
+    return splits
 
 
 # ---------------------------------------------------------------------------
@@ -336,6 +405,7 @@ def get_split_summary(
 
     target_name = getattr(y_train, "name", None) or TARGET_COLUMN
 
+    fingerprints = assert_disjoint_split_rows(splits)
     return {
         "train_rows": train_rows,
         "validation_rows": validation_rows,
@@ -349,6 +419,8 @@ def get_split_summary(
         "test_class_distribution": get_class_distribution(y_test),
         "feature_count": int(X_train.shape[1]),
         "target_name": target_name,
+        "row_fingerprints": fingerprints,
+        "duplicate_policy": "reject_exact_rows_before_split",
     }
 
 

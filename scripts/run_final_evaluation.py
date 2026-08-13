@@ -19,7 +19,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-import joblib
 import pandas as pd
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -32,6 +31,7 @@ from src.evaluation.final_evaluation import (  # noqa: E402
     save_final_evaluation,
     write_final_evaluation_report,
 )
+from src.artifacts.bundle import load_verified_joblib  # noqa: E402
 
 DEFAULT_MODEL_PATH = Path("artifacts/models/xgboost_baseline.joblib")
 DEFAULT_PROCESSED_DIR = Path("data/processed")
@@ -130,7 +130,11 @@ def run_final_evaluation(
     threshold = load_locked_threshold(thresholds_path)
     print(f"Loaded locked threshold from Day 6 validation: {threshold:.2f}")
 
-    model = joblib.load(model_path)
+    model = load_verified_joblib(
+        model_path,
+        trusted_root=PROJECT_ROOT / "artifacts",
+        required_attributes=("predict_proba",),
+    )
     x_test, y_test = load_test_data(processed_dir)
     print(f"Loaded test rows: {len(x_test)}")
 

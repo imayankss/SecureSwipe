@@ -9,7 +9,8 @@ Day 7 scope only.
 This module evaluates the champion model at a fixed threshold that was
 selected during Day 6 validation.  NO tuning, NO model training, and NO
 threshold search happen here.  The evaluation is run exactly once on the
-test split to give an honest, unbiased performance estimate.
+historical random holdout. The result is already observed and is not reused for
+development decisions.
 
 Typical call chain (from scripts/run_final_evaluation.py):
     metrics  = evaluate_locked_model(y_true, y_proba, threshold=0.53)
@@ -105,13 +106,16 @@ def _validate_inputs(
             f"Only found: {sorted(unique_labels)}"
         )
 
+    if not np.isfinite(y_proba_arr).all():
+        raise ValueError("y_proba must contain only finite values.")
+
     if np.any(y_proba_arr < 0.0) or np.any(y_proba_arr > 1.0):
         raise ValueError(
             f"y_proba values must be in [0, 1].  "
             f"Got min={y_proba_arr.min():.4f}, max={y_proba_arr.max():.4f}."
         )
 
-    if not (0.0 <= threshold <= 1.0):
+    if not np.isfinite(threshold) or not (0.0 <= threshold <= 1.0):
         raise ValueError(
             f"threshold must be in [0, 1].  Got: {threshold!r}"
         )
@@ -294,10 +298,11 @@ def build_final_evaluation_summary(
             "(min_recall=0.80, highest precision)"
         ),
         "threshold_selection_note": (
-            "The operating threshold was selected exclusively on the validation "
-            "set during Day 6.  Test-set results were not used in any "
-            "threshold or model decision.  This evaluation is therefore an "
-            "honest, unbiased estimate of real-world performance."
+            "Historical observation: repository history records model and threshold "
+            "selection on validation before this random held-out split was evaluated. The result "
+            "has now been observed and must not be reused for tuning. Exact duplicate "
+            "rows were reported in the source dataset, but cross-split overlap was "
+            "not recorded, so this is not out-of-time or real-world evidence."
         ),
         **metrics,
     }
@@ -371,6 +376,7 @@ def write_final_evaluation_report(
     model_name   = summary.get("model_name", "unknown")
     split_name   = summary.get("split_name", "test")
     threshold    = summary.get("threshold", "N/A")
+    threshold_source = summary.get("threshold_source", "historical validation artifact")
     generated_at = summary.get("generated_at", "N/A")
     note         = summary.get("threshold_selection_note", "")
 
@@ -399,7 +405,7 @@ def write_final_evaluation_report(
         f"| Champion model | `{model_name}` |",
         f"| Evaluated split | `{split_name}` |",
         f"| Locked threshold | `{threshold}` |",
-        f"| Threshold source | Day 6 recall-target (validation-only selection) |",
+        f"| Threshold source | {threshold_source} |",
         "",
         "---",
         "",
@@ -407,8 +413,8 @@ def write_final_evaluation_report(
         "",
         note,
         "",
-        "This ensures the final test-set evaluation is a truthful, "
-        "unbiased estimate of production performance.",
+        "This preserves the recorded result as historical evidence; it is not a "
+        "claim about deployment or future performance.",
         "",
         "---",
         "",
@@ -447,15 +453,14 @@ def write_final_evaluation_report(
         "",
         "### Interpretation",
         "",
-        f"- **Fraud caught (TP):** {_ifmt(tp)} — fraudulent transactions correctly blocked.",
-        f"- **Fraud missed (FN):** {_ifmt(fn)} — fraudulent transactions that slipped through.",
-        f"- **False alerts (FP):** {_ifmt(fp)} — legitimate transactions incorrectly flagged.",
-        f"- **True negatives (TN):** {_ifmt(tn)} — legitimate transactions correctly approved.",
+        f"- **True positives:** {_ifmt(tp)} — labelled fraud rows flagged at this threshold.",
+        f"- **False negatives:** {_ifmt(fn)} — labelled fraud rows not flagged.",
+        f"- **False positives:** {_ifmt(fp)} — labelled legitimate rows flagged.",
+        f"- **True negatives:** {_ifmt(tn)} — labelled legitimate rows not flagged.",
         "",
-        "> **Business context:** In fraud detection, false negatives (missed fraud) "
-        "typically carry higher cost than false positives (false alerts). "
-        "The recall-target threshold (0.53) was chosen to catch as much fraud "
-        "as possible while keeping false alerts at an acceptable level.",
+        "> **Decision context:** The historical threshold was selected on validation "
+        "for the point estimate recall constraint recorded in its source artifact. "
+        "No fraud-loss, review-cost, recovery, or authorization policy was evaluated.",
         "",
         "---",
         "",
@@ -478,10 +483,8 @@ def write_final_evaluation_report(
         "",
         "| Stage | Result |",
         "|---|---|",
-        "| Champion model | XGBoost (scale_pos_weight balanced) |",
-        "| Validation PR-AUC | 0.8129 |",
-        "| Validation ROC-AUC | 0.9851 |",
-        "| Operating threshold | 0.53 (recall-target, Day 6 validation) |",
+        f"| Recorded model | `{model_name}` |",
+        f"| Recorded threshold | {threshold} |",
         f"| **Final {split_name} PR-AUC** | **{_fmt(summary.get('pr_auc'))}** |",
         f"| Final {split_name} Recall | {_fmt(summary.get('recall'))} |",
         f"| Final {split_name} Precision | {_fmt(summary.get('precision'))} |",

@@ -38,6 +38,22 @@ def test_evaluate_locked_model_rejects_invalid_threshold() -> None:
         evaluate_locked_model([0, 1], [0.1, 0.9], threshold=1.5)
 
 
+@pytest.mark.parametrize("invalid_score", [np.nan, np.inf, -np.inf])
+def test_evaluate_locked_model_rejects_non_finite_scores(invalid_score: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        evaluate_locked_model([0, 1], [0.1, invalid_score], threshold=0.5)
+
+
+def test_historical_report_avoids_unsupported_claims(tmp_path: Path) -> None:
+    metrics = evaluate_locked_model([0, 0, 1, 1], [0.05, 0.2, 0.8, 0.95], 0.53)
+    summary = build_final_evaluation_summary(metrics, "xgboost_baseline", 0.53)
+    report = write_final_evaluation_report(summary, tmp_path / "historical.md")
+    combined = (summary["threshold_selection_note"] + report.read_text(encoding="utf-8")).lower()
+    forbidden = ("unbiased", "production performance", "real-world performance", "blocked", "approved", "acceptable level")
+    assert not any(term in combined for term in forbidden)
+    assert "historical" in combined
+
+
 def test_build_summary_and_save_outputs(tmp_path: Path) -> None:
     metrics = evaluate_locked_model([0, 0, 1, 1], [0.05, 0.2, 0.8, 0.95], 0.53)
     summary = build_final_evaluation_summary(

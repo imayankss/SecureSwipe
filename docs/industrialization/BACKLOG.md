@@ -1,0 +1,85 @@
+# Industrialization backlog
+
+Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
+`[B]` externally blocked.
+
+## P0
+
+- [x] Reject duplicate, missing, infinite, malformed, and out-of-contract dataset inputs.
+- [x] Fingerprint datasets/rows and prove split row hashes do not overlap.
+- [x] Preserve the historical result while removing unsupported unbiased/real-world/authorization claims.
+- [x] Replace unchecked deserialization with trusted-root, checksum, manifest, type, schema, and runtime verification.
+- [x] Add corrupt/mismatch/untrusted-path tests proving failure occurs before deserialization.
+
+## P1 — scientific validity
+
+- [B] Measure duplicate overlap in the original historical split; requires the local Kaggle CSV.
+- [B] Add deterministic blocked/out-of-time development evaluation and compare it with random development splits.
+- [B] Add paired uncertainty analysis and a simplicity/tie rule for Random Forest versus XGBoost.
+- [ ] Add bootstrap/Wilson confidence intervals for core classification metrics.
+- [ ] Implement Brier score, reliability data, ECE, and leakage-safe Platt/isotonic comparison.
+- [ ] Implement configurable FP/FN/review/recovery cost scenarios and threshold sensitivity.
+- [ ] Add recall at precision/FPR constraints and name average precision accurately.
+- [ ] Verify SHAP output units/additivity and report sample cohort composition.
+- [ ] Write data card, model card, and protected-group fairness limitation.
+
+## P1 — artifacts and reproducibility
+
+- [ ] Consolidate typed configuration and deterministic seeds.
+- [x] Add versioned `ModelBundle` with preprocessor, model, optional calibrator,
+  threshold, ordered schema, runtime versions, data fingerprint, version, and checksums.
+- [ ] Add deterministic run manifest including code SHA and input/artifact hashes.
+- [~] Add golden evaluation/service prediction parity tests (bundle round-trip parity passes; API path pending).
+- [~] Make service startup fail closed on incomplete/corrupt/mismatched bundles (loader gate passes; service pending).
+- [ ] Separate and lock API runtime, training, and developer dependency sets.
+- [ ] Build/install a wheel in a clean environment.
+- [ ] Protect historical test outputs from accidental overwrite and separate result namespaces.
+
+## P1 — API/container/operations
+
+- [ ] Implement live/readiness, model-info, single prediction, batch prediction, and justified metrics endpoints.
+- [ ] Strict Pydantic request/response/error contracts and OpenAPI validation.
+- [ ] Unknown/non-finite/malformed/oversized/batch-limit/unavailable-model/concurrency tests.
+- [ ] Structured redacted JSON logs with request IDs and no transaction vectors.
+- [ ] Configurable explicit CORS allowlist and request-body cap.
+- [ ] Replace Dockerfile, add `.dockerignore`, non-root user, pinned runtime, and health check.
+- [B] Test linux/arm64 image startup/readiness/inference; Docker Desktop must be started.
+- [B] Scan image and produce SBOM; Docker Desktop must be started.
+- [ ] Add bounded latency/request/error/score-distribution metrics.
+- [ ] Implement deterministic offline drift monitor with synthetic shifted demonstration.
+- [ ] Run local load test and record p50/p95/p99/error rate.
+- [ ] Create measured SLO guidance, alert/incident/rollback/model-replacement runbooks.
+
+## P1 — frontend/QA/supply chain
+
+- [ ] Make export check side-effect-free and checksum every public artifact.
+- [ ] Fully validate metric/confusion/threshold invariants and tamper cases.
+- [ ] Gate frontend build on export verification.
+- [ ] Add synthetic-only optional live API demo with static fallback, timeout/loading/error/empty states.
+- [ ] Add component, keyboard, accessibility, responsive, and browser-smoke tests.
+- [ ] Add Python lint/type/unit/integration/export-determinism gates.
+- [ ] Add frontend lint/type/test/build/data gates.
+- [ ] Add dependency, secret/code, bundle, container-build, and scan workflows with minimal permissions.
+- [ ] Add Dependabot for Python, npm, and Actions.
+- [ ] Add root LICENSE, CONTRIBUTING, SECURITY, and PR template.
+
+## P2/P3
+
+- [ ] Remove or explicitly deprecate dead placeholder modules and stale reports after call-graph verification.
+- [ ] Add skip link/mobile navigation/progress/table/chart accessibility semantics.
+- [ ] Record a frontend performance budget from a clean measured build.
+- [ ] Correct project author metadata.
+- [ ] Write architecture, ADRs, API guide, threat model, monitoring guide,
+  deployment/reproducibility/incident runbooks, limitations/non-goals,
+  interview defense, and three-minute demo script.
+- [ ] Evaluate deployment providers only after all local gates pass; require explicit approval before external action.
+
+## Exit audit
+
+- [ ] No open P0/P1 (external blockers documented with exact safe command).
+- [ ] Evidence score >= 92/100 and every category >= 80%.
+- [ ] Two consecutive full quality-gate runs pass with no code changes between them.
+- [ ] Golden predictions identical in evaluation and API service paths.
+- [ ] Container startup/readiness/inference pass.
+- [ ] Security/dependency scans have no unresolved high/critical issue or justified exception.
+- [ ] Independent adversarial re-audit finds no new P0/P1.

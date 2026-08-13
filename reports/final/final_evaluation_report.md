@@ -8,15 +8,15 @@
 | Champion model | `xgboost_baseline` |
 | Evaluated split | `test` |
 | Locked threshold | `0.53` |
-| Threshold source | Day 6 recall-target (validation-only selection) |
+| Threshold source | Day 6 validation — recall-target threshold (min_recall=0.80, highest precision) |
 
 ---
 
 ## Integrity Note — Threshold Selection
 
-The operating threshold was selected exclusively on the validation set during Day 6.  Test-set results were not used in any threshold or model decision.  This evaluation is therefore an honest, unbiased estimate of real-world performance.
+Historical observation: repository history records model and threshold selection on validation before this random held-out split was evaluated. The result has now been observed and must not be reused for tuning. Exact duplicate rows were reported in the source dataset, but cross-split overlap was not recorded, so this is not out-of-time or real-world evidence.
 
-This ensures the final test-set evaluation is a truthful, unbiased estimate of production performance.
+This preserves the recorded result as historical evidence; it is not a claim about deployment or future performance.
 
 ---
 
@@ -55,12 +55,12 @@ This ensures the final test-set evaluation is a truthful, unbiased estimate of p
 
 ### Interpretation
 
-- **Fraud caught (TP):** 62 — fraudulent transactions correctly blocked.
-- **Fraud missed (FN):** 12 — fraudulent transactions that slipped through.
-- **False alerts (FP):** 27 — legitimate transactions incorrectly flagged.
-- **True negatives (TN):** 42,621 — legitimate transactions correctly approved.
+- **True positives:** 62 — labelled fraud rows flagged at this threshold.
+- **False negatives:** 12 — labelled fraud rows not flagged.
+- **False positives:** 27 — labelled legitimate rows flagged.
+- **True negatives:** 42,621 — labelled legitimate rows not flagged.
 
-> **Business context:** In fraud detection, false negatives (missed fraud) typically carry higher cost than false positives (false alerts). The recall-target threshold (0.53) was chosen to catch as much fraud as possible while keeping false alerts at an acceptable level.
+> **Decision context:** The historical threshold was selected on validation for the point estimate recall constraint recorded in its source artifact. No fraud-loss, review-cost, recovery, or authorization policy was evaluated.
 
 ---
 
@@ -79,10 +79,8 @@ Under these conditions:
 
 | Stage | Result |
 |---|---|
-| Champion model | XGBoost (scale_pos_weight balanced) |
-| Validation PR-AUC | 0.8129 |
-| Validation ROC-AUC | 0.9851 |
-| Operating threshold | 0.53 (recall-target, Day 6 validation) |
+| Recorded model | `xgboost_baseline` |
+| Recorded threshold | 0.53 |
 | **Final test PR-AUC** | **0.8288** |
 | Final test Recall | 0.8378 |
 | Final test Precision | 0.6966 |

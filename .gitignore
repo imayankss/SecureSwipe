@@ -29,8 +29,14 @@ data/processed/*
 *.parquet
 *.joblib
 
+# Local Kaggle credentials (use Kaggle's user-level config or a secret store)
+kaggle.json
+.kaggle/
+
 # Generated pipeline artifacts
 artifacts/
+!src/artifacts/
+!src/artifacts/*.py
 
 # Models
 models/*.joblib

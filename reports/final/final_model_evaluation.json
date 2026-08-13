@@ -4,7 +4,7 @@
   "model_name": "xgboost_baseline",
   "split_name": "test",
   "threshold_source": "Day 6 validation \u2014 recall-target threshold (min_recall=0.80, highest precision)",
-  "threshold_selection_note": "The operating threshold was selected exclusively on the validation set during Day 6.  Test-set results were not used in any threshold or model decision.  This evaluation is therefore an honest, unbiased estimate of real-world performance.",
+  "threshold_selection_note": "Historical observation: repository history records model and threshold selection on validation before this random held-out split was evaluated. The result has now been observed and must not be reused for tuning. Exact duplicate rows were reported in the source dataset, but cross-split overlap was not recorded, so this is not out-of-time or real-world evidence.",
   "threshold": 0.53,
   "pr_auc": 0.8287848539773868,
   "roc_auc": 0.9613432016710013,

@@ -21,7 +21,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
-import joblib
 import numpy as np
 import pandas as pd
 
@@ -46,6 +45,7 @@ from src.evaluation.curves import (  # noqa: E402
 from src.evaluation.confusion_analysis import (  # noqa: E402
     plot_confusion_matrix,
 )
+from src.artifacts.bundle import load_verified_joblib  # noqa: E402
 
 DEFAULT_MODEL_PATH = Path("artifacts/models/xgboost_baseline.joblib")
 DEFAULT_PROCESSED_DIR = Path("data/processed")
@@ -72,7 +72,11 @@ def load_champion_model(model_path: Path) -> Any:
             f"Champion model not found at {model_path}. "
             "Please run Day 5 (scripts/run_day5_advanced_models.py) first."
         )
-    return joblib.load(model_path)
+    return load_verified_joblib(
+        model_path,
+        trusted_root=_REPO_ROOT / "artifacts",
+        required_attributes=("predict_proba",),
+    )
 
 
 def load_validation_data(processed_dir: Path) -> tuple[pd.DataFrame, pd.Series]:
