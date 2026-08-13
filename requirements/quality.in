@@ -6,3 +6,8 @@ ruff==0.12.11
 mypy==1.17.1
 pip-audit==2.9.0
 pip-licenses==5.0.0
+build==1.5.0
+pip-tools==7.5.2
+pip==25.3
+setuptools==84.0.0
+wheel==0.48.0

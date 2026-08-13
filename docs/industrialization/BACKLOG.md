@@ -57,11 +57,13 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Gate frontend build on export verification.
 - [ ] Add synthetic-only optional live API demo with static fallback, timeout/loading/error/empty states.
 - [ ] Add component, keyboard, accessibility, responsive, and browser-smoke tests.
-- [ ] Add Python lint/type/unit/integration/export-determinism gates.
-- [ ] Add frontend lint/type/test/build/data gates.
-- [ ] Add dependency, secret/code, bundle, container-build, and scan workflows with minimal permissions.
-- [ ] Add Dependabot for Python, npm, and Actions.
-- [ ] Add root LICENSE, CONTRIBUTING, SECURITY, and PR template.
+- [x] Add Python lint/type/unit/integration/export-determinism gates.
+- [x] Add frontend lint/type/test/build/data gates.
+- [~] Add dependency, secret/code, bundle, container-build, and scan workflows
+  with minimal permissions (definitions and local policy tests pass; first remote
+  execution and Docker-backed scan are externally blocked).
+- [x] Add Dependabot for Python, npm, and Actions.
+- [x] Add root LICENSE, CONTRIBUTING, SECURITY, and PR template.
 
 ## P2/P3
 
@@ -69,9 +71,10 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [ ] Add skip link/mobile navigation/progress/table/chart accessibility semantics.
 - [ ] Record a frontend performance budget from a clean measured build.
 - [x] Correct project author metadata.
-- [ ] Write architecture, ADRs, API guide, threat model, monitoring guide,
+- [ ] Write architecture, ADRs, API guide, monitoring guide,
   deployment/reproducibility/incident runbooks, limitations/non-goals,
   interview defense, and three-minute demo script.
+- [x] Write and locally verify an explicit threat model.
 - [ ] Evaluate deployment providers only after all local gates pass; require explicit approval before external action.
 
 ## Exit audit

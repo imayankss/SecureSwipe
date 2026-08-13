@@ -8,7 +8,7 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Current committed phase: `9f13f35` (export/audit batch pending commit)
+- Current committed phase: `f7585c9` (supply-chain batch pending commit)
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -62,10 +62,17 @@ not included in the service or required quality runtime.
 | executable project audit, generation then `--check` | PASS with explicit blocker | Nine commands passed twice; model bundle is `UNAVAILABLE`, overall report remains `INCOMPLETE` |
 | export/audit full Python regression | PASS | 267 tests, 19 upstream warnings, 6.34 s |
 | export-gated frontend test and production build | PASS | data check, ESLint, TypeScript, and static Next.js build |
+| hash-locked quality environment install | PASS | pip 25.3; `pip check` reports no broken requirements |
+| two-pass quality lock regeneration | PASS | identical SHA-256 `7baa2ea57dba3691da970e6d2efabb9f9db237f55de6bbe92670b1fff1bfde78` |
+| supply-chain policy/full Python regression | PASS | 274 tests, 19 upstream warnings |
+| CI-equivalent Ruff/focused mypy | PASS | Ruff clean; mypy clean on 14 critical paths |
+| API and npm dependency audits | PASS | zero known API vulnerabilities; npm found zero vulnerabilities |
+| frontend supply-chain regression | PASS | export check, ESLint, TypeScript, and static production build |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
-This is baseline evidence only; a dedicated secret scanner remains required.
+The pinned full-history TruffleHog workflow is defined but cannot be claimed as
+executed until this branch is pushed and GitHub Actions is authorized to run.
 
 ## Completed changes
 
@@ -141,6 +148,17 @@ This is baseline evidence only; a dedicated secret scanner remains required.
 - Replaced the file-existence project checklist: non-empty files are now only
   `PRESENT`; `PASS` requires an executed command; the model is `UNAVAILABLE`;
   the current overall audit is truthfully `INCOMPLETE`.
+- Added separate least-privilege GitHub workflows for Python/frontend quality,
+  multi-architecture container smoke/scan/SBOM, full-history secret scanning,
+  and CodeQL. Every external action is pinned to a reviewed 40-character commit.
+- Workflows never deploy, publish, push an image, release, or request content/OIDC
+  write permission; static policy tests enforce those boundaries.
+- Added weekly Dependabot coverage for pip, npm, and GitHub Actions.
+- Added the root MIT license, contributor/security policies, PR template, and an
+  OWASP-oriented threat model with explicit trust boundaries and residual risks.
+- Pinned the quality lock-generation toolchain (`pip==25.3`, pip-tools 7.5.2,
+  build/setuptools/wheel), proved two-pass lock determinism, and documented the
+  pip-tools/pip compatibility constraint.
 
 ## Current issues
 
@@ -159,30 +177,33 @@ new decision.
   vectors/artifacts; the recorded 0.0004 AP difference remains insufficient.
 - No original-data calibration result or domain-approved cost assumptions exist;
   the tested analysis engines do not retroactively justify threshold 0.53.
-- No reproducible training run manifest or authoritative typed training configuration.
+- No authoritative typed training configuration; legacy training commands do
+  not yet all emit the deterministic run manifest used by the new development runner.
 - Offline monitoring, measured SLO/load evidence, and broader operational runbooks remain unimplemented.
 - Historical test outputs are rerunnable/overwriteable and reports contain hardcoded decision metadata.
 - Frontend still lacks component/accessibility/browser tests and optional synthetic API mode.
-- No GitHub Actions, Dependabot, container scan, secret scan, or release-quality controls.
+- Workflow definitions have not run on GitHub because pushing is not authorized;
+  the local Docker daemon also prevents executing the container scan/SBOM job.
 - Current checkout cannot reproduce the original-data evaluation because the
   intentionally uncommitted CSV and fitted artifacts are unavailable.
 
 ### P2
 
 - Dead/duplicate placeholder modules and stale documents obscure canonical paths.
-- Missing root LICENSE, CONTRIBUTING, SECURITY, threat model, and broader runbooks.
+- Broader deployment/incident/monitoring/interview documentation remains incomplete.
 - Mobile navigation and several accessibility semantics need improvement.
 
 ## Next executable action
 
-Implement the next P1 batch: GitHub Actions with minimal permissions and pinned
-actions for Python/frontend/export/bundle/container gates; Dependabot for pip,
-npm, and Actions; secret scanning; root LICENSE, CONTRIBUTING, SECURITY, and PR
-template. Do not add deployment or auto-merge behavior.
+Implement the next P1 batch: a deterministic offline monitoring command with
+schema, missingness, feature/score drift, and optional delayed-label performance;
+generate a synthetic shifted demonstration. Add a bounded local load harness,
+measure host latency/error behavior with the synthetic bundle, and write alert,
+incident, rollback, and evidence-based SLO guidance.
 
-Acceptance: workflow syntax and local equivalents pass; no workflow can deploy
-or access write permissions on untrusted PRs; action revisions are immutable;
-dependency/secret/container findings fail appropriate gates.
+Acceptance: same-input reports are byte-identical; shifted synthetic data is
+detected without being labeled automatic model failure; invalid inputs fail
+closed; load output records p50/p95/p99 and error rate without invented targets.
 
 ## External blockers and user action
 

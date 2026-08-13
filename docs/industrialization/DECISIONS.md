@@ -158,3 +158,24 @@ Status: accepted
 Existing JSON keys remain for compatibility, but UI/report labels now state
 average precision because the implementation used `average_precision_score`.
 The exporter does not relabel it as trapezoidal area under the PR curve.
+
+## D-018 — CI verifies but never publishes
+
+Status: accepted
+
+Pull requests and main-branch updates run separate quality, security, and
+container evidence workflows. Their default token permission is read-only and
+all external actions use immutable revisions. The workflows do not deploy,
+publish packages/images, create releases, or auto-merge. Publication remains a
+separate owner-authorized action, and workflow definitions are not called
+passing evidence until GitHub actually executes them.
+
+## D-019 — Pin the lock generator, including pip
+
+Status: accepted
+
+The quality input includes pip 25.3 and pip-tools 7.5.2 because the latter uses
+an internal API removed by pip 26. Lock generation always runs from the
+`requirements/` directory with the command recorded in the lock header. Two
+consecutive generations must have the same digest; dependency update PRs must
+review both top-level intent and the resolved hash diff.

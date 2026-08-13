@@ -1,0 +1,81 @@
+"""Static policy tests for CI permissions, action pinning, and project governance."""
+
+from __future__ import annotations
+
+import re
+from pathlib import Path
+
+import yaml
+
+ROOT = Path(__file__).resolve().parents[1]
+WORKFLOWS = sorted((ROOT / ".github" / "workflows").glob("*.yml"))
+
+
+def test_workflows_are_valid_yaml_and_default_to_read_only() -> None:
+    assert {path.name for path in WORKFLOWS} == {"container.yml", "quality.yml", "security.yml"}
+    for path in WORKFLOWS:
+        payload = yaml.safe_load(path.read_text(encoding="utf-8"))
+        assert isinstance(payload, dict)
+        assert payload["permissions"] == {"contents": "read"}
+
+
+def test_every_third_party_action_is_pinned_to_full_commit() -> None:
+    action_pattern = re.compile(r"^\s*uses:\s*([^\s#]+)", re.MULTILINE)
+    pinned_pattern = re.compile(r"^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)?@[0-9a-f]{40}$")
+    found: list[str] = []
+    for path in WORKFLOWS:
+        found.extend(action_pattern.findall(path.read_text(encoding="utf-8")))
+    assert found
+    assert all(pinned_pattern.fullmatch(action) for action in found), found
+
+
+def test_pull_requests_cannot_deploy_or_gain_broad_write_permissions() -> None:
+    combined = "\n".join(path.read_text(encoding="utf-8") for path in WORKFLOWS)
+    assert "pull_request_target" not in combined
+    assert "contents: write" not in combined
+    assert "id-token: write" not in combined
+    assert "push: true" not in combined
+    assert "npm publish" not in combined
+    assert "docker push" not in combined
+    assert "gh release" not in combined
+
+
+def test_security_write_permission_is_isolated_to_codeql_job() -> None:
+    security = yaml.safe_load((ROOT / ".github/workflows/security.yml").read_text(encoding="utf-8"))
+    assert security["jobs"]["secrets"].get("permissions") is None
+    assert security["jobs"]["codeql"]["permissions"] == {
+        "actions": "read",
+        "contents": "read",
+        "packages": "read",
+        "security-events": "write",
+    }
+
+
+def test_container_workflow_builds_without_push_and_scans_each_architecture() -> None:
+    text = (ROOT / ".github/workflows/container.yml").read_text(encoding="utf-8")
+    assert "linux/amd64" in text
+    assert "linux/arm64" in text
+    assert "push: false" in text
+    assert "severity: HIGH,CRITICAL" in text
+    assert "exit-code: \"1\"" in text
+    assert "format: spdx-json" in text
+    assert "synthetic-smoke-1" in text
+
+
+def test_dependabot_covers_python_npm_and_actions() -> None:
+    payload = yaml.safe_load((ROOT / ".github/dependabot.yml").read_text(encoding="utf-8"))
+    assert {item["package-ecosystem"] for item in payload["updates"]} == {
+        "pip",
+        "npm",
+        "github-actions",
+    }
+
+
+def test_license_and_security_governance_files_are_present() -> None:
+    license_text = (ROOT / "LICENSE").read_text(encoding="utf-8")
+    assert license_text.startswith("MIT License")
+    assert "Mayank Suryavanshi" in license_text
+    assert (ROOT / "CONTRIBUTING.md").stat().st_size > 0
+    assert (ROOT / "SECURITY.md").stat().st_size > 0
+    assert (ROOT / "docs/THREAT_MODEL.md").stat().st_size > 0
+    assert (ROOT / ".github/pull_request_template.md").stat().st_size > 0

@@ -6,14 +6,14 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | Category | Available | Initial | Current | Evidence |
 |---|---:|---:|---:|---|
 | ML correctness and scientific validity | 20 | 5 | 14 | Strict contracts/isolation, historical quarantine, forward folds, Wilson/paired bootstrap uncertainty, simplicity rule, calibration diagnostics, constrained metrics, and explicit cost engine are tested; original OOT/model comparison/calibration and SHAP-unit evidence remain blocked/open. |
-| Reproducibility and data lineage | 15 | 2 | 12 | Hash-locked environments, fingerprints, bundle provenance, clean wheel, deterministic development manifests, full dashboard/figure digest, and side-effect-free export verification exist; authoritative config and legacy training manifests remain. |
-| Architecture and maintainability | 15 | 4 | 12 | Offline/static and verified serving paths, mounted bundle image, and executable current audit are separated with explicit status semantics; run configuration and duplicate legacy modules remain. |
-| Testing and quality gates | 15 | 6 | 14 | 267 Python tests, lint/types, scientific/API/container/tamper/determinism tests, executable audit, package proof, and frontend gates pass; daemon and real frontend behavior remain incomplete. |
+| Reproducibility and data lineage | 15 | 2 | 13 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, deterministic manifests/locks, full dashboard/figure digest, and read-only export verification exist; authoritative config and legacy training manifests remain. |
+| Architecture and maintainability | 15 | 4 | 13 | Offline/static and verified serving paths, mounted bundle image, executable current audit, workflow separation, and governance boundaries are explicit; run configuration and duplicate legacy modules remain. |
+| Testing and quality gates | 15 | 6 | 15 | 274 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain tests, package proof, and frontend gates pass; Docker execution and behavioral frontend coverage remain explicit blockers rather than passing evidence. |
 | API/container reliability | 10 | 0 | 6 | Versioned API behavior, readiness, concurrency serialization, limits, and OpenAPI pass synthetic tests; container remains unverified and requires Docker Desktop. |
-| Security and privacy | 10 | 3 | 8 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, and a clean runtime vulnerability audit pass; automated scans/threat model remain. |
+| Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean runtime/npm audits, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
 | Observability and operations | 10 | 0 | 3 | Bounded request/latency/score metrics and request-ID JSON logs are tested; drift monitoring, measured load/SLOs, alerts, and runbooks remain. |
 | Documentation and developer experience | 5 | 3 | 5 | Persistent controls, API/container/scientific protocols, data/model cards, and limitations are explicit; broader contributor/security/incident policy remains but the category's core evidence is complete. |
-| **Total** | **100** | **23** | **74** | **Export/current-audit integrity is verified; supply-chain, monitoring, frontend behavior, and external evidence remain.** |
+| **Total** | **100** | **23** | **79** | **Supply-chain controls pass local policy/equivalent gates; monitoring, frontend behavior, authoritative configuration, and external evidence remain.** |
 
 ## Evidence ledger
 
@@ -41,5 +41,11 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 - Export/audit batch: read-only hash snapshot passed; tamper cases fail; nine
   project gates executed twice while the absent model remained explicitly
   `UNAVAILABLE` and the overall current audit remained `INCOMPLETE`.
+- Supply-chain batch: 274 tests, Ruff, focused mypy, frontend production build,
+  npm audit, and API pip-audit pass; the quality lock is byte-identical across
+  two regeneration passes. Three workflow files parse as YAML and seven policy
+  tests enforce immutable action refs, least privilege, no publication/deploy,
+  multi-architecture scan/SBOM intent, and governance inventory. These workflow
+  definitions are not counted as remote execution evidence.
 
 The score will be updated only after each batch's acceptance commands pass.
