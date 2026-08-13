@@ -1,6 +1,6 @@
 # SecureSwipe industrialization state
 
-Last updated: 2026-08-13 (Asia/Kolkata)
+Last updated: 2026-08-14 (Asia/Kolkata)
 
 ## Repository identity
 
@@ -8,8 +8,8 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Current committed phase: `2fba975fc1a08b5f1b7c1f26a49d4b45e0cbf89e`
-  (pip-free API runtime hardening)
+- Current committed phase: `69889e47a338e3c42db686cc0078c8142fe80801`
+  (taint-aware scientific lineage and development-to-bundle workflow)
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -97,6 +97,7 @@ not included in the service or required quality runtime.
 | documentation contract | PASS | 23 Markdown files checked for valid local links; architecture, limitations, deployment, interview, and three-minute demo guides added |
 | adversarial wheel inspection | PASS after defect correction | first direct wheel build reused ignored stale modules and was rejected as evidence; sdist-boundary rebuild has exactly the 49 current source modules (54 archive members), 3 new inventory tests pass, and the 16-command audit passes |
 | pip-free API runtime proof | PASS locally, image execution blocked | clean API closure + wheel installed, pip removed, and API/bundle imports passed; Dockerfile contract enforces removal before non-root switch |
+| taint-aware scientific workflow regression | PASS | 339 tests, Ruff, 28-file mypy, historical lock, and web export pass; two synthetic development runs produce byte-identical real bundle/evidence and exact service parity |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
