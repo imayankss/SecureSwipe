@@ -8,12 +8,12 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | ML correctness and scientific validity | 20 | 5 | 15 | Strict contracts/isolation, historical quarantine, forward folds, uncertainty, simplicity rule, calibration, constrained/cost metrics, and raw-margin SHAP additivity/cohort evidence are tested; original OOT/model comparison/calibration and historical SHAP execution remain blocked. |
 | Reproducibility and data lineage | 15 | 2 | 15 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, atomic timestamp-free manifests for development and every legacy stage, typed configuration, historical lock, and read-only export verification are tested. |
 | Architecture and maintainability | 15 | 4 | 15 | Offline/static, blocked-development, reference-stage, and verified serving paths have explicit boundaries; direct partial legacy CLIs fail closed; mounted bundles, current audit, workflow separation, typed configuration, and governance are tested. |
-| Testing and quality gates | 15 | 6 | 15 | 295 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain tests, package proof, and frontend gates pass; Docker execution and behavioral frontend coverage remain explicit blockers rather than passing evidence. |
+| Testing and quality gates | 15 | 6 | 15 | 320 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain tests, package proof, four component tests, and two production Chromium keyboard/mobile/WCAG/static-boundary tests pass; Docker execution remains explicitly blocked. |
 | API/container reliability | 10 | 0 | 8 | Versioned API, readiness, limits, OpenAPI, exact parity, threadpool offload, runtime log evidence, health responsiveness, and 500-request loopback behavior pass; container remains unverified. |
 | Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean runtime/npm audits, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
 | Observability and operations | 10 | 0 | 8 | Bounded metrics, runtime JSON/redaction evidence, deterministic schema/feature/score/delayed-label monitoring, shifted demo, repeated M2 load evidence, local objectives, and incident/rollback guides pass; container/provider operations remain unmeasured. |
 | Documentation and developer experience | 5 | 3 | 5 | Persistent controls, API/container/scientific/monitoring protocols, data/model cards, security policy, threat model, and local incident guidance are explicit; broader architecture/reproducibility/interview material remains. |
-| **Total** | **100** | **23** | **90** | **Local scientific protocols, reproducibility, architecture, API, monitoring, and static frontend gates are evidence-backed; behavioral frontend, container, remote CI, and original-data execution remain.** |
+| **Total** | **100** | **23** | **90** | **Local scientific protocols, reproducibility, architecture, API, monitoring, and behavioral/static frontend gates are evidence-backed; container, remote CI, and original-data execution remain.** |
 
 ## Evidence ledger
 
@@ -74,5 +74,10 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   manifest failures leave no published directory; existing empty targets are
   preserved. The executable audit's 12 commands pass twice while the missing
   serving model remains truthfully `UNAVAILABLE`/`INCOMPLETE`.
+- Frontend behavior batch: four Vitest/Testing Library component tests and two
+  production Chromium tests pass on Node 22.13.1. The browser verifies skip-link
+  focus, keyboard score changes, responsive section navigation, named status/
+  table/progress/chart semantics, a clean WCAG A/AA Axe scan, and zero requests
+  to `/v1/predict`; full npm audit reports zero vulnerabilities.
 
 The score will be updated only after each batch's acceptance commands pass.

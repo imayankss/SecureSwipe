@@ -8,7 +8,8 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Current committed phase: `94e9fa6` (atomic reference-evidence batch pending commit)
+- Current committed phase: `9d7e2153d67cfc3b037e1355d874a4e01ded4a1b`
+  (production-browser accessibility batch)
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -89,6 +90,7 @@ not included in the service or required quality runtime.
 | atomic reference-evidence full regression | PASS | 320 tests, 22 upstream warnings; Ruff and both focused mypy modes pass |
 | reference-stage determinism/failure injection | PASS | actual synthetic Day 2 outputs/manifests match byte-for-byte; injected stage/manifest failures leave no target |
 | executable audit after reference wrapper | PASS with explicit blocker | 12 command gates pass twice; serving bundle remains `UNAVAILABLE`, overall `INCOMPLETE` |
+| frontend behavioral/accessibility batch | PASS | 4 Vitest component tests; 2 production Chromium tests; keyboard/mobile/static-boundary contracts and WCAG A/AA Axe scan pass; npm audit has zero findings |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -225,6 +227,13 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
   all six direct unmanifested CLIs now exit 2 with the canonical command.
 - Removed wall-clock timestamps from newly generated legacy reports and proved
   an actual synthetic Day 2 stage is byte-identical across separate destinations.
+- Added component contracts for status announcements, keyboard-adjustable scores,
+  responsive navigation, table/progress semantics, and static deployment mode.
+- Added a production Chromium gate for skip-link focus, keyboard/mobile navigation,
+  WCAG A/AA Axe scanning, and absence of `/v1/predict` traffic.
+- Corrected browser-measured contrast defects, added the visible skip link and
+  mobile section navigation, labelled sections/charts/status, and kept the
+  dashboard static while the container gate remains blocked.
 
 ## Current issues
 
@@ -245,7 +254,8 @@ new decision.
   the tested analysis engines do not retroactively justify threshold 0.53.
 - Applying the verified SHAP protocol to the historical ranking is blocked by
   the absent original model and aligned sample row identities.
-- Frontend still lacks component/accessibility/browser tests and optional synthetic API mode.
+- Optional synthetic live-demo mode remains deliberately disabled until the API
+  image passes startup, readiness, inference, and vulnerability-scan gates.
 - Workflow definitions have not run on GitHub because pushing is not authorized;
   the local Docker daemon also prevents executing the container scan/SBOM job.
 - Current checkout cannot reproduce the original-data evaluation because the
@@ -255,18 +265,17 @@ new decision.
 
 - Dead/duplicate placeholder modules and stale documents obscure canonical paths.
 - Broader architecture/deployment/reproducibility/interview documentation remains incomplete.
-- Mobile navigation and several accessibility semantics need improvement.
 
 ## Next executable action
 
-Implement the next locally actionable P1 batch: frontend component/accessibility
-tests plus a synthetic-only optional API demo with loading, timeout, error, and
-static fallback states. No secret may use `NEXT_PUBLIC_*`, and static mode remains
-the default.
+Complete the locally actionable documentation batch: architecture/data-flow,
+reproducibility, limitations/non-goals, interview-defense, and three-minute demo
+guides. Verify every command and public claim against the current checkout, then
+remove or explicitly quarantine stale/dead documents after call-graph checks.
 
-Acceptance: component tests cover keyboard/a11y and every API state; build-time
-configuration cannot contain secrets; unavailable API preserves the reviewed
-static dashboard; production build and browser smoke pass on Node 22.13.1.
+Acceptance: docs identify historical/development/backtest namespaces, artifact
+and trust boundaries, exact clean-clone commands, Docker/data/authorization
+blockers, and no unsupported deployment/scientific claim.
 
 ## External blockers and user action
 
