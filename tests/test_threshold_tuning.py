@@ -6,6 +6,7 @@ test-set data.
 """
 
 import json
+import math
 import sys
 from pathlib import Path
 
@@ -21,6 +22,7 @@ from src.evaluation.threshold_tuning import (  # noqa: E402
     calculate_threshold_metrics,
     save_threshold_outputs,
     select_best_f1_threshold,
+    select_false_positive_rate_target_threshold,
     select_recall_target_threshold,
     validate_binary_inputs,
 )
@@ -81,6 +83,12 @@ def test_validate_binary_inputs_rejects_probability_above_one() -> None:
         validate_binary_inputs(y_true, y_proba)
 
 
+@pytest.mark.parametrize("invalid", [math.nan, math.inf, -math.inf])
+def test_validate_binary_inputs_rejects_non_finite_scores(invalid: float) -> None:
+    with pytest.raises(ValueError, match="NaN or infinity"):
+        validate_binary_inputs([0, 1], [0.1, invalid])
+
+
 # ---------------------------------------------------------------------------
 # calculate_threshold_metrics
 # ---------------------------------------------------------------------------
@@ -121,6 +129,7 @@ def test_calculate_threshold_metrics_precision_recall_f1_are_correct() -> None:
     assert metrics["precision"] == pytest.approx(0.5)
     assert metrics["recall"] == pytest.approx(0.5)
     assert metrics["f1"] == pytest.approx(0.5)
+    assert metrics["false_positive_rate"] == pytest.approx(0.5)
     assert metrics["threshold"] == pytest.approx(0.5)
 
 
@@ -249,6 +258,31 @@ def test_select_recall_target_threshold_raises_error_when_unmet() -> None:
 
     with pytest.raises(ValueError):
         select_recall_target_threshold(threshold_table, min_recall=0.80)
+
+
+def test_select_fpr_target_returns_highest_recall_under_cap() -> None:
+    threshold_table = pd.DataFrame(
+        {
+            "threshold": [0.2, 0.4, 0.6],
+            "precision": [0.2, 0.6, 0.9],
+            "recall": [1.0, 0.8, 0.5],
+            "f1": [0.3, 0.7, 0.6],
+            "false_positive_rate": [0.2, 0.01, 0.001],
+        }
+    )
+    selected = select_false_positive_rate_target_threshold(
+        threshold_table, max_false_positive_rate=0.02
+    )
+    assert selected["threshold"] == pytest.approx(0.4)
+    assert selected["recall"] == pytest.approx(0.8)
+
+
+def test_threshold_selection_rejects_non_finite_metrics() -> None:
+    threshold_table = pd.DataFrame(
+        {"threshold": [0.5], "precision": [0.5], "recall": [math.nan], "f1": [0.5]}
+    )
+    with pytest.raises(ValueError, match="finite"):
+        select_best_f1_threshold(threshold_table)
 
 
 # ---------------------------------------------------------------------------

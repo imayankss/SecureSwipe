@@ -113,3 +113,31 @@ dependencies, and user privileges are testable without distributing a private
 dataset or artifact in the build context. A reviewed bundle is mounted read-only
 and selected by a server-side manifest path. Replacement or rollback starts a
 new container with another versioned bundle; bundles are never edited in place.
+
+## D-013 — Calibration comparison requires disjoint row identity
+
+Status: accepted
+
+The calibrator-training and calibration-evaluation partitions supply globally
+meaningful row IDs. The comparison rejects duplicates within either side and
+any cross-partition intersection before fitting. Platt/isotonic are compared
+against identity using Brier score and calibration error; identity wins ties and
+an explicitly recorded improvement margin controls whether calibration is used.
+
+## D-014 — Cost outputs are sensitivity evidence, not business policy
+
+Status: accepted
+
+Every scenario supplies non-negative false-positive, false-negative, and review
+cost plus a recovery rate. The report exposes component totals and review volume.
+Example scenarios are synthetic unitless ratios and cannot justify a threshold.
+A domain owner must provide reviewed assumptions before cost-based selection.
+
+## D-015 — Run manifests omit wall-clock timestamps
+
+Status: accepted
+
+Evidence manifests record code commit/dirty-diff digest, input/output hashes,
+parameters, seeds, runtime versions, and evaluation namespace. Excluding the wall
+clock makes identical inputs/code produce identical manifests; external job or
+artifact systems may record creation time separately without changing evidence.

@@ -1,11 +1,11 @@
 """Validation-only threshold tuning utilities for fraud detection.
 
-This module evaluates a fraud model's predicted probabilities across a
+This module evaluates a fraud model's bounded decision scores across a
 range of classification thresholds and selects business-relevant
 operating points (best F1, recall-target, precision-target).
 
 This module does not train models, plot anything, or use test data.
-Only validation labels and validation probabilities should be passed in.
+Only development-validation labels and bounded scores should be passed in.
 """
 
 from __future__ import annotations
@@ -36,7 +36,11 @@ def validate_binary_inputs(y_true: ArrayLike, y_proba: ArrayLike) -> None:
             outside the [0, 1] range.
     """
     y_true_arr = np.asarray(y_true)
-    y_proba_arr = np.asarray(y_proba)
+    try:
+        y_true_numeric = y_true_arr.astype(float)
+        y_proba_arr = np.asarray(y_proba, dtype=float)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("y_true and y_proba must contain numeric values.") from exc
 
     if y_true_arr.size == 0 or y_proba_arr.size == 0:
         raise ValueError(
@@ -51,15 +55,18 @@ def validate_binary_inputs(y_true: ArrayLike, y_proba: ArrayLike) -> None:
             f"y_proba length={y_proba_arr.shape[0]}."
         )
 
-    unique_labels = set(np.unique(y_true_arr).tolist())
+    if not np.isfinite(y_true_numeric).all():
+        raise ValueError("y_true must not contain NaN or infinity.")
+
+    unique_labels = set(np.unique(y_true_numeric).tolist())
     if not unique_labels.issubset({0, 1}):
         raise ValueError(
             "y_true must contain only 0 and 1 (legitimate=0, fraud=1). "
             f"Found unexpected values: {sorted(unique_labels - {0, 1})}."
         )
 
-    if np.isnan(y_proba_arr.astype(float)).any():
-        raise ValueError("y_proba must not contain NaN values.")
+    if not np.isfinite(y_proba_arr).all():
+        raise ValueError("y_proba must not contain NaN or infinity.")
 
     if (y_proba_arr < 0).any() or (y_proba_arr > 1).any():
         raise ValueError(
@@ -77,7 +84,7 @@ def _validate_threshold(threshold: float) -> None:
     Raises:
         ValueError: If threshold is not between 0 and 1 inclusive.
     """
-    if not (0.0 <= float(threshold) <= 1.0):
+    if not np.isfinite(float(threshold)) or not (0.0 <= float(threshold) <= 1.0):
         raise ValueError(f"threshold must be between 0 and 1. Got {threshold}.")
 
 
@@ -118,6 +125,7 @@ def calculate_threshold_metrics(
         "precision": float(precision),
         "recall": float(recall),
         "f1": float(f1),
+        "false_positive_rate": float(fp / (fp + tn)) if fp + tn else 0.0,
         "tp": int(tp),
         "fp": int(fp),
         "fn": int(fn),
@@ -182,6 +190,14 @@ def _validate_threshold_table(threshold_table: pd.DataFrame) -> None:
     missing = required_columns - set(threshold_table.columns)
     if missing:
         raise ValueError(f"threshold_table is missing required columns: {sorted(missing)}.")
+    try:
+        values = threshold_table[list(required_columns)].to_numpy(dtype=float)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("threshold_table metrics must be numeric.") from exc
+    if not np.isfinite(values).all() or np.logical_or(values < 0.0, values > 1.0).any():
+        raise ValueError("threshold_table metrics must be finite and in [0, 1].")
+    if threshold_table["threshold"].duplicated().any():
+        raise ValueError("threshold_table thresholds must be unique.")
 
 
 def select_best_f1_threshold(threshold_table: pd.DataFrame) -> Dict[str, Any]:
@@ -222,6 +238,8 @@ def select_recall_target_threshold(
         ValueError: If no threshold achieves the requested minimum recall.
     """
     _validate_threshold_table(threshold_table)
+    if not np.isfinite(min_recall) or not 0.0 <= min_recall <= 1.0:
+        raise ValueError("min_recall must be finite and in [0, 1].")
 
     eligible = threshold_table[threshold_table["recall"] >= min_recall]
     if eligible.empty:
@@ -255,6 +273,8 @@ def select_precision_target_threshold(
         ValueError: If no threshold achieves the requested minimum precision.
     """
     _validate_threshold_table(threshold_table)
+    if not np.isfinite(min_precision) or not 0.0 <= min_precision <= 1.0:
+        raise ValueError("min_precision must be finite and in [0, 1].")
 
     eligible = threshold_table[threshold_table["precision"] >= min_precision]
     if eligible.empty:
@@ -267,6 +287,31 @@ def select_precision_target_threshold(
     candidates = eligible[eligible["recall"] == max_recall]
     best_row = candidates.sort_values("threshold").iloc[0]
     return best_row.to_dict()
+
+
+def select_false_positive_rate_target_threshold(
+    threshold_table: pd.DataFrame,
+    max_false_positive_rate: float,
+) -> Dict[str, Any]:
+    """Select the highest-recall threshold satisfying an explicit FPR cap."""
+    _validate_threshold_table(threshold_table)
+    if not np.isfinite(max_false_positive_rate) or not 0.0 <= max_false_positive_rate <= 1.0:
+        raise ValueError("max_false_positive_rate must be finite and in [0, 1].")
+    if "false_positive_rate" not in threshold_table:
+        raise ValueError("threshold_table is missing required column: false_positive_rate.")
+
+    eligible = threshold_table[threshold_table["false_positive_rate"] <= max_false_positive_rate]
+    if eligible.empty:
+        raise ValueError(f"No threshold achieves false_positive_rate <= {max_false_positive_rate}.")
+    max_recall = eligible["recall"].max()
+    candidates = eligible[eligible["recall"] == max_recall]
+    # When recall ties, minimize false positives and then choose the largest
+    # threshold so the policy is deterministic and operationally conservative.
+    return (
+        candidates.sort_values(["false_positive_rate", "threshold"], ascending=[True, False])
+        .iloc[0]
+        .to_dict()
+    )
 
 
 def _to_native_type(value: Any) -> Any:

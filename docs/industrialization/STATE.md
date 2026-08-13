@@ -8,7 +8,7 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Current committed phase: `92b31fa534c21a5ec45136aa6c947502913ad1a0`
+- Current committed phase: `518ad19` (full SHA recorded by Git; scientific batch pending commit)
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -56,6 +56,8 @@ not included in the service or required quality runtime.
 | synthetic container fixture + compile/lint/type/full test gate | PASS | deterministic fixture digest `22855031e66951f84cbbfe211c6563519a8481cc007643992ec13e9951abc438`; 211 tests passed, 19 upstream warnings, 4.34 s |
 | `docker info --format '{{json .ServerVersion}}'` | BLOCKED | Docker daemon socket unavailable after the container implementation |
 | `docker buildx imagetools inspect python:3.12.10-slim-bookworm` | PASS | Multi-architecture index pinned to `sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db` |
+| scientific lint/type/full Python gate | PASS | Ruff; mypy on 14 critical modules; 251 tests, 19 upstream warnings, 6.82 s |
+| frontend data/lint/type/build after scientific batch | PASS | Static build succeeded; no public metrics changed |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -107,6 +109,22 @@ This is baseline evidence only; a dedicated secret scanner remains required.
 - Added exact linux/arm64 build, liveness/readiness/inference, Docker Scout,
   SPDX SBOM, artifact replacement, and rollback commands. Docker execution
   remains blocked rather than claimed because the local daemon is stopped.
+- Added Wilson intervals for fixed-threshold precision/recall/FPR and paired,
+  class-stratified AP bootstrap intervals for model differences.
+- Added a predeclared simplicity-margin selection policy using unrounded metrics.
+- Added Brier, reliability, quantile-bin ECE/MCE, Platt/isotonic fitting, and
+  comparison that requires unique, disjoint calibration/evaluation row IDs.
+- Added FPR-constrained threshold selection and configurable, component-level
+  cost sensitivity across explicit FP/FN/review/recovery assumptions.
+- Added expanding forward development folds that keep equal times together and
+  refit the preprocessor/model inside every fold; synthetic determinism passes.
+- Added a development-only analysis command that rejects historical/test
+  namespaces and produces deterministic hashed calibration/threshold/cost/
+  uncertainty artifacts plus a code/runtime/input/output run manifest.
+- Added scientific protocol, data card, and model card with fairness, SHAP,
+  historical-test, score-semantics, and non-goal limitations.
+- Full Python suite after the scientific batch: 251 passed in 6.82 s; frontend
+  data, lint, type, and build gates also passed with no public metric changes.
 
 ## Current issues
 
@@ -119,10 +137,12 @@ new decision.
 
 ### P1
 
-- No out-of-time/blocked evaluation or confidence intervals.
-- Single-split model selection does not establish XGBoost superiority over the
-  simpler Random Forest (validation AP difference is approximately 0.0004).
-- No calibration evaluation and no implemented cost model.
+- Original-data blocked evaluation and random-vs-forward comparison are not
+  executable until the CSV is restored; the tested protocol is now implemented.
+- Original Random Forest/XGBoost paired comparison is blocked by absent score
+  vectors/artifacts; the recorded 0.0004 AP difference remains insufficient.
+- No original-data calibration result or domain-approved cost assumptions exist;
+  the tested analysis engines do not retroactively justify threshold 0.53.
 - No reproducible training run manifest or authoritative typed training configuration.
 - Offline monitoring, measured SLO/load evidence, and broader operational runbooks remain unimplemented.
 - Historical test outputs are rerunnable/overwriteable and reports contain hardcoded decision metadata.
@@ -140,14 +160,14 @@ new decision.
 
 ## Next executable action
 
-Implement the next P1 batch: statistically valid development-only evaluation
-utilities for confidence intervals, calibration/reliability diagnostics,
-constrained metrics, and configurable cost scenarios. Add blocked time splits
-and tests using deterministic synthetic data without consulting the historical test.
+Implement the next P1 batch: make dashboard export verification strictly
+side-effect-free, include every public figure in the digest, cross-check
+threshold/confusion/metric invariants, add deterministic tamper tests, and make
+the project audit execute real gates instead of treating file existence as PASS.
 
-Acceptance: edge/property tests reject non-finite and degenerate inputs;
-synthetic blocked evaluation is deterministic; calibration is fitted only on
-development folds; threshold/cost outputs derive entirely from explicit inputs.
+Acceptance: `--check` cannot modify any byte, stale/tampered JSON or figure
+fails nonzero, alternate synthetic thresholds cannot inherit 0.53 constants,
+and an absent/corrupt model is never reported as a current verified artifact.
 
 ## External blockers and user action
 

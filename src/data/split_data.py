@@ -141,7 +141,7 @@ def validate_split_inputs(
     if not np.isfinite(numeric_values).all():
         raise ValueError("Split inputs contain non-finite values.")
 
-    duplicate_count = int(df.duplicated(subset=expected_columns, keep=False).sum())
+    duplicate_count = int(df.duplicated(subset=list(feature_cols), keep=False).sum())
     if duplicate_count:
         raise ValueError(
             "Split inputs contain exact duplicate rows; resolve duplicates "
@@ -150,14 +150,11 @@ def validate_split_inputs(
 
 
 def fingerprint_rows(X: pd.DataFrame, y: Optional[pd.Series] = None) -> pd.Series:
-    """Return stable SHA-256 row identifiers without exposing transaction values."""
+    """Return feature-only SHA-256 row IDs without exposing transaction values."""
     if y is not None:
         if len(X) != len(y):
             raise ValueError("Cannot fingerprint rows with mismatched X/y lengths.")
-        frame = X.copy()
-        frame[TARGET_COLUMN] = y.to_numpy()
-    else:
-        frame = X
+    frame = X
 
     def _digest(raw_hash: int) -> str:
         return hashlib.sha256(str(int(raw_hash)).encode("ascii")).hexdigest()
@@ -169,7 +166,7 @@ def fingerprint_rows(X: pd.DataFrame, y: Optional[pd.Series] = None) -> pd.Serie
 def assert_disjoint_split_rows(
     splits: dict[str, Union[pd.DataFrame, pd.Series]],
 ) -> dict[str, str]:
-    """Fail if any exact feature+target row appears in more than one split."""
+    """Fail if any identical transaction feature row appears in multiple splits."""
     row_hashes = {
         "train": set(fingerprint_rows(splits["X_train"], splits["y_train"])),
         "validation": set(fingerprint_rows(splits["X_val"], splits["y_val"])),

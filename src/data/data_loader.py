@@ -30,7 +30,7 @@ def validate_dataset_schema(
             the required schema are present.
         strict_order: If True (the safe default), required columns must use
             the exact canonical order.
-        reject_duplicate_rows: Reject exact duplicate transactions before any
+        reject_duplicate_rows: Reject duplicate transaction feature vectors before any
             split so identical rows cannot cross evaluation boundaries.
 
     Raises:
@@ -113,10 +113,11 @@ def validate_dataset_schema(
         raise ValueError("Dataset contains negative Amount values.")
 
     if reject_duplicate_rows:
-        duplicate_count = int(df.duplicated(subset=required, keep=False).sum())
+        transaction_features = [column for column in required if column != "Class"]
+        duplicate_count = int(df.duplicated(subset=transaction_features, keep=False).sum())
         if duplicate_count:
             raise ValueError(
-                "Dataset contains exact duplicate rows. Remove or explicitly "
+                "Dataset contains duplicate transaction feature rows. Remove or explicitly "
                 f"resolve {duplicate_count} duplicated row occurrences before splitting."
             )
 

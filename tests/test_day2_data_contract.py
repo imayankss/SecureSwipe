@@ -144,6 +144,18 @@ def test_validate_dataset_schema_rejects_exact_duplicate_rows(
         validate_dataset_schema(duplicated)
 
 
+def test_validate_dataset_schema_rejects_same_features_with_conflicting_label(
+    synthetic_credit_card_df: pd.DataFrame,
+) -> None:
+    duplicated = pd.concat(
+        [synthetic_credit_card_df, synthetic_credit_card_df.iloc[[0]]],
+        ignore_index=True,
+    )
+    duplicated.loc[len(duplicated) - 1, "Class"] = 1
+    with pytest.raises(ValueError, match="duplicate"):
+        validate_dataset_schema(duplicated)
+
+
 def test_validate_dataset_schema_rejects_wrong_order(
     synthetic_credit_card_df: pd.DataFrame,
 ) -> None:

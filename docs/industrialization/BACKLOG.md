@@ -14,21 +14,21 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 ## P1 — scientific validity
 
 - [B] Measure duplicate overlap in the original historical split; requires the local Kaggle CSV.
-- [B] Add deterministic blocked/out-of-time development evaluation and compare it with random development splits.
-- [B] Add paired uncertainty analysis and a simplicity/tie rule for Random Forest versus XGBoost.
-- [ ] Add bootstrap/Wilson confidence intervals for core classification metrics.
-- [ ] Implement Brier score, reliability data, ECE, and leakage-safe Platt/isotonic comparison.
-- [ ] Implement configurable FP/FN/review/recovery cost scenarios and threshold sensitivity.
-- [ ] Add recall at precision/FPR constraints and name average precision accurately.
+- [B] Execute deterministic blocked/out-of-time development evaluation and compare it with random development splits; synthetic-tested forward protocol is implemented, original CSV is absent.
+- [B] Execute paired uncertainty analysis for Random Forest versus XGBoost; bootstrap and simplicity/tie policy are implemented, paired original scores are absent.
+- [x] Add bootstrap/Wilson confidence intervals for core classification metrics.
+- [x] Implement Brier score, reliability data, ECE, and leakage-safe Platt/isotonic comparison.
+- [x] Implement configurable FP/FN/review/recovery cost scenarios and threshold sensitivity.
+- [x] Add recall at precision/FPR constraints and name average precision accurately.
 - [ ] Verify SHAP output units/additivity and report sample cohort composition.
-- [ ] Write data card, model card, and protected-group fairness limitation.
+- [x] Write data card, model card, and protected-group fairness limitation.
 
 ## P1 — artifacts and reproducibility
 
 - [ ] Consolidate typed configuration and deterministic seeds.
 - [x] Add versioned `ModelBundle` with preprocessor, model, optional calibrator,
   threshold, ordered schema, runtime versions, data fingerprint, version, and checksums.
-- [ ] Add deterministic run manifest including code SHA and input/artifact hashes.
+- [~] Add deterministic run manifests including code SHA and input/artifact hashes (development analysis complete; legacy training/export commands pending).
 - [x] Add golden evaluation/service prediction parity tests.
 - [x] Make service startup fail closed on incomplete/corrupt/mismatched bundles.
 - [x] Separate and hash-lock API runtime and quality dependency sets; keep notebook tooling optional.

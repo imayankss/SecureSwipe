@@ -3,7 +3,7 @@
 This module calculates and persists evaluation metrics for the Credit
 Card Fraud Detection & Risk Scoring System. Because the fraud class is
 extremely rare, accuracy alone is misleading: this module emphasizes
-precision, recall, F1-score, ROC-AUC, PR-AUC, and confusion matrix
+precision, recall, F1-score, ROC-AUC, average precision, and confusion matrix
 breakdowns instead.
 
 No threshold tuning, curve plotting, or test-set evaluation is performed
@@ -50,6 +50,16 @@ def validate_evaluation_inputs(
     y_true_array = np.asarray(y_true)
     y_pred_array = np.asarray(y_pred)
 
+    if y_true_array.ndim != 1 or y_pred_array.ndim != 1:
+        raise ValueError("y_true and y_pred must be one-dimensional.")
+    try:
+        y_true_numeric = y_true_array.astype(float)
+        y_pred_numeric = y_pred_array.astype(float)
+    except (TypeError, ValueError) as exc:
+        raise ValueError("y_true and y_pred must contain numeric values.") from exc
+    if not np.isfinite(y_true_numeric).all() or not np.isfinite(y_pred_numeric).all():
+        raise ValueError("y_true and y_pred must not contain NaN or infinity.")
+
     if y_true_array.size == 0:
         raise ValueError("y_true is empty. Cannot evaluate with no data.")
 
@@ -84,7 +94,10 @@ def validate_evaluation_inputs(
         )
 
     if y_proba is not None:
-        y_proba_array = np.asarray(y_proba)
+        try:
+            y_proba_array = np.asarray(y_proba, dtype=float)
+        except (TypeError, ValueError) as exc:
+            raise ValueError("y_proba must contain numeric values.") from exc
 
         if len(y_proba_array) != len(y_true_array):
             raise ValueError(
@@ -92,8 +105,10 @@ def validate_evaluation_inputs(
                 f"{len(y_true_array)} values. They must match."
             )
 
-        if not np.issubdtype(y_proba_array.dtype, np.number):
-            raise ValueError("y_proba must contain numeric values.")
+        if y_proba_array.ndim != 1:
+            raise ValueError("y_proba must be one-dimensional.")
+        if not np.isfinite(y_proba_array).all():
+            raise ValueError("y_proba must not contain NaN or infinity.")
 
 
 def get_positive_class_scores(model: Any, X: pd.DataFrame) -> np.ndarray:
@@ -142,7 +157,7 @@ def calculate_binary_classification_metrics(
         - recall
         - f1_score
         - roc_auc
-        - pr_auc
+        - average_precision (with legacy pr_auc compatibility alias)
         - confusion_matrix
         - true_negatives
         - false_positives
@@ -161,7 +176,7 @@ def calculate_binary_classification_metrics(
     f1 = f1_score(y_true_array, y_pred_array, zero_division=0)
 
     roc_auc: Optional[float] = None
-    pr_auc: Optional[float] = None
+    average_precision: Optional[float] = None
     if y_proba is not None:
         y_proba_array = np.asarray(y_proba)
         try:
@@ -169,9 +184,9 @@ def calculate_binary_classification_metrics(
         except ValueError:
             roc_auc = None
         try:
-            pr_auc = average_precision_score(y_true_array, y_proba_array)
+            average_precision = average_precision_score(y_true_array, y_proba_array)
         except ValueError:
-            pr_auc = None
+            average_precision = None
 
     cm = confusion_matrix(
         y_true_array, y_pred_array, labels=[NEGATIVE_LABEL, POSITIVE_LABEL]
@@ -184,7 +199,12 @@ def calculate_binary_classification_metrics(
         "recall": float(recall),
         "f1_score": float(f1),
         "roc_auc": float(roc_auc) if roc_auc is not None else None,
-        "pr_auc": float(pr_auc) if pr_auc is not None else None,
+        "average_precision": (
+            float(average_precision) if average_precision is not None else None
+        ),
+        # Compatibility alias for historical artifacts. The value has always
+        # been sklearn average_precision_score, not trapezoidal PR-curve area.
+        "pr_auc": float(average_precision) if average_precision is not None else None,
         "confusion_matrix": cm.tolist(),
         "true_negatives": int(true_negatives),
         "false_positives": int(false_positives),
@@ -193,7 +213,7 @@ def calculate_binary_classification_metrics(
         "fraud_detection_note": (
             "Accuracy can look high even when fraud detection is poor "
             "because legitimate transactions vastly outnumber fraud. "
-            "Prioritize PR-AUC, recall, and precision over accuracy when "
+            "Prioritize average precision, recall, and precision over accuracy when "
             "judging fraud detection performance."
         ),
     }
