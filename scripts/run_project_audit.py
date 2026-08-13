@@ -36,6 +36,9 @@ INVENTORY = {
     "Day 7 SHAP report": PROJECT_ROOT / "reports/explainability/shap_summary_report.md",
     "Final evaluation JSON": PROJECT_ROOT / "reports/final/final_model_evaluation.json",
     "Final evaluation report": PROJECT_ROOT / "reports/final/final_evaluation_report.md",
+    "Historical observation lock": (
+        PROJECT_ROOT / "reports/final/historical_observation.lock.json"
+    ),
     "SHAP top features": PROJECT_ROOT / "reports/explainability/shap_top_features.json",
     "API application": PROJECT_ROOT / "api/main.py",
     "Container definition": PROJECT_ROOT / "Dockerfile",
@@ -85,15 +88,22 @@ def command_gates() -> list[CommandGate]:
                 "src/evaluation/calibration.py",
                 "src/evaluation/cost_analysis.py",
                 "src/evaluation/temporal_validation.py",
+                "src/evaluation/historical_lock.py",
+                "src/utils/config.py",
                 "src/utils/run_manifest.py",
                 "scripts/run_development_analysis.py",
                 "scripts/run_offline_monitoring.py",
                 "scripts/create_synthetic_monitoring_demo.py",
                 "scripts/run_local_load_test.py",
+                "scripts/verify_historical_observation.py",
             ),
         ),
         CommandGate("Python tests", (python, "-m", "pytest")),
         CommandGate("Web artifact determinism", (python, "scripts/export_web_data.py", "--check")),
+        CommandGate(
+            "Historical observation integrity",
+            (python, "scripts/verify_historical_observation.py"),
+        ),
         CommandGate(
             "Synthetic monitoring determinism",
             (

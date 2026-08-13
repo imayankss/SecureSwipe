@@ -25,7 +25,7 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 
 ## P1 — artifacts and reproducibility
 
-- [ ] Consolidate typed configuration and deterministic seeds.
+- [x] Consolidate typed configuration and deterministic seeds.
 - [x] Add versioned `ModelBundle` with preprocessor, model, optional calibrator,
   threshold, ordered schema, runtime versions, data fingerprint, version, and checksums.
 - [~] Add deterministic run manifests including code SHA and input/artifact hashes (development analysis complete; legacy training/export commands pending).
@@ -33,7 +33,7 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Make service startup fail closed on incomplete/corrupt/mismatched bundles.
 - [x] Separate and hash-lock API runtime and quality dependency sets; keep notebook tooling optional.
 - [x] Build/install a wheel in a clean environment.
-- [ ] Protect historical test outputs from accidental overwrite and separate result namespaces.
+- [x] Protect historical test outputs from accidental overwrite and separate result namespaces.
 
 ## P1 — API/container/operations
 

@@ -47,7 +47,7 @@ Fraud is rare. In this dataset, only 492 out of 284,807 transactions are fraud:
 
 Accuracy is misleading here. A model can predict every transaction as legitimate
 and still score above 99% accuracy while catching zero fraud. This project
-therefore prioritizes PR-AUC, recall, precision, F1-score, ROC-AUC, and
+therefore prioritizes average precision, recall, precision, F1-score, ROC-AUC, and
 confusion matrix analysis.
 
 ## Dataset
@@ -90,7 +90,7 @@ web/                    Next.js dashboard and public aggregate artifacts
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-python3 -m pip install -r requirements.txt
+python3 -m pip install --require-hashes -r requirements/quality.lock
 ```
 
 The full ML pipeline requires the Kaggle dataset at:
@@ -108,7 +108,7 @@ python3 scripts/run_day4_baseline_models.py
 python3 -m scripts.run_day5_advanced_models
 python3 -m scripts.run_day6_threshold_tuning
 python3 -m scripts.run_day7_explainability
-python3 -m scripts.run_final_evaluation
+python3 scripts/verify_historical_observation.py
 python3 -m scripts.run_project_audit
 ```
 
@@ -185,9 +185,9 @@ must remain authoritative.
 ## Modeling Summary
 
 Day 4 trained Dummy, Logistic Regression, and Random Forest baselines. Day 5
-added XGBoost and selected the champion model by validation PR-AUC.
+added XGBoost and selected the champion model by validation average precision.
 
-| Model | Validation PR-AUC | Validation ROC-AUC |
+| Model | Validation average precision | Validation ROC-AUC |
 |---|---:|---:|
 | XGBoost | 0.8129 | 0.9851 |
 | Random Forest | 0.8125 | 0.9309 |
@@ -205,10 +205,11 @@ for threshold selection.
 |---:|---:|---:|---:|---|
 | 0.50 | 0.6061 | 0.8108 | 0.6936 | Default |
 | 0.98 | 0.9138 | 0.7162 | 0.8030 | Best validation F1 |
-| 0.53 | 0.6250 | 0.8108 | 0.7059 | Recommended business threshold |
+| 0.53 | 0.6250 | 0.8108 | 0.7059 | Historical development operating point |
 
-Recommended operating threshold: `0.53`, selected as the highest-precision
-threshold with validation recall at least 0.80.
+Historical development operating point: `0.53`, selected as the highest-precision
+threshold whose observed validation recall met the configured 0.80 point
+constraint. It is not a business-policy or future-performance guarantee.
 
 ## Explainability
 
@@ -228,9 +229,11 @@ Generated outputs:
 
 ## Final Evaluation
 
-The final evaluation uses the locked XGBoost model and locked threshold `0.53`
-on the held-out test split once. No threshold tuning, model selection,
-preprocessing changes, or feature changes are performed using test results.
+The repository records one evaluation of the selected XGBoost model and
+threshold `0.53` on the random held-out test split. That result is now an
+immutable historical observation: `scripts/verify_historical_observation.py`
+checks its hashes, while `scripts/run_final_evaluation.py` refuses to load test
+data or run it again. Test results are not used for further development choices.
 
 Final evaluation outputs:
 

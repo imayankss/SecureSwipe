@@ -31,6 +31,19 @@ def test_web_payload_matches_locked_project_outputs() -> None:
     assert "future-performance guarantee" in payload["methodology"]["selection"]
 
 
+def test_web_payload_verifies_historical_lock_before_export(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    observed: list[tuple[Path, Path]] = []
+    monkeypatch.setattr(
+        exporter,
+        "verify_historical_observation",
+        lambda lock, root: observed.append((Path(lock), Path(root))) or {},
+    )
+    build_web_payload()
+    assert observed == [(exporter.HISTORICAL_LOCK, exporter.PROJECT_ROOT)]
+
+
 def test_export_writes_strict_json_without_model_or_transaction_data(tmp_path) -> None:
     output = tmp_path / "dashboard.json"
     export_web_data(output, sync_assets=False)

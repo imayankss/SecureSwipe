@@ -8,7 +8,7 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Current committed phase: `6ccf49c` (monitoring/operations batch pending commit)
+- Current committed phase: `31633e3` (typed configuration/historical-lock batch pending commit)
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -77,6 +77,12 @@ not included in the service or required quality runtime.
 | three repeated M2 synthetic load probes | PASS | 1,500/1,500; p95 29.48–31.67 ms; p99 31.63–78.79 ms |
 | monitoring/API operations frontend and dependency gates | PASS | static build; npm/API audits found zero known vulnerabilities |
 | frontend lock after live advisory update | PASS | nanoid forced to fixed 3.3.18; clean npm audit/test/build on isolated Node 22.13.1 |
+| typed configuration/historical-lock focused regression | PASS | 136 runner/config/scientific tests plus 15 export/lock tests pass |
+| historical observation integrity | PASS | 3 tracked evidence files match the SHA-256 lock; ordinary final runner exits 2 |
+| web export after lock integration | PASS | exporter verifies historical lock first; regenerated payload passes read-only check |
+| configuration/historical full Python gate | PASS | Ruff, mypy on 26 critical files, 304 tests, 19 upstream warnings |
+| project audit generation and read-only replay | PASS with explicit blocker | 11 executable gates passed; absent model remains `UNAVAILABLE`, overall `INCOMPLETE` |
+| Node 22.13.1 frontend replay | PASS | clean npm install/audit, export gate, ESLint, TypeScript, and static Next.js build |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -184,6 +190,17 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
   error/throughput evidence without asserting deployment capacity.
 - Added monitoring/interpretation and incident/recovery/model-replacement guides
   plus local regression objectives derived from repeated M2 measurements.
+- Replaced the contradictory YAML with one strict, frozen Pydantic configuration
+  for canonical data paths, trusted artifact namespaces, report paths, model
+  candidates, metric names, seed, and development/historical scopes.
+- Routed the active Day 2–7 runners through that configuration, consolidated
+  randomized modules on the canonical seed, and added mismatch/path/unknown-key tests.
+- Permanently disabled historical test execution and coupled the already-observed
+  final JSON/report/selected validation point with a three-file SHA-256 lock.
+- Added a guarded one-time metadata migration that verified exact source hashes,
+  changed no recorded metric, and removed stale hardcoded policy wording.
+- Made the web export verify the historical lock before reading public metrics
+  and added the same integrity gate to CI and the executable project audit.
 
 ## Current issues
 
@@ -202,9 +219,9 @@ new decision.
   vectors/artifacts; the recorded 0.0004 AP difference remains insufficient.
 - No original-data calibration result or domain-approved cost assumptions exist;
   the tested analysis engines do not retroactively justify threshold 0.53.
-- No authoritative typed training configuration; legacy training commands do
-  not yet all emit the deterministic run manifest used by the new development runner.
-- Historical test outputs are rerunnable/overwriteable and reports contain hardcoded decision metadata.
+- Legacy training commands do not yet all emit the deterministic run manifest
+  used by the new development runner.
+- SHAP output units/additivity and sample cohort composition remain unverified.
 - Frontend still lacks component/accessibility/browser tests and optional synthetic API mode.
 - Workflow definitions have not run on GitHub because pushing is not authorized;
   the local Docker daemon also prevents executing the container scan/SBOM job.
@@ -219,15 +236,14 @@ new decision.
 
 ## Next executable action
 
-Implement the next P1 batch: one typed, validated configuration for seeds,
-artifact/report namespaces, operating-point metadata, and development paths.
-Protect the historical observed-test namespace from accidental overwrite and
-remove hardcoded threshold/decision metadata from legacy report generators.
+Implement the next locally actionable P1 batch: verify SHAP output units and
+additivity against the declared estimator output, record explained cohort class/
+score composition, and remove probability wording where only raw margin or
+uncalibrated score evidence exists.
 
-Acceptance: alternate synthetic config values propagate through generated
-outputs with no stale 0.53/0.80 constants; historical commands refuse overwrite
-without an explicit immutable-source migration path; new development output
-cannot use `test`/`historical` namespaces.
+Acceptance: synthetic XGBoost attribution sums reconstruct the explicitly named
+model output within tolerance; cohort metadata is generated and validated; no
+SHAP report implies causal or calibrated-probability semantics.
 
 ## External blockers and user action
 

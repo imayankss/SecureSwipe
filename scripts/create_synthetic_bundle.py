@@ -18,7 +18,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from src.artifacts.bundle import ModelBundle, save_model_bundle
 from src.data.data_loader import fingerprint_dataframe
-from src.preprocessing.feature_config import ALL_FEATURES
+from src.preprocessing.feature_config import ALL_FEATURES, RANDOM_STATE
 from src.preprocessing.preprocessors import build_preprocessor, fit_preprocessor
 
 SYNTHETIC_MODEL_VERSION = "synthetic-smoke-1"
@@ -46,7 +46,9 @@ def build_synthetic_bundle() -> tuple[ModelBundle, dict[str, float]]:
     frame, labels = synthetic_training_data()
     preprocessor = fit_preprocessor(frame, build_preprocessor())
     transformed = preprocessor.transform(frame)
-    model = LogisticRegression(random_state=42, max_iter=1_000).fit(transformed, labels)
+    model = LogisticRegression(random_state=RANDOM_STATE, max_iter=1_000).fit(
+        transformed, labels
+    )
     request = {feature: float(frame.iloc[3][feature]) for feature in ALL_FEATURES}
     labeled_frame = frame.copy()
     labeled_frame["Class"] = labels

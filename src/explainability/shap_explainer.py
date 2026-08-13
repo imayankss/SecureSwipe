@@ -29,10 +29,12 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
+from src.preprocessing.feature_config import RANDOM_STATE
+
 logger = logging.getLogger(__name__)
 
 DEFAULT_SAMPLE_SIZE = 1000
-DEFAULT_RANDOM_STATE = 42
+DEFAULT_RANDOM_STATE = RANDOM_STATE
 DEFAULT_TOP_N = 20
 
 

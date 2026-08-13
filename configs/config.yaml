@@ -1,7 +1,7 @@
 project:
   name: "Credit Card Fraud Detection & Risk Scoring System"
-  version: "0.1.0"
-  random_state: 42
+  version: "0.2.0"
+  random_seed: 42
 
 data:
   raw_path: "data/raw/creditcard.csv"
@@ -11,18 +11,25 @@ data:
   test_size: 0.15
   validation_size: 0.15
 
+artifacts:
+  trusted_root: "artifacts"
+  legacy_model_dir: "artifacts/models"
+  bundles_dir: "artifacts/bundles"
+
 models:
-  output_dir: "models"
   baseline_model: "logistic_regression"
-  advanced_models:
+  development_candidates:
+    - "logistic_regression"
     - "random_forest"
     - "xgboost"
-    - "lightgbm"
 
 evaluation:
-  primary_metric: "pr_auc"
+  primary_metric: "average_precision"
   secondary_metric: "roc_auc"
   default_threshold: 0.5
+  recall_target: 0.8
+  development_scope: "development_validation"
+  historical_scope: "historical_reported_test"
 
 risk_scoring:
   low_risk_threshold: 0.2
@@ -31,3 +38,7 @@ risk_scoring:
 reports:
   figures_dir: "reports/figures"
   metrics_dir: "reports/metrics"
+  threshold_dir: "reports/threshold_tuning"
+  historical_json: "reports/final/final_model_evaluation.json"
+  historical_report: "reports/final/final_evaluation_report.md"
+  historical_lock: "reports/final/historical_observation.lock.json"

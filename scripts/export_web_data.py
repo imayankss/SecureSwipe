@@ -19,6 +19,7 @@ import json
 import math
 import re
 import shutil
+import sys
 from collections.abc import Mapping, Sequence
 from datetime import date, datetime
 from decimal import Decimal
@@ -27,6 +28,11 @@ from typing import Any
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from src.evaluation.historical_lock import verify_historical_observation  # noqa: E402
+
 DEFAULT_OUTPUT = PROJECT_ROOT / "web/public/data/dashboard.json"
 
 EDA_REPORT = PROJECT_ROOT / "reports/day2_eda_summary.md"
@@ -35,6 +41,7 @@ MODEL_COMPARISON = PROJECT_ROOT / "reports/model_comparison/validation_model_com
 THRESHOLD_METRICS = PROJECT_ROOT / "reports/threshold_tuning/threshold_metrics.csv"
 SELECTED_THRESHOLDS = PROJECT_ROOT / "reports/threshold_tuning/selected_thresholds.json"
 FINAL_EVALUATION = PROJECT_ROOT / "reports/final/final_model_evaluation.json"
+HISTORICAL_LOCK = PROJECT_ROOT / "reports/final/historical_observation.lock.json"
 SHAP_FEATURES = PROJECT_ROOT / "reports/explainability/shap_top_features.json"
 
 SOURCE_FILES = (
@@ -44,6 +51,7 @@ SOURCE_FILES = (
     THRESHOLD_METRICS,
     SELECTED_THRESHOLDS,
     FINAL_EVALUATION,
+    HISTORICAL_LOCK,
     SHAP_FEATURES,
 )
 
@@ -524,6 +532,7 @@ def _selection_methodology(selected_threshold: float) -> str:
 
 
 def build_web_payload() -> dict[str, Any]:
+    verify_historical_observation(HISTORICAL_LOCK, PROJECT_ROOT)
     dataset = _parse_dataset_summary()
     splits = _parse_split_summary(dataset["totalTransactions"])
     model_comparison_raw = _read_json(MODEL_COMPARISON)

@@ -11,6 +11,8 @@ from sklearn.isotonic import IsotonicRegression
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import brier_score_loss
 
+from src.preprocessing.feature_config import RANDOM_STATE
+
 CalibrationMethod = Literal["identity", "platt", "isotonic"]
 
 
@@ -119,7 +121,7 @@ def fit_calibrator(
     """Fit only on a dedicated development calibration-training partition."""
     labels, values = _validated_inputs(calibration_train_labels, calibration_train_scores)
     if method == "platt":
-        return LogisticRegression(random_state=42, max_iter=1_000).fit(
+        return LogisticRegression(random_state=RANDOM_STATE, max_iter=1_000).fit(
             values.reshape(-1, 1), labels
         )
     if method == "isotonic":

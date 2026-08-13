@@ -50,17 +50,19 @@ from src.preprocessing.preprocessors import (
     get_preprocessing_summary,
 )
 from src.preprocessing.preprocessing_report import save_day3_preprocessing_report
+from src.utils.config import load_project_config
 
 # ---------------------------------------------------------------------------
 # Default paths
 # ---------------------------------------------------------------------------
 
-DEFAULT_DATA_PATH: Path = Path("data/raw/creditcard.csv")
-DEFAULT_INTERIM_DIR: Path = Path("data/interim")
-DEFAULT_PROCESSED_DIR: Path = Path("data/processed")
-DEFAULT_ARTIFACT_DIR: Path = Path("artifacts/preprocessing")
-DEFAULT_PREPROCESSOR_PATH: Path = Path("artifacts/preprocessing/preprocessor.joblib")
-DEFAULT_METADATA_PATH: Path = Path("artifacts/preprocessing/split_metadata.json")
+PROJECT_CONFIG = load_project_config()
+DEFAULT_DATA_PATH = PROJECT_CONFIG.data.raw_path
+DEFAULT_INTERIM_DIR = PROJECT_CONFIG.data.interim_dir
+DEFAULT_PROCESSED_DIR = PROJECT_CONFIG.data.processed_dir
+DEFAULT_ARTIFACT_DIR = PROJECT_CONFIG.artifacts.trusted_root / "preprocessing"
+DEFAULT_PREPROCESSOR_PATH = DEFAULT_ARTIFACT_DIR / "preprocessor.joblib"
+DEFAULT_METADATA_PATH = DEFAULT_ARTIFACT_DIR / "split_metadata.json"
 DEFAULT_REPORT_PATH: Path = Path("reports/day3_preprocessing_summary.md")
 
 

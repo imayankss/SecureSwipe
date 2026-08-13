@@ -20,6 +20,8 @@ from typing import Any
 import pandas as pd
 
 from src.artifacts.bundle import load_verified_joblib
+from src.preprocessing.feature_config import RANDOM_STATE
+from src.utils.config import load_project_config
 
 from src.explainability.shap_explainer import (
     build_shap_feature_importance,
@@ -33,12 +35,13 @@ from src.explainability.shap_explainer import (
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 
-DEFAULT_MODEL_PATH = Path("artifacts/models/xgboost_baseline.joblib")
-DEFAULT_PROCESSED_DIR = Path("data/processed")
+PROJECT_CONFIG = load_project_config()
+DEFAULT_MODEL_PATH = PROJECT_CONFIG.artifacts.legacy_model_dir / "xgboost_baseline.joblib"
+DEFAULT_PROCESSED_DIR = PROJECT_CONFIG.data.processed_dir
 DEFAULT_EXPLAINABILITY_DIR = Path("reports/explainability")
-DEFAULT_FIGURES_DIR = Path("reports/figures")
+DEFAULT_FIGURES_DIR = PROJECT_CONFIG.reports.figures_dir
 DEFAULT_SAMPLE_SIZE = 1000
-DEFAULT_RANDOM_STATE = 42
+DEFAULT_RANDOM_STATE = RANDOM_STATE
 DEFAULT_SUMMARY_TOP_N = 20
 DEFAULT_TOP_FEATURES_TOP_N = 10
 

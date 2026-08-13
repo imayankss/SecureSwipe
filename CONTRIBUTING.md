@@ -39,10 +39,12 @@ cd ..
 .venv/bin/python -m mypy --ignore-missing-imports api src/artifacts \
   src/inference/risk_scoring.py src/evaluation/statistical_metrics.py \
   src/evaluation/calibration.py src/evaluation/cost_analysis.py \
-  src/evaluation/temporal_validation.py src/utils/run_manifest.py \
-  scripts/run_development_analysis.py
+  src/evaluation/temporal_validation.py src/evaluation/historical_lock.py \
+  src/utils/config.py src/utils/run_manifest.py \
+  scripts/run_development_analysis.py scripts/verify_historical_observation.py
 .venv/bin/python -m pytest
 .venv/bin/python scripts/export_web_data.py --check
+.venv/bin/python scripts/verify_historical_observation.py
 cd web && npm test && npm run build
 ```
 

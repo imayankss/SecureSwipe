@@ -40,15 +40,17 @@ from src.evaluation.classification_metrics import (  # noqa: E402
     save_metrics_json,
 )
 from src.evaluation.model_report import save_day4_baseline_model_report  # noqa: E402
+from src.utils.config import load_project_config  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
 # Default paths
 # ---------------------------------------------------------------------------
 
-DEFAULT_PROCESSED_DIR = Path("data/processed")
-DEFAULT_MODELS_DIR = Path("artifacts/models")
-DEFAULT_METRICS_DIR = Path("reports/metrics")
+PROJECT_CONFIG = load_project_config()
+DEFAULT_PROCESSED_DIR = PROJECT_CONFIG.data.processed_dir
+DEFAULT_MODELS_DIR = PROJECT_CONFIG.artifacts.legacy_model_dir
+DEFAULT_METRICS_DIR = PROJECT_CONFIG.reports.metrics_dir
 DEFAULT_REPORT_PATH = Path("reports/day4_baseline_model_summary.md")
 
 REQUIRED_PROCESSED_FILES = (

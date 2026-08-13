@@ -6,14 +6,14 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | Category | Available | Initial | Current | Evidence |
 |---|---:|---:|---:|---|
 | ML correctness and scientific validity | 20 | 5 | 14 | Strict contracts/isolation, historical quarantine, forward folds, Wilson/paired bootstrap uncertainty, simplicity rule, calibration diagnostics, constrained metrics, and explicit cost engine are tested; original OOT/model comparison/calibration and SHAP-unit evidence remain blocked/open. |
-| Reproducibility and data lineage | 15 | 2 | 13 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, deterministic manifests/locks, full dashboard/figure digest, and read-only export verification exist; authoritative config and legacy training manifests remain. |
-| Architecture and maintainability | 15 | 4 | 13 | Offline/static and verified serving paths, mounted bundle image, executable current audit, workflow separation, and governance boundaries are explicit; run configuration and duplicate legacy modules remain. |
+| Reproducibility and data lineage | 15 | 2 | 14 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, deterministic manifests, strict typed configuration, SHA-256 historical lock, full dashboard/figure digest, and read-only verification exist; legacy training manifests remain. |
+| Architecture and maintainability | 15 | 4 | 14 | Offline/static and verified serving paths, mounted bundle image, executable current audit, workflow separation, typed configuration, immutable historical namespace, and governance boundaries are explicit; duplicate legacy modules remain. |
 | Testing and quality gates | 15 | 6 | 15 | 295 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain tests, package proof, and frontend gates pass; Docker execution and behavioral frontend coverage remain explicit blockers rather than passing evidence. |
 | API/container reliability | 10 | 0 | 8 | Versioned API, readiness, limits, OpenAPI, exact parity, threadpool offload, runtime log evidence, health responsiveness, and 500-request loopback behavior pass; container remains unverified. |
 | Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean runtime/npm audits, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
 | Observability and operations | 10 | 0 | 8 | Bounded metrics, runtime JSON/redaction evidence, deterministic schema/feature/score/delayed-label monitoring, shifted demo, repeated M2 load evidence, local objectives, and incident/rollback guides pass; container/provider operations remain unmeasured. |
 | Documentation and developer experience | 5 | 3 | 5 | Persistent controls, API/container/scientific/monitoring protocols, data/model cards, security policy, threat model, and local incident guidance are explicit; broader architecture/reproducibility/interview material remains. |
-| **Total** | **100** | **23** | **85** | **Monitoring and host operations are evidence-backed; authoritative configuration, historical write protection, frontend behavior, container, and original-data evidence remain.** |
+| **Total** | **100** | **23** | **87** | **Monitoring, host operations, configuration, and historical integrity are evidence-backed; frontend behavior, container, legacy manifests, SHAP units, and original-data evidence remain.** |
 
 ## Evidence ledger
 
@@ -58,5 +58,10 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 - A newly published high-severity nanoid advisory caused the executable npm gate
   to fail during this cycle; the transitive package is now locked to fixed
   3.3.18. Fresh `npm ci`, audit (zero findings), test, and build pass on Node 22.13.1.
+- Configuration/historical-integrity batch: 136 focused runner/config/scientific
+  tests and 15 export/lock tests pass. Three evidence files verify against the
+  tracked SHA-256 lock; the disabled historical runner exits 2; the web exporter
+  verifies the lock before reading metrics. The one-time migration recorded
+  `metrics_changed: false`, and threshold/report tests reject stale constants.
 
 The score will be updated only after each batch's acceptance commands pass.

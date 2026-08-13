@@ -209,3 +209,27 @@ response contract, probes liveness during load, and records runtime and latency
 percentiles. Local regression objectives use twice the worst observed values
 from repeated M2 synthetic runs. No container/provider/customer SLO exists until
 those environments and failure modes are measured.
+
+## D-023 — The historical test namespace is verify-only
+
+Status: accepted
+
+The tracked final JSON, generated report, and selected validation threshold are
+coupled by a reviewed SHA-256 lock. The legacy final runner has no data/model
+execution path and refuses ordinary invocation. A guarded one-time metadata
+migration changed only terminology/provenance fields, verified the exact source
+hashes, and left recorded metrics unchanged. New work must use an explicit
+development/forward namespace; changing the lock and evidence together requires
+normal code review and is never presented as new test evidence.
+
+## D-024 — One strict configuration owns offline defaults
+
+Status: accepted
+
+`configs/config.yaml` is validated with frozen Pydantic models and rejects
+unknown fields, invalid split/policy values, and artifact directories outside
+the trusted root. Active day runners derive their paths and operating-point
+defaults from it. Randomized modules import the canonical seed from one feature
+configuration module, and a contract test proves that value matches the typed
+configuration. API runtime settings remain environment-owned because container
+mounts, body limits, and CORS are deployment inputs rather than training facts.

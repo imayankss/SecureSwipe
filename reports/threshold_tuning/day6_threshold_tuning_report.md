@@ -10,7 +10,7 @@
 
 ## Why Threshold Tuning Matters
 
-The default classification threshold of 0.50 is rarely optimal for highly imbalanced fraud detection problems. Lowering the threshold tends to catch more fraud (higher recall) at the cost of more false alerts (lower precision). Raising the threshold reduces false alerts but risks missing more fraud. Accuracy is not used to choose a threshold here because the fraud class is rare; precision, recall, F1-score, and the confusion matrix are far more informative.
+The configured default classification threshold of 0.50 is rarely optimal for highly imbalanced fraud detection problems. Lowering the threshold tends to catch more fraud (higher recall) at the cost of more false alerts (lower precision). Raising the threshold reduces false alerts but risks missing more fraud. Accuracy is not used to choose a threshold here because the fraud class is rare; precision, recall, F1-score, and the confusion matrix are far more informative.
 
 ## Default Threshold (0.50)
 
@@ -51,9 +51,9 @@ The default classification threshold of 0.50 is rarely optimal for highly imbala
 - False Negatives (fraud missed): 14.0
 - True Negatives: 42611.0
 
-## Recommended Operating Threshold
+## Development Operating Point
 
-The recommended operating threshold is **0.53** (the recall-target threshold). In fraud detection, missing a fraudulent transaction (a false negative) is typically far more costly than reviewing a legitimate transaction that was flagged (a false positive). This threshold prioritizes catching at least 80% of fraud while keeping precision as high as possible at that recall level. The final choice should still be confirmed against business cost analysis.
+The development recall-target operating point is **0.53**. It has the highest observed precision among sweep points with recall >= 0.80. This point estimate is not a business policy: false-positive, review, loss, recovery, capacity, and uncertainty assumptions must be reviewed before use.
 
 ## Generated Artifacts
 
@@ -67,4 +67,4 @@ The recommended operating threshold is **0.53** (the recall-target threshold). I
 
 ## Note on Data Usage
 
-Only the validation set was used for this analysis. The held-out test set was not loaded, referenced, or evaluated at any point in this Day 6 pipeline. The test set remains untouched for the final evaluation stage.
+Only the validation set was used for this analysis. The repository's historical random holdout has already been observed and is not loaded or reused by this development command.

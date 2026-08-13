@@ -22,8 +22,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
 
 from src.artifacts.bundle import load_verified_joblib, write_checksum_sidecar
+from src.preprocessing.feature_config import RANDOM_STATE
 
-RANDOM_STATE: int = 42
 DEFAULT_MODELS_DIR: Path = Path("artifacts/models")
 
 

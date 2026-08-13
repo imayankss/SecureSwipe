@@ -47,6 +47,7 @@ import numpy as np
 import pandas as pd
 
 from src.artifacts.bundle import load_verified_joblib, write_checksum_sidecar
+from src.preprocessing.feature_config import RANDOM_STATE
 
 logger = logging.getLogger(__name__)
 
@@ -77,7 +78,6 @@ def _require_xgboost() -> None:
 # Constants
 # ---------------------------------------------------------------------------
 
-RANDOM_STATE: int = 42
 DEFAULT_MODELS_DIR: Path = Path("artifacts/models")
 
 # XGBoost hyper-parameters — centralised here so the runner script

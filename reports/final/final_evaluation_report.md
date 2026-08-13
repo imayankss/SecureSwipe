@@ -8,7 +8,7 @@
 | Champion model | `xgboost_baseline` |
 | Evaluated split | `test` |
 | Locked threshold | `0.53` |
-| Threshold source | Day 6 validation — recall-target threshold (min_recall=0.80, highest precision) |
+| Threshold source | development_validation — highest_precision_meeting_recall_target (minimum_recall=0.8) |
 
 ---
 
@@ -35,7 +35,7 @@ This preserves the recorded result as historical evidence; it is not a claim abo
 
 | Metric | Value |
 |---|---|
-| **PR-AUC** | **0.8288** |
+| **Average precision** | **0.8288** |
 | ROC-AUC | 0.9613 |
 | Precision | 0.6966 |
 | Recall | 0.8378 |
@@ -64,14 +64,14 @@ This preserves the recorded result as historical evidence; it is not a claim abo
 
 ---
 
-## Why PR-AUC Is the Primary Metric
+## Why Average Precision Is the Primary Metric
 
-The dataset contains roughly **0.17 % fraud** — an extreme class imbalance.
+This evaluation split contains **0.1732 % fraud** when the recorded counts are available — an extreme class imbalance.
 Under these conditions:
 
 - **Accuracy** is misleading.  A model that always predicts 'legitimate' achieves ~99.8 % accuracy while catching zero fraud.
 - **ROC-AUC** is influenced heavily by the large number of true negatives and can appear strong even when fraud detection is poor.
-- **PR-AUC** (Average Precision) measures the quality of the precision–recall trade-off for the fraud class only.  It is the most meaningful single-number summary for this problem.
+- **Average precision** measures the quality of the precision–recall trade-off for the fraud class only.  It is the most meaningful single-number summary for this problem.
 
 ---
 
@@ -81,7 +81,7 @@ Under these conditions:
 |---|---|
 | Recorded model | `xgboost_baseline` |
 | Recorded threshold | 0.53 |
-| **Final test PR-AUC** | **0.8288** |
+| **Final test average precision** | **0.8288** |
 | Final test Recall | 0.8378 |
 | Final test Precision | 0.6966 |
 | Final test F1-score | 0.7607 |

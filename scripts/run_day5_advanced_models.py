@@ -35,6 +35,8 @@ from typing import Any, Dict, Optional, Tuple
 
 import pandas as pd
 
+from src.utils.config import load_project_config
+
 # ---------------------------------------------------------------------------
 # Project imports
 #
@@ -47,7 +49,6 @@ import pandas as pd
 
 try:
     from src.models.advanced_models import (
-        DEFAULT_MODELS_DIR as ADVANCED_DEFAULT_MODELS_DIR,
         calculate_scale_pos_weight,
         save_model,
         train_xgboost_model,
@@ -61,7 +62,6 @@ except ImportError as exc:  # pragma: no cover - exercised via integration run
 
 try:
     from src.evaluation.classification_metrics import (
-        DEFAULT_METRICS_DIR,
         evaluate_model,
         save_metrics_json,
     )
@@ -104,12 +104,14 @@ logger = logging.getLogger(__name__)
 # Default paths
 # ---------------------------------------------------------------------------
 
-DEFAULT_PROCESSED_DIR = Path("data/processed")
-DEFAULT_MODELS_DIR = Path(ADVANCED_DEFAULT_MODELS_DIR)
+PROJECT_CONFIG = load_project_config()
+DEFAULT_PROCESSED_DIR = PROJECT_CONFIG.data.processed_dir
+DEFAULT_MODELS_DIR = PROJECT_CONFIG.artifacts.legacy_model_dir
 DEFAULT_XGBOOST_MODEL_PATH = DEFAULT_MODELS_DIR / "xgboost_baseline.joblib"
 
-DEFAULT_DAY4_METRICS_PATH = DEFAULT_METRICS_DIR / "day4_baseline_metrics.json"
-DEFAULT_DAY5_METRICS_PATH = DEFAULT_METRICS_DIR / "day5_xgboost_metrics.json"
+CONFIGURED_METRICS_DIR = PROJECT_CONFIG.reports.metrics_dir
+DEFAULT_DAY4_METRICS_PATH = CONFIGURED_METRICS_DIR / "day4_baseline_metrics.json"
+DEFAULT_DAY5_METRICS_PATH = CONFIGURED_METRICS_DIR / "day5_xgboost_metrics.json"
 
 DEFAULT_COMPARISON_DIR = Path("reports/model_comparison")
 DEFAULT_COMPARISON_CSV_PATH = DEFAULT_COMPARISON_DIR / "validation_model_comparison.csv"
@@ -153,7 +155,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--metrics-dir",
         type=Path,
-        default=DEFAULT_METRICS_DIR,
+        default=CONFIGURED_METRICS_DIR,
         help="Directory containing Day 4 metrics and where Day 5 metrics will be saved.",
     )
     parser.add_argument(
@@ -324,7 +326,7 @@ def build_day5_comparison_rows(
 def run_day5_advanced_models(
     processed_dir: str | Path = DEFAULT_PROCESSED_DIR,
     models_dir: str | Path = DEFAULT_MODELS_DIR,
-    metrics_dir: str | Path = DEFAULT_METRICS_DIR,
+    metrics_dir: str | Path = CONFIGURED_METRICS_DIR,
     comparison_dir: str | Path = DEFAULT_COMPARISON_DIR,
     day4_metrics_path: Optional[str | Path] = None,
 ) -> Dict[str, Any]:

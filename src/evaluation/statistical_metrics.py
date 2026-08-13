@@ -9,6 +9,8 @@ from typing import Sequence
 import numpy as np
 from sklearn.metrics import average_precision_score
 
+from src.preprocessing.feature_config import RANDOM_STATE
+
 
 def _binary_vector(values: Sequence[int] | np.ndarray, name: str) -> np.ndarray:
     array = np.asarray(values)
@@ -99,7 +101,7 @@ def paired_average_precision_difference(
     *,
     confidence_level: float = 0.95,
     n_resamples: int = 2_000,
-    random_seed: int = 42,
+    random_seed: int = RANDOM_STATE,
 ) -> dict[str, float | int | str]:
     """Stratified paired bootstrap CI for complex AP minus simple-model AP."""
     truth = _binary_vector(y_true, "y_true")
