@@ -29,10 +29,26 @@ export function Navigation() {
             </a>
           ))}
         </div>
+        <details className="relative ml-auto lg:hidden">
+          <summary className="cursor-pointer list-none rounded-lg border border-white/15 px-3 py-2 text-sm font-medium text-white marker:content-none">
+            Sections
+          </summary>
+          <div className="absolute right-0 mt-2 grid min-w-48 gap-1 rounded-lg border border-white/15 bg-slate-950 p-2 shadow-xl">
+            {navItems.map(([label, href]) => (
+              <a
+                key={href}
+                className="rounded-md px-3 py-2 text-sm text-slate-200 hover:bg-white/[0.08] hover:text-cyan-100"
+                href={href}
+              >
+                {label}
+              </a>
+            ))}
+          </div>
+        </details>
         <a
           href={dashboardData.project.repository}
           target="_blank"
-          rel="noreferrer"
+          rel="noopener noreferrer"
           className="inline-flex items-center gap-2 rounded-lg border border-white/15 px-3 py-2 text-sm font-medium text-white transition hover:border-cyan-200/30 hover:bg-white/[0.06]"
           aria-label="Open SecureSwipe GitHub repository"
         >

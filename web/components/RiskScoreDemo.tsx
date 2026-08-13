@@ -28,6 +28,9 @@ export function RiskScoreDemo() {
               <CardDescription>Hypothetical, user-controlled XGBoost score.</CardDescription>
             </div>
             <Badge
+              role="status"
+              aria-live="polite"
+              aria-label="Hypothetical review decision"
               className={
                 requiresReview
                   ? "border-rose-300/30 bg-rose-300/10 text-rose-100"

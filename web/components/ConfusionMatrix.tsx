@@ -31,10 +31,10 @@ export function ConfusionMatrix() {
               <div key={cell.label} className="rounded-lg border border-white/10 bg-slate-950/70 p-5">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm text-slate-400">{cell.label}</p>
-                  <span className="font-mono text-xs text-slate-500">{cell.short}</span>
+                  <span className="font-mono text-xs text-slate-400">{cell.short}</span>
                 </div>
                 <p className={`mt-2 text-4xl font-semibold ${cell.tone}`}>{formatInteger(cell.value)}</p>
-                <p className="mt-2 text-xs text-slate-500">{cell.detail}</p>
+                <p className="mt-2 text-xs text-slate-400">{cell.detail}</p>
               </div>
             ))}
           </div>

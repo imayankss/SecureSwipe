@@ -17,8 +17,8 @@ export function TR({ className, ...props }: React.ComponentProps<"tr">) {
   return <tr className={cn("align-middle", className)} {...props} />;
 }
 
-export function TH({ className, ...props }: React.ComponentProps<"th">) {
-  return <th className={cn("py-3 font-medium", className)} {...props} />;
+export function TH({ className, scope, ...props }: React.ComponentProps<"th">) {
+  return <th scope={scope ?? "col"} className={cn("py-3 font-medium", className)} {...props} />;
 }
 
 export function TD({ className, ...props }: React.ComponentProps<"td">) {

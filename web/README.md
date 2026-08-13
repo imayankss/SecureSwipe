@@ -32,7 +32,15 @@ npm run lint
 npm run typecheck
 npm run test
 npm run build
+npx playwright install --no-shell chromium
+npm run test:e2e
 ```
+
+The unit suite checks component interaction and screen-reader contracts in
+JSDOM. The Chromium suite starts the production build, verifies keyboard and
+mobile navigation, runs a WCAG A/AA Axe scan, and fails if the static dashboard
+makes a request to `/v1/predict`. The browser is a local/CI test dependency only;
+it is not shipped with the dashboard.
 
 The production dependency audit should also remain clean:
 
@@ -45,6 +53,10 @@ npm audit --omit=dev
 Use this folder as the dedicated Vercel project root. Framework detection should
 select Next.js, with `npm ci`/the committed lockfile and `npm run build`. The
 current static deployment requires no environment variables.
+
+An optional live-demo build is intentionally absent until the versioned API has
+passed the documented container startup, readiness, inference, and image-scan
+gates.
 
 See the repository-level README for the full architecture, data refresh,
 security, Git, and deployment workflow.

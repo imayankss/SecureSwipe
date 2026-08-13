@@ -90,9 +90,15 @@ jobs:
       - name: Test frontend static gates
         working-directory: web
         run: npm test
+      - name: Install Chromium for browser gate
+        working-directory: web
+        run: npx playwright install --with-deps --no-shell chromium
       - name: Build frontend
         working-directory: web
         run: npm run build
+      - name: Test production dashboard in Chromium
+        working-directory: web
+        run: npm run test:e2e
       - name: Audit frontend dependencies
         working-directory: web
         run: npm audit --audit-level=high

@@ -12,17 +12,21 @@ export function ShapSection() {
     <Section
       id="shap"
       eyebrow="Explainability"
-      title="Top factors influencing fraud predictions"
-      description={`SHAP summarizes how the selected XGBoost model used transformed features on a ${dashboardData.explainability.split}. It explains model behavior, not causality.`}
+      title="Historical SHAP attribution ranking"
+      description={`The tracked ${dashboardData.explainability.split} ranking is output-unit and cohort unverified. It describes historical model behavior only—not causality or probability impact.`}
     >
       <div className="grid gap-6 lg:grid-cols-[1fr_0.9fr]">
         <Card>
           <CardHeader>
             <CardTitle>SHAP feature importance</CardTitle>
-            <CardDescription>Top 10 by mean absolute SHAP value.</CardDescription>
+            <CardDescription>Top 10 historical values; attribution unit unverified.</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
+            <div
+              className="h-80"
+              role="img"
+              aria-label="Historical SHAP feature ranking; exact values follow in the adjacent table"
+            >
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={shapFeatures} layout="vertical" margin={{ left: 8, right: 20 }}>
                   <CartesianGrid stroke="rgba(148,163,184,0.16)" horizontal={false} />

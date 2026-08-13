@@ -96,7 +96,7 @@ export function ThresholdCards() {
               className="mt-6 w-full accent-cyan-300"
               aria-valuetext={`Threshold ${selected.threshold.toFixed(2)}`}
             />
-            <div className="mt-2 flex justify-between text-xs text-slate-500">
+            <div className="mt-2 flex justify-between text-xs text-slate-400">
               <span>{points[0].threshold.toFixed(2)}</span>
               <span>{points.at(-1)?.threshold.toFixed(2)}</span>
             </div>

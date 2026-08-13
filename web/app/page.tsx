@@ -15,22 +15,31 @@ import { ThresholdCards } from "@/components/ThresholdCards";
 
 export default function Home() {
   return (
-    <main className="min-h-screen overflow-hidden bg-slate-950 text-slate-100">
-      <div className="dashboard-grid fixed inset-0 -z-10 bg-[linear-gradient(135deg,#020617_0%,#07111f_48%,#061d1f_100%)]" />
+    <>
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
       <Navigation />
-      <Hero />
-      <ProblemSection />
-      <PipelineTimeline />
-      <ModelPerformance />
-      <ThresholdCards />
-      <ConfusionMatrix />
-      <CurveAnalysis />
-      <ShapSection />
-      <RiskScoreDemo />
-      <Methodology />
-      <DataProvenance />
-      <GithubCTA />
-      <Footer />
-    </main>
+      <main
+        id="main-content"
+        tabIndex={-1}
+        className="min-h-screen overflow-hidden bg-slate-950 text-slate-100"
+      >
+        <div className="dashboard-grid fixed inset-0 -z-10 bg-[linear-gradient(135deg,#020617_0%,#07111f_48%,#061d1f_100%)]" />
+        <Hero />
+        <ProblemSection />
+        <PipelineTimeline />
+        <ModelPerformance />
+        <ThresholdCards />
+        <ConfusionMatrix />
+        <CurveAnalysis />
+        <ShapSection />
+        <RiskScoreDemo />
+        <Methodology />
+        <DataProvenance />
+        <GithubCTA />
+        <Footer />
+      </main>
+    </>
   );
 }

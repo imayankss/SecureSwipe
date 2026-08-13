@@ -259,3 +259,16 @@ timestamps were removed from generated reports, so equal inputs/code/runtime
 produce byte-identical evidence in separate targets. Direct Day 2–7 CLIs refuse
 execution; `run_reference_stage.py` is the manifested compatibility boundary and
 its `legacy_random_*_reference` scopes are ineligible for new decisions.
+
+## D-027 — Browser behavior is tested; live mode remains container-gated
+
+Status: accepted
+
+Vitest and Testing Library cover deterministic component interaction and
+screen-reader semantics without expanding the runtime bundle. A single
+Playwright Chromium gate exercises the production build, responsive/keyboard
+navigation, a WCAG A/AA Axe scan, and the static no-inference boundary. Adding
+multiple browser engines has no demonstrated reference-project benefit. The
+optional synthetic live demo is not implemented or enabled until the API image
+passes startup, readiness, inference, and vulnerability gates; this preserves
+the reviewed static fallback and avoids presenting an unverified integration.

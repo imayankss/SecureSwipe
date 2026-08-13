@@ -34,7 +34,7 @@ export function Hero() {
             <Button
               href={dashboardData.project.repository}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               variant="secondary"
             >
               <GitBranch className="h-4 w-4" />
