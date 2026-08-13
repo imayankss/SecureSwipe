@@ -8,9 +8,9 @@ locked held-out test evaluation with a deployment-safe Next.js dashboard.
 
 ## Live Demo
 
-The production URL will be added here immediately after the Vercel production
-deployment is created and independently verified. The deployable frontend root
-is `web/`.
+The repository does not record an independently verified live URL. The
+deployable static frontend root is `web/`; no public deployment is performed by
+the checked-in workflows.
 
 The hosted application uses **static evaluation artifacts and precomputed
 demonstration interactions**. It does not perform live transaction inference.
@@ -32,6 +32,9 @@ evaluation, and SHAP generation stay offline. `scripts/export_web_data.py`
 validates the tracked outputs against each other, rejects non-finite JSON,
 copies approved figures, and produces the small public payload used by the web
 application. No raw rows, fitted preprocessors, or model binaries are shipped.
+
+The complete development, historical-lock, bundle/API, monitoring, public-data,
+and trust-boundary diagram is in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Why This Problem Is Hard
 
@@ -77,8 +80,12 @@ src/preprocessing/     leakage-safe preprocessing pipeline
 src/models/            baseline and XGBoost model utilities
 src/evaluation/        metrics, comparison, threshold tuning, final evaluation
 src/explainability/    SHAP explainability helpers
+src/artifacts/         versioned bundle creation and verified loading
+src/inference/         canonical batch/risk scoring shared by API and monitoring
+src/monitoring/        offline schema, feature, score, and delayed-label diagnostics
+api/                   versioned FastAPI reference service
 scripts/               reproducible day-by-day pipeline runners
-tests/                 lightweight synthetic unit tests
+tests/                 unit, contract, integration, determinism, and failure tests
 reports/               generated Markdown reports and metrics
 artifacts/models/      trained model artifacts
 scripts/export_web_data.py  verified deployment export
@@ -196,10 +203,14 @@ npm run lint
 npm run typecheck
 npm run test
 npm run build
+npx playwright install --no-shell chromium
+npm run test:e2e
 ```
 
-Node.js 22 is selected through `web/package.json`. The lockfile is committed and
-must remain authoritative.
+Node.js 22.13.1 is selected through `web/package.json`. The lockfile is committed
+and must remain authoritative. The production Chromium gate verifies keyboard
+and mobile behavior, WCAG A/AA rules, and that the static dashboard emits no
+`/v1/predict` request.
 
 ## Modeling Summary
 
@@ -288,33 +299,20 @@ stay server-side and must never use a `NEXT_PUBLIC_` prefix.
 
 ## Vercel Deployment
 
-Create a dedicated Vercel project for this repository and set its Root Directory
-to `web`. From `web/`, the current CLI workflow is:
+The repository contains `web/vercel.json`, but no provider action is authorized
+or verified. Provider pricing/limits, preview isolation, current CLI steps, and
+rollback behavior must be checked after local container gates pass. Deployment,
+repository connection, and environment changes require explicit owner approval.
+See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
-```bash
-vercel link
-vercel deploy --logs
-vercel curl / --deployment <preview-url>
-vercel logs --deployment <preview-url> --level error
-vercel deploy --prod
-```
-
-The framework should be detected as Next.js, the install command should use the
-committed npm lockfile, and the build command should be `npm run build`. No
-output-directory override is required. Connecting the GitHub repository lets
-future branches create previews and updates to the configured production branch
-create production deployments.
-
-## Updating the Live Application
+## Publication Workflow (Not Executed)
 
 1. Regenerate or update verified Python reports locally.
 2. Run `python3 scripts/export_web_data.py`.
 3. Run the Python and frontend test commands above.
-4. Review `git diff`, commit the report/export/frontend changes, and push a
-   non-production branch for a Vercel preview.
-5. Merge through the repository's normal review process when the preview is
-   accepted; the connected Vercel project will deploy the configured production
-   branch.
+4. Review `git diff` and commit the report/export/frontend changes locally.
+5. Immediately before any push, preview, merge, or production deployment, obtain
+   the required explicit approval and verify the provider's current workflow.
 
 Do not run model training during `next build`, Vercel deployment, browser page
 loads, or API requests.
@@ -350,12 +348,17 @@ or investigate real transactions.
 
 ## Future Work
 
-- Add cost-sensitive threshold optimization with real business costs.
+- Execute the existing cost-sensitivity engine only after a domain owner supplies
+  reviewed real business assumptions.
 - Execute the implemented monitoring/calibration protocols on authorized
   development data and establish reviewed reference windows.
-- Package inference behind a separately secured service only after the full
-  preprocessor/model artifact set, input contract, monitoring, and production
-  requirements have been validated.
+- Pass Docker startup/readiness/inference, image scan, and SBOM gates before any
+  optional synthetic live-demo integration.
+
+Detailed limitations/non-goals and interview/demo guides are in
+[`docs/LIMITATIONS.md`](docs/LIMITATIONS.md),
+[`docs/INTERVIEW_DEFENSE.md`](docs/INTERVIEW_DEFENSE.md), and
+[`docs/DEMO.md`](docs/DEMO.md).
 
 ## Author
 

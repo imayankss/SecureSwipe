@@ -21,16 +21,25 @@ not require them. If original-data work is authorized, obtain `creditcard.csv`
 through Kaggle's official process, place it under `data/raw/`, and never commit
 the CSV or Kaggle credentials.
 
-Regenerate the quality lock only from its directory so its provenance comments
-and digest remain stable. `pip==25.3` is intentionally part of the quality input:
-`pip-tools==7.5.2` is not compatible with pip 26's removed internal API.
+Regenerate dependency locks only with the isolated hash-locked tool environment;
+pip-tools is not part of the ordinary quality runtime. Run from the indicated
+directory so provenance comments and digests remain stable:
 
 ```bash
+lock_env=$(mktemp -d /tmp/secureswipe-lock-tools.XXXXXX)
+python3 -m venv "$lock_env"
+"$lock_env/bin/python" -m pip install --require-hashes \
+  -r requirements/lock-tools.lock
 cd requirements
-../.venv/bin/pip-compile --generate-hashes --allow-unsafe --strip-extras \
+"$lock_env/bin/python" -m piptools compile \
+  --generate-hashes --allow-unsafe --strip-extras \
   --output-file=quality.lock quality.in
 cd ..
 ```
+
+Run the compile twice and require identical SHA-256 output, then run pip-audit
+against the result. Updates to the generator itself change `lock-tools.in` and
+`lock-tools.lock` in a separate reviewed diff.
 
 ## Required checks
 
@@ -47,7 +56,10 @@ cd ..
   --follow-imports=skip scripts/run_reference_stage.py
 .venv/bin/python scripts/export_web_data.py --check
 .venv/bin/python scripts/verify_historical_observation.py
+.venv/bin/python -m pip_audit -r requirements/quality.lock --disable-pip \
+  --progress-spinner off
 cd web && npm test && npm run build
+npx playwright install --no-shell chromium && npm run test:e2e
 ```
 
 Container build/smoke/scan commands are in `docs/CONTAINER.md`. Do not call a

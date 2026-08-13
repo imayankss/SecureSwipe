@@ -1,3 +1,1 @@
-"""Data ingestion and validation package."""
-
-# TODO: Implement this module in the development phase.
+"""Strict dataset ingestion, validation, fingerprinting, and split isolation."""

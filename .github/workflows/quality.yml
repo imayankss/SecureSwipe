@@ -62,6 +62,10 @@ jobs:
         run: >-
           python -m pip_audit -r requirements/api.lock --disable-pip
           --progress-spinner off
+      - name: Audit quality dependencies
+        run: >-
+          python -m pip_audit -r requirements/quality.lock --disable-pip
+          --progress-spinner off
       - name: Build wheel
         run: python -m build --wheel
       - name: Prove clean API lock and wheel install

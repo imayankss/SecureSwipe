@@ -77,5 +77,38 @@ def test_license_and_security_governance_files_are_present() -> None:
     assert "Mayank Suryavanshi" in license_text
     assert (ROOT / "CONTRIBUTING.md").stat().st_size > 0
     assert (ROOT / "SECURITY.md").stat().st_size > 0
-    assert (ROOT / "docs/THREAT_MODEL.md").stat().st_size > 0
     assert (ROOT / ".github/pull_request_template.md").stat().st_size > 0
+    required_docs = {
+        "API.md",
+        "ARCHITECTURE.md",
+        "CONTAINER.md",
+        "DATA_CARD.md",
+        "DEMO.md",
+        "DEPLOYMENT.md",
+        "FRONTEND_PERFORMANCE.md",
+        "INTERVIEW_DEFENSE.md",
+        "LIMITATIONS.md",
+        "MODEL_CARD.md",
+        "MONITORING.md",
+        "OPERATIONS.md",
+        "REPRODUCIBILITY.md",
+        "SCIENTIFIC_VALIDITY.md",
+        "THREAT_MODEL.md",
+    }
+    assert all((ROOT / "docs" / name).stat().st_size > 0 for name in required_docs)
+
+
+def test_lock_generator_is_isolated_and_fixed_versions_are_pinned() -> None:
+    lock_tools_input = (ROOT / "requirements/lock-tools.in").read_text(encoding="utf-8")
+    lock_tools = (ROOT / "requirements/lock-tools.lock").read_text(encoding="utf-8")
+    quality_input = (ROOT / "requirements/quality.in").read_text(encoding="utf-8")
+    quality_lock = (ROOT / "requirements/quality.lock").read_text(encoding="utf-8")
+
+    assert "pip==26.2.1" in lock_tools_input
+    assert "pip-tools==7.6.1" in lock_tools_input
+    assert "pip==26.2.1" in lock_tools
+    assert "pip-tools==7.6.1" in lock_tools
+    assert "pip-tools" not in quality_input
+    assert "pip-tools" not in quality_lock
+    assert "streamlit" not in quality_input.lower()
+    assert "streamlit" not in quality_lock.lower()

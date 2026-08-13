@@ -1,0 +1,81 @@
+# Limitations and non-goals
+
+This document states what the current evidence does not support. These limits
+are release controls, not a roadmap that can be waived by changing wording.
+
+## Scientific limitations
+
+- The tracked test result is a single already-observed random holdout, not an
+  out-of-time or real-world performance estimate. The raw CSV, fitted artifact,
+  score vector, and original runtime manifest are absent.
+- Historical EDA recorded 1,081 exact duplicate rows. The original split did not
+  group or reject them, so cross-split overlap cannot be measured without the
+  local CSV. New contracts reject exact duplicates.
+- XGBoost's recorded validation average-precision advantage over Random Forest
+  is about 0.0004 on one split. That does not establish material superiority;
+  the implemented paired blocked/bootstrap and simplicity rule still requires
+  original development scores.
+- The historical `0.53` threshold met a point recall constraint on one validation
+  sample. It is not a business policy, guarantee, or cost optimum. Cost examples
+  in code use explicit synthetic unitless assumptions.
+- The class-weighted XGBoost output is an uncalibrated raw score. A calibrated
+  probability may only be exposed when a disjointly fit/evaluated calibrator is
+  packaged and identified in the bundle.
+
+## Data, fairness, and explainability limitations
+
+- `V1`–`V28` are anonymized PCA components. They do not support merchant,
+  customer, location, device, or causal narratives.
+- No protected-group attributes are present. Demographic parity, equalized odds,
+  subgroup recall, and other protected-group fairness evaluations cannot be
+  performed from these fields. Absence of an observed disparity is not claimed.
+- SHAP is a model-attribution method, not a causal explanation. The tracked
+  historical ranking lacks retained row identities, score/label composition,
+  declared output unit, and additivity residual, so it remains explicitly
+  unverified. New XGBoost runs verify raw-margin additivity and disclose cohorts.
+- The dataset is old, anonymized, and not a representative sample of every
+  geography, issuer, merchant, attack pattern, or operational review process.
+
+## Service and security limitations
+
+- The API is a local/container reference. It has no implemented customer
+  authentication, public rate limiter, TLS termination, enterprise identity,
+  multi-tenancy, transaction store, or real-data privacy program.
+- Checksum and trusted-root verification reduce artifact substitution risk but
+  do not make untrusted pickle/joblib safe. Only locally produced, reviewed
+  bundles are eligible.
+- The service returns a demonstration `review` signal; it does not approve,
+  decline, block, investigate, or report a financial transaction.
+- No PCI DSS, regulatory, bank-grade, penetration-test, availability, or
+  production-customer claim is made.
+
+## Operational and deployment limitations
+
+- Local load numbers use a synthetic logistic-regression fixture on loopback M2
+  hardware. They do not measure the absent historical XGBoost model, Docker,
+  cloud cold starts, network paths, autoscaling, or customer traffic.
+- The Dockerfile and CI jobs have strong static tests, but local Docker startup,
+  image scanning, and SBOM generation remain unexecuted because the daemon was
+  unavailable. Remote workflows have not run because no push is authorized.
+- Drift metrics are diagnostic signals. They do not prove model failure and do
+  not trigger automatic retraining, threshold changes, rollback, or deployment.
+- No public backend deployment is verified. The repository has a Vercel frontend
+  configuration but records no independently verified live URL.
+
+## Explicit non-goals
+
+- Real payment authorization or automated adverse action.
+- Raw transaction ingestion, storage, or customer identity processing.
+- Kubernetes, Kafka, Spark, a microservice fleet, online feature stores, or
+  automatic retraining without a demonstrated requirement.
+- Fabricated costs, SLOs, capacity, security certification, or screenshots.
+- Reusing the historical test to select a model, calibrator, threshold, or
+  monitoring policy.
+
+## Evidence required to change these limits
+
+Changing a limitation requires generated evidence: the authorized original data
+for forward/paired/calibration analysis; a complete reviewed ModelBundle; Docker
+startup/readiness/inference plus image scan/SBOM; remote CI execution; and, for a
+public service, an owner-approved threat/risk review with authentication, TLS,
+rate limits, retention, provider measurement, rollback rehearsal, and cost.

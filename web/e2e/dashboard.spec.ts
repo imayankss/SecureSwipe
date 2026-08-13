@@ -30,6 +30,24 @@ test("production dashboard is keyboard reachable, static, and WCAG-scannable", a
     .analyze();
   expect(accessibility.violations).toEqual([]);
   expect(predictionRequests).toEqual([]);
+
+  const assetBudget = await page.evaluate(() => {
+    const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming;
+    const resources = performance.getEntriesByType("resource") as PerformanceResourceTiming[];
+    const scripts = resources.filter((entry) => entry.initiatorType === "script");
+    return {
+      scriptCount: scripts.length,
+      scriptEncodedBytes: scripts.reduce((total, entry) => total + entry.encodedBodySize, 0),
+      totalRequestCount: resources.length + 1,
+      totalEncodedBytes:
+        navigation.encodedBodySize +
+        resources.reduce((total, entry) => total + entry.encodedBodySize, 0),
+    };
+  });
+  expect(assetBudget.scriptCount).toBeLessThanOrEqual(8);
+  expect(assetBudget.scriptEncodedBytes).toBeLessThanOrEqual(350_000);
+  expect(assetBudget.totalRequestCount).toBeLessThanOrEqual(12);
+  expect(assetBudget.totalEncodedBytes).toBeLessThanOrEqual(450_000);
 });
 
 test("mobile navigation exposes every dashboard section", async ({ page }) => {

@@ -23,6 +23,23 @@ unsafe artifact paths, and inconsistent split settings fail closed. Active
 day-by-day runners derive their data, artifact, report, and seed defaults from
 that contract.
 
+Dependency resolution uses a separate disposable environment so the resolver is
+not part of ordinary test/training execution:
+
+```bash
+lock_env=$(mktemp -d /tmp/secureswipe-lock-tools.XXXXXX)
+python3 -m venv "$lock_env"
+"$lock_env/bin/python" -m pip install --require-hashes \
+  -r requirements/lock-tools.lock
+cd requirements
+"$lock_env/bin/python" -m piptools compile --generate-hashes --allow-unsafe \
+  --strip-extras --output-file=quality.lock quality.in
+cd ..
+```
+
+Compile twice and compare SHA-256 digests. The current generator lock uses pip
+26.2.1 and pip-tools 7.6.1; both the generator and quality locks are reviewed.
+
 ## Checks that require no private data
 
 ```bash
@@ -31,12 +48,19 @@ that contract.
 .venv/bin/python -m pytest
 .venv/bin/python scripts/verify_historical_observation.py
 .venv/bin/python scripts/export_web_data.py --check
+.venv/bin/python -m pip_audit -r requirements/quality.lock --disable-pip \
+  --progress-spinner off
 cd web
 npm ci
 npm test
 npm run build
+npx playwright install --no-shell chromium
+npm run test:e2e
 npm audit --audit-level=high
 ```
+
+The frontend contract requires Node.js 22.13.1. The browser installation is a
+local/CI test tool, not a dashboard runtime dependency.
 
 The historical verifier checks the recorded final JSON, report, and selected
 validation threshold against `reports/final/historical_observation.lock.json`.

@@ -1,3 +1,1 @@
-"""Automated test package."""
-
-# TODO: Implement this module in the development phase.
+"""SecureSwipe unit, contract, integration, determinism, and failure-mode tests."""

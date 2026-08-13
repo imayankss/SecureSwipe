@@ -44,6 +44,11 @@ INVENTORY = {
     "Container definition": PROJECT_ROOT / "Dockerfile",
     "Monitoring guide": PROJECT_ROOT / "docs/MONITORING.md",
     "Operations runbook": PROJECT_ROOT / "docs/OPERATIONS.md",
+    "Architecture guide": PROJECT_ROOT / "docs/ARCHITECTURE.md",
+    "Limitations and non-goals": PROJECT_ROOT / "docs/LIMITATIONS.md",
+    "Deployment runbook": PROJECT_ROOT / "docs/DEPLOYMENT.md",
+    "Interview defense": PROJECT_ROOT / "docs/INTERVIEW_DEFENSE.md",
+    "Demonstration script": PROJECT_ROOT / "docs/DEMO.md",
     "Synthetic monitoring evidence": (
         PROJECT_ROOT / "reports/monitoring/synthetic_shift_report.json"
     ),
@@ -139,8 +144,26 @@ def command_gates() -> list[CommandGate]:
                 "off",
             ),
         ),
+        CommandGate(
+            "Quality dependency vulnerabilities",
+            (
+                python,
+                "-m",
+                "pip_audit",
+                "-r",
+                "requirements/quality.lock",
+                "--disable-pip",
+                "--progress-spinner",
+                "off",
+            ),
+        ),
         CommandGate("Frontend test gate", ("npm", "test"), PROJECT_ROOT / "web"),
         CommandGate("Frontend production build", ("npm", "run", "build"), PROJECT_ROOT / "web"),
+        CommandGate(
+            "Frontend production browser gate",
+            ("npm", "run", "test:e2e"),
+            PROJECT_ROOT / "web",
+        ),
         CommandGate(
             "Frontend dependency vulnerabilities",
             ("npm", "audit", "--audit-level=high"),

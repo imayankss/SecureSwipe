@@ -172,7 +172,7 @@ passing evidence until GitHub actually executes them.
 
 ## D-019 — Pin the lock generator, including pip
 
-Status: accepted
+Status: superseded by D-028
 
 The quality input includes pip 25.3 and pip-tools 7.5.2 because the latter uses
 an internal API removed by pip 26. Lock generation always runs from the
@@ -272,3 +272,15 @@ multiple browser engines has no demonstrated reference-project benefit. The
 optional synthetic live demo is not implemented or enabled until the API image
 passes startup, readiness, inference, and vulnerability gates; this preserves
 the reviewed static fallback and avoids presenting an unverified integration.
+
+## D-028 — Isolate the current lock generator from the quality runtime
+
+Status: accepted
+
+Four 2026 advisories made pip 25.3 unsuitable even for the contributor
+environment. The quality input now pins fixed pip 26.2.1 and no longer installs
+pip-tools. Lock generation uses the separate hash-locked `lock-tools.lock` with
+pip 26.2.1 and pip-tools 7.6.1 in a disposable virtual environment. This keeps
+the resolver reproducible without making it part of ordinary test/training
+execution. Both locks must compile byte-identically twice, and the quality lock
+must pass `pip-audit` before review.

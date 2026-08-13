@@ -23,6 +23,11 @@ artifact blocker and must not be interpreted as passing.
 | PRESENT | Container definition | `Dockerfile` |
 | PRESENT | Monitoring guide | `docs/MONITORING.md` |
 | PRESENT | Operations runbook | `docs/OPERATIONS.md` |
+| PRESENT | Architecture guide | `docs/ARCHITECTURE.md` |
+| PRESENT | Limitations and non-goals | `docs/LIMITATIONS.md` |
+| PRESENT | Deployment runbook | `docs/DEPLOYMENT.md` |
+| PRESENT | Interview defense | `docs/INTERVIEW_DEFENSE.md` |
+| PRESENT | Demonstration script | `docs/DEMO.md` |
 | PRESENT | Synthetic monitoring evidence | `reports/monitoring/synthetic_shift_report.json` |
 | PASS | Python compile | `python -m compileall -q api src scripts tests` |
 | PASS | Python lint | `python -m ruff check api src scripts tests` |
@@ -33,7 +38,9 @@ artifact blocker and must not be interpreted as passing.
 | PASS | Historical observation integrity | `python scripts/verify_historical_observation.py` |
 | PASS | Synthetic monitoring determinism | `python scripts/create_synthetic_monitoring_demo.py --output reports/monitoring/synthetic_shift_report.json --check` |
 | PASS | API dependency vulnerabilities | `python -m pip_audit -r requirements/api.lock --disable-pip --progress-spinner off` |
+| PASS | Quality dependency vulnerabilities | `python -m pip_audit -r requirements/quality.lock --disable-pip --progress-spinner off` |
 | PASS | Frontend test gate | `npm test` |
 | PASS | Frontend production build | `npm run build` |
+| PASS | Frontend production browser gate | `npm run test:e2e` |
 | PASS | Frontend dependency vulnerabilities | `npm audit --audit-level=high` |
 | UNAVAILABLE | Verified serving model bundle | `SECURESWIPE_BUNDLE_MANIFEST is not configured` |
