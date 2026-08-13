@@ -31,13 +31,9 @@ DEFAULT_OUTPUT = PROJECT_ROOT / "web/public/data/dashboard.json"
 
 EDA_REPORT = PROJECT_ROOT / "reports/day2_eda_summary.md"
 SPLIT_REPORT = PROJECT_ROOT / "reports/day3_preprocessing_summary.md"
-MODEL_COMPARISON = (
-    PROJECT_ROOT / "reports/model_comparison/validation_model_comparison.json"
-)
+MODEL_COMPARISON = PROJECT_ROOT / "reports/model_comparison/validation_model_comparison.json"
 THRESHOLD_METRICS = PROJECT_ROOT / "reports/threshold_tuning/threshold_metrics.csv"
-SELECTED_THRESHOLDS = (
-    PROJECT_ROOT / "reports/threshold_tuning/selected_thresholds.json"
-)
+SELECTED_THRESHOLDS = PROJECT_ROOT / "reports/threshold_tuning/selected_thresholds.json"
 FINAL_EVALUATION = PROJECT_ROOT / "reports/final/final_model_evaluation.json"
 SHAP_FEATURES = PROJECT_ROOT / "reports/explainability/shap_top_features.json"
 
@@ -60,6 +56,17 @@ PUBLIC_FIGURES = (
     "shap_summary_bar.png",
     "shap_top_features.png",
 )
+
+
+def _figure_pairs() -> list[tuple[Path, Path]]:
+    return [
+        (
+            PROJECT_ROOT / "reports/figures" / filename,
+            PROJECT_ROOT / "web/public/images" / filename,
+        )
+        for filename in PUBLIC_FIGURES
+    ]
+
 
 MODEL_DISPLAY_NAMES = {
     "dummy_baseline": "Dummy baseline",
@@ -137,7 +144,7 @@ def _parse_dataset_summary() -> dict[str, Any]:
     }
 
 
-def _parse_split_summary() -> list[dict[str, Any]]:
+def _parse_split_summary(dataset_rows: int) -> list[dict[str, Any]]:
     report = _read_text(SPLIT_REPORT)
     rows: list[dict[str, Any]] = []
     for name in ("Train", "Validation", "Test"):
@@ -154,8 +161,8 @@ def _parse_split_summary() -> list[dict[str, Any]]:
             }
         )
 
-    if sum(row["rows"] for row in rows) != 284_807:
-        raise ValueError("Train, validation, and test rows do not sum to 284,807.")
+    if sum(row["rows"] for row in rows) != dataset_rows:
+        raise ValueError("Train, validation, and test rows do not sum to the dataset total.")
     return rows
 
 
@@ -166,7 +173,51 @@ def _number(row: Mapping[str, str], field: str, *, integer: bool = False) -> int
     value = float(raw)
     if not math.isfinite(value):
         raise ValueError(f"Threshold field {field} contains a non-finite value.")
-    return int(value) if integer else value
+    if integer:
+        if value < 0.0 or not value.is_integer():
+            raise ValueError(f"Threshold field {field} must be a non-negative integer.")
+        return int(value)
+    return value
+
+
+def _ratio(numerator: float, denominator: float) -> float:
+    return numerator / denominator if denominator else 0.0
+
+
+def _assert_close(actual: Any, expected: float, label: str) -> None:
+    if not isinstance(actual, (int, float)) or not math.isfinite(float(actual)):
+        raise ValueError(f"{label} must be a finite number.")
+    if not math.isclose(float(actual), expected, rel_tol=1e-9, abs_tol=1e-12):
+        raise ValueError(f"{label} does not match its confusion-matrix value.")
+
+
+def _validate_confusion_metrics(
+    values: Mapping[str, Any],
+    *,
+    tp_key: str,
+    fp_key: str,
+    fn_key: str,
+    tn_key: str,
+    precision_key: str,
+    recall_key: str,
+    f1_key: str,
+    context: str,
+) -> None:
+    counts: dict[str, int] = {}
+    for key in (tp_key, fp_key, fn_key, tn_key):
+        value = values.get(key)
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"{context} {key} must be a non-negative integer.")
+        numeric = float(value)
+        if not math.isfinite(numeric) or numeric < 0.0 or not numeric.is_integer():
+            raise ValueError(f"{context} {key} must be a non-negative integer.")
+        counts[key] = int(numeric)
+    precision = _ratio(counts[tp_key], counts[tp_key] + counts[fp_key])
+    recall = _ratio(counts[tp_key], counts[tp_key] + counts[fn_key])
+    f1 = _ratio(2 * precision * recall, precision + recall)
+    _assert_close(values.get(precision_key), precision, f"{context} {precision_key}")
+    _assert_close(values.get(recall_key), recall, f"{context} {recall_key}")
+    _assert_close(values.get(f1_key), f1, f"{context} {f1_key}")
 
 
 def _parse_threshold_points(validation_rows: int, validation_frauds: int) -> list[dict[str, Any]]:
@@ -193,7 +244,23 @@ def _parse_threshold_points(validation_rows: int, validation_frauds: int) -> lis
 
     if not points:
         raise ValueError("Threshold metrics table is empty.")
+    thresholds = [float(point["threshold"]) for point in points]
+    if any(not 0.0 <= threshold <= 1.0 for threshold in thresholds):
+        raise ValueError("Threshold sweep contains a value outside [0, 1].")
+    if thresholds != sorted(thresholds) or len(thresholds) != len(set(thresholds)):
+        raise ValueError("Threshold sweep must be strictly increasing and unique.")
     for point in points:
+        _validate_confusion_metrics(
+            point,
+            tp_key="truePositives",
+            fp_key="falsePositives",
+            fn_key="falseNegatives",
+            tn_key="trueNegatives",
+            precision_key="precision",
+            recall_key="recall",
+            f1_key="f1",
+            context=f"threshold {point['threshold']}",
+        )
         confusion_total = (
             point["truePositives"]
             + point["falsePositives"]
@@ -204,6 +271,16 @@ def _parse_threshold_points(validation_rows: int, validation_frauds: int) -> lis
             raise ValueError("A threshold confusion matrix does not match validation rows.")
         if point["truePositives"] + point["falseNegatives"] != validation_frauds:
             raise ValueError("A threshold point does not match validation fraud count.")
+        if point["fraudCaught"] != point["truePositives"]:
+            raise ValueError("fraud_caught does not equal true positives.")
+        if point["fraudMissed"] != point["falseNegatives"]:
+            raise ValueError("fraud_missed does not equal false negatives.")
+        if point["falseAlerts"] != point["falsePositives"]:
+            raise ValueError("false_alerts does not equal false positives.")
+        if point["reviewWorkload"] != point["truePositives"] + point["falsePositives"]:
+            raise ValueError("predicted_frauds does not match flagged rows.")
+        if point["predictedLegitimate"] != point["trueNegatives"] + point["falseNegatives"]:
+            raise ValueError("predicted_legitimate does not match unflagged rows.")
     return points
 
 
@@ -213,6 +290,8 @@ def _normalise_selected_thresholds(raw: Mapping[str, Mapping[str, Any]]) -> list
         "best_f1": "Best validation F1",
         "recall_target": "Selected operating point",
     }
+    if set(raw) != set(labels):
+        raise ValueError(f"Selected thresholds must contain exactly {sorted(labels)}.")
     return [
         {
             "key": key,
@@ -225,18 +304,41 @@ def _normalise_selected_thresholds(raw: Mapping[str, Mapping[str, Any]]) -> list
             "falsePositives": values["fp"],
             "falseNegatives": values["fn"],
             "trueNegatives": values["tn"],
+            "fraudCaught": values["fraud_caught"],
+            "fraudMissed": values["fraud_missed"],
+            "falseAlerts": values["false_alerts"],
+            "reviewWorkload": values["predicted_frauds"],
+            "predictedLegitimate": values["predicted_legitimate"],
         }
-        for key, values in raw.items()
-        if key in labels
+        for key in labels
+        for values in [raw[key]]
     ]
 
 
 def _source_digest() -> str:
     digest = hashlib.sha256()
     for path in sorted(SOURCE_FILES):
+        if not path.is_file():
+            raise FileNotFoundError(f"Required report is missing: {path}")
         digest.update(str(path.relative_to(PROJECT_ROOT)).encode("utf-8"))
         digest.update(path.read_bytes())
+    for source, _ in sorted(_figure_pairs()):
+        if not source.is_file():
+            raise FileNotFoundError(f"Required verified figure is missing: {source}")
+        digest.update(str(source.relative_to(PROJECT_ROOT)).encode("utf-8"))
+        digest.update(source.read_bytes())
     return digest.hexdigest()
+
+
+def verify_public_figures() -> None:
+    """Read-only verification that every published figure equals its source."""
+    for source, destination in _figure_pairs():
+        if not source.is_file():
+            raise FileNotFoundError(f"Required verified figure is missing: {source}")
+        if not destination.is_file():
+            raise FileNotFoundError(f"Published figure is missing: {destination}")
+        if source.read_bytes() != destination.read_bytes():
+            raise ValueError(f"Published figure is stale or modified: {destination}")
 
 
 def sanitize_for_json(value: Any) -> Any:
@@ -266,49 +368,193 @@ def sanitize_for_json(value: Any) -> Any:
     raise TypeError(f"Unsupported value for web JSON export: {type(value).__name__}")
 
 
+def _validate_model_comparison(
+    rows: Any, validation_rows: int, validation_frauds: int
+) -> list[Mapping[str, Any]]:
+    if not isinstance(rows, list) or not rows:
+        raise ValueError("Validation model comparison must be a non-empty list.")
+    names: list[str] = []
+    for index, row in enumerate(rows):
+        if not isinstance(row, Mapping):
+            raise ValueError("Every model comparison row must be an object.")
+        name = row.get("model_name")
+        if not isinstance(name, str) or not name.strip():
+            raise ValueError("Every model comparison row needs a model_name.")
+        names.append(name)
+        if row.get("validation_rows") != validation_rows:
+            raise ValueError(f"Model comparison row {index} has the wrong validation size.")
+        if row.get("validation_frauds") != validation_frauds:
+            raise ValueError(f"Model comparison row {index} has the wrong fraud count.")
+        for field in ("pr_auc", "roc_auc", "precision", "recall", "f1"):
+            value = row.get(field)
+            if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+                raise ValueError(f"Model comparison {field} must be finite.")
+            if not 0.0 <= float(value) <= 1.0:
+                raise ValueError(f"Model comparison {field} must be in [0, 1].")
+    if len(names) != len(set(names)):
+        raise ValueError("Model comparison model names must be unique.")
+    highest_average_precision = max(float(row["pr_auc"]) for row in rows)
+    if not math.isclose(float(rows[0]["pr_auc"]), highest_average_precision, abs_tol=1e-12):
+        raise ValueError("First model row is not the highest reported average precision.")
+    return rows
+
+
+def _validate_selected_thresholds(
+    selected: list[dict[str, Any]], points: list[dict[str, Any]]
+) -> None:
+    compared_fields = (
+        "precision",
+        "recall",
+        "f1",
+        "truePositives",
+        "falsePositives",
+        "falseNegatives",
+        "trueNegatives",
+        "fraudCaught",
+        "fraudMissed",
+        "falseAlerts",
+        "reviewWorkload",
+        "predictedLegitimate",
+    )
+    for selected_point in selected:
+        matching = next(
+            (
+                point
+                for point in points
+                if math.isclose(
+                    float(point["threshold"]),
+                    float(selected_point["threshold"]),
+                    abs_tol=1e-12,
+                )
+            ),
+            None,
+        )
+        if matching is None:
+            raise ValueError(
+                f"Selected threshold {selected_point['threshold']} is absent from sweep."
+            )
+        for field in compared_fields:
+            expected = matching[field]
+            actual = selected_point[field]
+            if isinstance(expected, float):
+                if not isinstance(actual, (int, float)) or not math.isclose(
+                    float(actual), expected, rel_tol=1e-9, abs_tol=1e-12
+                ):
+                    raise ValueError(
+                        f"Selected threshold {selected_point['key']} has stale {field}."
+                    )
+            elif actual != expected:
+                raise ValueError(f"Selected threshold {selected_point['key']} has stale {field}.")
+
+
+def _validate_final_evaluation(
+    final: Any,
+    *,
+    test_rows: int,
+    test_frauds: int,
+    selected_threshold: float,
+) -> Mapping[str, Any]:
+    if not isinstance(final, Mapping):
+        raise ValueError("Final evaluation must be a JSON object.")
+    if final.get("split_name") != "test":
+        raise ValueError("Final evaluation split_name must be test.")
+    if final.get("total_samples") != test_rows or final.get("total_fraud") != test_frauds:
+        raise ValueError("Final evaluation totals do not match the recorded test split.")
+    if final.get("total_legitimate") != test_rows - test_frauds:
+        raise ValueError("Final legitimate count does not match the test split.")
+    threshold = final.get("threshold")
+    if not isinstance(threshold, (int, float)) or not math.isclose(
+        float(threshold), selected_threshold, abs_tol=1e-12
+    ):
+        raise ValueError("Final threshold does not match the selected validation threshold.")
+    _validate_confusion_metrics(
+        final,
+        tp_key="true_positives",
+        fp_key="false_positives",
+        fn_key="false_negatives",
+        tn_key="true_negatives",
+        precision_key="precision",
+        recall_key="recall",
+        f1_key="f1_score",
+        context="final evaluation",
+    )
+    tp = int(final["true_positives"])
+    fp = int(final["false_positives"])
+    fn = int(final["false_negatives"])
+    tn = int(final["true_negatives"])
+    if tp + fp + fn + tn != test_rows or tp + fn != test_frauds:
+        raise ValueError("Final confusion counts do not match the test split.")
+    exact_aliases = {
+        "fraud_caught": tp,
+        "fraud_missed": fn,
+        "false_alerts": fp,
+    }
+    for field, expected in exact_aliases.items():
+        if final.get(field) != expected:
+            raise ValueError(f"Final {field} does not match its confusion count.")
+    _assert_close(final.get("specificity"), _ratio(tn, tn + fp), "final specificity")
+    _assert_close(
+        final.get("false_positive_rate"),
+        _ratio(fp, fp + tn),
+        "final false_positive_rate",
+    )
+    _assert_close(
+        final.get("false_negative_rate"),
+        _ratio(fn, fn + tp),
+        "final false_negative_rate",
+    )
+    for field in ("pr_auc", "roc_auc"):
+        value = final.get(field)
+        if not isinstance(value, (int, float)) or not math.isfinite(float(value)):
+            raise ValueError(f"Final {field} must be finite.")
+        if not 0.0 <= float(value) <= 1.0:
+            raise ValueError(f"Final {field} must be in [0, 1].")
+    return final
+
+
+def _selection_methodology(selected_threshold: float) -> str:
+    if not math.isfinite(selected_threshold) or not 0.0 <= selected_threshold <= 1.0:
+        raise ValueError("Selected methodology threshold must be finite and in [0, 1].")
+    return (
+        "Models were compared by reported validation average precision. The "
+        f"historical {selected_threshold:.2f} operating point was recorded from "
+        "validation data under the recall-target rule; it has no domain-approved "
+        "cost model or future-performance guarantee."
+    )
+
+
 def build_web_payload() -> dict[str, Any]:
     dataset = _parse_dataset_summary()
-    splits = _parse_split_summary()
-    model_comparison = _read_json(MODEL_COMPARISON)
+    splits = _parse_split_summary(dataset["totalTransactions"])
+    model_comparison_raw = _read_json(MODEL_COMPARISON)
     selected_thresholds_raw = _read_json(SELECTED_THRESHOLDS)
     final_evaluation = _read_json(FINAL_EVALUATION)
     shap_features = _read_json(SHAP_FEATURES)
 
-    if not isinstance(model_comparison, list) or not model_comparison:
-        raise ValueError("Validation model comparison must be a non-empty list.")
     if not isinstance(selected_thresholds_raw, dict):
         raise ValueError("Selected threshold data must be a JSON object.")
     if not isinstance(shap_features, list) or not shap_features:
         raise ValueError("SHAP feature importance must be a non-empty list.")
 
-    champion = model_comparison[0]
-    if champion["model_name"] != final_evaluation["model_name"]:
-        raise ValueError("Validation champion and final evaluated model do not match.")
-
     validation_split = next(row for row in splits if row["name"] == "validation")
     test_split = next(row for row in splits if row["name"] == "test")
-    if champion["validation_rows"] != validation_split["rows"]:
-        raise ValueError("Model comparison row count does not match the validation split.")
-    if champion["validation_frauds"] != validation_split["fraud"]:
-        raise ValueError("Model comparison fraud count does not match the validation split.")
-    if final_evaluation["total_samples"] != test_split["rows"]:
-        raise ValueError("Final evaluation row count does not match the test split.")
-
-    threshold_points = _parse_threshold_points(
-        validation_split["rows"], validation_split["fraud"]
+    model_comparison = _validate_model_comparison(
+        model_comparison_raw, validation_split["rows"], validation_split["fraud"]
     )
+    champion = model_comparison[0]
+
+    threshold_points = _parse_threshold_points(validation_split["rows"], validation_split["fraud"])
     selected_thresholds = _normalise_selected_thresholds(selected_thresholds_raw)
-    for selected in selected_thresholds:
-        matching = next(
-            (
-                point
-                for point in threshold_points
-                if math.isclose(point["threshold"], selected["threshold"], abs_tol=1e-12)
-            ),
-            None,
-        )
-        if matching is None:
-            raise ValueError(f"Selected threshold {selected['threshold']} is absent from sweep.")
+    _validate_selected_thresholds(selected_thresholds, threshold_points)
+    recall_target = next(item for item in selected_thresholds if item["key"] == "recall_target")
+    final_evaluation = _validate_final_evaluation(
+        final_evaluation,
+        test_rows=test_split["rows"],
+        test_frauds=test_split["fraud"],
+        selected_threshold=float(recall_target["threshold"]),
+    )
+    if champion["model_name"] != final_evaluation["model_name"]:
+        raise ValueError("Validation champion and final evaluated model do not match.")
 
     comparison_rows = [
         {
@@ -335,10 +581,8 @@ def build_web_payload() -> dict[str, Any]:
         "dataset": {**dataset, "splits": splits},
         "modelSelection": {
             "modelName": champion["model_name"],
-            "displayName": MODEL_DISPLAY_NAMES.get(
-                champion["model_name"], champion["model_name"]
-            ),
-            "selectedBy": "Highest validation PR-AUC",
+            "displayName": MODEL_DISPLAY_NAMES.get(champion["model_name"], champion["model_name"]),
+            "selectedBy": "Highest reported validation average precision (single split)",
             "selectionSplit": "validation",
             "validationMetrics": champion,
         },
@@ -375,7 +619,7 @@ def build_web_payload() -> dict[str, Any]:
             "split": "validation",
             "precisionRecall": {
                 "image": "/images/precision_recall_curve.png",
-                "auc": champion["pr_auc"],
+                "averagePrecision": champion["pr_auc"],
             },
             "roc": {
                 "image": "/images/roc_curve.png",
@@ -392,11 +636,7 @@ def build_web_payload() -> dict[str, Any]:
                 "Logistic Regression used class weighting; XGBoost scale_pos_weight was "
                 "derived only from the training labels."
             ),
-            "selection": (
-                "Models were compared by validation PR-AUC. The 0.53 operating threshold "
-                "was selected on validation data as the highest-precision point with "
-                "recall of at least 0.80."
-            ),
+            "selection": _selection_methodology(float(recall_target["threshold"])),
             "finalTest": (
                 "The held-out test split was evaluated once after model and threshold lock."
             ),
@@ -408,20 +648,19 @@ def build_web_payload() -> dict[str, Any]:
             "The historical, anonymized dataset does not represent current bank traffic or policy.",
             "The XGBoost score has not been calibrated as a real-world fraud probability.",
         ],
-        "sources": [str(path.relative_to(PROJECT_ROOT)) for path in SOURCE_FILES],
+        "sources": [
+            str(path.relative_to(PROJECT_ROOT))
+            for path in (*SOURCE_FILES, *(source for source, _ in _figure_pairs()))
+        ],
     }
     return sanitize_for_json(payload)
 
 
 def sync_public_figures() -> None:
-    source_dir = PROJECT_ROOT / "reports/figures"
-    target_dir = PROJECT_ROOT / "web/public/images"
-    target_dir.mkdir(parents=True, exist_ok=True)
-    for filename in PUBLIC_FIGURES:
-        source = source_dir / filename
+    (PROJECT_ROOT / "web/public/images").mkdir(parents=True, exist_ok=True)
+    for source, destination in _figure_pairs():
         if not source.is_file():
             raise FileNotFoundError(f"Required verified figure is missing: {source}")
-        destination = target_dir / filename
         if not destination.exists() or source.read_bytes() != destination.read_bytes():
             shutil.copy2(source, destination)
 
@@ -451,9 +690,9 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> None:
     args = parse_args()
-    payload_text = json.dumps(
-        build_web_payload(), indent=2, ensure_ascii=False, allow_nan=False
-    ) + "\n"
+    payload_text = (
+        json.dumps(build_web_payload(), indent=2, ensure_ascii=False, allow_nan=False) + "\n"
+    )
     output_path = args.output.resolve()
 
     if args.check:
@@ -461,7 +700,7 @@ def main() -> None:
             raise SystemExit(
                 "Web data is stale. Run `python3 scripts/export_web_data.py` and commit the result."
             )
-        sync_public_figures()
+        verify_public_figures()
         print(f"Verified current web data: {output_path.relative_to(PROJECT_ROOT)}")
         return
 

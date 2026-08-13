@@ -6,14 +6,14 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | Category | Available | Initial | Current | Evidence |
 |---|---:|---:|---:|---|
 | ML correctness and scientific validity | 20 | 5 | 14 | Strict contracts/isolation, historical quarantine, forward folds, Wilson/paired bootstrap uncertainty, simplicity rule, calibration diagnostics, constrained metrics, and explicit cost engine are tested; original OOT/model comparison/calibration and SHAP-unit evidence remain blocked/open. |
-| Reproducibility and data lineage | 15 | 2 | 11 | Hash-locked environments, fingerprints, bundle provenance, clean wheel, and deterministic development-analysis manifests exist; authoritative config and legacy training manifests remain. |
-| Architecture and maintainability | 15 | 4 | 11 | Offline/static and verified serving paths are separated; the image contains only service/runtime code and consumes a mounted bundle; run configuration and duplicate legacy modules remain. |
-| Testing and quality gates | 15 | 6 | 13 | 251 Python tests, repository lint, 14-module types, scientific edge/determinism/leakage tests, API/parity/failures, container policies, package proof, and frontend gates pass; daemon/frontend behavior and export gates remain incomplete. |
+| Reproducibility and data lineage | 15 | 2 | 12 | Hash-locked environments, fingerprints, bundle provenance, clean wheel, deterministic development manifests, full dashboard/figure digest, and side-effect-free export verification exist; authoritative config and legacy training manifests remain. |
+| Architecture and maintainability | 15 | 4 | 12 | Offline/static and verified serving paths, mounted bundle image, and executable current audit are separated with explicit status semantics; run configuration and duplicate legacy modules remain. |
+| Testing and quality gates | 15 | 6 | 14 | 267 Python tests, lint/types, scientific/API/container/tamper/determinism tests, executable audit, package proof, and frontend gates pass; daemon and real frontend behavior remain incomplete. |
 | API/container reliability | 10 | 0 | 6 | Versioned API behavior, readiness, concurrency serialization, limits, and OpenAPI pass synthetic tests; container remains unverified and requires Docker Desktop. |
 | Security and privacy | 10 | 3 | 8 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, and a clean runtime vulnerability audit pass; automated scans/threat model remain. |
 | Observability and operations | 10 | 0 | 3 | Bounded request/latency/score metrics and request-ID JSON logs are tested; drift monitoring, measured load/SLOs, alerts, and runbooks remain. |
 | Documentation and developer experience | 5 | 3 | 5 | Persistent controls, API/container/scientific protocols, data/model cards, and limitations are explicit; broader contributor/security/incident policy remains but the category's core evidence is complete. |
-| **Total** | **100** | **23** | **71** | **Scientific development protocol is executable; original-data evidence and several platform gates remain.** |
+| **Total** | **100** | **23** | **74** | **Export/current-audit integrity is verified; supply-chain, monitoring, frontend behavior, and external evidence remain.** |
 
 ## Evidence ledger
 
@@ -38,5 +38,8 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 - Scientific batch: 251 Python tests passed in 6.82 seconds; forward-fold,
   calibration-partition, uncertainty, cost-accounting, finite-input, and
   deterministic run-manifest behavior are covered with synthetic evidence.
+- Export/audit batch: read-only hash snapshot passed; tamper cases fail; nine
+  project gates executed twice while the absent model remained explicitly
+  `UNAVAILABLE` and the overall current audit remained `INCOMPLETE`.
 
 The score will be updated only after each batch's acceptance commands pass.

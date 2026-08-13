@@ -9,7 +9,7 @@ const curves = [
     description:
       "The primary curve for the rare fraud class. The dashed baseline is validation prevalence.",
     image: dashboardData.curves.precisionRecall.image,
-    value: `PR-AUC ${formatMetric(dashboardData.curves.precisionRecall.auc)}`,
+    value: `Average precision ${formatMetric(dashboardData.curves.precisionRecall.averagePrecision)}`,
     alt: "Validation precision-recall curve for the selected XGBoost model",
   },
   {

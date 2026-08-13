@@ -6,7 +6,7 @@
     "repository": "https://github.com/imayankss/SecureSwipe",
     "deploymentMode": "precomputed-demonstration",
     "artifactGeneratedAt": "2026-06-24T11:47:35.859632+00:00",
-    "sourceDigestSha256": "590a8292a593d7ab5320bb8c68819c849cf80b05c5ff242e03cd936556125b25",
+    "sourceDigestSha256": "24f56e39610c3dfc2ee61daa15a3969d8795690a915a7316fb345597f958f028",
     "disclaimer": "Educational portfolio system—not a bank production authorization, compliance, or payment-processing service."
   },
   "dataset": {
@@ -47,7 +47,7 @@
   "modelSelection": {
     "modelName": "xgboost_baseline",
     "displayName": "XGBoost",
-    "selectedBy": "Highest validation PR-AUC",
+    "selectedBy": "Highest reported validation average precision (single split)",
     "selectionSplit": "validation",
     "validationMetrics": {
       "model_name": "xgboost_baseline",
@@ -1637,7 +1637,12 @@
         "truePositives": 60,
         "falsePositives": 39,
         "falseNegatives": 14,
-        "trueNegatives": 42608
+        "trueNegatives": 42608,
+        "fraudCaught": 60,
+        "fraudMissed": 14,
+        "falseAlerts": 39,
+        "reviewWorkload": 99,
+        "predictedLegitimate": 42622
       },
       {
         "key": "best_f1",
@@ -1649,7 +1654,12 @@
         "truePositives": 53.0,
         "falsePositives": 5.0,
         "falseNegatives": 21.0,
-        "trueNegatives": 42642.0
+        "trueNegatives": 42642.0,
+        "fraudCaught": 53.0,
+        "fraudMissed": 21.0,
+        "falseAlerts": 5.0,
+        "reviewWorkload": 58.0,
+        "predictedLegitimate": 42663.0
       },
       {
         "key": "recall_target",
@@ -1661,7 +1671,12 @@
         "truePositives": 60.0,
         "falsePositives": 36.0,
         "falseNegatives": 14.0,
-        "trueNegatives": 42611.0
+        "trueNegatives": 42611.0,
+        "fraudCaught": 60.0,
+        "fraudMissed": 14.0,
+        "falseAlerts": 36.0,
+        "reviewWorkload": 96.0,
+        "predictedLegitimate": 42625.0
       }
     ],
     "costAnalysisAvailable": false,
@@ -1798,7 +1813,7 @@
     "split": "validation",
     "precisionRecall": {
       "image": "/images/precision_recall_curve.png",
-      "auc": 0.8129
+      "averagePrecision": 0.8129
     },
     "roc": {
       "image": "/images/roc_curve.png",
@@ -1809,7 +1824,7 @@
     "splitStrategy": "70% train / 15% validation / 15% test, stratified by Class",
     "preprocessing": "StandardScaler fitted on training Time and Amount only; V1-V28 passed through; the target was excluded.",
     "imbalanceHandling": "Logistic Regression used class weighting; XGBoost scale_pos_weight was derived only from the training labels.",
-    "selection": "Models were compared by validation PR-AUC. The 0.53 operating threshold was selected on validation data as the highest-precision point with recall of at least 0.80.",
+    "selection": "Models were compared by reported validation average precision. The historical 0.53 operating point was recorded from validation data under the recall-target rule; it has no domain-approved cost model or future-performance guarantee.",
     "finalTest": "The held-out test split was evaluated once after model and threshold lock."
   },
   "limitations": [
@@ -1826,6 +1841,13 @@
     "reports/threshold_tuning/threshold_metrics.csv",
     "reports/threshold_tuning/selected_thresholds.json",
     "reports/final/final_model_evaluation.json",
-    "reports/explainability/shap_top_features.json"
+    "reports/explainability/shap_top_features.json",
+    "reports/figures/precision_recall_curve.png",
+    "reports/figures/roc_curve.png",
+    "reports/figures/confusion_matrix_default_threshold.png",
+    "reports/figures/confusion_matrix_best_f1_threshold.png",
+    "reports/figures/confusion_matrix_recall_target_threshold.png",
+    "reports/figures/shap_summary_bar.png",
+    "reports/figures/shap_top_features.png"
   ]
 }

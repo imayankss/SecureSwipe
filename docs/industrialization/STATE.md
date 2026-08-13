@@ -8,7 +8,7 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Current committed phase: `518ad19` (full SHA recorded by Git; scientific batch pending commit)
+- Current committed phase: `9f13f35` (export/audit batch pending commit)
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -58,6 +58,10 @@ not included in the service or required quality runtime.
 | `docker buildx imagetools inspect python:3.12.10-slim-bookworm` | PASS | Multi-architecture index pinned to `sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db` |
 | scientific lint/type/full Python gate | PASS | Ruff; mypy on 14 critical modules; 251 tests, 19 upstream warnings, 6.82 s |
 | frontend data/lint/type/build after scientific batch | PASS | Static build succeeded; no public metrics changed |
+| read-only export hash snapshot + `scripts/export_web_data.py --check` | PASS | Dashboard and all seven public figure bytes unchanged across verification |
+| executable project audit, generation then `--check` | PASS with explicit blocker | Nine commands passed twice; model bundle is `UNAVAILABLE`, overall report remains `INCOMPLETE` |
+| export/audit full Python regression | PASS | 267 tests, 19 upstream warnings, 6.34 s |
+| export-gated frontend test and production build | PASS | data check, ESLint, TypeScript, and static Next.js build |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -125,6 +129,18 @@ This is baseline evidence only; a dedicated secret scanner remains required.
   historical-test, score-semantics, and non-goal limitations.
 - Full Python suite after the scientific batch: 251 passed in 6.82 s; frontend
   data, lint, type, and build gates also passed with no public metric changes.
+- Made dashboard `--check` strictly read-only and added every source figure to
+  the evidence digest; stale/missing/tampered published figures fail nonzero.
+- Added strict cross-checks for threshold count integrality, class/population
+  totals, recomputed precision/recall/F1, aliases/workload, selected values,
+  final confusion/rates, and final-vs-validation threshold equality.
+- Removed hardcoded 0.53 methodology text from the exporter and changed public
+  labels from the inaccurate `PR-AUC` name to `average precision` while retaining
+  historical source keys for compatibility.
+- Gated frontend test/build commands on read-only export verification.
+- Replaced the file-existence project checklist: non-empty files are now only
+  `PRESENT`; `PASS` requires an executed command; the model is `UNAVAILABLE`;
+  the current overall audit is truthfully `INCOMPLETE`.
 
 ## Current issues
 
@@ -146,7 +162,7 @@ new decision.
 - No reproducible training run manifest or authoritative typed training configuration.
 - Offline monitoring, measured SLO/load evidence, and broader operational runbooks remain unimplemented.
 - Historical test outputs are rerunnable/overwriteable and reports contain hardcoded decision metadata.
-- Export `--check` is mutating and does not checksum public figures or fully cross-check metrics.
+- Frontend still lacks component/accessibility/browser tests and optional synthetic API mode.
 - No GitHub Actions, Dependabot, container scan, secret scan, or release-quality controls.
 - Current checkout cannot reproduce the original-data evaluation because the
   intentionally uncommitted CSV and fitted artifacts are unavailable.
@@ -154,20 +170,19 @@ new decision.
 ### P2
 
 - Dead/duplicate placeholder modules and stale documents obscure canonical paths.
-- Frontend lacks behavior, accessibility, responsive, timeout/error, and browser-smoke tests.
-- Missing root LICENSE, CONTRIBUTING, SECURITY, threat model, model/data cards, and runbooks.
+- Missing root LICENSE, CONTRIBUTING, SECURITY, threat model, and broader runbooks.
 - Mobile navigation and several accessibility semantics need improvement.
 
 ## Next executable action
 
-Implement the next P1 batch: make dashboard export verification strictly
-side-effect-free, include every public figure in the digest, cross-check
-threshold/confusion/metric invariants, add deterministic tamper tests, and make
-the project audit execute real gates instead of treating file existence as PASS.
+Implement the next P1 batch: GitHub Actions with minimal permissions and pinned
+actions for Python/frontend/export/bundle/container gates; Dependabot for pip,
+npm, and Actions; secret scanning; root LICENSE, CONTRIBUTING, SECURITY, and PR
+template. Do not add deployment or auto-merge behavior.
 
-Acceptance: `--check` cannot modify any byte, stale/tampered JSON or figure
-fails nonzero, alternate synthetic thresholds cannot inherit 0.53 constants,
-and an absent/corrupt model is never reported as a current verified artifact.
+Acceptance: workflow syntax and local equivalents pass; no workflow can deploy
+or access write permissions on untrusted PRs; action revisions are immutable;
+dependency/secret/container findings fail appropriate gates.
 
 ## External blockers and user action
 

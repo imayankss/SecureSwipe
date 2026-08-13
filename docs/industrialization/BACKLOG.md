@@ -52,9 +52,9 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 
 ## P1 — frontend/QA/supply chain
 
-- [ ] Make export check side-effect-free and checksum every public artifact.
-- [ ] Fully validate metric/confusion/threshold invariants and tamper cases.
-- [ ] Gate frontend build on export verification.
+- [x] Make export check side-effect-free and checksum every public artifact.
+- [x] Fully validate metric/confusion/threshold invariants and tamper cases.
+- [x] Gate frontend build on export verification.
 - [ ] Add synthetic-only optional live API demo with static fallback, timeout/loading/error/empty states.
 - [ ] Add component, keyboard, accessibility, responsive, and browser-smoke tests.
 - [ ] Add Python lint/type/unit/integration/export-determinism gates.

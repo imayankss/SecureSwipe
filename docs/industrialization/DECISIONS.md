@@ -141,3 +141,20 @@ Evidence manifests record code commit/dirty-diff digest, input/output hashes,
 parameters, seeds, runtime versions, and evaluation namespace. Excluding the wall
 clock makes identical inputs/code produce identical manifests; external job or
 artifact systems may record creation time separately without changing evidence.
+
+## D-016 — File presence is never a passing audit gate
+
+Status: accepted
+
+The current project audit uses `PRESENT` for non-empty inventory entries and
+reserves `PASS` for commands or verified bundles that actually execute. Missing
+model configuration is `UNAVAILABLE`, not a stale historical PASS. The report
+remains `INCOMPLETE` even when static-checkout gates succeed without a model.
+
+## D-017 — Historical `pr_auc` keys mean average precision
+
+Status: accepted
+
+Existing JSON keys remain for compatibility, but UI/report labels now state
+average precision because the implementation used `average_precision_score`.
+The exporter does not relabel it as trapezoidal area under the PR curve.
