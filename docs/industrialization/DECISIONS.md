@@ -284,3 +284,14 @@ pip 26.2.1 and pip-tools 7.6.1 in a disposable virtual environment. This keeps
 the resolver reproducible without making it part of ordinary test/training
 execution. Both locks must compile byte-identically twice, and the quality lock
 must pass `pip-audit` before review.
+
+## D-029 — Build release wheels through a fresh sdist boundary
+
+Status: accepted
+
+Direct `python -m build --wheel` can reuse ignored `build/lib` contents and
+silently package modules deleted from the worktree. Release gates therefore run
+`python -m build --no-isolation`, which creates the sdist and builds the wheel
+from its fresh temporary extraction using the already locked build backend. A
+second executable gate compares every packaged `api/` and `src/` Python member
+against the current source tree and rejects either missing or unexpected files.

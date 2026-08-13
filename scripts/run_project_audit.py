@@ -157,6 +157,11 @@ def command_gates() -> list[CommandGate]:
                 "off",
             ),
         ),
+        CommandGate("Build source distribution and wheel", (python, "-m", "build", "--no-isolation")),
+        CommandGate(
+            "Wheel source inventory",
+            (python, "scripts/verify_wheel_contents.py", "dist/credit_card_fraud_risk_scoring-0.1.0-py3-none-any.whl"),
+        ),
         CommandGate("Frontend test gate", ("npm", "test"), PROJECT_ROOT / "web"),
         CommandGate("Frontend production build", ("npm", "run", "build"), PROJECT_ROOT / "web"),
         CommandGate(

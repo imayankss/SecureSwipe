@@ -58,6 +58,8 @@ against the result. Updates to the generator itself change `lock-tools.in` and
 .venv/bin/python scripts/verify_historical_observation.py
 .venv/bin/python -m pip_audit -r requirements/quality.lock --disable-pip \
   --progress-spinner off
+.venv/bin/python -m build --no-isolation
+.venv/bin/python scripts/verify_wheel_contents.py dist/*.whl
 cd web && npm test && npm run build
 npx playwright install --no-shell chromium && npm run test:e2e
 ```

@@ -67,7 +67,9 @@ jobs:
           python -m pip_audit -r requirements/quality.lock --disable-pip
           --progress-spinner off
       - name: Build wheel
-        run: python -m build --wheel
+        run: python -m build --no-isolation
+      - name: Verify wheel contains only current source modules
+        run: python scripts/verify_wheel_contents.py dist/*.whl
       - name: Prove clean API lock and wheel install
         run: |
           python -m venv /tmp/secureswipe-api-proof

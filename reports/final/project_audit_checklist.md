@@ -39,6 +39,8 @@ artifact blocker and must not be interpreted as passing.
 | PASS | Synthetic monitoring determinism | `python scripts/create_synthetic_monitoring_demo.py --output reports/monitoring/synthetic_shift_report.json --check` |
 | PASS | API dependency vulnerabilities | `python -m pip_audit -r requirements/api.lock --disable-pip --progress-spinner off` |
 | PASS | Quality dependency vulnerabilities | `python -m pip_audit -r requirements/quality.lock --disable-pip --progress-spinner off` |
+| PASS | Build source distribution and wheel | `python -m build --no-isolation` |
+| PASS | Wheel source inventory | `python scripts/verify_wheel_contents.py dist/credit_card_fraud_risk_scoring-0.1.0-py3-none-any.whl` |
 | PASS | Frontend test gate | `npm test` |
 | PASS | Frontend production build | `npm run build` |
 | PASS | Frontend production browser gate | `npm run test:e2e` |

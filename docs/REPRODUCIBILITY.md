@@ -50,6 +50,8 @@ Compile twice and compare SHA-256 digests. The current generator lock uses pip
 .venv/bin/python scripts/export_web_data.py --check
 .venv/bin/python -m pip_audit -r requirements/quality.lock --disable-pip \
   --progress-spinner off
+.venv/bin/python -m build --no-isolation
+.venv/bin/python scripts/verify_wheel_contents.py dist/*.whl
 cd web
 npm ci
 npm test
