@@ -29,23 +29,23 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Add versioned `ModelBundle` with preprocessor, model, optional calibrator,
   threshold, ordered schema, runtime versions, data fingerprint, version, and checksums.
 - [ ] Add deterministic run manifest including code SHA and input/artifact hashes.
-- [~] Add golden evaluation/service prediction parity tests (bundle round-trip parity passes; API path pending).
-- [~] Make service startup fail closed on incomplete/corrupt/mismatched bundles (loader gate passes; service pending).
-- [ ] Separate and lock API runtime, training, and developer dependency sets.
-- [ ] Build/install a wheel in a clean environment.
+- [x] Add golden evaluation/service prediction parity tests.
+- [x] Make service startup fail closed on incomplete/corrupt/mismatched bundles.
+- [x] Separate and hash-lock API runtime and quality dependency sets; keep notebook tooling optional.
+- [x] Build/install a wheel in a clean environment.
 - [ ] Protect historical test outputs from accidental overwrite and separate result namespaces.
 
 ## P1 — API/container/operations
 
-- [ ] Implement live/readiness, model-info, single prediction, batch prediction, and justified metrics endpoints.
-- [ ] Strict Pydantic request/response/error contracts and OpenAPI validation.
-- [ ] Unknown/non-finite/malformed/oversized/batch-limit/unavailable-model/concurrency tests.
-- [ ] Structured redacted JSON logs with request IDs and no transaction vectors.
-- [ ] Configurable explicit CORS allowlist and request-body cap.
+- [x] Implement live/readiness, model-info, single prediction, batch prediction, and bounded metrics endpoints.
+- [x] Strict Pydantic request/response/error contracts and OpenAPI validation.
+- [x] Unknown/non-finite/malformed/oversized/batch-limit/unavailable-model/concurrency tests.
+- [x] Structured redacted JSON logs with request IDs and no transaction vectors.
+- [x] Configurable explicit CORS allowlist and request-body cap.
 - [ ] Replace Dockerfile, add `.dockerignore`, non-root user, pinned runtime, and health check.
 - [B] Test linux/arm64 image startup/readiness/inference; Docker Desktop must be started.
 - [B] Scan image and produce SBOM; Docker Desktop must be started.
-- [ ] Add bounded latency/request/error/score-distribution metrics.
+- [x] Add bounded latency/request/error/score-distribution metrics.
 - [ ] Implement deterministic offline drift monitor with synthetic shifted demonstration.
 - [ ] Run local load test and record p50/p95/p99/error rate.
 - [ ] Create measured SLO guidance, alert/incident/rollback/model-replacement runbooks.
@@ -68,7 +68,7 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [ ] Remove or explicitly deprecate dead placeholder modules and stale reports after call-graph verification.
 - [ ] Add skip link/mobile navigation/progress/table/chart accessibility semantics.
 - [ ] Record a frontend performance budget from a clean measured build.
-- [ ] Correct project author metadata.
+- [x] Correct project author metadata.
 - [ ] Write architecture, ADRs, API guide, threat model, monitoring guide,
   deployment/reproducibility/incident runbooks, limitations/non-goals,
   interview defense, and three-minute demo script.

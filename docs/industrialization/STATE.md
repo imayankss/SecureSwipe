@@ -8,6 +8,7 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
+- Current committed phase: `92b31fa534c21a5ec45136aa6c947502913ad1a0`
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -20,10 +21,10 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Docker client: 27.3.1, arm64; Docker daemon unavailable during baseline
 - GitHub CLI: not installed; no push, PR, release, or deployment attempted
 
-The baseline `requirements.txt` had no version bounds. A clean install on
-2026-08-13 therefore resolved contemporary packages rather than a reproducible
-historical environment. The exact resolved set was captured with `pip freeze`
-during the audit and will be replaced by project-owned dependency locks.
+The baseline `requirements.txt` had no version bounds. It has been replaced by
+separate hash-locked API and quality environments generated from reviewed
+top-level inputs. The optional notebook input remains separate so Jupyter is
+not included in the service or required quality runtime.
 
 ## Verified baseline commands
 
@@ -44,6 +45,14 @@ during the audit and will be replaced by project-owned dependency locks.
 | `cd web && npm audit --omit=dev --json` | PASS | 0 vulnerabilities |
 | Docker daemon query | FAIL (environment) | Docker Desktop is not running |
 | Documented full ML pipeline | BLOCKED | `data/raw/creditcard.csv`, processed splits, and fitted artifacts are absent |
+| `.venv/bin/ruff check api src scripts tests` | PASS | Ruff 0.12.11 |
+| `.venv/bin/mypy --ignore-missing-imports api src/artifacts src/inference/risk_scoring.py` | PASS | 8 source files, mypy 1.17.1 |
+| `.venv/bin/pip install --require-hashes -r requirements/api.lock` in a new venv | PASS | Fresh API environment installed and imported the built wheel outside the repository |
+| `.venv/bin/pip check` | PASS | Hash-locked quality environment has no broken requirements |
+| `.venv/bin/pip-audit -r requirements/api.lock --disable-pip --progress-spinner off` | PASS | No known vulnerabilities |
+| `.venv/bin/python -m pytest` | PASS | 196 passed, 12 upstream deprecation warnings, 5.68 s |
+| `.venv/bin/python -m build --wheel` | PASS | Package includes `api` and `src`; isolated build uses setuptools 84.0.0 |
+| frontend data/lint/type/test/build sequence | PASS | Static production build completed in the same post-API cycle |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -69,6 +78,21 @@ This is baseline evidence only; a dedicated secret scanner remains required.
   missing-checksum, and untrusted artifacts plus golden bundle round-trip scores.
 - Corrected and regenerated historical report/dashboard language without changing metrics.
 - Full Python suite after the batch: 166 passed, 11 upstream joblib/NumPy warnings.
+- Replaced the API placeholders with versioned liveness, readiness, model-info,
+  single-prediction, batch-prediction, and Prometheus-text metrics endpoints.
+- Added strict finite feature contracts, unknown-field rejection, a 100-row
+  batch cap, byte-level request limit, explicit CORS allowlist, stable error
+  envelopes, request IDs, and structured redacted request logs.
+- Added an immutable, lock-protected serving path whose direct bundle and API
+  scores match exactly on golden synthetic inputs. Missing models fail
+  readiness/inference; corrupt configured bundles fail startup before use.
+- Separated `raw_score` from optional `calibrated_probability` in every API
+  response and documented that the reference API must not process real data.
+- Added hash-locked API and quality dependency sets, clean wheel install/import
+  proof, repository-wide Ruff checks, focused mypy checks, and a clean API
+  dependency vulnerability audit.
+- Full Python suite after the API batch: 196 passed in 5.68 s; frontend data,
+  lint, type, current test, and production-build gates also passed.
 
 ## Current issues
 
@@ -85,13 +109,11 @@ new decision.
 - Single-split model selection does not establish XGBoost superiority over the
   simpler Random Forest (validation AP difference is approximately 0.0004).
 - No calibration evaluation and no implemented cost model.
-- No versioned serving bundle, run manifest, golden parity test, or dependency lock.
-- FastAPI, inference, container, monitoring, and operations paths are placeholders.
-- Numerical validation does not consistently reject NaN/infinity/duplicates.
+- No reproducible training run manifest or authoritative typed training configuration.
+- Docker, offline monitoring, and operational runbooks remain unimplemented.
 - Historical test outputs are rerunnable/overwriteable and reports contain hardcoded decision metadata.
 - Export `--check` is mutating and does not checksum public figures or fully cross-check metrics.
 - No GitHub Actions, Dependabot, container scan, secret scan, or release-quality controls.
-- Kaggle credential filenames are not explicitly ignored.
 - Current checkout cannot reproduce the original-data evaluation because the
   intentionally uncommitted CSV and fitted artifacts are unavailable.
 
@@ -104,14 +126,14 @@ new decision.
 
 ## Next executable action
 
-Implement the next P1 batch: strict FastAPI schemas/service with bundle-backed
-startup readiness, golden evaluation/service parity, stable error contracts,
-request limits, request IDs, structured redacted logs, bounded metrics, OpenAPI
-tests, and unavailable-model behavior.
+Implement the next P1 batch: replace the placeholder container definition with
+a minimal pinned Python image, hash-locked install, non-root runtime, liveness
+health check, explicit artifact mount contract, deterministic synthetic smoke
+bundle, and container-oriented contract tests. Add a strict `.dockerignore`.
 
-Acceptance: every endpoint and failure mode passes synthetic contract tests; a
-corrupt or absent bundle leaves readiness false; raw inputs produce byte-for-byte
-equivalent scores through direct bundle and service paths; logs contain no vectors.
+Acceptance: static Dockerfile policy tests pass now; when Docker Desktop is
+available, linux/arm64 build, startup, liveness, readiness, golden inference,
+vulnerability scan, and SBOM generation must pass before the container item is closed.
 
 ## External blockers and user action
 

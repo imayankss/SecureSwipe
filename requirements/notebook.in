@@ -1,0 +1,3 @@
+# Optional notebook environment, intentionally separate from CI and API images.
+-r training.in
+jupyter==1.1.1

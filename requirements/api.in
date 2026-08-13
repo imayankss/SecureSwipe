@@ -1,0 +1,11 @@
+# Minimal CPU inference runtime. Exact transitive versions/hashes are compiled
+# into api.lock; do not install this input directly in CI or containers.
+fastapi==0.141.1
+joblib==1.5.3
+numpy==2.5.2
+pandas==3.0.5
+pyarrow==24.0.0
+pydantic==2.13.4
+scikit-learn==1.9.0
+uvicorn[standard]==0.52.2
+xgboost==3.4.0

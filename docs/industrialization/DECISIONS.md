@@ -84,3 +84,22 @@ Local installs, tests, edits, and commits are authorized. Pushes, pull requests,
 releases, public deployments, DNS, and paid infrastructure require explicit
 confirmation immediately before the action.
 
+## D-010 — Separate hash-locked service and quality environments
+
+Status: accepted
+
+`requirements/api.lock` contains only the production API closure and hashes;
+`requirements/quality.lock` adds training and verification tools. Human-reviewed
+top-level `.in` files are the source of each lock. Notebook tooling remains an
+explicit optional input rather than inflating the service or ordinary test
+environment. Locks target Python 3.12 and CPU execution on Apple Silicon/Linux;
+CUDA is neither required nor selected.
+
+## D-011 — Missing artifacts mean not-ready, invalid artifacts abort startup
+
+Status: accepted
+
+An image or developer process may start without a model so liveness and
+diagnostics remain available, but readiness and inference return 503. Once a
+bundle path is explicitly configured, any trust, provenance, checksum, schema,
+or runtime failure aborts startup. This avoids silently serving a fallback model.

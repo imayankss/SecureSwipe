@@ -201,8 +201,8 @@ def build_day3_preprocessing_report(
         "",
         "## Preprocessing Strategy",
         "",
-        f"- `Time` and `Amount` are scaled using `StandardScaler`.",
-        f"- `V1`-`V28` are passed through unchanged because they are "
+        "- `Time` and `Amount` are scaled using `StandardScaler`.",
+        "- `V1`-`V28` are passed through unchanged because they are "
         "already PCA-transformed.",
         f"- `{target_name}` is never included in the preprocessing pipeline.",
         "- The preprocessor is fitted only on training data "

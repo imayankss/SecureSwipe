@@ -16,7 +16,7 @@ import sys
 from dataclasses import dataclass
 from importlib import metadata
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any, Literal, Mapping, Sequence, cast
 
 import joblib
 
@@ -26,6 +26,7 @@ BUNDLE_FORMAT_VERSION = "1"
 MANIFEST_FILENAME = "manifest.json"
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 _RUNTIME_PACKAGES = ("joblib", "numpy", "pandas", "scikit-learn")
+ScoreType = Literal["raw_score", "calibrated_probability"]
 
 
 class ArtifactVerificationError(RuntimeError):
@@ -43,7 +44,7 @@ class ModelBundle:
     feature_schema: tuple[str, ...]
     training_data_fingerprint: str
     model_version: str
-    score_type: str = "raw_score"
+    score_type: ScoreType = "raw_score"
 
     def validate(self) -> None:
         if self.preprocessor is None or not hasattr(self.preprocessor, "transform"):
@@ -66,6 +67,8 @@ class ModelBundle:
             raise ValueError("Unsupported ModelBundle score_type.")
         if self.calibrator is None and self.score_type != "raw_score":
             raise ValueError("A bundle without a calibrator must expose raw_score.")
+        if self.calibrator is not None and self.score_type != "calibrated_probability":
+            raise ValueError("A bundle with a calibrator must expose calibrated_probability.")
 
 
 def sha256_file(path: Path) -> str:
@@ -81,7 +84,11 @@ def _resolve_trusted_path(path: str | Path, trusted_root: str | Path) -> Path:
     candidate = Path(path).expanduser()
     if not candidate.is_absolute():
         working_directory_candidate = candidate.resolve(strict=False)
-        candidate = working_directory_candidate if working_directory_candidate.exists() else root / candidate
+        candidate = (
+            working_directory_candidate
+            if working_directory_candidate.exists()
+            else root / candidate
+        )
     if candidate.is_symlink():
         raise ArtifactVerificationError("Artifact must not be a symbolic link.")
     candidate = candidate.resolve(strict=True)
@@ -198,8 +205,14 @@ def save_model_bundle(bundle: ModelBundle, output_dir: str | Path) -> Path:
 
 def _validate_manifest(manifest: Mapping[str, Any]) -> None:
     required = {
-        "bundle_format_version", "model_version", "operating_threshold", "score_type",
-        "feature_schema", "training_data_fingerprint", "runtime", "artifacts",
+        "bundle_format_version",
+        "model_version",
+        "operating_threshold",
+        "score_type",
+        "feature_schema",
+        "training_data_fingerprint",
+        "runtime",
+        "artifacts",
     }
     missing = required - manifest.keys()
     if missing:
@@ -293,7 +306,7 @@ def load_model_bundle(
         feature_schema=tuple(manifest["feature_schema"]),
         training_data_fingerprint=str(manifest["training_data_fingerprint"]),
         model_version=str(manifest["model_version"]),
-        score_type=str(manifest["score_type"]),
+        score_type=cast(ScoreType, manifest["score_type"]),
     )
     bundle.validate()
     return bundle
