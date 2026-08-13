@@ -1807,7 +1807,7 @@
         "mean_abs_shap_value": 0.10089807212352753
       }
     ],
-    "caveat": "V1-V28 are anonymized PCA components. SHAP describes model behavior and does not assign real-world business meaning or causality."
+    "caveat": "V1-V28 are anonymized PCA components. The historical SHAP unit, additivity residual, and cohort composition were not retained and cannot be verified without the absent model artifact. Treat this as a noncausal historical ranking, not probability impact."
   },
   "curves": {
     "split": "validation",

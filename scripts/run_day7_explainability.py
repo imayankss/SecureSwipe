@@ -18,17 +18,21 @@ from pathlib import Path
 from typing import Any
 
 import pandas as pd
+import numpy as np
 
 from src.artifacts.bundle import load_verified_joblib
 from src.preprocessing.feature_config import RANDOM_STATE
 from src.utils.config import load_project_config
 
 from src.explainability.shap_explainer import (
+    build_cohort_feature_importance,
+    build_explanation_cohort,
     build_shap_feature_importance,
-    calculate_shap_values,
+    calculate_verified_shap_explanation,
     plot_shap_summary_bar,
-    sample_explanation_data,
+    save_shap_cohort_evidence,
     save_shap_outputs,
+    summarize_explanation_cohort,
     write_shap_markdown_report,
 )
 
@@ -117,6 +121,34 @@ def load_validation_features(
     return X_val
 
 
+def load_validation_labels(processed_dir: str | Path = DEFAULT_PROCESSED_DIR) -> pd.Series:
+    """Load finite binary validation labels for explicit cohort composition."""
+    path = Path(processed_dir) / "y_val.parquet"
+    if not path.is_file():
+        raise FileNotFoundError(f"Validation labels not found at {path}.")
+    frame = pd.read_parquet(path)
+    if list(frame.columns) != ["Class"]:
+        raise ValueError("y_val.parquet must contain exactly the Class column.")
+    labels = frame["Class"]
+    numeric = pd.to_numeric(labels, errors="raise").to_numpy(dtype=float)
+    if not np.isfinite(numeric).all() or not set(np.unique(numeric)).issubset({0.0, 1.0}):
+        raise ValueError("Validation labels must contain only finite binary values.")
+    return pd.Series(numeric.astype(int), index=labels.index, name="Class")
+
+
+def generate_validation_raw_scores(model: Any, features: pd.DataFrame) -> np.ndarray:
+    """Return bounded class scores without describing them as probabilities."""
+    scores = np.asarray(model.predict_proba(features), dtype=float)
+    if scores.ndim != 2 or scores.shape != (len(features), 2):
+        raise ValueError("Champion model predict_proba must return two columns.")
+    positive_scores = scores[:, 1]
+    if not np.isfinite(positive_scores).all() or np.logical_or(
+        positive_scores < 0, positive_scores > 1
+    ).any():
+        raise ValueError("Champion model returned an invalid bounded raw score.")
+    return positive_scores
+
+
 def parse_args() -> argparse.Namespace:
     """Parse command-line arguments for the Day 7 SHAP runner."""
     parser = argparse.ArgumentParser(
@@ -174,12 +206,11 @@ def run_day7_explainability(
     Workflow:
         1. Load the champion XGBoost model.
         2. Load validation features (validation data only).
-        3. Sample up to ``sample_size`` validation rows.
-        4. Calculate SHAP values for the sample.
-        5. Build mean absolute SHAP feature importance.
-        6. Save feature importance as CSV and JSON.
-        7. Save SHAP summary bar plots as PNG.
-        8. Save a Markdown report explaining the top features.
+        3. Load aligned validation labels and compute uncalibrated raw scores.
+        4. Select disjoint fraud/high-score/representative explanation cohorts.
+        5. Calculate raw-margin SHAP values and prove additivity.
+        6. Build combined and per-cohort mean absolute SHAP importance.
+        7. Save aggregate evidence, importance tables, plots, and a report.
 
     Args:
         model_path: Path to the champion model artifact.
@@ -203,22 +234,46 @@ def run_day7_explainability(
 
     X_val = load_validation_features(processed_dir)
     print(f"Loaded validation rows: {len(X_val)}")
+    y_val = load_validation_labels(processed_dir)
+    if len(X_val) != len(y_val) or not X_val.index.equals(y_val.index):
+        raise ValueError("Validation features and labels must have identical aligned row indexes.")
+    validation_scores = generate_validation_raw_scores(model, X_val)
 
-    X_sample = sample_explanation_data(
-        X_val, sample_size=sample_size, random_state=random_state
+    cohort = build_explanation_cohort(
+        X_val,
+        y_val,
+        validation_scores,
+        sample_size=sample_size,
+        random_state=random_state,
     )
-    print(f"Sampled validation rows for SHAP: {len(X_sample)}")
+    print(f"Selected validation rows for SHAP: {len(cohort.features)}")
 
-    shap_values = calculate_shap_values(model, X_sample)
-    print("Calculated SHAP values")
+    explanation = calculate_verified_shap_explanation(model, cohort.features)
+    print(
+        "Verified SHAP raw-margin additivity: "
+        f"max_abs_error={explanation.max_abs_additivity_error:.9g}"
+    )
 
     feature_importance_df = build_shap_feature_importance(
-        shap_values, feature_names=list(X_sample.columns)
+        explanation.values, feature_names=list(cohort.features.columns)
+    )
+    cohort_summary = summarize_explanation_cohort(cohort)
+    cohort_importance = build_cohort_feature_importance(
+        explanation,
+        list(cohort.features.columns),
+        cohort.cohort_names,
     )
 
     shap_paths = save_shap_outputs(feature_importance_df, explainability_dir)
     print(f"Saved SHAP feature importance: {shap_paths['csv']}")
     print(f"Saved SHAP top features: {shap_paths['json']}")
+    cohort_evidence_path = save_shap_cohort_evidence(
+        explanation,
+        cohort_summary,
+        cohort_importance,
+        explainability_dir,
+    )
+    print(f"Saved SHAP cohort evidence: {cohort_evidence_path}")
 
     summary_bar_path = figures_dir / "shap_summary_bar.png"
     plot_shap_summary_bar(
@@ -240,6 +295,9 @@ def run_day7_explainability(
     write_shap_markdown_report(
         feature_importance_df,
         report_path,
+        explanation=explanation,
+        cohort_summary=cohort_summary,
+        cohort_importance=cohort_importance,
         top_n=DEFAULT_SUMMARY_TOP_N,
     )
     print(f"Saved SHAP markdown report: {report_path}")
@@ -247,7 +305,11 @@ def run_day7_explainability(
     return {
         "model_path": Path(model_path),
         "validation_rows": len(X_val),
-        "sampled_rows": len(X_sample),
+        "sampled_rows": len(cohort.features),
+        "shap_output": explanation.output_name,
+        "max_abs_additivity_error": explanation.max_abs_additivity_error,
+        "cohort_summary": cohort_summary,
+        "cohort_evidence_json": cohort_evidence_path,
         "feature_importance_csv": shap_paths["csv"],
         "feature_importance_json": shap_paths["json"],
         "summary_bar_plot": summary_bar_path,
@@ -267,6 +329,9 @@ def print_success_message(results: dict[str, Any]) -> None:
     print(f"Model used: {results['model_path']}")
     print(f"Validation rows available: {results['validation_rows']}")
     print(f"Validation rows sampled for SHAP: {results['sampled_rows']}")
+    print(f"SHAP model output: {results['shap_output']}")
+    print(f"Maximum additivity error: {results['max_abs_additivity_error']:.9g}")
+    print(f"Cohort evidence JSON: {results['cohort_evidence_json']}")
     print(f"Feature importance CSV: {results['feature_importance_csv']}")
     print(f"Feature importance JSON: {results['feature_importance_json']}")
     print(f"Summary bar plot: {results['summary_bar_plot']}")

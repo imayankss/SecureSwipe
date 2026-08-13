@@ -5,7 +5,7 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 
 | Category | Available | Initial | Current | Evidence |
 |---|---:|---:|---:|---|
-| ML correctness and scientific validity | 20 | 5 | 14 | Strict contracts/isolation, historical quarantine, forward folds, Wilson/paired bootstrap uncertainty, simplicity rule, calibration diagnostics, constrained metrics, and explicit cost engine are tested; original OOT/model comparison/calibration and SHAP-unit evidence remain blocked/open. |
+| ML correctness and scientific validity | 20 | 5 | 15 | Strict contracts/isolation, historical quarantine, forward folds, uncertainty, simplicity rule, calibration, constrained/cost metrics, and raw-margin SHAP additivity/cohort evidence are tested; original OOT/model comparison/calibration and historical SHAP execution remain blocked. |
 | Reproducibility and data lineage | 15 | 2 | 14 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, deterministic manifests, strict typed configuration, SHA-256 historical lock, full dashboard/figure digest, and read-only verification exist; legacy training manifests remain. |
 | Architecture and maintainability | 15 | 4 | 14 | Offline/static and verified serving paths, mounted bundle image, executable current audit, workflow separation, typed configuration, immutable historical namespace, and governance boundaries are explicit; duplicate legacy modules remain. |
 | Testing and quality gates | 15 | 6 | 15 | 295 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain tests, package proof, and frontend gates pass; Docker execution and behavioral frontend coverage remain explicit blockers rather than passing evidence. |
@@ -13,7 +13,7 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean runtime/npm audits, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
 | Observability and operations | 10 | 0 | 8 | Bounded metrics, runtime JSON/redaction evidence, deterministic schema/feature/score/delayed-label monitoring, shifted demo, repeated M2 load evidence, local objectives, and incident/rollback guides pass; container/provider operations remain unmeasured. |
 | Documentation and developer experience | 5 | 3 | 5 | Persistent controls, API/container/scientific/monitoring protocols, data/model cards, security policy, threat model, and local incident guidance are explicit; broader architecture/reproducibility/interview material remains. |
-| **Total** | **100** | **23** | **87** | **Monitoring, host operations, configuration, and historical integrity are evidence-backed; frontend behavior, container, legacy manifests, SHAP units, and original-data evidence remain.** |
+| **Total** | **100** | **23** | **88** | **Monitoring, host operations, configuration, historical integrity, and the new SHAP protocol are evidence-backed; frontend behavior, container, legacy manifests, and original-data execution remain.** |
 
 ## Evidence ledger
 
@@ -63,5 +63,10 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   tracked SHA-256 lock; the disabled historical runner exits 2; the web exporter
   verifies the lock before reading metrics. The one-time migration recorded
   `metrics_changed: false`, and threshold/report tests reject stale constants.
+- SHAP-validity batch: 307 Python tests, repository Ruff, focused mypy, and the
+  Node 22.13.1 frontend gates pass. A fitted synthetic binary-logistic XGBoost
+  reconstructs native raw margin from base plus SHAP within `1e-5`; unsupported
+  estimator output fails closed; cohort evidence is byte-deterministic. The
+  historical ranking remains explicitly unverified because its model/rows are absent.
 
 The score will be updated only after each batch's acceptance commands pass.

@@ -213,16 +213,19 @@ constraint. It is not a business-policy or future-performance guarantee.
 
 ## Explainability
 
-Day 7 uses SHAP on a small validation sample to explain the already-trained
-XGBoost model. SHAP is used only for explanation, not tuning, feature selection,
-or model changes. Because most features are PCA-anonymized, the explanations
-describe model behavior over transformed components rather than real-world
-merchant or customer attributes.
+The tracked Day 7 ranking came from a validation sample, but its row identities,
+labels, score composition, output unit, and additivity residual were not retained;
+without the absent model artifact it is historical, unit-unverified evidence.
+New runs explain XGBoost raw margin/log-odds, verify SHAP additivity against the
+native margin, and emit aggregate fraud/high-score/representative cohort evidence.
+SHAP remains noncausal and is never used for tuning or feature selection. PCA
+components cannot be mapped to real merchant or customer attributes.
 
 Generated outputs:
 
 - `reports/explainability/shap_feature_importance.csv`
 - `reports/explainability/shap_top_features.json`
+- `reports/explainability/shap_cohort_evidence.json` (new verified runs only)
 - `reports/explainability/shap_summary_report.md`
 - `reports/figures/shap_summary_bar.png`
 - `reports/figures/shap_top_features.png`

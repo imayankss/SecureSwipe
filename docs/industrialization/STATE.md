@@ -8,7 +8,7 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Current committed phase: `31633e3` (typed configuration/historical-lock batch pending commit)
+- Current committed phase: `0b4017a` (SHAP-validity batch pending commit)
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -83,6 +83,9 @@ not included in the service or required quality runtime.
 | configuration/historical full Python gate | PASS | Ruff, mypy on 26 critical files, 304 tests, 19 upstream warnings |
 | project audit generation and read-only replay | PASS with explicit blocker | 11 executable gates passed; absent model remains `UNAVAILABLE`, overall `INCOMPLETE` |
 | Node 22.13.1 frontend replay | PASS | clean npm install/audit, export gate, ESLint, TypeScript, and static Next.js build |
+| SHAP-validity full regression | PASS | Ruff, focused mypy, 307 tests, 22 upstream warnings |
+| SHAP synthetic additivity evidence | PASS | binary-logistic XGBoost raw margin reconstructed within `1e-5`; unsupported estimator rejected |
+| frontend after SHAP caveat export | PASS | Node 22.13.1 export/lint/type/build and npm audit all pass |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -201,6 +204,14 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
   changed no recorded metric, and removed stale hardcoded policy wording.
 - Made the web export verify the historical lock before reading public metrics
   and added the same integrity gate to CI and the executable project audit.
+- Added XGBoost-only TreeExplainer raw-margin/log-odds attribution that fails
+  closed unless base plus SHAP values reconstruct native `output_margin=True`.
+- Replaced the prevalence-blind future SHAP sample with disjoint labelled-fraud,
+  high-raw-score, and deterministic representative cohorts; new reports persist
+  only aggregate composition/additivity/per-cohort importance, never row vectors.
+- Quarantined the tracked legacy SHAP ranking as output-unit/additivity/cohort-
+  unverified because its model and row identities are absent; public text no
+  longer implies probability impact.
 
 ## Current issues
 
@@ -221,7 +232,8 @@ new decision.
   the tested analysis engines do not retroactively justify threshold 0.53.
 - Legacy training commands do not yet all emit the deterministic run manifest
   used by the new development runner.
-- SHAP output units/additivity and sample cohort composition remain unverified.
+- Applying the verified SHAP protocol to the historical ranking is blocked by
+  the absent original model and aligned sample row identities.
 - Frontend still lacks component/accessibility/browser tests and optional synthetic API mode.
 - Workflow definitions have not run on GitHub because pushing is not authorized;
   the local Docker daemon also prevents executing the container scan/SBOM job.
@@ -236,14 +248,14 @@ new decision.
 
 ## Next executable action
 
-Implement the next locally actionable P1 batch: verify SHAP output units and
-additivity against the declared estimator output, record explained cohort class/
-score composition, and remove probability wording where only raw margin or
-uncalibrated score evidence exists.
+Implement the next locally actionable P1 batch: make legacy Day 2–7 training
+commands emit deterministic run manifests (code state, parameters, seed, runtime,
+input hashes, and output hashes) and refuse partial/overwrite evidence directories.
 
-Acceptance: synthetic XGBoost attribution sums reconstruct the explicitly named
-model output within tolerance; cohort metadata is generated and validated; no
-SHAP report implies causal or calibrated-probability semantics.
+Acceptance: a synthetic legacy command run emits a strict development namespace
+manifest, repeated identical runs in separate destinations are byte-identical,
+injected failure publishes no complete destination, and test/historical names
+are rejected.
 
 ## External blockers and user action
 

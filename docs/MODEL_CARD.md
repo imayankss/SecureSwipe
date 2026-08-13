@@ -53,6 +53,10 @@ future final claim.
 - Fraud patterns and base rates drift. Drift is a diagnostic signal, not by
   itself proof of model failure.
 - SHAP attribution is noncausal and PCA features reduce human interpretability.
+  The tracked historical ranking lacks retained output-unit/additivity/cohort
+  evidence and is explicitly unit-unverified. New runs must explain XGBoost raw
+  margin/log-odds, pass native-output additivity, and report purposeful cohort
+  label/score composition; that protocol does not retroactively validate history.
 - Protected-group fairness cannot be evaluated because protected attributes are
   absent. This system must not be used to infer them.
 - Human review capacity, appeal/override, recovery, and customer-harm processes

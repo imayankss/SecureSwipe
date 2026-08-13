@@ -620,8 +620,10 @@ def build_web_payload() -> dict[str, Any]:
             "split": "validation sample",
             "features": shap_features,
             "caveat": (
-                "V1-V28 are anonymized PCA components. SHAP describes model behavior "
-                "and does not assign real-world business meaning or causality."
+                "V1-V28 are anonymized PCA components. The historical SHAP unit, "
+                "additivity residual, and cohort composition were not retained and "
+                "cannot be verified without the absent model artifact. Treat this as "
+                "a noncausal historical ranking, not probability impact."
             ),
         },
         "curves": {

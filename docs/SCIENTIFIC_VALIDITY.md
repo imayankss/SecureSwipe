@@ -84,6 +84,16 @@ must be checked against the fitted model before a report labels them. Global
 plots must disclose cohort class/score composition and include relevant alert
 cohorts rather than relying on a prevalence-blind random sample.
 
+The current implementation supports fitted binary-logistic XGBoost only. It
+requests TreeExplainer's raw output and verifies that the base value plus every
+row's SHAP sum reconstructs native `output_margin=True` within a declared
+tolerance. The purposeful explanation cohort is disjoint: labelled-fraud rows,
+highest remaining raw-score rows, and a deterministic random remainder. Reports
+state that this is not prevalence-representative and persist only aggregate
+composition and cohort importance, never row vectors. The historical ranking
+predates this evidence and is labelled unit/additivity/cohort-unverified because
+the original model and row identities are absent.
+
 Protected-group fairness cannot be evaluated from this dataset: the anonymized
 PCA fields contain no declared protected attributes, and treating PCA axes as
 proxies would be unsupported. This limitation does not establish fairness.

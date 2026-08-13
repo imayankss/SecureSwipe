@@ -233,3 +233,16 @@ defaults from it. Randomized modules import the canonical seed from one feature
 configuration module, and a contract test proves that value matches the typed
 configuration. API runtime settings remain environment-owned because container
 mounts, body limits, and CORS are deployment inputs rather than training facts.
+
+## D-025 — SHAP explains verified raw margin on disclosed cohorts
+
+Status: accepted
+
+New XGBoost explanations use TreeExplainer raw output and must reconstruct the
+model's native `output_margin=True` for every explained row. The resulting unit
+is raw margin/log-odds, never calibrated probability. A disjoint purposeful
+cohort includes labelled-fraud, highest remaining raw-score, and deterministic
+random rows; its aggregate label/score composition and per-cohort rankings are
+reported as non-prevalence-representative. Historical values are not upgraded by
+the new protocol: their artifact, row identities, output unit, and residuals are
+absent, so public material labels them unverified.

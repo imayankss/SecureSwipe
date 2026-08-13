@@ -20,7 +20,9 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Implement Brier score, reliability data, ECE, and leakage-safe Platt/isotonic comparison.
 - [x] Implement configurable FP/FN/review/recovery cost scenarios and threshold sensitivity.
 - [x] Add recall at precision/FPR constraints and name average precision accurately.
-- [ ] Verify SHAP output units/additivity and report sample cohort composition.
+- [x] Add fail-closed XGBoost raw-margin SHAP additivity and cohort-evidence protocol.
+- [B] Apply the verified SHAP protocol to the historical model; the artifact and
+  aligned sample row identities are absent, so the tracked ranking is explicitly unverified.
 - [x] Write data card, model card, and protected-group fairness limitation.
 
 ## P1 — artifacts and reproducibility
