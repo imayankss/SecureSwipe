@@ -47,6 +47,7 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Structured redacted JSON logs with request IDs and no transaction vectors.
 - [x] Configurable explicit CORS allowlist and request-body cap.
 - [x] Replace Dockerfile, add `.dockerignore`, non-root user, pinned runtime, and health check.
+- [x] Remove the unnecessary package installer from the final runtime image.
 - [B] Test linux/arm64 image startup/readiness/inference; Docker Desktop must be started.
 - [B] Scan image and produce SBOM; Docker Desktop must be started.
 - [x] Add bounded latency/request/error/score-distribution metrics.

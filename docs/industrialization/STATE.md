@@ -8,8 +8,8 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Current committed phase: `0e6f07a05fb5c146367a817ff486e554dfac4698`
-  (fresh-source wheel boundary and exact inventory verification)
+- Current committed phase: `2fba975fc1a08b5f1b7c1f26a49d4b45e0cbf89e`
+  (pip-free API runtime hardening)
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -96,6 +96,7 @@ not included in the service or required quality runtime.
 | static frontend measured budget | PASS | clean production page: 6 scripts/270,718 encoded script bytes; 10 total requests/329,437 encoded bytes; enforced at 8/350,000 and 12/450,000 |
 | documentation contract | PASS | 23 Markdown files checked for valid local links; architecture, limitations, deployment, interview, and three-minute demo guides added |
 | adversarial wheel inspection | PASS after defect correction | first direct wheel build reused ignored stale modules and was rejected as evidence; sdist-boundary rebuild has exactly the 49 current source modules (54 archive members), 3 new inventory tests pass, and the 16-command audit passes |
+| pip-free API runtime proof | PASS locally, image execution blocked | clean API closure + wheel installed, pip removed, and API/bundle imports passed; Dockerfile contract enforces removal before non-root switch |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -251,6 +252,9 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
   finding 16 deleted modules copied from ignored `build/lib`; release builds now
   start from a fresh sdist extraction and compare the complete wheel module set
   with current source, failing on missing or unexpected members.
+- Removed the now-vulnerable, operationally unnecessary pip installer from the
+  final API image; a clean pip-free environment still imports the packaged API
+  and bundle code, while Docker scan evidence remains explicitly blocked.
 
 ## Current issues
 

@@ -10,7 +10,7 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | Architecture and maintainability | 15 | 4 | 15 | Offline/static, blocked-development, reference-stage, and verified serving paths have explicit boundaries; direct partial legacy CLIs fail closed; mounted bundles, current audit, workflow separation, typed configuration, and governance are tested. |
 | Testing and quality gates | 15 | 6 | 15 | 323 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain/wheel-inventory tests, clean package proof, four component tests, and two production Chromium keyboard/mobile/WCAG/static-boundary tests pass; Docker execution remains explicitly blocked. |
 | API/container reliability | 10 | 0 | 8 | Versioned API, readiness, limits, OpenAPI, exact parity, threadpool offload, runtime log evidence, health responsiveness, and 500-request loopback behavior pass; container remains unverified. |
-| Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean API/quality/resolver/npm audits, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
+| Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean API/quality/resolver/npm audits, pip-free runtime policy, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
 | Observability and operations | 10 | 0 | 8 | Bounded metrics, runtime JSON/redaction evidence, deterministic schema/feature/score/delayed-label monitoring, shifted demo, repeated M2 load evidence, local objectives, and incident/rollback guides pass; container/provider operations remain unmeasured. |
 | Documentation and developer experience | 5 | 3 | 5 | Persistent controls, architecture/data flow, API/container/scientific/monitoring protocols, data/model cards, threat/limitations/deployment/reproducibility guides, interview defense, demo, and local incident guidance are explicit and link-checked. |
 | **Total** | **100** | **23** | **90** | **Local scientific protocols, reproducibility, architecture, API, monitoring, and behavioral/static frontend gates are evidence-backed; container, remote CI, and original-data execution remain.** |
@@ -97,5 +97,9 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   then compare all packaged `api/` and `src/` Python modules with current source.
   Three failure-mode tests and the corrected 49-source-module/54-member wheel
   inventory pass.
+- Runtime hardening proof: the API lock and corrected wheel were installed into
+  a clean environment, pip was removed, and the API/bundle imports still passed.
+  The Dockerfile and static tests enforce removal before switching to UID 10001;
+  final image execution/scan remains blocked by the stopped daemon.
 
 The score will be updated only after each batch's acceptance commands pass.
