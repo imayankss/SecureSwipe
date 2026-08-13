@@ -37,14 +37,19 @@ jobs:
       - name: Type-check critical paths
         run: >-
           python -m mypy --ignore-missing-imports api src/artifacts
-          src/inference/risk_scoring.py src/evaluation/statistical_metrics.py
+          src/inference src/monitoring src/evaluation/statistical_metrics.py
           src/evaluation/calibration.py src/evaluation/cost_analysis.py
           src/evaluation/temporal_validation.py src/utils/run_manifest.py
-          scripts/run_development_analysis.py
+          scripts/run_development_analysis.py scripts/run_offline_monitoring.py
+          scripts/create_synthetic_monitoring_demo.py scripts/run_local_load_test.py
       - name: Test
         run: python -m pytest
       - name: Verify deterministic web export
         run: python scripts/export_web_data.py --check
+      - name: Verify deterministic synthetic monitoring evidence
+        run: >-
+          python scripts/create_synthetic_monitoring_demo.py
+          --output reports/monitoring/synthetic_shift_report.json --check
       - name: Audit API dependencies
         run: >-
           python -m pip_audit -r requirements/api.lock --disable-pip
@@ -68,7 +73,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
-          node-version: 22.11.0
+          node-version: 22.13.1
           cache: npm
           cache-dependency-path: web/package-lock.json
       - name: Install frontend dependencies

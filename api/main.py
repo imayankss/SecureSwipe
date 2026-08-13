@@ -17,6 +17,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
+from starlette.concurrency import run_in_threadpool
 
 from api.metrics import ApiMetrics
 from api.schemas import (
@@ -35,6 +36,24 @@ from src.artifacts.bundle import ArtifactVerificationError, load_model_bundle
 
 LOGGER = logging.getLogger("secureswipe.api")
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
+KNOWN_ROUTES = {
+    "/health/live",
+    "/health/ready",
+    "/v1/model-info",
+    "/v1/predict",
+    "/v1/predict/batch",
+    "/metrics",
+}
+
+
+def configure_api_logging() -> None:
+    """Ensure request JSON reaches stderr even with Uvicorn access logs disabled."""
+    LOGGER.setLevel(logging.INFO)
+    if not LOGGER.handlers:
+        handler = logging.StreamHandler()
+        handler.setFormatter(logging.Formatter("%(message)s"))
+        LOGGER.addHandler(handler)
+    LOGGER.propagate = False
 
 
 @dataclass(frozen=True)
@@ -154,6 +173,7 @@ def create_app(
     service: ModelService | None = None,
     settings: ApiSettings | None = None,
 ) -> FastAPI:
+    configure_api_logging()
     configured = settings or ApiSettings.from_environment()
     injected_service = service
 
@@ -214,8 +234,14 @@ def create_app(
                     {
                         "event": "http_request",
                         "request_id": request_id,
-                        "method": request.method,
-                        "route": request.url.path,
+                        "method": (
+                            request.method
+                            if request.method in {"GET", "POST", "OPTIONS"}
+                            else "OTHER"
+                        ),
+                        "route": (
+                            request.url.path if request.url.path in KNOWN_ROUTES else "unmatched"
+                        ),
                         "status": status,
                         "latency_ms": round(latency * 1000, 3),
                         "model_version": model_service.model_version if model_service else None,
@@ -273,12 +299,15 @@ def create_app(
 
     @application.exception_handler(Exception)
     async def unexpected_error(request: Request, exc: Exception) -> JSONResponse:
-        LOGGER.exception(
+        LOGGER.error(
             json.dumps(
-                {"event": "unhandled_error", "request_id": _request_id(request)},
+                {
+                    "event": "unhandled_error",
+                    "request_id": _request_id(request),
+                    "error_class": type(exc).__name__,
+                },
                 separators=(",", ":"),
-            ),
-            exc_info=exc,
+            )
         )
         return JSONResponse(
             status_code=500,
@@ -327,7 +356,7 @@ def create_app(
 
     @application.post("/v1/predict", response_model=PredictionResponse, tags=["inference"])
     async def predict(transaction: TransactionFeatures, request: Request) -> PredictionResponse:
-        result = current_service().predict_one(transaction)
+        result = await run_in_threadpool(current_service().predict_one, transaction)
         application.state.metrics.observe_scores([result.decision_score])
         return PredictionResponse(request_id=_request_id(request), **result.model_dump())
 
@@ -339,7 +368,7 @@ def create_app(
     async def predict_batch(
         batch: BatchPredictionRequest, request: Request
     ) -> BatchPredictionResponse:
-        results = current_service().predict_many(batch.transactions)
+        results = await run_in_threadpool(current_service().predict_many, batch.transactions)
         application.state.metrics.observe_scores([result.decision_score for result in results])
         return BatchPredictionResponse(
             request_id=_request_id(request),

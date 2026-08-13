@@ -20,6 +20,7 @@ class ApiMetrics:
         self._score_count = 0
 
     def observe_request(self, method: str, route: str, status: int, latency: float) -> None:
+        normalized_method = method if method in {"GET", "POST", "OPTIONS"} else "OTHER"
         normalized_route = (
             route
             if route
@@ -34,7 +35,7 @@ class ApiMetrics:
             else "unmatched"
         )
         with self._lock:
-            self._requests[(method, normalized_route, status)] += 1
+            self._requests[(normalized_method, normalized_route, status)] += 1
             self._latency_sum[normalized_route] += latency
             self._latency_count[normalized_route] += 1
             for bucket in LATENCY_BUCKETS:

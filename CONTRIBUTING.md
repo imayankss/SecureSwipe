@@ -7,7 +7,7 @@ security, compliance, or deployment claims.
 
 ## Local setup
 
-Use Python 3.12.10 and Node 22.11.0. Create an isolated environment; never install
+Use Python 3.12.10 and Node 22.13.1. Create an isolated environment; never install
 project packages system-wide:
 
 ```bash

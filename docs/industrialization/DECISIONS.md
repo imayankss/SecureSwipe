@@ -179,3 +179,33 @@ an internal API removed by pip 26. Lock generation always runs from the
 `requirements/` directory with the command recorded in the lock header. Two
 consecutive generations must have the same digest; dependency update PRs must
 review both top-level intent and the resolved hash diff.
+
+## D-020 — Drift opens an investigation; it does not declare failure
+
+Status: accepted
+
+Offline monitoring validates schema before scoring and emits aggregate feature,
+decision-score, and optional delayed-label diagnostics. PSI/KS thresholds are
+operational signals rather than causal/statistical proof. No signal changes a
+threshold, retrains, deploys, or rolls back automatically. Raw-score calibration
+diagnostics are never described as evidence of real probability calibration.
+
+## D-021 — Preserve event-loop health while serializing estimator access
+
+Status: accepted
+
+FastAPI endpoints offload synchronous pandas/preprocessor/model work to the
+framework threadpool, so liveness and metrics are not held behind CPU-bound
+request execution. The model service lock remains the single estimator-access
+boundary because concurrent safety is not assumed for arbitrary fitted objects.
+Measured scaling claims require the actual candidate model and container.
+
+## D-022 — Local measurements are regression evidence, not deployment SLOs
+
+Status: accepted
+
+The bounded harness accepts loopback targets only, warms up once, validates the
+response contract, probes liveness during load, and records runtime and latency
+percentiles. Local regression objectives use twice the worst observed values
+from repeated M2 synthetic runs. No container/provider/customer SLO exists until
+those environments and failure modes are measured.

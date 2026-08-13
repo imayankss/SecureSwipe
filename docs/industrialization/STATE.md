@@ -8,7 +8,7 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Current committed phase: `f7585c9` (supply-chain batch pending commit)
+- Current committed phase: `6ccf49c` (monitoring/operations batch pending commit)
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -17,7 +17,8 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 
 - Host: macOS 26.5.2 (Darwin 25.5.0), Apple M2, arm64
 - Python: CPython 3.12.10, isolated environment at `.venv`
-- Node.js used for verified frontend checks: 22.11.0; npm 10.9.0
+- Node.js used for final verified frontend checks: isolated official 22.13.1;
+  npm 10.9.2 (baseline host runtime was 22.11.0/npm 10.9.0)
 - Docker client: 27.3.1, arm64; Docker daemon unavailable during baseline
 - GitHub CLI: not installed; no push, PR, release, or deployment attempted
 
@@ -68,6 +69,14 @@ not included in the service or required quality runtime.
 | CI-equivalent Ruff/focused mypy | PASS | Ruff clean; mypy clean on 14 critical paths |
 | API and npm dependency audits | PASS | zero known API vulnerabilities; npm found zero vulnerabilities |
 | frontend supply-chain regression | PASS | export check, ESLint, TypeScript, and static production build |
+| monitoring/API operations full Python regression | PASS | 295 tests, 19 upstream warnings |
+| monitoring/API operations Ruff and mypy | PASS | Ruff clean; mypy clean on 23 source files |
+| deterministic synthetic monitoring check | PASS | 2 shifted features detected; same-input report bytes identical |
+| actual loopback Uvicorn request logging | PASS | 504 request records parsed as JSON; feature vectors absent |
+| M2 synthetic load baseline | PASS | 500/500, p50 25.98 ms, p95 29.99 ms, p99 38.72 ms; concurrent health 9.82 ms |
+| three repeated M2 synthetic load probes | PASS | 1,500/1,500; p95 29.48–31.67 ms; p99 31.63–78.79 ms |
+| monitoring/API operations frontend and dependency gates | PASS | static build; npm/API audits found zero known vulnerabilities |
+| frontend lock after live advisory update | PASS | nanoid forced to fixed 3.3.18; clean npm audit/test/build on isolated Node 22.13.1 |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -159,6 +168,22 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
 - Pinned the quality lock-generation toolchain (`pip==25.3`, pip-tools 7.5.2,
   build/setuptools/wheel), proved two-pass lock determinism, and documented the
   pip-tools/pip compatibility constraint.
+- Added a deterministic offline monitoring contract that reports schema and
+  missingness violations without scoring invalid rows, compares every feature
+  and decision-score distribution, and adds delayed-label performance only when
+  valid labels support it.
+- Added a tracked synthetic shift report: `Amount` and `V1` drift signals fire
+  while score drift does not, demonstrating that drift is not model failure.
+- Factored one canonical bundle batch-scoring path shared by monitoring and API;
+  serving still has exact golden parity and serialized estimator access.
+- Corrected observability defects found by the independent ops re-audit: INFO
+  JSON logs now reach stderr, methods/routes are bounded, downstream exception
+  messages are redacted, and synchronous inference is threadpool-offloaded.
+- Added a loopback-only bounded load harness that validates response contracts,
+  separates warmup, probes health during load, and records runtime/p50/p95/p99/
+  error/throughput evidence without asserting deployment capacity.
+- Added monitoring/interpretation and incident/recovery/model-replacement guides
+  plus local regression objectives derived from repeated M2 measurements.
 
 ## Current issues
 
@@ -179,7 +204,6 @@ new decision.
   the tested analysis engines do not retroactively justify threshold 0.53.
 - No authoritative typed training configuration; legacy training commands do
   not yet all emit the deterministic run manifest used by the new development runner.
-- Offline monitoring, measured SLO/load evidence, and broader operational runbooks remain unimplemented.
 - Historical test outputs are rerunnable/overwriteable and reports contain hardcoded decision metadata.
 - Frontend still lacks component/accessibility/browser tests and optional synthetic API mode.
 - Workflow definitions have not run on GitHub because pushing is not authorized;
@@ -190,20 +214,20 @@ new decision.
 ### P2
 
 - Dead/duplicate placeholder modules and stale documents obscure canonical paths.
-- Broader deployment/incident/monitoring/interview documentation remains incomplete.
+- Broader architecture/deployment/reproducibility/interview documentation remains incomplete.
 - Mobile navigation and several accessibility semantics need improvement.
 
 ## Next executable action
 
-Implement the next P1 batch: a deterministic offline monitoring command with
-schema, missingness, feature/score drift, and optional delayed-label performance;
-generate a synthetic shifted demonstration. Add a bounded local load harness,
-measure host latency/error behavior with the synthetic bundle, and write alert,
-incident, rollback, and evidence-based SLO guidance.
+Implement the next P1 batch: one typed, validated configuration for seeds,
+artifact/report namespaces, operating-point metadata, and development paths.
+Protect the historical observed-test namespace from accidental overwrite and
+remove hardcoded threshold/decision metadata from legacy report generators.
 
-Acceptance: same-input reports are byte-identical; shifted synthetic data is
-detected without being labeled automatic model failure; invalid inputs fail
-closed; load output records p50/p95/p99 and error rate without invented targets.
+Acceptance: alternate synthetic config values propagate through generated
+outputs with no stale 0.53/0.80 constants; historical commands refuse overwrite
+without an explicit immutable-source migration path; new development output
+cannot use `test`/`historical` namespaces.
 
 ## External blockers and user action
 

@@ -20,11 +20,15 @@ artifact blocker and must not be interpreted as passing.
 | PRESENT | SHAP top features | `reports/explainability/shap_top_features.json` |
 | PRESENT | API application | `api/main.py` |
 | PRESENT | Container definition | `Dockerfile` |
+| PRESENT | Monitoring guide | `docs/MONITORING.md` |
+| PRESENT | Operations runbook | `docs/OPERATIONS.md` |
+| PRESENT | Synthetic monitoring evidence | `reports/monitoring/synthetic_shift_report.json` |
 | PASS | Python compile | `python -m compileall -q api src scripts tests` |
 | PASS | Python lint | `python -m ruff check api src scripts tests` |
-| PASS | Critical Python types | `python -m mypy --ignore-missing-imports api src/artifacts src/inference/risk_scoring.py src/evaluation/statistical_metrics.py src/evaluation/calibration.py src/evaluation/cost_analysis.py src/evaluation/temporal_validation.py src/utils/run_manifest.py scripts/run_development_analysis.py` |
+| PASS | Critical Python types | `python -m mypy --ignore-missing-imports api src/artifacts src/inference src/monitoring src/evaluation/statistical_metrics.py src/evaluation/calibration.py src/evaluation/cost_analysis.py src/evaluation/temporal_validation.py src/utils/run_manifest.py scripts/run_development_analysis.py scripts/run_offline_monitoring.py scripts/create_synthetic_monitoring_demo.py scripts/run_local_load_test.py` |
 | PASS | Python tests | `python -m pytest` |
 | PASS | Web artifact determinism | `python scripts/export_web_data.py --check` |
+| PASS | Synthetic monitoring determinism | `python scripts/create_synthetic_monitoring_demo.py --output reports/monitoring/synthetic_shift_report.json --check` |
 | PASS | API dependency vulnerabilities | `python -m pip_audit -r requirements/api.lock --disable-pip --progress-spinner off` |
 | PASS | Frontend test gate | `npm test` |
 | PASS | Frontend production build | `npm run build` |

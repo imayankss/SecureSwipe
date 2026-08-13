@@ -18,7 +18,11 @@ cardholder/customer transactions.
 - Named JSON fields are normalized to `Time`, `V1`–`V28`, `Amount`; object key
   order does not control model feature order.
 - Default limits are 65,536 request bytes and 100 transactions per batch.
-- Logs contain request metadata and model version, never complete feature vectors.
+- Inference runs in the framework threadpool so synchronous model work does not
+  block the event loop; estimator access remains serialized for safety.
+- INFO request logs are parseable JSON with normalized method/route, status,
+  latency, request ID, and model version. Downstream exception messages and
+  complete feature vectors are never emitted.
 
 ## Configure a bundle
 
@@ -83,7 +87,10 @@ Errors use a stable envelope:
 
 The interactive OpenAPI description is available at `/docs`; the machine
 contract is `/openapi.json`. `/metrics` uses Prometheus text exposition with
-bounded route/status and fixed histogram buckets.
+bounded method/route/status labels and fixed histogram buckets.
 
 Container build, restricted runtime, smoke-test, scan, SBOM, and model-replacement
 commands are documented in [`CONTAINER.md`](CONTAINER.md).
+Offline drift interpretation is documented in [`MONITORING.md`](MONITORING.md);
+measured local behavior and incident/rollback guidance are in
+[`OPERATIONS.md`](OPERATIONS.md).

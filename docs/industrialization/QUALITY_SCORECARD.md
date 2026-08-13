@@ -8,17 +8,18 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | ML correctness and scientific validity | 20 | 5 | 14 | Strict contracts/isolation, historical quarantine, forward folds, Wilson/paired bootstrap uncertainty, simplicity rule, calibration diagnostics, constrained metrics, and explicit cost engine are tested; original OOT/model comparison/calibration and SHAP-unit evidence remain blocked/open. |
 | Reproducibility and data lineage | 15 | 2 | 13 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, deterministic manifests/locks, full dashboard/figure digest, and read-only export verification exist; authoritative config and legacy training manifests remain. |
 | Architecture and maintainability | 15 | 4 | 13 | Offline/static and verified serving paths, mounted bundle image, executable current audit, workflow separation, and governance boundaries are explicit; run configuration and duplicate legacy modules remain. |
-| Testing and quality gates | 15 | 6 | 15 | 274 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain tests, package proof, and frontend gates pass; Docker execution and behavioral frontend coverage remain explicit blockers rather than passing evidence. |
-| API/container reliability | 10 | 0 | 6 | Versioned API behavior, readiness, concurrency serialization, limits, and OpenAPI pass synthetic tests; container remains unverified and requires Docker Desktop. |
+| Testing and quality gates | 15 | 6 | 15 | 295 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain tests, package proof, and frontend gates pass; Docker execution and behavioral frontend coverage remain explicit blockers rather than passing evidence. |
+| API/container reliability | 10 | 0 | 8 | Versioned API, readiness, limits, OpenAPI, exact parity, threadpool offload, runtime log evidence, health responsiveness, and 500-request loopback behavior pass; container remains unverified. |
 | Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean runtime/npm audits, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
-| Observability and operations | 10 | 0 | 3 | Bounded request/latency/score metrics and request-ID JSON logs are tested; drift monitoring, measured load/SLOs, alerts, and runbooks remain. |
-| Documentation and developer experience | 5 | 3 | 5 | Persistent controls, API/container/scientific protocols, data/model cards, and limitations are explicit; broader contributor/security/incident policy remains but the category's core evidence is complete. |
-| **Total** | **100** | **23** | **79** | **Supply-chain controls pass local policy/equivalent gates; monitoring, frontend behavior, authoritative configuration, and external evidence remain.** |
+| Observability and operations | 10 | 0 | 8 | Bounded metrics, runtime JSON/redaction evidence, deterministic schema/feature/score/delayed-label monitoring, shifted demo, repeated M2 load evidence, local objectives, and incident/rollback guides pass; container/provider operations remain unmeasured. |
+| Documentation and developer experience | 5 | 3 | 5 | Persistent controls, API/container/scientific/monitoring protocols, data/model cards, security policy, threat model, and local incident guidance are explicit; broader architecture/reproducibility/interview material remains. |
+| **Total** | **100** | **23** | **85** | **Monitoring and host operations are evidence-backed; authoritative configuration, historical write protection, frontend behavior, container, and original-data evidence remain.** |
 
 ## Evidence ledger
 
 - Python: `145 passed` in 59.18 seconds on clean Python 3.12.10 arm64 environment.
-- Frontend: data check, lint, typecheck, current test script, and production build all passed on Node 22.11.0.
+- Frontend: data check, lint, typecheck, current test script, production build,
+  and npm audit passed on isolated official Node 22.13.1/npm 10.9.2.
 - npm audit: zero known vulnerabilities in full and production-only scans.
 - Docker: client present; daemon unavailable, so no image evidence.
 - Data/model: absent by design; original AP/ROC and artifact behavior not reproducible.
@@ -47,5 +48,15 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   tests enforce immutable action refs, least privilege, no publication/deploy,
   multi-architecture scan/SBOM intent, and governance inventory. These workflow
   definitions are not counted as remote execution evidence.
+- Monitoring/operations batch: 295 tests, Ruff, and 23-file mypy pass. Synthetic
+  drift evidence is byte-deterministic and distinguishes two feature signals
+  from absent score drift. An actual loopback Uvicorn run emitted 504 parseable,
+  vector-free JSON records. Its tracked 500-request M2 result had zero errors,
+  p50/p95/p99 25.98/29.99/38.72 ms and concurrent health 9.82 ms; three additional
+  runs also had zero errors and exposed p99 jitter up to 78.79 ms. These are local
+  synthetic measurements, not a real-model/container/deployment capacity claim.
+- A newly published high-severity nanoid advisory caused the executable npm gate
+  to fail during this cycle; the transitive package is now locked to fixed
+  3.3.18. Fresh `npm ci`, audit (zero findings), test, and build pass on Node 22.13.1.
 
 The score will be updated only after each batch's acceptance commands pass.

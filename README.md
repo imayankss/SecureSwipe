@@ -315,8 +315,9 @@ loads, or API requests.
 - SHAP explains transformed PCA features, not original business fields.
 - No trained model artifact or inference service is included in the hosted site.
 - XGBoost scores have not been calibrated as real-world fraud probabilities.
-- No live feedback loop, drift monitoring, fraud-loss model, or review-cost
-  estimate is available.
+- No live feedback loop or domain-approved fraud-loss/review-cost estimate is
+  available. Offline monitoring exists for authorized local batches, but no real
+  monitoring baseline or automatic action is claimed.
 
 SecureSwipe is an educational portfolio fraud-analytics system. It is not a
 bank's production authorization system and must not be used to approve, block,
@@ -325,8 +326,8 @@ or investigate real transactions.
 ## Future Work
 
 - Add cost-sensitive threshold optimization with real business costs.
-- Add monitoring for class drift and calibration drift.
-- Add model calibration analysis.
+- Execute the implemented monitoring/calibration protocols on authorized
+  development data and establish reviewed reference windows.
 - Package inference behind a separately secured service only after the full
   preprocessor/model artifact set, input contract, monitoring, and production
   requirements have been validated.

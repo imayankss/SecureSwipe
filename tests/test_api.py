@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 import logging
+import time
+from io import StringIO
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
@@ -14,6 +16,7 @@ from fastapi.testclient import TestClient
 from sklearn.linear_model import LogisticRegression
 
 from api.main import ApiSettings, create_app
+from api.metrics import ApiMetrics
 from api.schemas import TransactionFeatures
 from api.service import ModelService
 from src.artifacts.bundle import ModelBundle, save_model_bundle
@@ -224,6 +227,139 @@ def test_metrics_are_prometheus_compatible_and_bounded(
     assert 'route="/v1/predict"' in response.text
     assert "request_id=" not in response.text
     assert "secureswipe_prediction_decision_score_bucket" in response.text
+
+
+def test_metrics_normalize_attacker_controlled_methods() -> None:
+    metrics = ApiMetrics()
+    for index in range(500):
+        metrics.observe_request(f"LOAD{index}", "/health/live", 405, 0.001)
+    exposition = metrics.render()
+    request_series = [
+        line
+        for line in exposition.splitlines()
+        if line.startswith("secureswipe_http_requests_total{")
+    ]
+    assert request_series == [
+        'secureswipe_http_requests_total{method="OTHER",route="/health/live",status="405"} 500'
+    ]
+
+
+def test_api_info_logging_is_enabled_and_emits_parseable_redacted_json(
+    ready_client: TestClient,
+    transaction_payload: dict[str, float],
+) -> None:
+    stream = StringIO()
+    handler = logging.StreamHandler(stream)
+    logger = logging.getLogger("secureswipe.api")
+    logger.addHandler(handler)
+    try:
+        response = ready_client.post(
+            "/v1/predict",
+            json=transaction_payload,
+            headers={"X-Request-ID": "runtime-log-check"},
+        )
+    finally:
+        logger.removeHandler(handler)
+    assert response.status_code == 200
+    records = [json.loads(line) for line in stream.getvalue().splitlines()]
+    record = next(item for item in records if item["request_id"] == "runtime-log-check")
+    assert record["method"] == "POST"
+    assert record["route"] == "/v1/predict"
+    assert record["status"] == 200
+    assert record["model_version"] == "api-fixture-1"
+    assert isinstance(record["latency_ms"], float)
+    assert "123.456789" not in stream.getvalue()
+    assert '"V28"' not in stream.getvalue()
+
+
+def test_unexpected_model_exception_log_omits_exception_message_and_features(
+    fitted_bundle: ModelBundle,
+    transaction_payload: dict[str, float],
+    tmp_path: Path,
+) -> None:
+    sentinel = "SENSITIVE-123.456789-V1-V28"
+
+    class ExplodingPreprocessor:
+        def transform(self, _frame: pd.DataFrame) -> np.ndarray:
+            raise RuntimeError(sentinel)
+
+    broken = ModelBundle(
+        preprocessor=ExplodingPreprocessor(),
+        model=fitted_bundle.model,
+        calibrator=None,
+        operating_threshold=0.53,
+        feature_schema=tuple(ALL_FEATURES),
+        training_data_fingerprint="c" * 64,
+        model_version="broken-fixture-1",
+    )
+    stream = StringIO()
+    handler = logging.StreamHandler(stream)
+    logger = logging.getLogger("secureswipe.api")
+    logger.addHandler(handler)
+    try:
+        with TestClient(
+            create_app(
+                service=ModelService(broken),
+                settings=ApiSettings(tmp_path, None, ()),
+            ),
+            raise_server_exceptions=False,
+        ) as client:
+            response = client.post(
+                "/v1/predict",
+                json=transaction_payload,
+                headers={"X-Request-ID": "exception-redaction-check"},
+            )
+    finally:
+        logger.removeHandler(handler)
+    assert response.status_code == 500
+    output = stream.getvalue()
+    assert sentinel not in output
+    assert '"V28"' not in output
+    error_record = next(
+        json.loads(line)
+        for line in output.splitlines()
+        if '"event":"unhandled_error"' in line
+    )
+    assert error_record == {
+        "event": "unhandled_error",
+        "request_id": "exception-redaction-check",
+        "error_class": "RuntimeError",
+    }
+
+
+def test_slow_inference_is_offloaded_so_liveness_remains_responsive(
+    fitted_bundle: ModelBundle,
+    transaction_payload: dict[str, float],
+    tmp_path: Path,
+) -> None:
+    original = fitted_bundle.preprocessor
+
+    class SlowPreprocessor:
+        def transform(self, frame: pd.DataFrame) -> object:
+            time.sleep(0.2)
+            return original.transform(frame)
+
+    slow = ModelBundle(
+        preprocessor=SlowPreprocessor(),
+        model=fitted_bundle.model,
+        calibrator=None,
+        operating_threshold=0.53,
+        feature_schema=tuple(ALL_FEATURES),
+        training_data_fingerprint="d" * 64,
+        model_version="slow-fixture-1",
+    )
+    with TestClient(
+        create_app(service=ModelService(slow), settings=ApiSettings(tmp_path, None, ()))
+    ) as client:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            prediction = executor.submit(client.post, "/v1/predict", json=transaction_payload)
+            time.sleep(0.04)
+            started = time.perf_counter()
+            health = client.get("/health/live")
+            health_latency = time.perf_counter() - started
+        assert prediction.result().status_code == 200
+    assert health.status_code == 200
+    assert health_latency < 0.15
 
 
 def test_logs_contain_request_metadata_but_not_transaction_vectors(

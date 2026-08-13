@@ -46,9 +46,11 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [B] Test linux/arm64 image startup/readiness/inference; Docker Desktop must be started.
 - [B] Scan image and produce SBOM; Docker Desktop must be started.
 - [x] Add bounded latency/request/error/score-distribution metrics.
-- [ ] Implement deterministic offline drift monitor with synthetic shifted demonstration.
-- [ ] Run local load test and record p50/p95/p99/error rate.
-- [~] Create measured SLO guidance, alert/incident/rollback/model-replacement runbooks (container replacement/rollback procedure complete; measurement and incident guidance pending).
+- [x] Implement deterministic offline drift monitor with synthetic shifted demonstration.
+- [x] Run local load test and record p50/p95/p99/error rate.
+- [~] Create measured SLO guidance, alert/incident/rollback/model-replacement
+  runbooks (host measurement and full local guidance complete; container/provider
+  objectives remain externally blocked/unselected).
 
 ## P1 — frontend/QA/supply chain
 
@@ -71,10 +73,11 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [ ] Add skip link/mobile navigation/progress/table/chart accessibility semantics.
 - [ ] Record a frontend performance budget from a clean measured build.
 - [x] Correct project author metadata.
-- [ ] Write architecture, ADRs, API guide, monitoring guide,
-  deployment/reproducibility/incident runbooks, limitations/non-goals,
+- [ ] Write architecture, ADRs, deployment/reproducibility guides,
+  limitations/non-goals,
   interview defense, and three-minute demo script.
 - [x] Write and locally verify an explicit threat model.
+- [x] Write monitoring interpretation and local incident/rollback guidance.
 - [ ] Evaluate deployment providers only after all local gates pass; require explicit approval before external action.
 
 ## Exit audit

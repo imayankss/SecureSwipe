@@ -39,6 +39,11 @@ INVENTORY = {
     "SHAP top features": PROJECT_ROOT / "reports/explainability/shap_top_features.json",
     "API application": PROJECT_ROOT / "api/main.py",
     "Container definition": PROJECT_ROOT / "Dockerfile",
+    "Monitoring guide": PROJECT_ROOT / "docs/MONITORING.md",
+    "Operations runbook": PROJECT_ROOT / "docs/OPERATIONS.md",
+    "Synthetic monitoring evidence": (
+        PROJECT_ROOT / "reports/monitoring/synthetic_shift_report.json"
+    ),
 }
 
 
@@ -74,17 +79,31 @@ def command_gates() -> list[CommandGate]:
                 "--ignore-missing-imports",
                 "api",
                 "src/artifacts",
-                "src/inference/risk_scoring.py",
+                "src/inference",
+                "src/monitoring",
                 "src/evaluation/statistical_metrics.py",
                 "src/evaluation/calibration.py",
                 "src/evaluation/cost_analysis.py",
                 "src/evaluation/temporal_validation.py",
                 "src/utils/run_manifest.py",
                 "scripts/run_development_analysis.py",
+                "scripts/run_offline_monitoring.py",
+                "scripts/create_synthetic_monitoring_demo.py",
+                "scripts/run_local_load_test.py",
             ),
         ),
         CommandGate("Python tests", (python, "-m", "pytest")),
         CommandGate("Web artifact determinism", (python, "scripts/export_web_data.py", "--check")),
+        CommandGate(
+            "Synthetic monitoring determinism",
+            (
+                python,
+                "scripts/create_synthetic_monitoring_demo.py",
+                "--output",
+                "reports/monitoring/synthetic_shift_report.json",
+                "--check",
+            ),
+        ),
         CommandGate(
             "API dependency vulnerabilities",
             (
