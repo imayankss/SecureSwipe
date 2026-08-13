@@ -77,7 +77,20 @@ jobs:
           curl --fail --silent http://127.0.0.1:8000/v1/predict \
             --header 'Content-Type: application/json' \
             --data @artifacts/synthetic-ci/smoke_request.json >/tmp/prediction.json
-          python -c "import json; p=json.load(open('/tmp/prediction.json')); assert p['model_version']=='synthetic-smoke-1'"
+          python - <<'PY'
+          import json
+          import math
+
+          expected = json.load(open("artifacts/synthetic-ci/smoke_expected.json"))
+          actual = json.load(open("/tmp/prediction.json"))
+          for field in ("decision", "model_version", "score_type"):
+              assert actual[field] == expected[field], field
+          for field in ("raw_score", "decision_score", "operating_threshold"):
+              assert math.isclose(actual[field], expected[field], rel_tol=0.0, abs_tol=1e-12), field
+          assert actual["calibrated_probability"] is None
+          PY
+          docker exec "$CONTAINER_NAME" python -c \
+            "import importlib.util, os; assert os.getuid() == 10001; assert importlib.util.find_spec('pip') is None"
       - name: Scan high and critical vulnerabilities
         uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
         with:

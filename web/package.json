@@ -11,7 +11,7 @@
     "test": "npm run data:check && npm run lint && npm run typecheck && npm run test:unit",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
-    "data:check": "python3 ../scripts/export_web_data.py --check"
+    "data:check": "python3 -S ../scripts/export_web_data.py --check"
   },
   "engines": {
     "node": ">=22.13.1 <23"

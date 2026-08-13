@@ -38,6 +38,13 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Build/install a wheel in a clean environment.
 - [x] Build the wheel through a fresh sdist boundary and reject missing/stale modules.
 - [x] Protect historical test outputs from accidental overwrite and separate result namespaces.
+- [x] Record/verify positive-class semantics, SciPy/XGBoost runtime, and a
+  checksummed full-path startup probe in bundle format 2.
+- [ ] Add deterministic manifested duplicate curation with conflicting-label failure.
+- [ ] Enforce source-row fingerprint isolation across calibration, selection,
+  untouched evaluation, and the already-observed historical namespace.
+- [ ] Add a real development training-to-bundle command that persists the selected
+  calibrator/threshold and evaluation/service golden parity evidence.
 
 ## P1 — API/container/operations
 
@@ -71,6 +78,9 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [B] Execute dependency, secret/code, bundle, container-build, and scan
   workflows remotely; least-privilege definitions and local policy/dependency
   audits pass, while first GitHub/Docker-backed execution is externally blocked.
+- [x] Scan full history without suppressing unverified/revoked-looking secret candidates.
+- [x] Make frontend export verification dependency-free under `python3 -S` and
+  qualify public historical/deployment claims in tested visible copy.
 - [x] Add Dependabot for Python, npm, and Actions.
 - [x] Add root LICENSE, CONTRIBUTING, SECURITY, and PR template.
 

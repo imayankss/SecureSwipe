@@ -255,6 +255,17 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
 - Removed the now-vulnerable, operationally unnecessary pip installer from the
   final API image; a clean pip-free environment still imports the packaged API
   and bundle code, while Docker scan evidence remains explicitly blocked.
+- Closed the adversarial bundle/class-runtime gap with bundle format 2: explicit
+  positive-label/index semantics, SciPy/XGBoost pre-load version checks, and a
+  checksummed synthetic end-to-end compatibility probe before readiness.
+- Strengthened container workflow intent to compare score/decision/threshold
+  semantics and prove UID 10001 plus pip absence in the final image.
+- Removed `--only-verified` from the full-history secret scan so revoked,
+  unverifiable, and unknown-status candidates are not silently suppressed.
+- Made frontend export verification run with `python3 -S`, added an exact Python
+  runtime to its CI job, and removed the export path's third-party import.
+- Replaced above-fold/public “verified/final/hosted” claims with locked historical
+  and deployable-static wording; component tests enforce the visible caveats.
 
 ## Current issues
 
@@ -266,6 +277,17 @@ recorded result is now explicitly quarantined/caveated and is not used for any
 new decision.
 
 ### P1
+
+- The historical holdout has no retained row identities, so exclusion from new
+  decisions is not technically enforceable. Until an executable lineage policy
+  exists, the original Kaggle dataset is historically tainted for new model
+  selection rather than protected by caller-authored IDs.
+- The known Kaggle file contains duplicate rows, but no manifested deterministic
+  curation command currently connects it to a safe scientific workflow.
+- No executable development selection/calibration/threshold workflow emits a
+  real API-eligible bundle; the synthetic fixture is not model evidence.
+- Calibration-method and threshold selection currently reuse the same
+  development-validation rows later used for descriptive intervals.
 
 - Original-data blocked evaluation and random-vs-forward comparison are not
   executable until the CSV is restored; the tested protocol is now implemented.
@@ -290,15 +312,15 @@ architecture, and secret requirements are time-sensitive selection inputs.
 
 ## Next executable action
 
-Run two consecutive complete data-free quality gates with no intervening code
-change, then perform the independent final adversarial re-audit. These runs can
-validate local code/static evidence but cannot satisfy original-data, Docker,
-remote workflow, or serving-model exit conditions.
+Implement a deterministic manifested duplicate-curation and lineage boundary,
+then connect an untouched-development evaluation protocol to atomic real-bundle
+packaging without permitting the already-observed historical namespace.
 
-Acceptance: compile, Ruff, both mypy modes, 323 tests, evidence locks/exports,
-API and quality audits, frontend unit/build/browser/audit gates pass twice;
-worktree remains unchanged; project audit remains honestly `INCOMPLETE` only for
-the absent verified serving bundle.
+Acceptance: conflicting-label duplicates fail; exact duplicates are resolved by
+one recorded policy with raw/curated fingerprints and class counts; renamed IDs
+cannot cross calibration/selection/evaluation roles; the historical Kaggle
+namespace cannot create a decision-eligible bundle; a synthetic new-development
+fixture produces a verified bundle and exact evaluation/service golden parity.
 
 ## External blockers and user action
 

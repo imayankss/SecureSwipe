@@ -4,6 +4,8 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { Navigation } from "@/components/Navigation";
+import { ConfusionMatrix } from "@/components/ConfusionMatrix";
+import { Hero } from "@/components/Hero";
 import { RiskScoreDemo } from "@/components/RiskScoreDemo";
 import { Progress } from "@/components/ui/progress";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
@@ -76,5 +78,19 @@ describe("static deployment boundary", () => {
     expect(dashboardData.limitations).toContain(
       "Dashboard interactions use precomputed validation and test artifacts, not live inference.",
     );
+  });
+
+  it("qualifies historical and explainability claims in the visible UI", () => {
+    const { container } = render(
+      <>
+        <Hero />
+        <ConfusionMatrix />
+      </>,
+    );
+    expect(screen.getByText(/Locked historical artifacts/)).toBeInTheDocument();
+    expect(screen.getAllByText(/already-observed random-holdout/)).toHaveLength(2);
+    expect(screen.getByText(/Historical reported confusion matrix/)).toBeInTheDocument();
+    expect(container).not.toHaveTextContent("Verified artifacts");
+    expect(container).not.toHaveTextContent("Final confusion matrix");
   });
 });

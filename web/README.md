@@ -52,7 +52,8 @@ npm audit --omit=dev
 
 Use this folder as the dedicated Vercel project root. Framework detection should
 select Next.js, with `npm ci`/the committed lockfile and `npm run build`. The
-current static deployment requires no environment variables.
+deployable static configuration requires no environment variables. No live
+provider deployment or URL is verified by this repository.
 
 An optional live-demo build is intentionally absent until the versioned API has
 passed the documented container startup, readiness, inference, and image-scan

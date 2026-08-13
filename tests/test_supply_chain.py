@@ -51,6 +51,12 @@ def test_security_write_permission_is_isolated_to_codeql_job() -> None:
     }
 
 
+def test_history_secret_scan_does_not_suppress_unverified_candidates() -> None:
+    text = (ROOT / ".github/workflows/security.yml").read_text(encoding="utf-8")
+    assert "fetch-depth: 0" in text
+    assert "--only-verified" not in text
+
+
 def test_container_workflow_builds_without_push_and_scans_each_architecture() -> None:
     text = (ROOT / ".github/workflows/container.yml").read_text(encoding="utf-8")
     assert "linux/amd64" in text
@@ -59,7 +65,9 @@ def test_container_workflow_builds_without_push_and_scans_each_architecture() ->
     assert "severity: HIGH,CRITICAL" in text
     assert "exit-code: \"1\"" in text
     assert "format: spdx-json" in text
-    assert "synthetic-smoke-1" in text
+    assert "smoke_expected.json" in text
+    assert "os.getuid() == 10001" in text
+    assert "find_spec('pip') is None" in text
 
 
 def test_dependabot_covers_python_npm_and_actions() -> None:

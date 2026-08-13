@@ -8,7 +8,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from src.artifacts.bundle import ModelBundle
+from src.artifacts.bundle import ModelBundle, positive_class_index
 from src.preprocessing.preprocessors import validate_features_for_preprocessing
 
 
@@ -27,7 +27,7 @@ def _positive_scores(model: Any, features: object) -> np.ndarray:
     probabilities = np.asarray(model.predict_proba(features), dtype=float)
     if probabilities.ndim != 2 or probabilities.shape[1] != 2:
         raise ScoreIntegrityError("Model predict_proba output must have two columns.")
-    scores = probabilities[:, 1]
+    scores = probabilities[:, positive_class_index(model)]
     if not np.isfinite(scores).all() or np.logical_or(scores < 0.0, scores > 1.0).any():
         raise ScoreIntegrityError("Model produced an invalid raw score.")
     return scores
@@ -37,7 +37,9 @@ def _calibrate(calibrator: Any, raw_scores: np.ndarray) -> np.ndarray:
     inputs = raw_scores.reshape(-1, 1)
     if hasattr(calibrator, "predict_proba"):
         output = np.asarray(calibrator.predict_proba(inputs), dtype=float)
-        calibrated = output[:, 1] if output.ndim == 2 and output.shape[1] == 2 else output.ravel()
+        if output.ndim != 2 or output.shape[1] != 2:
+            raise ScoreIntegrityError("Calibrator predict_proba output must have two columns.")
+        calibrated = output[:, positive_class_index(calibrator, component="calibrator")]
     else:
         calibrated = np.asarray(calibrator.predict(inputs), dtype=float).ravel()
     if calibrated.shape != raw_scores.shape or not np.isfinite(calibrated).all():

@@ -3,11 +3,10 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import re
 from pathlib import Path
 from typing import Any
-
-from src.artifacts.bundle import sha256_file
 
 HISTORICAL_LOCK_VERSION = "1"
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -15,6 +14,14 @@ _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
 class HistoricalObservationError(RuntimeError):
     """Raised when the locked historical evidence is absent, changed, or reused."""
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def verify_historical_observation(lock_path: str | Path, repository: str | Path) -> dict[str, Any]:
@@ -46,7 +53,7 @@ def verify_historical_observation(lock_path: str | Path, repository: str | Path)
         artifact = (root / relative).resolve(strict=True)
         if not artifact.is_relative_to(root) or not artifact.is_file() or artifact.is_symlink():
             raise HistoricalObservationError(f"Unsafe historical artifact: {logical_name}.")
-        actual = sha256_file(artifact)
+        actual = _sha256_file(artifact)
         if actual != expected:
             raise HistoricalObservationError(
                 f"Historical artifact changed: {logical_name}; expected {expected}, got {actual}."

@@ -292,6 +292,8 @@ def test_unexpected_model_exception_log_omits_exception_message_and_features(
         training_data_fingerprint="c" * 64,
         model_version="broken-fixture-1",
     )
+    service = ModelService(fitted_bundle)
+    service._bundle = broken
     stream = StringIO()
     handler = logging.StreamHandler(stream)
     logger = logging.getLogger("secureswipe.api")
@@ -299,7 +301,7 @@ def test_unexpected_model_exception_log_omits_exception_message_and_features(
     try:
         with TestClient(
             create_app(
-                service=ModelService(broken),
+                service=service,
                 settings=ApiSettings(tmp_path, None, ()),
             ),
             raise_server_exceptions=False,

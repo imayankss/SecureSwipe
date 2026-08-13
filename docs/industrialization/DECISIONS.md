@@ -306,3 +306,18 @@ shipping an unnecessary installer and its advisory surface. Dependencies remain
 installed only in the build stage from the hash-locked API closure. A clean
 pip-free virtual-environment proof imports the wheel successfully; final image
 behavior and vulnerability evidence still require the Docker smoke/scan gate.
+
+## D-031 — Bundle readiness includes class semantics and a golden runtime probe
+
+Status: accepted
+
+Bundle format 2 records the fraud label and its exact probability-column index,
+rejects any model or probabilistic calibrator whose fitted classes are not
+exactly `[0, 1]`, and records SciPy/XGBoost alongside the core Python runtime.
+Every payload and runtime dependency is verified before deserialization. After
+deserialization, a checksummed fixed synthetic raw-feature probe must traverse
+the fitted preprocessor, estimator, optional calibrator, and score-integrity
+checks within a fixed numerical tolerance before the bundle can become ready.
+The probe contains no source transaction. Container CI compares the complete
+synthetic response and checks the final UID and absence of pip; this workflow is
+still intent, not execution evidence, until Docker/GitHub run it.

@@ -9,7 +9,11 @@ from typing import Iterable
 import pandas as pd
 
 from api.schemas import PredictionResult, ScoreType, TransactionFeatures
-from src.artifacts.bundle import BUNDLE_FORMAT_VERSION, ModelBundle
+from src.artifacts.bundle import (
+    BUNDLE_FORMAT_VERSION,
+    ModelBundle,
+    probe_bundle_runtime,
+)
 from src.inference.batch_scoring import ScoreIntegrityError, score_bundle_frame
 from src.inference.risk_scoring import threshold_decision
 
@@ -39,6 +43,7 @@ class ModelService:
     def __init__(self, bundle: ModelBundle | None = None) -> None:
         if bundle is not None:
             bundle.validate()
+            probe_bundle_runtime(bundle)
         self._bundle = bundle
         self._prediction_lock = threading.Lock()
 

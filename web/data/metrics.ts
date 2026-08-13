@@ -14,22 +14,22 @@ export const formatPercent = (value: number, digits = 2) =>
 
 export const heroMetrics = [
   {
-    label: "Evaluated transactions",
+    label: "Historical holdout rows",
     value: formatInteger(dashboardData.finalEvaluation.total_samples),
     description: "Locked held-out test split",
   },
   {
-    label: "Test fraud cases",
+    label: "Historical fraud cases",
     value: formatInteger(dashboardData.finalEvaluation.total_fraud),
     description: "Rare positive class",
   },
   {
-    label: "Test average precision",
+    label: "Reported holdout AP",
     value: formatMetric(dashboardData.finalEvaluation.pr_auc),
-    description: "Primary final metric",
+    description: "Locked historical random-holdout metric",
   },
   {
-    label: "Fraud recall",
+    label: "Reported holdout recall",
     value: formatPercent(dashboardData.finalEvaluation.recall),
     description: `At the recorded ${dashboardData.finalEvaluation.threshold.toFixed(2)} threshold`,
   },

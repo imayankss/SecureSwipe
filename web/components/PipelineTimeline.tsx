@@ -9,7 +9,7 @@ export function PipelineTimeline() {
       id="pipeline"
       eyebrow="Pipeline"
       title="Expensive ML work stays outside the request path"
-      description="Training, threshold search, curve generation, and SHAP analysis run in the Python workflow. Vercel serves only the reviewed export."
+      description="Training, threshold search, curve generation, and SHAP analysis run in the Python workflow. The deployable frontend serves only the reviewed export; no provider deployment is verified here."
     >
       <Card>
         <CardContent className="p-5">

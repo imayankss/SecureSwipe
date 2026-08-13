@@ -39,7 +39,7 @@ export function ThresholdCards() {
     <Section
       id="thresholds"
       eyebrow="Threshold Tuning"
-      title="Explore the real validation trade-off"
+      title="Explore the recorded validation trade-off"
       description="Move through the tracked 0.01–0.99 threshold sweep. Every outcome below is a precomputed validation result; the control does not rerun the model."
     >
       <Card>

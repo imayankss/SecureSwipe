@@ -19,13 +19,24 @@ from pathlib import Path
 from typing import Any, Literal, Mapping, Sequence, cast
 
 import joblib
+import numpy as np
+import pandas as pd
 
 from src.preprocessing.feature_config import ALL_FEATURES
 
-BUNDLE_FORMAT_VERSION = "1"
+BUNDLE_FORMAT_VERSION = "2"
 MANIFEST_FILENAME = "manifest.json"
 _SHA256_PATTERN = re.compile(r"^[0-9a-f]{64}$")
-_RUNTIME_PACKAGES = ("joblib", "numpy", "pandas", "scikit-learn")
+_RUNTIME_PACKAGES = (
+    "joblib",
+    "numpy",
+    "pandas",
+    "scikit-learn",
+    "scipy",
+    "xgboost",
+)
+POSITIVE_CLASS_LABEL = 1
+GOLDEN_PROBE_TOLERANCE = 1e-12
 ScoreType = Literal["raw_score", "calibrated_probability"]
 
 
@@ -69,6 +80,100 @@ class ModelBundle:
             raise ValueError("A bundle without a calibrator must expose raw_score.")
         if self.calibrator is not None and self.score_type != "calibrated_probability":
             raise ValueError("A bundle with a calibrator must expose calibrated_probability.")
+        positive_class_index(self.model, component="model")
+        if self.calibrator is not None and hasattr(self.calibrator, "predict_proba"):
+            positive_class_index(self.calibrator, component="calibrator")
+
+
+def positive_class_index(payload: Any, *, component: str = "model") -> int:
+    """Return the explicit fraud-class column and reject ambiguous class semantics."""
+    classes = getattr(payload, "classes_", None)
+    if classes is None:
+        raise ValueError(f"ModelBundle {component} must expose fitted classes_.")
+    values = np.asarray(classes)
+    if values.ndim != 1 or values.tolist() != [0, POSITIVE_CLASS_LABEL]:
+        raise ValueError(
+            f"ModelBundle {component} classes_ must be exactly [0, {POSITIVE_CLASS_LABEL}]."
+        )
+    return int(np.flatnonzero(values == POSITIVE_CLASS_LABEL)[0])
+
+
+def canonical_golden_frame() -> pd.DataFrame:
+    """Return a fixed synthetic transaction used only for compatibility probing."""
+    values = {feature: 0.0 for feature in ALL_FEATURES}
+    values["Amount"] = 1.0
+    return pd.DataFrame([values], columns=ALL_FEATURES)
+
+
+def _canonical_json_sha256(payload: Mapping[str, Any]) -> str:
+    encoded = json.dumps(
+        payload, sort_keys=True, separators=(",", ":"), allow_nan=False
+    ).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def _golden_probe(bundle: ModelBundle) -> dict[str, Any]:
+    from src.inference.batch_scoring import score_bundle_frame
+
+    scored = score_bundle_frame(bundle, canonical_golden_frame())
+    probe: dict[str, Any] = {
+        "calibrated_probability": (
+            None
+            if scored.calibrated_probabilities is None
+            else float(scored.calibrated_probabilities[0])
+        ),
+        "decision_score": float(scored.decision_scores[0]),
+        "features": {
+            feature: float(canonical_golden_frame().iloc[0][feature])
+            for feature in ALL_FEATURES
+        },
+        "raw_score": float(scored.raw_scores[0]),
+        "tolerance": GOLDEN_PROBE_TOLERANCE,
+    }
+    return {**probe, "sha256": _canonical_json_sha256(probe)}
+
+
+def probe_bundle_runtime(bundle: ModelBundle) -> None:
+    """Execute a fixed synthetic probe and raise on training-serving skew."""
+    try:
+        _golden_probe(bundle)
+    except ArtifactVerificationError:
+        raise
+    except Exception:
+        raise ArtifactVerificationError(
+            "Bundle runtime compatibility probe failed."
+        ) from None
+
+
+def verify_bundle_golden_probe(bundle: ModelBundle, expected: Mapping[str, Any]) -> None:
+    """Execute the complete preprocessing/scoring path before declaring readiness."""
+    try:
+        actual = _golden_probe(bundle)
+    except ArtifactVerificationError:
+        raise
+    except Exception:
+        raise ArtifactVerificationError(
+            "Bundle runtime compatibility probe failed."
+        ) from None
+    for field in ("raw_score", "decision_score"):
+        if not np.isclose(
+            float(actual[field]),
+            float(expected[field]),
+            rtol=0.0,
+            atol=GOLDEN_PROBE_TOLERANCE,
+        ):
+            raise ArtifactVerificationError(f"Bundle golden probe mismatch for {field}.")
+    actual_calibrated = actual["calibrated_probability"]
+    expected_calibrated = expected["calibrated_probability"]
+    if (actual_calibrated is None) != (expected_calibrated is None):
+        raise ArtifactVerificationError("Bundle golden calibration semantics mismatch.")
+    if actual_calibrated is not None and not np.isclose(
+        float(actual_calibrated),
+        float(expected_calibrated),
+        rtol=0.0,
+        atol=GOLDEN_PROBE_TOLERANCE,
+    ):
+        raise ArtifactVerificationError("Bundle golden calibrated probability mismatch.")
 
 
 def sha256_file(path: Path) -> str:
@@ -165,6 +270,7 @@ def _artifact_entry(path: Path, payload: Any) -> dict[str, Any]:
 def save_model_bundle(bundle: ModelBundle, output_dir: str | Path) -> Path:
     """Persist a complete versioned bundle and return its manifest path."""
     bundle.validate()
+    golden_probe = _golden_probe(bundle)
     directory = Path(output_dir).resolve()
     directory.mkdir(parents=True, exist_ok=True)
 
@@ -186,6 +292,9 @@ def save_model_bundle(bundle: ModelBundle, output_dir: str | Path) -> Path:
         "score_type": bundle.score_type,
         "feature_schema": list(bundle.feature_schema),
         "training_data_fingerprint": bundle.training_data_fingerprint,
+        "positive_class_label": POSITIVE_CLASS_LABEL,
+        "positive_class_index": positive_class_index(bundle.model),
+        "golden_probe": golden_probe,
         "runtime": {
             "python": platform.python_version(),
             "python_implementation": platform.python_implementation(),
@@ -211,6 +320,9 @@ def _validate_manifest(manifest: Mapping[str, Any]) -> None:
         "score_type",
         "feature_schema",
         "training_data_fingerprint",
+        "positive_class_label",
+        "positive_class_index",
+        "golden_probe",
         "runtime",
         "artifacts",
     }
@@ -221,6 +333,11 @@ def _validate_manifest(manifest: Mapping[str, Any]) -> None:
         raise ArtifactVerificationError("Unsupported bundle_format_version.")
     if manifest["feature_schema"] != list(ALL_FEATURES):
         raise ArtifactVerificationError("Bundle feature schema/order mismatch.")
+    if (
+        manifest["positive_class_label"] != POSITIVE_CLASS_LABEL
+        or manifest["positive_class_index"] != 1
+    ):
+        raise ArtifactVerificationError("Bundle positive-class mapping mismatch.")
     if not _SHA256_PATTERN.fullmatch(str(manifest["training_data_fingerprint"])):
         raise ArtifactVerificationError("Invalid training_data_fingerprint.")
     threshold = manifest["operating_threshold"]
@@ -231,6 +348,32 @@ def _validate_manifest(manifest: Mapping[str, Any]) -> None:
         raise ArtifactVerificationError("Bundle must contain model and preprocessor artifacts.")
     if manifest["score_type"] == "calibrated_probability" and "calibrator" not in artifacts:
         raise ArtifactVerificationError("Calibrated score_type requires a calibrator artifact.")
+
+    golden = manifest["golden_probe"]
+    golden_fields = {
+        "calibrated_probability",
+        "decision_score",
+        "features",
+        "raw_score",
+        "sha256",
+        "tolerance",
+    }
+    if not isinstance(golden, dict) or set(golden) != golden_fields:
+        raise ArtifactVerificationError("Bundle golden probe is incomplete.")
+    unsigned_golden = {key: value for key, value in golden.items() if key != "sha256"}
+    if golden["sha256"] != _canonical_json_sha256(unsigned_golden):
+        raise ArtifactVerificationError("Bundle golden probe checksum mismatch.")
+    if golden["features"] != {
+        feature: float(canonical_golden_frame().iloc[0][feature]) for feature in ALL_FEATURES
+    }:
+        raise ArtifactVerificationError("Bundle golden probe feature schema mismatch.")
+    if golden["tolerance"] != GOLDEN_PROBE_TOLERANCE:
+        raise ArtifactVerificationError("Bundle golden probe tolerance mismatch.")
+    numerical = [golden["raw_score"], golden["decision_score"]]
+    if golden["calibrated_probability"] is not None:
+        numerical.append(golden["calibrated_probability"])
+    if not all(isinstance(value, (int, float)) and np.isfinite(value) for value in numerical):
+        raise ArtifactVerificationError("Bundle golden probe contains invalid scores.")
 
     runtime = manifest["runtime"]
     if not isinstance(runtime, dict):
@@ -308,5 +451,9 @@ def load_model_bundle(
         model_version=str(manifest["model_version"]),
         score_type=cast(ScoreType, manifest["score_type"]),
     )
-    bundle.validate()
+    try:
+        bundle.validate()
+    except ValueError:
+        raise ArtifactVerificationError("Bundle semantic validation failed.") from None
+    verify_bundle_golden_probe(bundle, manifest["golden_probe"])
     return bundle

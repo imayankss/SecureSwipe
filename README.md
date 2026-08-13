@@ -12,7 +12,7 @@ The repository does not record an independently verified live URL. The
 deployable static frontend root is `web/`; no public deployment is performed by
 the checked-in workflows.
 
-The hosted application uses **static evaluation artifacts and precomputed
+The deployable frontend uses **static evaluation artifacts and precomputed
 demonstration interactions**. It does not perform live transaction inference.
 
 ## Architecture
@@ -24,7 +24,7 @@ flowchart LR
     B --> D["Tracked aggregate reports and figures"]
     D --> E["Validated web-data export"]
     E --> F["web/public/data/dashboard.json"]
-    F --> G["Next.js dashboard on Vercel"]
+    F --> G["Deployable Next.js dashboard — provider unverified"]
 ```
 
 Training, large-data processing, cross-validation, threshold sweeps, final
@@ -70,7 +70,7 @@ to be committed; place it in `data/raw/creditcard.csv`.
 - pytest
 - joblib, pyarrow
 - Next.js 16, React 19, TypeScript, Tailwind CSS, Recharts
-- Vercel for the static dashboard deployment
+- Vercel-compatible static dashboard configuration (not deployed or verified here)
 
 ## Project Structure
 
@@ -88,7 +88,7 @@ scripts/               reproducible day-by-day pipeline runners
 tests/                 unit, contract, integration, determinism, and failure tests
 reports/               generated Markdown reports and metrics
 artifacts/models/      trained model artifacts
-scripts/export_web_data.py  verified deployment export
+scripts/export_web_data.py  deterministic tracked-artifact export
 web/                    Next.js dashboard and public aggregate artifacts
 ```
 
@@ -135,8 +135,13 @@ python3 scripts/run_reference_stage.py --stage day7 \
   --model-path artifacts/runs/reference-day5/artifacts/models/xgboost_baseline.joblib \
   --output-dir artifacts/runs/reference-day7
 python3 scripts/verify_historical_observation.py
-python3 -m scripts.run_project_audit
+python3 -m scripts.run_project_audit --allow-missing-model --check
 ```
+
+That data-free/current-state audit passes its executable checks but reports the
+serving bundle as unavailable. The strict release audit is intentionally
+separate: configure `SECURESWIPE_BUNDLE_MANIFEST` to a reviewed real bundle and
+run `python3 -m scripts.run_project_audit` without `--allow-missing-model`.
 
 Run tests:
 
@@ -151,7 +156,7 @@ commands again.
 
 ## Refresh Deployment Artifacts
 
-After the verified reports change, rebuild the public dashboard payload without
+After the tracked reports change, rebuild the public dashboard payload without
 training or inference:
 
 ```bash
@@ -169,7 +174,7 @@ The exporter reads:
 - `reports/final/final_model_evaluation.json`
 - `reports/explainability/shap_top_features.json`
 
-It writes `web/public/data/dashboard.json` and synchronizes only the verified
+It writes `web/public/data/dashboard.json` and synchronizes only the approved
 aggregate figures used by the frontend. The command is deterministic so stale
 exports can be detected in CI.
 
@@ -275,7 +280,7 @@ Final evaluation outputs:
 - `reports/final/final_project_report.md`
 - `reports/final/project_audit_checklist.md`
 
-## Training, Evaluation, Export, and Hosted Behavior
+## Training, Evaluation, Export, and Deployable Static Behavior
 
 | Stage | Where it runs | Uses private rows | Runs on web request |
 |---|---|---:|---:|
@@ -284,9 +289,9 @@ Final evaluation outputs:
 | Threshold sweep and SHAP | Local Python environment | Yes | No |
 | Locked final test evaluation | Local Python environment | Yes | No |
 | Web export | Local/CI, from aggregate reports | No | No |
-| Hosted dashboard | Vercel/visitor browser | No | Yes, static rendering only |
+| Deployable static dashboard | Candidate provider/visitor browser | No | Yes, static rendering only |
 
-The hosted project therefore uses **precomputed inference summaries, sanitized
+The deployable frontend therefore uses **precomputed inference summaries, sanitized
 aggregate evaluation artifacts, and demonstration controls**—not live model
 inference.
 
@@ -307,7 +312,7 @@ See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Publication Workflow (Not Executed)
 
-1. Regenerate or update verified Python reports locally.
+1. Regenerate or update tracked Python reports locally.
 2. Run `python3 scripts/export_web_data.py`.
 3. Run the Python and frontend test commands above.
 4. Review `git diff` and commit the report/export/frontend changes locally.
@@ -336,7 +341,7 @@ loads, or API requests.
 
 - The dataset is anonymized and historical, so feature interpretation is limited.
 - SHAP explains transformed PCA features, not original business fields.
-- No trained model artifact or inference service is included in the hosted site.
+- No trained model artifact or inference service is included in the static frontend.
 - XGBoost scores have not been calibrated as real-world fraud probabilities.
 - No live feedback loop or domain-approved fraud-loss/review-cost estimate is
   available. Offline monitoring exists for authorized local batches, but no real

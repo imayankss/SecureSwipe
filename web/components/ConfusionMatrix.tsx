@@ -14,13 +14,13 @@ export function ConfusionMatrix() {
   return (
     <Section
       id="confusion"
-      eyebrow="Final Evaluation"
-      title={`Locked test threshold: ${confusionMatrix.threshold.toFixed(2)}`}
-      description="The model and operating point were selected on validation data before this held-out test confusion matrix was produced."
+      eyebrow="Historical reported random holdout"
+      title={`Recorded threshold: ${confusionMatrix.threshold.toFixed(2)}`}
+      description="This already-observed random-holdout confusion matrix is locked historical evidence, not a current production or out-of-time estimate."
     >
       <Card>
         <CardHeader>
-          <CardTitle>Final confusion matrix</CardTitle>
+          <CardTitle>Historical reported confusion matrix</CardTitle>
           <CardDescription>
             {formatInteger(confusionMatrix.total_samples)} test rows · rows are actual classes · columns are decisions
           </CardDescription>

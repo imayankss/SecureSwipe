@@ -19,6 +19,7 @@ from src.artifacts.bundle import (
     load_verified_joblib,
     save_model_bundle,
     write_checksum_sidecar,
+    sha256_file,
 )
 from src.preprocessing.feature_config import ALL_FEATURES
 from src.preprocessing.preprocessors import build_preprocessor, fit_preprocessor
@@ -63,6 +64,11 @@ def test_model_bundle_roundtrip_preserves_golden_scores(tmp_path: Path) -> None:
     np.testing.assert_array_equal(actual, expected)
     assert loaded.operating_threshold == pytest.approx(0.53)
     assert loaded.score_type == "raw_score"
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    assert payload["positive_class_label"] == 1
+    assert payload["positive_class_index"] == 1
+    assert {"scipy", "xgboost"} <= set(payload["runtime"]["dependencies"])
+    assert len(payload["golden_probe"]["sha256"]) == 64
 
 
 def test_corrupt_bundle_fails_before_any_deserialization(tmp_path: Path) -> None:
@@ -88,6 +94,51 @@ def test_manifest_schema_mismatch_fails_before_deserialization(tmp_path: Path) -
         with pytest.raises(ArtifactVerificationError, match="schema"):
             load_model_bundle(manifest, trusted_root=tmp_path / "trusted")
         deserialize.assert_not_called()
+
+
+def test_runtime_mismatch_fails_before_deserialization(tmp_path: Path) -> None:
+    bundle, _ = _bundle()
+    manifest = save_model_bundle(bundle, tmp_path / "trusted" / "fixture-1")
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    payload["runtime"]["dependencies"]["xgboost"] = "0.0.0-wrong"
+    manifest.write_text(json.dumps(payload), encoding="utf-8")
+
+    with patch("src.artifacts.bundle.joblib.load") as deserialize:
+        with pytest.raises(ArtifactVerificationError, match="Dependency mismatch for xgboost"):
+            load_model_bundle(manifest, trusted_root=tmp_path / "trusted")
+        deserialize.assert_not_called()
+
+
+def test_reversed_model_class_mapping_is_rejected() -> None:
+    bundle, _ = _bundle()
+    bundle.model.classes_ = np.array([1, 0])
+    with pytest.raises(ValueError, match=r"classes_ must be exactly \[0, 1\]"):
+        bundle.validate()
+
+
+def test_golden_probe_rejects_preprocessor_model_dimensional_skew(tmp_path: Path) -> None:
+    bundle, _ = _bundle()
+    manifest = save_model_bundle(bundle, tmp_path / "trusted" / "fixture-1")
+    wrong_model = LogisticRegression(random_state=42).fit(
+        np.arange(80, dtype=float).reshape(40, 2), np.array([0, 1] * 20)
+    )
+    model_path = manifest.parent / "model.joblib"
+    joblib.dump(wrong_model, model_path)
+    write_checksum_sidecar(model_path)
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    payload["artifacts"]["model"].update(
+        {
+            "sha256": sha256_file(model_path),
+            "size_bytes": model_path.stat().st_size,
+            "python_type": (
+                f"{type(wrong_model).__module__}.{type(wrong_model).__qualname__}"
+            ),
+        }
+    )
+    manifest.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(ArtifactVerificationError, match="compatibility probe"):
+        load_model_bundle(manifest, trusted_root=tmp_path / "trusted")
 
 
 def test_verified_joblib_rejects_untrusted_path(tmp_path: Path) -> None:
