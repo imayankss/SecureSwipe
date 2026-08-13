@@ -149,6 +149,13 @@ def print_success_message(results: dict[str, object]) -> None:
 
 def main() -> None:
     """Parse arguments, run Day 2 EDA, and report success or failure."""
+    print(
+        "Direct unmanifested execution is disabled. Use "
+        "`python scripts/run_reference_stage.py --stage day2 --output-dir <new-dir>`. ",
+        file=sys.stderr,
+    )
+    raise SystemExit(2)
+
     args = parse_args()
 
     try:

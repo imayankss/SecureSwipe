@@ -9,7 +9,6 @@ No model training, threshold tuning, plotting, or test-set evaluation is
 performed in this module.
 """
 
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional, Union
 
@@ -153,7 +152,7 @@ def build_day4_baseline_model_report(
     Returns:
         The complete Markdown report as a string.
     """
-    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    generated_at = "omitted for deterministic evidence; see run manifest"
 
     if best_model_name:
         best_model_section = (

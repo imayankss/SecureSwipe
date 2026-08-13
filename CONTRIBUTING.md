@@ -43,6 +43,8 @@ cd ..
   src/utils/config.py src/utils/run_manifest.py \
   scripts/run_development_analysis.py scripts/verify_historical_observation.py
 .venv/bin/python -m pytest
+.venv/bin/python -m mypy --no-incremental --ignore-missing-imports \
+  --follow-imports=skip scripts/run_reference_stage.py
 .venv/bin/python scripts/export_web_data.py --check
 .venv/bin/python scripts/verify_historical_observation.py
 cd web && npm test && npm run build

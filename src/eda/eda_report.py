@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
 
 import pandas as pd
@@ -248,7 +247,7 @@ def build_day2_eda_report(
     overview = get_dataset_overview(df)
     missing_summary = get_missing_values_summary(df)
     numeric_summary = get_basic_numeric_summary(df)
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = "omitted for deterministic evidence; see run manifest"
 
     column_overview = ", ".join(f"`{column}`" for column in overview["column_names"])
 

@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
@@ -315,7 +314,7 @@ def build_day6_threshold_tuning_report(
     Returns:
         Complete Markdown report content as a string.
     """
-    generated_at = generated_at or datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    generated_at = generated_at or "omitted for deterministic evidence; see run manifest"
     recall_target = selected_thresholds["recall_target"]
 
     sections = [
@@ -506,6 +505,13 @@ def print_success_message(results: Dict[str, Any]) -> None:
 
 def main() -> None:
     """Parse arguments, run the Day 6 pipeline, and handle errors."""
+    print(
+        "Direct unmanifested execution is disabled. Use "
+        "`python scripts/run_reference_stage.py --stage day6 --output-dir <new-dir>`. ",
+        file=sys.stderr,
+    )
+    raise SystemExit(2)
+
     args = parse_args()
     try:
         results = run_day6_threshold_tuning(

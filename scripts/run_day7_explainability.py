@@ -345,6 +345,13 @@ def print_success_message(results: dict[str, Any]) -> None:
 
 def main() -> None:
     """Parse arguments, run the Day 7 SHAP pipeline, and report results."""
+    print(
+        "Direct unmanifested execution is disabled. Use "
+        "`python scripts/run_reference_stage.py --stage day7 --output-dir <new-dir>`. ",
+        file=sys.stderr,
+    )
+    raise SystemExit(2)
+
     args = parse_args()
 
     try:

@@ -23,6 +23,10 @@ from src.evaluation.threshold_tuning import (
     build_threshold_metrics_table,
     select_best_f1_threshold,
 )
+from src.utils.evidence_directory import (
+    atomic_evidence_directory,
+    require_absent_evidence_target,
+)
 from src.utils.run_manifest import build_run_manifest, write_run_manifest
 
 REQUIRED_SCORE_COLUMNS = ["row_id", "partition", "y_true", "raw_score"]
@@ -101,10 +105,8 @@ def run_development_analysis(
     output_dir: Path,
     minimum_brier_improvement: float,
 ) -> dict[str, Path]:
-    """Write deterministic evidence; refuse to overwrite an existing run directory."""
-    if output_dir.exists() and any(output_dir.iterdir()):
-        raise FileExistsError(f"Refusing to overwrite non-empty output directory: {output_dir}")
-    output_dir.mkdir(parents=True, exist_ok=True)
+    """Compute first, then atomically publish deterministic development evidence."""
+    output_dir = require_absent_evidence_target(output_dir)
     scores = load_development_scores(scores_path)
     scenarios = load_cost_scenarios(scenarios_path)
     train = scores[scores["partition"] == "calibration_train"]
@@ -132,44 +134,54 @@ def run_development_analysis(
     calibration_metrics = evaluate_calibration(labels, decision_scores)
     cost_table, cost_selections = analyze_cost_scenarios(labels, decision_scores, scenarios)
 
-    outputs = {
-        "calibration_comparison": output_dir / "calibration_comparison.csv",
-        "calibration_metrics": output_dir / "calibration_metrics.json",
-        "cost_sensitivity": output_dir / "cost_sensitivity.csv",
-        "selected_operating_points": output_dir / "selected_operating_points.json",
-        "threshold_metrics": output_dir / "threshold_metrics.csv",
+    filenames = {
+        "calibration_comparison": "calibration_comparison.csv",
+        "calibration_metrics": "calibration_metrics.json",
+        "cost_sensitivity": "cost_sensitivity.csv",
+        "selected_operating_points": "selected_operating_points.json",
+        "threshold_metrics": "threshold_metrics.csv",
     }
-    comparison.to_csv(outputs["calibration_comparison"], index=False)
-    threshold_table.to_csv(outputs["threshold_metrics"], index=False)
-    cost_table.to_csv(outputs["cost_sensitivity"], index=False)
-    _json_write(calibration_metrics, outputs["calibration_metrics"])
-    _json_write(
-        {
-            "calibration_method": selected_method,
-            "cost_scenarios": cost_selections,
-            "evaluation_scope": "development_validation",
-            "score_type": ("calibrated_probability" if calibrator is not None else "raw_score"),
-            "threshold_best_f1": best_f1,
-            "wilson_intervals": intervals,
-        },
-        outputs["selected_operating_points"],
-    )
-    manifest = build_run_manifest(
-        run_kind="development_score_analysis",
-        evaluation_scope="development_validation",
-        repository=PROJECT_ROOT,
-        inputs={"cost_scenarios": scenarios_path, "development_scores": scores_path},
-        outputs=outputs,
-        parameters={
-            "calibration_methods": ["identity", "platt", "isotonic"],
-            "minimum_brier_improvement": minimum_brier_improvement,
-            "threshold_grid": {"minimum": 0.01, "maximum": 0.99, "step": 0.01},
-        },
-        seeds={"calibration_logistic_regression": 42},
-        packages=["numpy", "pandas", "pyyaml", "scikit-learn"],
-    )
-    outputs["run_manifest"] = write_run_manifest(manifest, output_dir / "run_manifest.json")
-    return outputs
+    with atomic_evidence_directory(output_dir) as temporary:
+        temporary_outputs = {
+            logical_name: temporary / filename
+            for logical_name, filename in filenames.items()
+        }
+        comparison.to_csv(temporary_outputs["calibration_comparison"], index=False)
+        threshold_table.to_csv(temporary_outputs["threshold_metrics"], index=False)
+        cost_table.to_csv(temporary_outputs["cost_sensitivity"], index=False)
+        _json_write(calibration_metrics, temporary_outputs["calibration_metrics"])
+        _json_write(
+            {
+                "calibration_method": selected_method,
+                "cost_scenarios": cost_selections,
+                "evaluation_scope": "development_validation",
+                "score_type": (
+                    "calibrated_probability" if calibrator is not None else "raw_score"
+                ),
+                "threshold_best_f1": best_f1,
+                "wilson_intervals": intervals,
+            },
+            temporary_outputs["selected_operating_points"],
+        )
+        manifest = build_run_manifest(
+            run_kind="development_score_analysis",
+            evaluation_scope="development_validation",
+            repository=PROJECT_ROOT,
+            inputs={"cost_scenarios": scenarios_path, "development_scores": scores_path},
+            outputs=temporary_outputs,
+            parameters={
+                "calibration_methods": ["identity", "platt", "isotonic"],
+                "minimum_brier_improvement": minimum_brier_improvement,
+                "threshold_grid": {"minimum": 0.01, "maximum": 0.99, "step": 0.01},
+            },
+            seeds={"calibration_logistic_regression": 42},
+            packages=["numpy", "pandas", "pyyaml", "scikit-learn"],
+        )
+        write_run_manifest(manifest, temporary / "run_manifest.json")
+    return {
+        **{name: output_dir / filename for name, filename in filenames.items()},
+        "run_manifest": output_dir / "run_manifest.json",
+    }
 
 
 def parse_args() -> argparse.Namespace:

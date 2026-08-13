@@ -30,7 +30,8 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Consolidate typed configuration and deterministic seeds.
 - [x] Add versioned `ModelBundle` with preprocessor, model, optional calibrator,
   threshold, ordered schema, runtime versions, data fingerprint, version, and checksums.
-- [~] Add deterministic run manifests including code SHA and input/artifact hashes (development analysis complete; legacy training/export commands pending).
+- [x] Add deterministic run manifests including code SHA and input/artifact hashes;
+  legacy direct CLIs now refuse execution and the atomic reference wrapper covers Day 2–7.
 - [x] Add golden evaluation/service prediction parity tests.
 - [x] Make service startup fail closed on incomplete/corrupt/mismatched bundles.
 - [x] Separate and hash-lock API runtime and quality dependency sets; keep notebook tooling optional.

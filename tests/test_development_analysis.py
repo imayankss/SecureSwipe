@@ -9,6 +9,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
+import scripts.run_development_analysis as development_script
+
 from scripts.run_development_analysis import (
     load_development_scores,
     run_development_analysis,
@@ -80,13 +82,34 @@ def test_development_analysis_refuses_to_overwrite_outputs(tmp_path: Path) -> No
         output_dir=output,
         minimum_brier_improvement=0.0,
     )
-    with pytest.raises(FileExistsError, match="Refusing to overwrite"):
+    with pytest.raises(FileExistsError, match="Refusing to overwrite evidence target"):
         run_development_analysis(
             scores_path=scores,
             scenarios_path=ROOT / "configs" / "cost_scenarios.example.yaml",
             output_dir=output,
             minimum_brier_improvement=0.0,
         )
+
+
+def test_development_analysis_write_failure_publishes_no_partial_target(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    scores = _write_scores(tmp_path / "scores.csv")
+    output = tmp_path / "failed"
+    monkeypatch.setattr(
+        development_script,
+        "write_run_manifest",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("injected write failure")),
+    )
+    with pytest.raises(OSError, match="injected write failure"):
+        run_development_analysis(
+            scores_path=scores,
+            scenarios_path=ROOT / "configs" / "cost_scenarios.example.yaml",
+            output_dir=output,
+            minimum_brier_improvement=0.0,
+        )
+    assert not output.exists()
+    assert not list(tmp_path.glob(".failed.*"))
 
 
 def test_historical_or_test_partition_is_rejected(tmp_path: Path) -> None:

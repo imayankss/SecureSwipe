@@ -6,14 +6,14 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | Category | Available | Initial | Current | Evidence |
 |---|---:|---:|---:|---|
 | ML correctness and scientific validity | 20 | 5 | 15 | Strict contracts/isolation, historical quarantine, forward folds, uncertainty, simplicity rule, calibration, constrained/cost metrics, and raw-margin SHAP additivity/cohort evidence are tested; original OOT/model comparison/calibration and historical SHAP execution remain blocked. |
-| Reproducibility and data lineage | 15 | 2 | 14 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, deterministic manifests, strict typed configuration, SHA-256 historical lock, full dashboard/figure digest, and read-only verification exist; legacy training manifests remain. |
-| Architecture and maintainability | 15 | 4 | 14 | Offline/static and verified serving paths, mounted bundle image, executable current audit, workflow separation, typed configuration, immutable historical namespace, and governance boundaries are explicit; duplicate legacy modules remain. |
+| Reproducibility and data lineage | 15 | 2 | 15 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, atomic timestamp-free manifests for development and every legacy stage, typed configuration, historical lock, and read-only export verification are tested. |
+| Architecture and maintainability | 15 | 4 | 15 | Offline/static, blocked-development, reference-stage, and verified serving paths have explicit boundaries; direct partial legacy CLIs fail closed; mounted bundles, current audit, workflow separation, typed configuration, and governance are tested. |
 | Testing and quality gates | 15 | 6 | 15 | 295 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain tests, package proof, and frontend gates pass; Docker execution and behavioral frontend coverage remain explicit blockers rather than passing evidence. |
 | API/container reliability | 10 | 0 | 8 | Versioned API, readiness, limits, OpenAPI, exact parity, threadpool offload, runtime log evidence, health responsiveness, and 500-request loopback behavior pass; container remains unverified. |
 | Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean runtime/npm audits, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
 | Observability and operations | 10 | 0 | 8 | Bounded metrics, runtime JSON/redaction evidence, deterministic schema/feature/score/delayed-label monitoring, shifted demo, repeated M2 load evidence, local objectives, and incident/rollback guides pass; container/provider operations remain unmeasured. |
 | Documentation and developer experience | 5 | 3 | 5 | Persistent controls, API/container/scientific/monitoring protocols, data/model cards, security policy, threat model, and local incident guidance are explicit; broader architecture/reproducibility/interview material remains. |
-| **Total** | **100** | **23** | **88** | **Monitoring, host operations, configuration, historical integrity, and the new SHAP protocol are evidence-backed; frontend behavior, container, legacy manifests, and original-data execution remain.** |
+| **Total** | **100** | **23** | **90** | **Local scientific protocols, reproducibility, architecture, API, monitoring, and static frontend gates are evidence-backed; behavioral frontend, container, remote CI, and original-data execution remain.** |
 
 ## Evidence ledger
 
@@ -68,5 +68,11 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   reconstructs native raw margin from base plus SHAP within `1e-5`; unsupported
   estimator output fails closed; cohort evidence is byte-deterministic. The
   historical ranking remains explicitly unverified because its model/rows are absent.
+- Atomic evidence batch: 320 tests, Ruff, critical-path mypy, and isolated
+  reference-wrapper mypy pass. An actual synthetic Day 2 stage produces
+  byte-identical reports/manifests in separate targets. Injected stage and
+  manifest failures leave no published directory; existing empty targets are
+  preserved. The executable audit's 12 commands pass twice while the missing
+  serving model remains truthfully `UNAVAILABLE`/`INCOMPLETE`.
 
 The score will be updated only after each batch's acceptance commands pass.

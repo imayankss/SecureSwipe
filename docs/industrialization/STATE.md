@@ -8,7 +8,7 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Current committed phase: `0b4017a` (SHAP-validity batch pending commit)
+- Current committed phase: `94e9fa6` (atomic reference-evidence batch pending commit)
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -86,6 +86,9 @@ not included in the service or required quality runtime.
 | SHAP-validity full regression | PASS | Ruff, focused mypy, 307 tests, 22 upstream warnings |
 | SHAP synthetic additivity evidence | PASS | binary-logistic XGBoost raw margin reconstructed within `1e-5`; unsupported estimator rejected |
 | frontend after SHAP caveat export | PASS | Node 22.13.1 export/lint/type/build and npm audit all pass |
+| atomic reference-evidence full regression | PASS | 320 tests, 22 upstream warnings; Ruff and both focused mypy modes pass |
+| reference-stage determinism/failure injection | PASS | actual synthetic Day 2 outputs/manifests match byte-for-byte; injected stage/manifest failures leave no target |
+| executable audit after reference wrapper | PASS with explicit blocker | 12 command gates pass twice; serving bundle remains `UNAVAILABLE`, overall `INCOMPLETE` |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -212,6 +215,16 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
 - Quarantined the tracked legacy SHAP ranking as output-unit/additivity/cohort-
   unverified because its model and row identities are absent; public text no
   longer implies probability impact.
+- Added a shared atomic multi-file evidence boundary: compute/write failures
+  remove the sibling temporary tree, successful publication is one rename, and
+  no existing target (even empty/symlink) can be overwritten.
+- Refactored development analysis onto that boundary and added injected-failure
+  coverage so a failed manifest write publishes no partial destination.
+- Added the Day 2–7 reference-stage wrapper with strict legacy scopes, input and
+  output hashes, code/runtime provenance, parameters, seeds, and raw-data digest;
+  all six direct unmanifested CLIs now exit 2 with the canonical command.
+- Removed wall-clock timestamps from newly generated legacy reports and proved
+  an actual synthetic Day 2 stage is byte-identical across separate destinations.
 
 ## Current issues
 
@@ -230,8 +243,6 @@ new decision.
   vectors/artifacts; the recorded 0.0004 AP difference remains insufficient.
 - No original-data calibration result or domain-approved cost assumptions exist;
   the tested analysis engines do not retroactively justify threshold 0.53.
-- Legacy training commands do not yet all emit the deterministic run manifest
-  used by the new development runner.
 - Applying the verified SHAP protocol to the historical ranking is blocked by
   the absent original model and aligned sample row identities.
 - Frontend still lacks component/accessibility/browser tests and optional synthetic API mode.
@@ -248,14 +259,14 @@ new decision.
 
 ## Next executable action
 
-Implement the next locally actionable P1 batch: make legacy Day 2–7 training
-commands emit deterministic run manifests (code state, parameters, seed, runtime,
-input hashes, and output hashes) and refuse partial/overwrite evidence directories.
+Implement the next locally actionable P1 batch: frontend component/accessibility
+tests plus a synthetic-only optional API demo with loading, timeout, error, and
+static fallback states. No secret may use `NEXT_PUBLIC_*`, and static mode remains
+the default.
 
-Acceptance: a synthetic legacy command run emits a strict development namespace
-manifest, repeated identical runs in separate destinations are byte-identical,
-injected failure publishes no complete destination, and test/historical names
-are rejected.
+Acceptance: component tests cover keyboard/a11y and every API state; build-time
+configuration cannot contain secrets; unavailable API preserves the reviewed
+static dashboard; production build and browser smoke pass on Node 22.13.1.
 
 ## External blockers and user action
 

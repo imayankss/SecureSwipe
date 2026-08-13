@@ -27,6 +27,7 @@ artifact blocker and must not be interpreted as passing.
 | PASS | Python compile | `python -m compileall -q api src scripts tests` |
 | PASS | Python lint | `python -m ruff check api src scripts tests` |
 | PASS | Critical Python types | `python -m mypy --ignore-missing-imports api src/artifacts src/inference src/monitoring src/evaluation/statistical_metrics.py src/evaluation/calibration.py src/evaluation/cost_analysis.py src/evaluation/temporal_validation.py src/evaluation/historical_lock.py src/utils/config.py src/utils/run_manifest.py scripts/run_development_analysis.py scripts/run_offline_monitoring.py scripts/create_synthetic_monitoring_demo.py scripts/run_local_load_test.py scripts/verify_historical_observation.py` |
+| PASS | Reference-stage wrapper types | `python -m mypy --no-incremental --ignore-missing-imports --follow-imports=skip scripts/run_reference_stage.py` |
 | PASS | Python tests | `python -m pytest` |
 | PASS | Web artifact determinism | `python scripts/export_web_data.py --check` |
 | PASS | Historical observation integrity | `python scripts/verify_historical_observation.py` |

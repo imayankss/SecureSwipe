@@ -455,6 +455,13 @@ def main() -> None:
     Parses arguments, runs the full pipeline, prints a success summary,
     and exits with a non-zero status code on failure.
     """
+    print(
+        "Direct unmanifested execution is disabled. Use "
+        "`python scripts/run_reference_stage.py --stage day5 --output-dir <new-dir>`. ",
+        file=sys.stderr,
+    )
+    raise SystemExit(2)
+
     logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
     args = parse_args()
 

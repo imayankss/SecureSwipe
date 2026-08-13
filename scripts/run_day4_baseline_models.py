@@ -308,6 +308,13 @@ def print_success_message(results: Dict[str, Any]) -> None:
 
 def main() -> None:
     """Entry point for the Day 4 baseline modeling script."""
+    print(
+        "Direct unmanifested execution is disabled. Use "
+        "`python scripts/run_reference_stage.py --stage day4 --output-dir <new-dir>`. ",
+        file=sys.stderr,
+    )
+    raise SystemExit(2)
+
     args = parse_args()
 
     try:

@@ -11,7 +11,6 @@ itself. It only formats and saves results that are computed elsewhere.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Union
 
@@ -134,7 +133,7 @@ def build_day3_preprocessing_report(
     Returns:
         A complete Markdown report as a single string.
     """
-    generated_at = datetime.now(timezone.utc).isoformat()
+    generated_at = "omitted for deterministic evidence; see run manifest"
 
     train_rows = split_summary.get("train_rows", "N/A")
     validation_rows = split_summary.get("validation_rows", "N/A")

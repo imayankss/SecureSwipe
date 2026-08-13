@@ -61,6 +61,13 @@ claim test or historical scope. The original historical AP/ROC-AUC cannot be
 independently regenerated in a clean clone because the original rows, score
 vector, and fitted model were intentionally not committed.
 
+The Day 2–7 modules remain reusable implementation libraries, but their direct
+CLIs refuse unmanifested execution. `scripts/run_reference_stage.py` publishes
+one legacy stage into a new directory via a sibling temporary directory and an
+atomic rename. Failures leave no apparently complete target; existing targets,
+including empty ones, are never overwritten. These runs use explicit
+`legacy_random_*_reference` scopes and are not eligible for new decisions.
+
 ## Serving artifact proof
 
 Only bundles created locally by the project are eligible. A bundle couples the

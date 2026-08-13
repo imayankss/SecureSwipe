@@ -246,3 +246,16 @@ random rows; its aggregate label/score composition and per-cohort rankings are
 reported as non-prevalence-representative. Historical values are not upgraded by
 the new protocol: their artifact, row identities, output unit, and residuals are
 absent, so public material labels them unverified.
+
+## D-026 — Multi-file evidence publishes atomically or not at all
+
+Status: accepted
+
+Development analysis and legacy reference stages write into a sibling temporary
+directory and rename it only after every output and strict run manifest closes
+successfully. Existing targets, including empty directories and symlinks, are
+never overwritten; injected failure leaves no apparently complete target. Wall
+timestamps were removed from generated reports, so equal inputs/code/runtime
+produce byte-identical evidence in separate targets. Direct Day 2–7 CLIs refuse
+execution; `run_reference_stage.py` is the manifested compatibility boundary and
+its `legacy_random_*_reference` scopes are ineligible for new decisions.

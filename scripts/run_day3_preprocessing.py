@@ -259,6 +259,13 @@ def print_success_message(results: Dict[str, Any]) -> None:
 
 def main() -> None:
     """Parse arguments, run the Day 3 pipeline, and report the outcome."""
+    print(
+        "Direct unmanifested execution is disabled. Use "
+        "`python scripts/run_reference_stage.py --stage day3 --output-dir <new-dir>`. ",
+        file=sys.stderr,
+    )
+    raise SystemExit(2)
+
     args = parse_args()
 
     try:

@@ -98,6 +98,18 @@ def command_gates() -> list[CommandGate]:
                 "scripts/verify_historical_observation.py",
             ),
         ),
+        CommandGate(
+            "Reference-stage wrapper types",
+            (
+                python,
+                "-m",
+                "mypy",
+                "--no-incremental",
+                "--ignore-missing-imports",
+                "--follow-imports=skip",
+                "scripts/run_reference_stage.py",
+            ),
+        ),
         CommandGate("Python tests", (python, "-m", "pytest")),
         CommandGate("Web artifact determinism", (python, "scripts/export_web_data.py", "--check")),
         CommandGate(

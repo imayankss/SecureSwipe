@@ -99,15 +99,34 @@ The full ML pipeline requires the Kaggle dataset at:
 data/raw/creditcard.csv
 ```
 
-## Reproduce the ML Pipeline
+## Reproduce the Historical Reference Stages
+
+Direct Day 2–7 CLIs are disabled because they wrote partial, unmanifested files
+into shared directories. Use the atomic stage wrapper. Each target must be new;
+completed runs include hashes, code/runtime provenance, parameters, and seeds.
+These stages reproduce the legacy random-split workflow for reference only and
+must not be used for new model or threshold decisions.
 
 ```bash
-python3 scripts/run_day2_eda.py
-python3 scripts/run_day3_preprocessing.py
-python3 scripts/run_day4_baseline_models.py
-python3 -m scripts.run_day5_advanced_models
-python3 -m scripts.run_day6_threshold_tuning
-python3 -m scripts.run_day7_explainability
+python3 scripts/run_reference_stage.py --stage day2 --skip-figures \
+  --output-dir artifacts/runs/reference-day2
+python3 scripts/run_reference_stage.py --stage day3 \
+  --output-dir artifacts/runs/reference-day3
+python3 scripts/run_reference_stage.py --stage day4 \
+  --processed-dir artifacts/runs/reference-day3/data/processed \
+  --output-dir artifacts/runs/reference-day4
+python3 scripts/run_reference_stage.py --stage day5 \
+  --processed-dir artifacts/runs/reference-day3/data/processed \
+  --day4-metrics-path artifacts/runs/reference-day4/reports/metrics/day4_baseline_metrics.json \
+  --output-dir artifacts/runs/reference-day5
+python3 scripts/run_reference_stage.py --stage day6 \
+  --processed-dir artifacts/runs/reference-day3/data/processed \
+  --model-path artifacts/runs/reference-day5/artifacts/models/xgboost_baseline.joblib \
+  --output-dir artifacts/runs/reference-day6
+python3 scripts/run_reference_stage.py --stage day7 \
+  --processed-dir artifacts/runs/reference-day3/data/processed \
+  --model-path artifacts/runs/reference-day5/artifacts/models/xgboost_baseline.joblib \
+  --output-dir artifacts/runs/reference-day7
 python3 scripts/verify_historical_observation.py
 python3 -m scripts.run_project_audit
 ```
