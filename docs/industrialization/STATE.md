@@ -8,8 +8,8 @@ Last updated: 2026-08-13 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Current committed phase: `9d7e2153d67cfc3b037e1355d874a4e01ded4a1b`
-  (production-browser accessibility batch)
+- Current committed phase: `02cec1463e671fe3e01b0ba8e8b99451b5515708`
+  (dead-surface removal, clean supply-chain, architecture/documentation batch)
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -91,6 +91,10 @@ not included in the service or required quality runtime.
 | reference-stage determinism/failure injection | PASS | actual synthetic Day 2 outputs/manifests match byte-for-byte; injected stage/manifest failures leave no target |
 | executable audit after reference wrapper | PASS with explicit blocker | 12 command gates pass twice; serving bundle remains `UNAVAILABLE`, overall `INCOMPLETE` |
 | frontend behavioral/accessibility batch | PASS | 4 Vitest component tests; 2 production Chromium tests; keyboard/mobile/static-boundary contracts and WCAG A/AA Axe scan pass; npm audit has zero findings |
+| quality lock isolation and clean install | PASS | pip 26.2.1 quality closure and pip 26.2.1/pip-tools 7.6.1 resolver closure are separately hash-locked; two quality generations matched `46507a91ea208ba3ad26b6f4f6bbffbdf3e6a0f9772fbe36c5746eb075170a7b`; both audits clean; fresh install/import proof passed |
+| dead-surface/full regression | PASS | 21 unreachable source/script placeholders, 4 zero-test files, one stale report, and Streamlit closure removed; 320 tests, Ruff, focused mypy, compile, and expanded 14-command audit pass |
+| static frontend measured budget | PASS | clean production page: 6 scripts/270,718 encoded script bytes; 10 total requests/329,437 encoded bytes; enforced at 8/350,000 and 12/450,000 |
+| documentation contract | PASS | 23 Markdown files checked for valid local links; architecture, limitations, deployment, interview, and three-minute demo guides added |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -234,6 +238,14 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
 - Corrected browser-measured contrast defects, added the visible skip link and
   mobile section navigation, labelled sections/charts/status, and kept the
   dashboard static while the container gate remains blocked.
+- Removed every unreferenced three-line placeholder and zero-test file identified
+  by the call-graph audit, plus the stale root final report and unused Streamlit
+  dependency closure; canonical working modules and historical artifacts remain.
+- Isolated pip-tools in a separate hash-locked disposable resolver environment,
+  upgraded fixed pip to 26.2.1, proved clean install/import and two-pass lock
+  determinism, and added quality-lock auditing to local/CI project gates.
+- Added architecture/data-flow, limitations/non-goals, deployment, interview-
+  defense, demonstration, and measured frontend-budget guides with verified links.
 
 ## Current issues
 
@@ -263,19 +275,21 @@ new decision.
 
 ### P2
 
-- Dead/duplicate placeholder modules and stale documents obscure canonical paths.
-- Broader architecture/deployment/reproducibility/interview documentation remains incomplete.
+No open locally actionable P2 remains. Provider comparison is intentionally
+deferred until the Docker gate passes because pricing, free-tier, cold-start,
+architecture, and secret requirements are time-sensitive selection inputs.
 
 ## Next executable action
 
-Complete the locally actionable documentation batch: architecture/data-flow,
-reproducibility, limitations/non-goals, interview-defense, and three-minute demo
-guides. Verify every command and public claim against the current checkout, then
-remove or explicitly quarantine stale/dead documents after call-graph checks.
+Run two consecutive complete data-free quality gates with no intervening code
+change, then perform the independent final adversarial re-audit. These runs can
+validate local code/static evidence but cannot satisfy original-data, Docker,
+remote workflow, or serving-model exit conditions.
 
-Acceptance: docs identify historical/development/backtest namespaces, artifact
-and trust boundaries, exact clean-clone commands, Docker/data/authorization
-blockers, and no unsupported deployment/scientific claim.
+Acceptance: compile, Ruff, both mypy modes, 320 tests, evidence locks/exports,
+API and quality audits, frontend unit/build/browser/audit gates pass twice;
+worktree remains unchanged; project audit remains honestly `INCOMPLETE` only for
+the absent verified serving bundle.
 
 ## External blockers and user action
 

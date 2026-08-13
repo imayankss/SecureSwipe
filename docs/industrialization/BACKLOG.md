@@ -51,9 +51,9 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Add bounded latency/request/error/score-distribution metrics.
 - [x] Implement deterministic offline drift monitor with synthetic shifted demonstration.
 - [x] Run local load test and record p50/p95/p99/error rate.
-- [~] Create measured SLO guidance, alert/incident/rollback/model-replacement
-  runbooks (host measurement and full local guidance complete; container/provider
-  objectives remain externally blocked/unselected).
+- [B] Create measured provider/container SLOs; host measurement and local
+  alert/incident/rollback/model-replacement guidance are complete, while Docker
+  and a selected provider remain external prerequisites.
 
 ## P1 — frontend/QA/supply chain
 
@@ -66,28 +66,31 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Add component, keyboard, accessibility, responsive, and browser-smoke tests.
 - [x] Add Python lint/type/unit/integration/export-determinism gates.
 - [x] Add frontend lint/type/test/build/data gates.
-- [~] Add dependency, secret/code, bundle, container-build, and scan workflows
-  with minimal permissions (definitions and local policy tests pass; first remote
-  execution and Docker-backed scan are externally blocked).
+- [B] Execute dependency, secret/code, bundle, container-build, and scan
+  workflows remotely; least-privilege definitions and local policy/dependency
+  audits pass, while first GitHub/Docker-backed execution is externally blocked.
 - [x] Add Dependabot for Python, npm, and Actions.
 - [x] Add root LICENSE, CONTRIBUTING, SECURITY, and PR template.
 
 ## P2/P3
 
-- [ ] Remove or explicitly deprecate dead placeholder modules and stale reports after call-graph verification.
+- [x] Remove or explicitly deprecate dead placeholder modules and stale reports after call-graph verification.
 - [x] Add skip link/mobile navigation/progress/table/chart accessibility semantics.
-- [ ] Record a frontend performance budget from a clean measured build.
+- [x] Record a frontend performance budget from a clean measured build.
 - [x] Correct project author metadata.
-- [ ] Write architecture, ADRs, deployment/reproducibility guides,
+- [x] Write architecture, ADRs, deployment/reproducibility guides,
   limitations/non-goals,
   interview defense, and three-minute demo script.
 - [x] Write and locally verify an explicit threat model.
 - [x] Write monitoring interpretation and local incident/rollback guidance.
-- [ ] Evaluate deployment providers only after all local gates pass; require explicit approval before external action.
+- [B] Evaluate deployment providers only after the Docker/local gates pass;
+  current prices/limits require research at selection time and external action
+  requires explicit approval.
 
 ## Exit audit
 
-- [ ] No open P0/P1 (external blockers documented with exact safe command).
+- [B] No open locally actionable P0/P1; original data/model, Docker, remote CI,
+  and public integration prerequisites are documented external blockers.
 - [ ] Evidence score >= 92/100 and every category >= 80%.
 - [ ] Two consecutive full quality-gate runs pass with no code changes between them.
 - [ ] Golden predictions identical in evaluation and API service paths.

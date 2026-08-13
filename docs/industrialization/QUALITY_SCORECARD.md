@@ -10,9 +10,9 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | Architecture and maintainability | 15 | 4 | 15 | Offline/static, blocked-development, reference-stage, and verified serving paths have explicit boundaries; direct partial legacy CLIs fail closed; mounted bundles, current audit, workflow separation, typed configuration, and governance are tested. |
 | Testing and quality gates | 15 | 6 | 15 | 320 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain tests, package proof, four component tests, and two production Chromium keyboard/mobile/WCAG/static-boundary tests pass; Docker execution remains explicitly blocked. |
 | API/container reliability | 10 | 0 | 8 | Versioned API, readiness, limits, OpenAPI, exact parity, threadpool offload, runtime log evidence, health responsiveness, and 500-request loopback behavior pass; container remains unverified. |
-| Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean runtime/npm audits, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
+| Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean API/quality/resolver/npm audits, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
 | Observability and operations | 10 | 0 | 8 | Bounded metrics, runtime JSON/redaction evidence, deterministic schema/feature/score/delayed-label monitoring, shifted demo, repeated M2 load evidence, local objectives, and incident/rollback guides pass; container/provider operations remain unmeasured. |
-| Documentation and developer experience | 5 | 3 | 5 | Persistent controls, API/container/scientific/monitoring protocols, data/model cards, security policy, threat model, and local incident guidance are explicit; broader architecture/reproducibility/interview material remains. |
+| Documentation and developer experience | 5 | 3 | 5 | Persistent controls, architecture/data flow, API/container/scientific/monitoring protocols, data/model cards, threat/limitations/deployment/reproducibility guides, interview defense, demo, and local incident guidance are explicit and link-checked. |
 | **Total** | **100** | **23** | **90** | **Local scientific protocols, reproducibility, architecture, API, monitoring, and behavioral/static frontend gates are evidence-backed; container, remote CI, and original-data execution remain.** |
 
 ## Evidence ledger
@@ -79,5 +79,17 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   focus, keyboard score changes, responsive section navigation, named status/
   table/progress/chart semantics, a clean WCAG A/AA Axe scan, and zero requests
   to `/v1/predict`; full npm audit reports zero vulnerabilities.
+- Maintainability/supply-chain/documentation batch: 21 unreachable source/script
+  placeholders, four zero-test files, one stale report, and the unused Streamlit
+  closure were removed after reference search; all 320 tests still pass. The
+  quality and isolated resolver locks install cleanly, audit with no known
+  vulnerabilities, and the quality lock regenerates identically twice at
+  `46507a91ea208ba3ad26b6f4f6bbffbdf3e6a0f9772fbe36c5746eb075170a7b`.
+  The expanded executable audit has 14 passing commands plus an explicitly
+  unavailable bundle, and 23 documentation files have valid local links.
+- Frontend performance evidence: the clean production page measured 270,718
+  encoded script bytes across six scripts and 329,437 total bytes across ten
+  requests. Chromium now enforces 350,000/8 script and 450,000/12 total budgets;
+  timings are recorded for context but not asserted as a local-run SLO.
 
 The score will be updated only after each batch's acceptance commands pass.
