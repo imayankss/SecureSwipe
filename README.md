@@ -329,7 +329,7 @@ or investigate real transactions.
 - Add model calibration analysis.
 - Package inference behind a separately secured service only after the full
   preprocessor/model artifact set, input contract, monitoring, and production
-  
+  requirements have been validated.
 
 ## Author
 
