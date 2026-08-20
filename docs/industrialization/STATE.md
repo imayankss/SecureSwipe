@@ -8,11 +8,13 @@ Last updated: 2026-08-20 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Implementation commit audited by this state snapshot:
-  `77c2664390df8605727ed209bf81156f15d1658d` (verified container runtime,
-  pinned OS fixes, and expiring scan exceptions). The control-file
-  commit containing this snapshot is intentionally one commit later; obtain it
-  with `git log -1 --format=%H -- docs/industrialization/STATE.md`.
+- Corrected implementation commit audited by this state snapshot:
+  `050d4f1b2963c0123e265c76b1c9a1f26e1836d5`. Durable container evidence is
+  committed at `cadfc57396318999c2b47ff3a776646e55f99e3f`; the refreshed audit
+  checklist and two unchanged final cycles use
+  `14ee9fbe573bb56586fedd10aef8234fa2ca8d8d`. The control-file commit
+  containing this snapshot is intentionally later; obtain it with
+  `git log -1 --format=%H -- docs/industrialization/STATE.md`.
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -106,9 +108,10 @@ not included in the service or required quality runtime.
 | four-lock regeneration | PASS | two byte-identical passes: Darwin API `465ca25d...`, Linux API `b72a0222...`, Darwin quality `b6a31eb7...`, Linux quality `b033c14e...`; Linux locks contain `xgboost-cpu` and no NVIDIA packages |
 | final ARM64 image build/runtime | PASS | image `sha256:a16cb318edec7b34407ddaaec2aa5e3ee38154abb73023929292d63013866b40`; Python 3.12.13/aarch64; healthy, read-only, UID/GID 10001, all capabilities dropped, no-new-privileges, pip absent |
 | container API/golden/load probe | PASS | live/ready/model-info/OpenAPI/metrics and exact golden response passed; 500/500 predictions, p50/p95/p99 28.33/38.08/147.06 ms, concurrent health 20.01 ms, zero errors |
-| final image Trivy/SBOM | PASS with reviewed exceptions | Trivy 0.70.0: 12 unique Debian high/critical advisories had no fix; all are individually mitigated and expire 2026-09-20; reviewed scan has zero active findings. SPDX 2.2 SBOM: 117 packages, SHA-256 `03559fcf...` |
-| final unchanged quality cycle 1 | PASS | CPython 3.12.10 quality venv and isolated official Node 22.13.1/npm 10.9.2; all 18 `run_project_audit.py --allow-missing-model --check` executable gates passed: compile, Ruff, both mypy scopes, pytest, web export, historical lock, synthetic monitoring, four pip audits, sdist/wheel build and inventory, frontend test/build/Chromium, and npm audit. The clean Darwin API lock installed, passed `pip check`, installed the freshly built wheel, removed `pip`, and imported `api.main` plus `ModelBundle` from `/tmp`. Audit status remained `INCOMPLETE` only because no serving bundle is configured. |
-| final unchanged quality cycle 2 | PASS | Same CPython 3.12.10 quality venv and the same verified isolated official Node 22.13.1/npm 10.9.2; the identical 18 audit gates and separate clean pip-free Darwin API wheel-import proof all passed again. No tracked source, configuration, or control file changed between the two successful cycles. Audit status remained `INCOMPLETE` only because no serving bundle is configured. |
+| source-bound corrected ARM64 image/runtime | PASS | image `sha256:afb032c3c614edb5a0c743c166a52bbab1f9e265592043cc766ad9c14d9779e7`, OCI revision `050d4f1b2963c0123e265c76b1c9a1f26e1836d5`; Linux-generated synthetic bundle reached ready/live under a read-only root, UID 10001, all capabilities dropped, no-new-privileges, and pip absent. |
+| durable final image Trivy/SBOM | PASS with reviewed exceptions | [binding manifest](evidence/container/manifest.json) retains Trivy 0.70.0/database timestamps, image/source identities, all 17 package records across 12 unique no-fix high/critical advisories, exact exception dispositions expiring 2026-09-20, and zero active policy findings. Raw scan SHA-256 `72e7617b18dcf66088556b82743e4b601e9f47dd6e8990c987872879ecf4366b`; 117-package SPDX 2.2 SHA-256 `bdd9797cf0f36c75c2c5364d7ca0fe6be0bdde3afb72d9f5fcafa0919016c21d`. |
+| corrected final unchanged quality cycle 1 | PASS | At clean tracked HEAD `14ee9fbe573bb56586fedd10aef8234fa2ca8d8d`, CPython 3.12.10 and isolated official Node 22.13.1/npm 10.9.2 passed all 18 `run_project_audit.py --allow-missing-model --check` gates. A fresh offline hash-locked Darwin API environment passed `pip check`, installed the freshly built wheel, removed pip, and imported `api.main` plus `ModelBundle` from `/tmp`. |
+| corrected final unchanged quality cycle 2 | PASS | The identical 18 gates and an independent fresh pip-free Darwin API proof passed again at the same HEAD. Tracked source, configuration, evidence, and control files remained unchanged between the two successful cycles; audit status stayed `INCOMPLETE` only because no serving bundle is configured. |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -308,8 +311,20 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
   uses a three-second abort timeout, and preserves the static score demo for
   loading, timeout, unavailable, empty, and error outcomes. Component coverage
   passes 7 focused Vitest tests; the production Chromium dashboard suite passes
-  3 tests including no-request behavior when the API URL is absent. Frontend
-  build, data check, lint, and TypeScript checks pass.
+  3 tests including the configured complete-contract request and no request
+  before user opt-in. Frontend build, data check, lint, and TypeScript checks pass.
+- Normalized Starlette-generated 404/405 responses into the stable
+  `ErrorResponse` envelope and declared the actual inference 413/422/500/503
+  schemas; focused runtime/OpenAPI parity tests pass.
+- Validated the configured frontend API as an HTTP(S) origin, derived CSP
+  `connect-src` from that origin, validated the complete live response, and
+  proved exactly one all-zero synthetic request in production Chromium.
+- Atomically retained canonical new-source approval payloads, revalidated their
+  exact fields/source/reviewer during curated loading and training, and bound
+  approval plus curation evidence into both manifests.
+- Rebuilt the ARM64 image with an OCI Git revision label and committed the full
+  checksummed Trivy JSON, SPDX 2.2 JSON, scanner/database metadata, and every
+  exception disposition under `docs/industrialization/evidence/container/`.
 
 ## Current issues
 
@@ -322,12 +337,15 @@ the entire known corpus is ineligible for new decisions.
 
 ### P1
 
-No open scientific, backend, container, or supply-chain P1 remains. The deterministic curation
+No confirmed P0/P1 from the independent audit at `c942c05` remains locally
+unresolved. The deterministic curation
 and four-role workflow are synthetic-tested, including operator-attested exact-
 file approval, taint propagation, score recomputation, paired selection evidence,
 calibration, reusable forward backtest, atomic real-bundle packaging, and exact
 direct/reloaded/API parity. The optional synthetic-only frontend live-demo mode
-is implemented and locally verified.
+is implemented and locally verified. Stable API/OpenAPI error parity, the
+configured cross-origin production demo, self-contained approval lineage, and
+source-bound durable scan/SBOM evidence are focused-tested and pass.
 
 External evidence blockers remain:
 
@@ -340,17 +358,22 @@ External evidence blockers remain:
 - Current checkout cannot reproduce the original-data evaluation because the
   intentionally uncommitted CSV and fitted artifacts are unavailable.
 
-### P2
+### P2/P3
 
-No open locally actionable P2 remains. Provider comparison remains a later
-product choice because pricing, free-tier, cold-start, architecture, and secret
-requirements are time-sensitive selection inputs.
+The independent audit recorded three still-open implementation/documentation
+P2 findings: joint reuse of `operating_point_selection`, post-deserialization
+bundle semantic checks, and mutating side effects behind project-audit
+`--check`. Its exit-record inconsistency is reconciled by this evidence update.
+The P3 pre-resolve symlink checks remain deferred. None was changed in the
+P0/P1-only correction scope. Provider comparison also remains a later product
+choice because its inputs are time-sensitive.
 
 ## Next executable action
 
-Run the final independent adversarial audit. The two unchanged full quality
-cycles were completed locally on 2026-08-20; the adversarial audit was not run
-in this session by owner instruction.
+Run a follow-up independent adversarial audit against the corrected HEAD. The
+audit at `c942c05` found four P1 findings; all four corrections and two unchanged
+full quality cycles were completed locally on 2026-08-20, but an independent
+post-correction re-audit has not run.
 
 Completed acceptance: the live-demo boundary and fallback tests pass; compile,
 lint, both mypy scopes, Python tests, evidence checks, four dependency audits,

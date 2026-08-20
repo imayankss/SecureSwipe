@@ -6,11 +6,11 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | Category | Available | Initial | Current | Evidence |
 |---|---:|---:|---:|---|
 | ML correctness and scientific validity | 20 | 5 | 17 | Historical-corpus quarantine, operator-attested exact-file approval, deterministic curation, four chronological content-hash-isolated roles, matched random diagnostic, paired uncertainty/simplicity selection, calibration, reusable forward backtest, constrained/cost metrics, and raw-margin SHAP protocols are synthetic-tested; real new-data and historical SHAP execution remain external blockers. |
-| Reproducibility and data lineage | 15 | 2 | 15 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, atomic timestamp-free manifests for development and every legacy stage, typed configuration, historical lock, and read-only export verification are tested. |
+| Reproducibility and data lineage | 15 | 2 | 15 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, atomic timestamp-free manifests for development and every legacy stage, retained/revalidated operator approval evidence, typed configuration, historical lock, and read-only export verification are tested. |
 | Architecture and maintainability | 15 | 4 | 15 | Offline/static, blocked-development, reference-stage, and verified serving paths have explicit boundaries; direct partial legacy CLIs fail closed; mounted bundles, current audit, workflow separation, typed configuration, and governance are tested. |
-| Testing and quality gates | 15 | 6 | 15 | 343 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain/wheel-inventory tests, clean package proof, seven focused component tests, and three production Chromium keyboard/mobile/WCAG/static-boundary/live-fallback tests pass; two unchanged final cycles remain. |
-| API/container reliability | 10 | 0 | 10 | Versioned API, readiness, limits, OpenAPI, exact parity, threadpool offload, runtime log evidence, health responsiveness, and the final ARM64 read-only/non-root/pip-free container pass. |
-| Security and privacy | 10 | 3 | 10 | Trusted-root loading, validation/limits/CORS/redacted logs, clean dependency audits, least-privilege CI, final-image Trivy review, expiring per-CVE mitigations, and an SPDX SBOM pass locally; remote secret/code workflows remain external evidence. |
+| Testing and quality gates | 15 | 6 | 15 | 348 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain/wheel-inventory tests, clean package proof, seven focused component tests, and three production Chromium keyboard/mobile/WCAG/configured-live-contract tests pass; two unchanged 18-gate final cycles pass at `14ee9fb`. |
+| API/container reliability | 10 | 0 | 10 | Versioned API, stable framework/runtime error envelopes, OpenAPI response parity, readiness, limits, exact scoring parity, threadpool offload, runtime logs, health responsiveness, and the source-bound ARM64 read-only/non-root/pip-free container pass. |
+| Security and privacy | 10 | 3 | 10 | Trusted-root loading, validation/limits/validated CSP+CORS/redacted logs, clean dependency audits, least-privilege CI, and durable checksummed source-bound Trivy/SPDX evidence with expiring per-CVE dispositions pass locally; remote secret/code workflows remain external evidence. |
 | Observability and operations | 10 | 0 | 9 | Bounded metrics/logs, deterministic offline monitoring, incident/rollback guides, repeated host measurements, and a zero-error 500-request final-container probe pass; provider behavior remains unmeasured. |
 | Documentation and developer experience | 5 | 3 | 5 | Persistent controls, architecture/data flow, API/container/scientific/monitoring protocols, data/model cards, threat/limitations/deployment/reproducibility guides, interview defense, demo, and local incident guidance are explicit and link-checked. |
 | **Total** | **100** | **23** | **96** | **Local scientific protocols, reproducibility, architecture, API, container, monitoring, security scan, and behavioral/static frontend gates are evidence-backed; real new-data and remote CI remain external blockers.** |
@@ -21,9 +21,10 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 - Frontend: data check, lint, typecheck, current test script, production build,
   and npm audit passed on isolated official Node 22.13.1/npm 10.9.2.
 - npm audit: zero known vulnerabilities in full and production-only scans.
-- Docker: final ARM64 image `sha256:a16cb318...` passed restricted startup,
-  readiness, exact golden inference, metrics/OpenAPI, bounded load, Trivy review,
-  and SPDX SBOM generation.
+- Docker: prior final ARM64 image `sha256:a16cb318...` passed restricted startup,
+  exact golden inference, metrics/OpenAPI, and bounded load. Corrected image
+  `sha256:afb032c3...` is bound to source `050d4f1...` and passed restricted
+  ready/live verification with a Linux-generated synthetic bundle.
 - Data/model: absent by design; original AP/ROC and artifact behavior not reproducible.
 - Historical confusion-matrix derived metrics: independently recomputed and matched.
 - P0 batch: 166 Python tests passed; corrupt, incomplete, schema-mismatched,
@@ -131,5 +132,18 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   0.70.0 found 12 unique no-fix Debian advisories; each has a documented
   mitigation and 2026-09-20 expiry, leaving zero active reviewed findings. The
   SPDX 2.2 SBOM contains 117 packages and hashes to `03559fcf...`.
+- Independent-audit P1 correction batch: stable 404/405/runtime/OpenAPI error
+  parity, validated cross-origin CSP with exactly one complete-contract browser
+  request, and retained/revalidated approval lineage pass focused tests. Image
+  `sha256:afb032c3...` carries OCI revision `050d4f1...`; the durable binding
+  manifest records Trivy 0.70.0 and its database timestamps, 17 raw records/12
+  unique no-fix CVEs/zero active findings, raw scan SHA-256 `72e7617b...`, and a
+  117-package SPDX 2.2 SHA-256 `bdd9797c...`.
+- Corrected final cycles: at tracked-clean `14ee9fb`, the same 18 executable
+  audit gates passed twice with official Node 22.13.1/npm 10.9.2 and CPython
+  3.12.10. Each cycle also created a fresh offline hash-locked Darwin API
+  environment, passed `pip check`, installed the new wheel, removed pip, and
+  imported `api.main` plus `ModelBundle` from `/tmp`; no tracked file changed
+  between the two successful runs.
 
 The score will be updated only after each batch's acceptance commands pass.

@@ -57,6 +57,9 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
   produce a distinct model version.
 - [x] Resolve and audit separate deterministic Darwin and Linux CPU locks; Linux
   uses `xgboost-cpu` and contains no NVIDIA packages.
+- [x] Retain the canonical new-source approval atomically; revalidate its exact
+  schema, source checksum/reference, attestation, and reviewer during curated
+  loading/training; bind it and the curation manifest into training evidence.
 
 ## P1 — API/container/operations
 
@@ -65,11 +68,16 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Unknown/non-finite/malformed/oversized/batch-limit/unavailable-model/concurrency tests.
 - [x] Structured redacted JSON logs with request IDs and no transaction vectors.
 - [x] Configurable explicit CORS allowlist and request-body cap.
+- [x] Normalize framework-generated 404/405 errors into `ErrorResponse` and
+  document runtime-parity 413/422/500/503 OpenAPI schemas.
 - [x] Replace Dockerfile, add `.dockerignore`, non-root user, pinned runtime, and health check.
 - [x] Remove the unnecessary package installer from the final runtime image.
 - [x] Rebuild and test linux/arm64 image startup/readiness/inference from the final lock.
 - [x] Scan the rebuilt image and produce an SPDX SBOM; individually reviewed
   no-fix Debian exceptions expire 2026-09-20.
+- [x] Bind the final ARM64 image to its Git revision and retain checksummed raw
+  Trivy JSON, SPDX 2.2 JSON, scanner/database metadata, full findings, and every
+  exception disposition in durable repository evidence.
 - [x] Add bounded latency/request/error/score-distribution metrics.
 - [x] Implement deterministic offline drift monitor with synthetic shifted demonstration.
 - [x] Run local load test and record p50/p95/p99/error rate.
@@ -85,6 +93,8 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Add synthetic-only optional live API demo with static fallback,
   timeout/loading/error/empty/unavailable states and focused component/browser
   coverage; the Docker prerequisite and local API gates pass.
+- [x] Derive production `connect-src` from a validated API origin and prove one
+  complete-contract synthetic request in the production Chromium gate.
 - [x] Add component, keyboard, accessibility, responsive, and browser-smoke tests.
 - [x] Add Python lint/type/unit/integration/export-determinism gates.
 - [x] Add frontend lint/type/test/build/data gates.
@@ -99,6 +109,13 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 
 ## P2/P3
 
+- [ ] Treat calibration/candidate/threshold reuse of
+  `operating_point_selection` explicitly as joint tuning or add an independent role.
+- [ ] Validate bundle score/calibrator semantics before deserialization.
+- [ ] Separate project-audit output verification from mutating quality execution
+  or document the `--check` side effects.
+- [x] Reconcile the exit-control scorecard with the two completed unchanged cycles.
+- [ ] Check original paths for symlinks before `resolve()` dereferences them.
 - [x] Remove or explicitly deprecate dead placeholder modules and stale reports after call-graph verification.
 - [x] Add skip link/mobile navigation/progress/table/chart accessibility semantics.
 - [x] Record a frontend performance budget from a clean measured build.
@@ -114,8 +131,8 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 
 ## Exit audit
 
-- [~] No open P0; the optional frontend live-demo is now locally implemented;
-  original data/model and remote CI remain documented external blockers.
+- [~] No open P0 and all four confirmed P1 findings from the independent audit
+  at `c942c05` are corrected; follow-up independent re-audit remains outstanding.
 - [x] Evidence score >= 92/100 and every category >= 80%.
 - [x] Two consecutive full quality-gate runs pass with no code changes between them.
 - [x] Golden predictions identical in evaluation and API service paths on the
