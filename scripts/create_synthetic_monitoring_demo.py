@@ -17,6 +17,17 @@ from src.monitoring.io import write_report
 from src.monitoring.offline import monitor_batches
 
 
+def _portable_fixture_value(value: Any) -> Any:
+    """Normalize host-level floating-point noise in the tracked fixture only."""
+    if isinstance(value, dict):
+        return {key: _portable_fixture_value(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_portable_fixture_value(item) for item in value]
+    if isinstance(value, float):
+        return round(value, 12)
+    return value
+
+
 def generate_demo(output: Path) -> dict[str, Any]:
     bundle, _ = build_synthetic_bundle()
     from scripts.create_synthetic_bundle import synthetic_training_data
@@ -27,7 +38,7 @@ def generate_demo(output: Path) -> dict[str, Any]:
     current["V1"] = current["V1"] + 3.0
     reference["Class"] = labels
     current["Class"] = labels
-    report = monitor_batches(reference, current, bundle=bundle)
+    report = _portable_fixture_value(monitor_batches(reference, current, bundle=bundle))
     # The tracked fixture is verified byte-for-byte on macOS and Linux. Runtime
     # provenance remains part of ordinary monitoring reports, but is host-specific
     # and therefore intentionally excluded from this synthetic demonstration.

@@ -10,7 +10,7 @@ import pandas as pd
 import pytest
 
 from scripts.create_synthetic_bundle import build_synthetic_bundle, synthetic_training_data
-from scripts.create_synthetic_monitoring_demo import generate_demo
+from scripts.create_synthetic_monitoring_demo import _portable_fixture_value, generate_demo
 from src.monitoring.io import write_report
 from src.monitoring.offline import DriftThresholds, audit_batch, monitor_batches
 
@@ -120,3 +120,7 @@ def test_demo_and_report_check_are_byte_deterministic(tmp_path: Path) -> None:
     first.write_text("{}\n", encoding="utf-8")
     with pytest.raises(RuntimeError, match="stale"):
         write_report(payload, first, check=True)
+
+
+def test_fixture_rounding_is_portable() -> None:
+    assert _portable_fixture_value({"value": 0.12345678901267}) == {"value": 0.123456789013}
