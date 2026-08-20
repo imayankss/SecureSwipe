@@ -649,27 +649,27 @@
     "calibrated_probability_claim": false,
     "current": {
       "available": true,
-      "average_precision": 0.89925,
-      "brier_score_diagnostic": 0.064516748673,
-      "expected_calibration_error": 0.1169794896,
-      "false_negatives": 3,
-      "false_positives": 0,
-      "precision": 1.0,
-      "recall": 0.8,
-      "true_negatives": 49,
-      "true_positives": 12
+      "average_precision": 0.234375,
+      "brier_score_diagnostic": 0.499375,
+      "expected_calibration_error": 0.565625,
+      "false_negatives": 0,
+      "false_positives": 49,
+      "precision": 0.234375,
+      "recall": 1.0,
+      "true_negatives": 0,
+      "true_positives": 15
     },
     "reference": {
       "available": true,
-      "average_precision": 0.90162835249,
-      "brier_score_diagnostic": 0.063949058798,
-      "expected_calibration_error": 0.11725865317,
-      "false_negatives": 3,
-      "false_positives": 0,
-      "precision": 1.0,
-      "recall": 0.8,
-      "true_negatives": 49,
-      "true_positives": 12
+      "average_precision": 0.254166666667,
+      "brier_score_diagnostic": 0.20875,
+      "expected_calibration_error": 0.05,
+      "false_negatives": 12,
+      "false_positives": 6,
+      "precision": 0.333333333333,
+      "recall": 0.2,
+      "true_negatives": 43,
+      "true_positives": 3
     }
   },
   "schema": {
@@ -761,28 +761,28 @@
   "score_drift": {
     "current": {
       "count": 64,
-      "mean": 0.244574788327,
-      "p05": 0.007259949643,
-      "p50": 0.136698917081,
-      "p95": 0.832597856648,
-      "standard_deviation": 0.271289379863
+      "mean": 0.8,
+      "p05": 0.8,
+      "p50": 0.8,
+      "p95": 0.8,
+      "standard_deviation": 0.0
     },
-    "drift_signal": false,
-    "ks_statistic": 0.078125,
-    "population_stability_index": 0.036992815532,
+    "drift_signal": true,
+    "ks_statistic": 0.859375,
+    "population_stability_index": 13.428237416822,
     "reference": {
       "count": 64,
-      "mean": 0.23439823799,
-      "p05": 0.007609488531,
-      "p50": 0.129302855946,
-      "p95": 0.809429514797,
-      "standard_deviation": 0.265130325076
+      "mean": 0.284375,
+      "p05": 0.2,
+      "p50": 0.2,
+      "p95": 0.8,
+      "standard_deviation": 0.20858058245
     }
   },
   "signals": {
     "feature_drift": true,
     "schema_violation": false,
-    "score_drift": false
+    "score_drift": true
   },
   "status": "valid",
   "thresholds": {

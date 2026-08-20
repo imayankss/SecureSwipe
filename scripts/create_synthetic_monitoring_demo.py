@@ -8,13 +8,36 @@ import sys
 from pathlib import Path
 from typing import Any
 
+import numpy as np
+import pandas as pd
+
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from scripts.create_synthetic_bundle import build_synthetic_bundle
+from scripts.create_synthetic_bundle import SYNTHETIC_MODEL_VERSION, synthetic_training_data
+from src.artifacts.bundle import ModelBundle
+from src.data.data_loader import fingerprint_dataframe
 from src.monitoring.io import write_report
 from src.monitoring.offline import monitor_batches
+from src.preprocessing.feature_config import ALL_FEATURES
+
+
+class _FixturePreprocessor:
+    """Minimal deterministic transformer for the tracked monitoring fixture."""
+
+    def transform(self, frame: pd.DataFrame) -> np.ndarray:
+        return frame.to_numpy(dtype=float, copy=True)
+
+
+class _FixtureModel:
+    """Simple rule model that avoids platform-specific solver variation."""
+
+    classes_ = np.array([0, 1])
+
+    def predict_proba(self, values: np.ndarray) -> np.ndarray:
+        positive = np.where(values[:, -1] >= 50.0, 0.8, 0.2)
+        return np.column_stack((1.0 - positive, positive))
 
 
 def _portable_fixture_value(value: Any) -> Any:
@@ -28,11 +51,23 @@ def _portable_fixture_value(value: Any) -> Any:
     return value
 
 
-def generate_demo(output: Path) -> dict[str, Any]:
-    bundle, _ = build_synthetic_bundle()
-    from scripts.create_synthetic_bundle import synthetic_training_data
+def _fixture_bundle(reference: pd.DataFrame, labels: np.ndarray) -> ModelBundle:
+    labeled = reference.copy()
+    labeled["Class"] = labels
+    return ModelBundle(
+        preprocessor=_FixturePreprocessor(),
+        model=_FixtureModel(),
+        calibrator=None,
+        operating_threshold=0.53,
+        feature_schema=tuple(ALL_FEATURES),
+        training_data_fingerprint=fingerprint_dataframe(labeled),
+        model_version=SYNTHETIC_MODEL_VERSION,
+    )
 
+
+def generate_demo(output: Path) -> dict[str, Any]:
     reference, labels = synthetic_training_data()
+    bundle = _fixture_bundle(reference, labels)
     current = reference.copy()
     current["Amount"] = current["Amount"] * 4.0 + 100.0
     current["V1"] = current["V1"] + 3.0
