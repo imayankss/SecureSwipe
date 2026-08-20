@@ -1,0 +1,37 @@
+vulnerabilities:
+  - id: CVE-2026-41992
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fix; the runtime never accepts or creates gzip archives.
+  - id: CVE-2026-54369
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fix; the non-root read-only service does not manipulate ACLs.
+  - id: CVE-2025-69720
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fix; the headless service has no terminal or ncurses input.
+  - id: CVE-2026-14456
+    expired_at: 2026-09-20
+    statement: Debian deferred the fix; this reference container terminates no TLS.
+  - id: CVE-2026-13221
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fix; Perl is never invoked and no user regular expression is evaluated.
+  - id: CVE-2026-42496
+    expired_at: 2026-09-20
+    statement: Debian deferred the fix; Perl Archive-Tar is never invoked and the root filesystem is read-only.
+  - id: CVE-2026-57433
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fix; Perl Storable is never invoked or given user data.
+  - id: CVE-2026-8376
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fix; Perl is never invoked and supported images are not 32-bit runtimes.
+  - id: CVE-2026-42497
+    expired_at: 2026-09-20
+    statement: Debian deferred the fix; Perl Archive-Tar is never invoked and the root filesystem is read-only.
+  - id: CVE-2026-48962
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fix; Perl is never invoked or exposed through the API.
+  - id: CVE-2026-57432
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fix; Perl Storable is never invoked or given user data.
+  - id: CVE-2026-9538
+    expired_at: 2026-09-20
+    statement: Debian deferred the fix; Perl is never invoked or exposed through the API.

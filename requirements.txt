@@ -1,18 +1,4 @@
-pandas
-numpy
-scikit-learn
-imbalanced-learn
-xgboost
-lightgbm
-matplotlib
-seaborn
-plotly
-shap
-joblib
-pyarrow
-pyyaml
-streamlit
-fastapi
-uvicorn
-pytest
-jupyter
+# Compatibility entrypoint for local contributors. This delegates to the
+# hash-locked quality environment. Production images use requirements/api.lock;
+# notebook users additionally install requirements/notebook.in in a local venv.
+-r requirements/quality.lock

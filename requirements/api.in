@@ -1,0 +1,3 @@
+# Apple Silicon/Darwin CPU inference runtime. Install only the compiled lock.
+-r api-common.in
+xgboost==3.3.0

@@ -3,10 +3,23 @@
 from pathlib import Path
 
 import pytest
+import yaml
+from pydantic import ValidationError
 
 import main as main_module
-from src.utils.config import get_config_value, load_config
+from src.utils.config import (
+    ProjectConfig,
+    get_config_value,
+    load_config,
+    load_project_config,
+)
 from src.utils.paths import get_project_root
+from src.preprocessing.feature_config import (
+    RANDOM_STATE,
+    TARGET_COLUMN,
+    TEST_SIZE,
+    VALIDATION_SIZE,
+)
 
 
 def test_project_root_is_valid_directory() -> None:
@@ -28,6 +41,40 @@ def test_load_config_returns_dict() -> None:
     config = load_config()
     assert isinstance(config, dict)
     assert "project" in config
+
+
+def test_typed_config_is_authoritative_and_paths_are_consistent() -> None:
+    config = load_project_config()
+    assert isinstance(config, ProjectConfig)
+    assert config.project.random_seed == 42
+    assert config.project.random_seed == RANDOM_STATE
+    assert config.data.target_column == TARGET_COLUMN
+    assert config.data.test_size == TEST_SIZE
+    assert config.data.validation_size == VALIDATION_SIZE
+    assert config.artifacts.legacy_model_dir == Path("artifacts/models")
+    assert config.reports.historical_lock == Path(
+        "reports/final/historical_observation.lock.json"
+    )
+    assert config.evaluation.development_scope == "development_validation"
+    assert config.evaluation.historical_scope == "historical_reported_test"
+
+
+def test_typed_config_rejects_unknown_fields_and_unsafe_artifact_path(tmp_path: Path) -> None:
+    payload = yaml.safe_load(
+        (get_project_root() / "configs/config.yaml").read_text(encoding="utf-8")
+    )
+    payload["project"]["invented"] = True
+    unknown = tmp_path / "unknown.yaml"
+    unknown.write_text(yaml.safe_dump(payload), encoding="utf-8")
+    with pytest.raises(ValidationError, match="extra_forbidden"):
+        load_project_config(unknown)
+
+    del payload["project"]["invented"]
+    payload["artifacts"]["legacy_model_dir"] = "outside/models"
+    unsafe = tmp_path / "unsafe.yaml"
+    unsafe.write_text(yaml.safe_dump(payload), encoding="utf-8")
+    with pytest.raises(ValidationError, match="inside trusted_root"):
+        load_project_config(unsafe)
 
 
 def test_project_name_exists_in_config() -> None:
@@ -67,3 +114,12 @@ def test_main_runs_safely() -> None:
     result = main_module.main()
     assert isinstance(result, dict)
     assert "project" in result
+
+
+def test_readme_separates_reference_corpus_new_development_and_audit_modes() -> None:
+    readme = (get_project_root() / "README.md").read_text(encoding="utf-8")
+    assert "--source-kind historical_kaggle_reference" in readme
+    assert "--source-kind new_authorized_development" in readme
+    assert "scripts/run_development_training.py" in readme
+    assert "scripts.run_project_audit --allow-missing-model --check" in readme
+    assert "run `python3 -m scripts.run_project_audit` without `--allow-missing-model`" in readme

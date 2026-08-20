@@ -1,3 +1,1 @@
-"""Model evaluation package."""
-
-# TODO: Implement this module in the development phase.
+"""Development, historical-integrity, calibration, cost, and metric protocols."""

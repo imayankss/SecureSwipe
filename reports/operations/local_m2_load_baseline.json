@@ -1,0 +1,32 @@
+{
+  "concurrency": 8,
+  "error_count": 0,
+  "error_rate": 0.0,
+  "health_probe": {
+    "latency_ms": 9.818124992307276,
+    "status": 200,
+    "timing": "concurrent_with_prediction_load"
+  },
+  "latency_ms": {
+    "max": 44.31508400011808,
+    "p50": 25.979770492995158,
+    "p95": 29.98990557680372,
+    "p99": 38.71901491278548,
+    "percentile_method": "numpy_linear"
+  },
+  "model_versions": [
+    "synthetic-smoke-1"
+  ],
+  "request_count": 500,
+  "runtime": {
+    "httpx": "0.28.1",
+    "machine": "arm64",
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "python": "3.12.10",
+    "python_implementation": "CPython"
+  },
+  "successful_count": 500,
+  "throughput_requests_per_second": 314.4354731666456,
+  "timeout_seconds": 5.0,
+  "wall_seconds": 1.5901513749849983
+}

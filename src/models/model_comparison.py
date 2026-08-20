@@ -31,7 +31,6 @@ from __future__ import annotations
 import json
 import logging
 import math
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -519,7 +518,7 @@ def write_markdown_comparison_report(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    timestamp = "omitted for deterministic evidence; see run manifest"
     n_models = len(comparison_df)
     model_list_md = "\n".join(
         f"- `{name}`" for name in comparison_df["model_name"].tolist()

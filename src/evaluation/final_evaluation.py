@@ -9,14 +9,12 @@ Day 7 scope only.
 This module evaluates the champion model at a fixed threshold that was
 selected during Day 6 validation.  NO tuning, NO model training, and NO
 threshold search happen here.  The evaluation is run exactly once on the
-test split to give an honest, unbiased performance estimate.
+historical random holdout. The result is already observed and is not reused for
+development decisions.
 
-Typical call chain (from scripts/run_final_evaluation.py):
-    metrics  = evaluate_locked_model(y_true, y_proba, threshold=0.53)
-    summary  = build_final_evaluation_summary(metrics, "xgboost_baseline",
-                                               threshold=0.53, split_name="test")
-    save_final_evaluation(summary)
-    write_final_evaluation_report(summary)
+The executable runner is permanently locked. These functions remain available
+for synthetic unit tests and newly named development scopes only; callers must
+not overwrite the recorded historical outputs.
 """
 
 from __future__ import annotations
@@ -105,13 +103,16 @@ def _validate_inputs(
             f"Only found: {sorted(unique_labels)}"
         )
 
+    if not np.isfinite(y_proba_arr).all():
+        raise ValueError("y_proba must contain only finite values.")
+
     if np.any(y_proba_arr < 0.0) or np.any(y_proba_arr > 1.0):
         raise ValueError(
             f"y_proba values must be in [0, 1].  "
             f"Got min={y_proba_arr.min():.4f}, max={y_proba_arr.max():.4f}."
         )
 
-    if not (0.0 <= threshold <= 1.0):
+    if not np.isfinite(threshold) or not (0.0 <= threshold <= 1.0):
         raise ValueError(
             f"threshold must be in [0, 1].  Got: {threshold!r}"
         )
@@ -159,7 +160,7 @@ def evaluate_locked_model(
     """
     Evaluate a champion model at a fixed, pre-selected threshold.
 
-    Probability-based metrics (PR-AUC, ROC-AUC) use ``y_proba`` directly so
+    Score-based metrics (average precision, ROC-AUC) use ``y_proba`` directly so
     they reflect the full scoring range.  Label-based metrics (precision,
     recall, F1, confusion-matrix values) use ``y_proba >= threshold`` so
     they match exactly what the deployed model would do at the chosen
@@ -200,7 +201,7 @@ def evaluate_locked_model(
             average_precision_score(y_true_arr, y_proba_arr)
         )
     except Exception as exc:
-        logger.warning("Could not compute PR-AUC: %s", exc)
+        logger.warning("Could not compute average precision: %s", exc)
         pr_auc = None
 
     try:
@@ -262,6 +263,7 @@ def build_final_evaluation_summary(
     model_name: str,
     threshold: float,
     split_name: str = "test",
+    threshold_source: str = "validation-selected operating point (policy metadata unavailable)",
 ) -> dict[str, Any]:
     """
     Wrap raw evaluation metrics into a labelled, JSON-serialisable summary.
@@ -289,15 +291,13 @@ def build_final_evaluation_summary(
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "model_name": model_name,
         "split_name": split_name,
-        "threshold_source": (
-            "Day 6 validation — recall-target threshold "
-            "(min_recall=0.80, highest precision)"
-        ),
+        "threshold_source": threshold_source,
         "threshold_selection_note": (
-            "The operating threshold was selected exclusively on the validation "
-            "set during Day 6.  Test-set results were not used in any "
-            "threshold or model decision.  This evaluation is therefore an "
-            "honest, unbiased estimate of real-world performance."
+            "Historical observation: repository history records model and threshold "
+            "selection on validation before this random held-out split was evaluated. The result "
+            "has now been observed and must not be reused for tuning. Exact duplicate "
+            "rows were reported in the source dataset, but cross-split overlap was "
+            "not recorded, so this is not out-of-time or real-world evidence."
         ),
         **metrics,
     }
@@ -326,6 +326,8 @@ def save_final_evaluation(
         Resolved path to the saved JSON file.
     """
     output_path = Path(output_path)
+    if output_path.exists():
+        raise FileExistsError(f"Refusing to overwrite evaluation evidence: {output_path}")
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     clean = _convert_for_json(summary)
@@ -366,11 +368,14 @@ def write_final_evaluation_report(
     reviewers.
     """
     output_path = Path(output_path)
+    if output_path.exists():
+        raise FileExistsError(f"Refusing to overwrite evaluation evidence: {output_path}")
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     model_name   = summary.get("model_name", "unknown")
     split_name   = summary.get("split_name", "test")
     threshold    = summary.get("threshold", "N/A")
+    threshold_source = summary.get("threshold_source", "historical validation artifact")
     generated_at = summary.get("generated_at", "N/A")
     note         = summary.get("threshold_selection_note", "")
 
@@ -399,7 +404,7 @@ def write_final_evaluation_report(
         f"| Champion model | `{model_name}` |",
         f"| Evaluated split | `{split_name}` |",
         f"| Locked threshold | `{threshold}` |",
-        f"| Threshold source | Day 6 recall-target (validation-only selection) |",
+        f"| Threshold source | {threshold_source} |",
         "",
         "---",
         "",
@@ -407,8 +412,8 @@ def write_final_evaluation_report(
         "",
         note,
         "",
-        "This ensures the final test-set evaluation is a truthful, "
-        "unbiased estimate of production performance.",
+        "This preserves the recorded result as historical evidence; it is not a "
+        "claim about deployment or future performance.",
         "",
         "---",
         "",
@@ -427,7 +432,7 @@ def write_final_evaluation_report(
         "",
         "| Metric | Value |",
         "|---|---|",
-        f"| **PR-AUC** | **{_fmt(summary.get('pr_auc'))}** |",
+        f"| **Average precision** | **{_fmt(summary.get('pr_auc'))}** |",
         f"| ROC-AUC | {_fmt(summary.get('roc_auc'))} |",
         f"| Precision | {_fmt(summary.get('precision'))} |",
         f"| Recall | {_fmt(summary.get('recall'))} |",
@@ -447,28 +452,30 @@ def write_final_evaluation_report(
         "",
         "### Interpretation",
         "",
-        f"- **Fraud caught (TP):** {_ifmt(tp)} — fraudulent transactions correctly blocked.",
-        f"- **Fraud missed (FN):** {_ifmt(fn)} — fraudulent transactions that slipped through.",
-        f"- **False alerts (FP):** {_ifmt(fp)} — legitimate transactions incorrectly flagged.",
-        f"- **True negatives (TN):** {_ifmt(tn)} — legitimate transactions correctly approved.",
+        f"- **True positives:** {_ifmt(tp)} — labelled fraud rows flagged at this threshold.",
+        f"- **False negatives:** {_ifmt(fn)} — labelled fraud rows not flagged.",
+        f"- **False positives:** {_ifmt(fp)} — labelled legitimate rows flagged.",
+        f"- **True negatives:** {_ifmt(tn)} — labelled legitimate rows not flagged.",
         "",
-        "> **Business context:** In fraud detection, false negatives (missed fraud) "
-        "typically carry higher cost than false positives (false alerts). "
-        "The recall-target threshold (0.53) was chosen to catch as much fraud "
-        "as possible while keeping false alerts at an acceptable level.",
+        "> **Decision context:** The historical threshold was selected on validation "
+        "for the point estimate recall constraint recorded in its source artifact. "
+        "No fraud-loss, review-cost, recovery, or authorization policy was evaluated.",
         "",
         "---",
         "",
-        "## Why PR-AUC Is the Primary Metric",
+        "## Why Average Precision Is the Primary Metric",
         "",
-        "The dataset contains roughly **0.17 % fraud** — an extreme class imbalance.",
+        f"This evaluation split contains **{(100 * total_fraud / total_samples):.4f} % fraud** "
+        "when the recorded counts are available — an extreme class imbalance."
+        if isinstance(total_fraud, int) and isinstance(total_samples, int) and total_samples
+        else "The evaluation concerns an extremely imbalanced fraud classification problem.",
         "Under these conditions:",
         "",
         "- **Accuracy** is misleading.  A model that always predicts 'legitimate' "
         "achieves ~99.8 % accuracy while catching zero fraud.",
         "- **ROC-AUC** is influenced heavily by the large number of true negatives and "
         "can appear strong even when fraud detection is poor.",
-        "- **PR-AUC** (Average Precision) measures the quality of the precision–recall "
+        "- **Average precision** measures the quality of the precision–recall "
         "trade-off for the fraud class only.  It is the most meaningful single-number "
         "summary for this problem.",
         "",
@@ -478,11 +485,9 @@ def write_final_evaluation_report(
         "",
         "| Stage | Result |",
         "|---|---|",
-        "| Champion model | XGBoost (scale_pos_weight balanced) |",
-        "| Validation PR-AUC | 0.8129 |",
-        "| Validation ROC-AUC | 0.9851 |",
-        "| Operating threshold | 0.53 (recall-target, Day 6 validation) |",
-        f"| **Final {split_name} PR-AUC** | **{_fmt(summary.get('pr_auc'))}** |",
+        f"| Recorded model | `{model_name}` |",
+        f"| Recorded threshold | {threshold} |",
+        f"| **Final {split_name} average precision** | **{_fmt(summary.get('pr_auc'))}** |",
         f"| Final {split_name} Recall | {_fmt(summary.get('recall'))} |",
         f"| Final {split_name} Precision | {_fmt(summary.get('precision'))} |",
         f"| Final {split_name} F1-score | {_fmt(summary.get('f1_score'))} |",

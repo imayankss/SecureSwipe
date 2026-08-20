@@ -2,15 +2,24 @@
 
 ## Purpose
 
-This report explains which features most influenced the champion XGBoost model's fraud predictions, based on mean absolute SHAP values calculated on a sample of validation data.
+This historical report records a feature ranking produced from a validation sample. The original run did not retain its row identities, labels, scores, SHAP expected value, output unit, or additivity residuals. The ranking therefore cannot be described as probability impact or independently reproduced from this checkout.
 
 ## Important Limitation
 
 Because `V1` to `V28` are anonymized PCA-transformed features, SHAP values explain model behavior in terms of these transformed components. They do not map directly to real-world transaction attributes such as merchant, location, or card type.
 
-## Top 20 Features by SHAP Importance
+## Historical Evidence Status
 
-| Rank | Feature | Mean Absolute SHAP Value |
+- **Output unit:** not retained or independently verified. Based on the reviewed code path, TreeExplainer likely used its default raw model output, but the absent model artifact prevents verification.
+- **Additivity:** not retained or independently verified.
+- **Cohort composition:** unavailable; the original sample did not retain aligned labels, score distribution, or row identities.
+- **Model artifact:** intentionally absent from the repository.
+
+New runs use the tested raw-margin/log-odds additivity protocol and emit aggregate cohort evidence. These safeguards do not retroactively validate the values below.
+
+## Top 20 Historical Features by SHAP Importance
+
+| Rank | Feature | Historical Mean Absolute SHAP Value (Unit Unverified) |
 |---:|---|---:|
 | 1 | V4 | 1.914230 |
 | 2 | V14 | 1.808449 |
@@ -35,10 +44,10 @@ Because `V1` to `V28` are anonymized PCA-transformed features, SHAP values expla
 
 ## How to Read This Report
 
-- A higher mean absolute SHAP value means the feature has, on average, a larger impact on the model's predicted fraud probability across the explained sample.
+- A higher historical mean absolute value records a larger attribution magnitude in the original run's unspecified model-output unit. It is not evidence of a calibrated fraud-probability change.
 - This ranking reflects model behavior only. It does not imply causation or a verified real-world explanation.
 
 ## Scope Notes
 
-- SHAP values were calculated on a sample of validation data only, never on the test set used for final evaluation.
+- The tracked script says the historical values came from a validation sample; the absent artifact and unretained row identities prevent independent reproduction.
 - SHAP was used strictly for explanation. It was not used to tune the model, select features, or change preprocessing.

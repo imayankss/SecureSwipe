@@ -11,7 +11,7 @@ export function Hero() {
         <div>
           <Badge>
             <ShieldCheck className="h-3.5 w-3.5" />
-            Verified artifacts · Safe demonstration mode
+            Locked historical artifacts · Safe demonstration mode
           </Badge>
           <h1 className="mt-6 max-w-4xl text-5xl font-semibold tracking-tight text-white sm:text-7xl">
             Fraud decisions,
@@ -23,9 +23,9 @@ export function Hero() {
             SecureSwipe fraud detection and transaction risk analytics
           </p>
           <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300">
-            Explore an end-to-end XGBoost workflow through real validation and test
-            outputs: model comparison, threshold trade-offs, PR-focused evaluation,
-            and SHAP explainability.
+            Explore tracked validation and already-observed random-holdout summaries:
+            model comparison, threshold trade-offs, PR-focused evaluation, and
+            non-causal SHAP artifacts whose original output units remain unverified.
           </p>
           <div className="mt-8 flex flex-col gap-3 sm:flex-row">
             <Button href="#performance">
@@ -34,7 +34,7 @@ export function Hero() {
             <Button
               href={dashboardData.project.repository}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
               variant="secondary"
             >
               <GitBranch className="h-4 w-4" />

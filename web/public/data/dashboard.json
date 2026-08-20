@@ -6,7 +6,7 @@
     "repository": "https://github.com/imayankss/SecureSwipe",
     "deploymentMode": "precomputed-demonstration",
     "artifactGeneratedAt": "2026-06-24T11:47:35.859632+00:00",
-    "sourceDigestSha256": "e9857bfa6bcdb00dbdbd664b748ce3994271313562e27aa1b55e37e235f5d410",
+    "sourceDigestSha256": "a9ae037aad76232a52c6658ca8fd2a0b6c5eef8db106042cd097be167f8bf99d",
     "disclaimer": "Educational portfolio system—not a bank production authorization, compliance, or payment-processing service."
   },
   "dataset": {
@@ -47,7 +47,7 @@
   "modelSelection": {
     "modelName": "xgboost_baseline",
     "displayName": "XGBoost",
-    "selectedBy": "Highest validation PR-AUC",
+    "selectedBy": "Highest reported validation average precision (single split)",
     "selectionSplit": "validation",
     "validationMetrics": {
       "model_name": "xgboost_baseline",
@@ -65,8 +65,8 @@
     "generated_at": "2026-06-24T11:47:35.859632+00:00",
     "model_name": "xgboost_baseline",
     "split_name": "test",
-    "threshold_source": "Day 6 validation — recall-target threshold (min_recall=0.80, highest precision)",
-    "threshold_selection_note": "The operating threshold was selected exclusively on the validation set during Day 6.  Test-set results were not used in any threshold or model decision.  This evaluation is therefore an honest, unbiased estimate of real-world performance.",
+    "threshold_source": "development_validation — highest_precision_meeting_recall_target (minimum_recall=0.8)",
+    "threshold_selection_note": "Historical observation: repository history records model and threshold selection on validation before this random held-out split was evaluated. The result has now been observed and must not be reused for tuning. Exact duplicate rows were reported in the source dataset, but cross-split overlap was not recorded, so this is not out-of-time or real-world evidence.",
     "threshold": 0.53,
     "pr_auc": 0.8287848539773868,
     "roc_auc": 0.9613432016710013,
@@ -1637,7 +1637,12 @@
         "truePositives": 60,
         "falsePositives": 39,
         "falseNegatives": 14,
-        "trueNegatives": 42608
+        "trueNegatives": 42608,
+        "fraudCaught": 60,
+        "fraudMissed": 14,
+        "falseAlerts": 39,
+        "reviewWorkload": 99,
+        "predictedLegitimate": 42622
       },
       {
         "key": "best_f1",
@@ -1649,7 +1654,12 @@
         "truePositives": 53.0,
         "falsePositives": 5.0,
         "falseNegatives": 21.0,
-        "trueNegatives": 42642.0
+        "trueNegatives": 42642.0,
+        "fraudCaught": 53.0,
+        "fraudMissed": 21.0,
+        "falseAlerts": 5.0,
+        "reviewWorkload": 58.0,
+        "predictedLegitimate": 42663.0
       },
       {
         "key": "recall_target",
@@ -1661,7 +1671,12 @@
         "truePositives": 60.0,
         "falsePositives": 36.0,
         "falseNegatives": 14.0,
-        "trueNegatives": 42611.0
+        "trueNegatives": 42611.0,
+        "fraudCaught": 60.0,
+        "fraudMissed": 14.0,
+        "falseAlerts": 36.0,
+        "reviewWorkload": 96.0,
+        "predictedLegitimate": 42625.0
       }
     ],
     "costAnalysisAvailable": false,
@@ -1792,13 +1807,13 @@
         "mean_abs_shap_value": 0.10089807212352753
       }
     ],
-    "caveat": "V1-V28 are anonymized PCA components. SHAP describes model behavior and does not assign real-world business meaning or causality."
+    "caveat": "V1-V28 are anonymized PCA components. The historical SHAP unit, additivity residual, and cohort composition were not retained and cannot be verified without the absent model artifact. Treat this as a noncausal historical ranking, not probability impact."
   },
   "curves": {
     "split": "validation",
     "precisionRecall": {
       "image": "/images/precision_recall_curve.png",
-      "auc": 0.8129
+      "averagePrecision": 0.8129
     },
     "roc": {
       "image": "/images/roc_curve.png",
@@ -1809,7 +1824,7 @@
     "splitStrategy": "70% train / 15% validation / 15% test, stratified by Class",
     "preprocessing": "StandardScaler fitted on training Time and Amount only; V1-V28 passed through; the target was excluded.",
     "imbalanceHandling": "Logistic Regression used class weighting; XGBoost scale_pos_weight was derived only from the training labels.",
-    "selection": "Models were compared by validation PR-AUC. The 0.53 operating threshold was selected on validation data as the highest-precision point with recall of at least 0.80.",
+    "selection": "Models were compared by reported validation average precision. The historical 0.53 operating point was recorded from validation data under the recall-target rule; it has no domain-approved cost model or future-performance guarantee.",
     "finalTest": "The held-out test split was evaluated once after model and threshold lock."
   },
   "limitations": [
@@ -1826,6 +1841,14 @@
     "reports/threshold_tuning/threshold_metrics.csv",
     "reports/threshold_tuning/selected_thresholds.json",
     "reports/final/final_model_evaluation.json",
-    "reports/explainability/shap_top_features.json"
+    "reports/final/historical_observation.lock.json",
+    "reports/explainability/shap_top_features.json",
+    "reports/figures/precision_recall_curve.png",
+    "reports/figures/roc_curve.png",
+    "reports/figures/confusion_matrix_default_threshold.png",
+    "reports/figures/confusion_matrix_best_f1_threshold.png",
+    "reports/figures/confusion_matrix_recall_target_threshold.png",
+    "reports/figures/shap_summary_bar.png",
+    "reports/figures/shap_top_features.png"
   ]
 }

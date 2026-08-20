@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "SecureSwipe | Fraud Detection & Risk Analytics",
   description:
-    "Explore verified XGBoost fraud-detection results, threshold trade-offs, confusion matrices, and SHAP explainability from the SecureSwipe ML pipeline.",
+    "Explore locked historical XGBoost artifacts, threshold trade-offs, confusion matrices, and non-causal SHAP summaries from the SecureSwipe ML pipeline.",
   applicationName: "SecureSwipe",
   keywords: [
     "fraud detection",
@@ -19,14 +19,14 @@ export const metadata: Metadata = {
     type: "website",
     title: "SecureSwipe | Fraud Detection & Risk Analytics",
     description:
-      "A deployment-safe view of verified fraud-model evaluation, threshold analysis, and explainability artifacts.",
+      "A deployment-safe view of tracked historical fraud-model artifacts and their explicit limitations.",
     siteName: "SecureSwipe",
   },
   twitter: {
     card: "summary",
     title: "SecureSwipe | Fraud Detection & Risk Analytics",
     description:
-      "Verified fraud-model evaluation, threshold analysis, and explainability artifacts.",
+      "Tracked historical fraud-model artifacts, threshold analysis, and stated limitations.",
   },
   robots: { index: true, follow: true },
 };

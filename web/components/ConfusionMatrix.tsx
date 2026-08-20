@@ -14,13 +14,13 @@ export function ConfusionMatrix() {
   return (
     <Section
       id="confusion"
-      eyebrow="Final Evaluation"
-      title={`Locked test threshold: ${confusionMatrix.threshold.toFixed(2)}`}
-      description="The model and operating point were selected on validation data before this held-out test confusion matrix was produced."
+      eyebrow="Historical reported random holdout"
+      title={`Recorded threshold: ${confusionMatrix.threshold.toFixed(2)}`}
+      description="This already-observed random-holdout confusion matrix is locked historical evidence, not a current production or out-of-time estimate."
     >
       <Card>
         <CardHeader>
-          <CardTitle>Final confusion matrix</CardTitle>
+          <CardTitle>Historical reported confusion matrix</CardTitle>
           <CardDescription>
             {formatInteger(confusionMatrix.total_samples)} test rows · rows are actual classes · columns are decisions
           </CardDescription>
@@ -31,10 +31,10 @@ export function ConfusionMatrix() {
               <div key={cell.label} className="rounded-lg border border-white/10 bg-slate-950/70 p-5">
                 <div className="flex items-center justify-between gap-3">
                   <p className="text-sm text-slate-400">{cell.label}</p>
-                  <span className="font-mono text-xs text-slate-500">{cell.short}</span>
+                  <span className="font-mono text-xs text-slate-400">{cell.short}</span>
                 </div>
                 <p className={`mt-2 text-4xl font-semibold ${cell.tone}`}>{formatInteger(cell.value)}</p>
-                <p className="mt-2 text-xs text-slate-500">{cell.detail}</p>
+                <p className="mt-2 text-xs text-slate-400">{cell.detail}</p>
               </div>
             ))}
           </div>

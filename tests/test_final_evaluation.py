@@ -38,6 +38,22 @@ def test_evaluate_locked_model_rejects_invalid_threshold() -> None:
         evaluate_locked_model([0, 1], [0.1, 0.9], threshold=1.5)
 
 
+@pytest.mark.parametrize("invalid_score", [np.nan, np.inf, -np.inf])
+def test_evaluate_locked_model_rejects_non_finite_scores(invalid_score: float) -> None:
+    with pytest.raises(ValueError, match="finite"):
+        evaluate_locked_model([0, 1], [0.1, invalid_score], threshold=0.5)
+
+
+def test_historical_report_avoids_unsupported_claims(tmp_path: Path) -> None:
+    metrics = evaluate_locked_model([0, 0, 1, 1], [0.05, 0.2, 0.8, 0.95], 0.53)
+    summary = build_final_evaluation_summary(metrics, "xgboost_baseline", 0.53)
+    report = write_final_evaluation_report(summary, tmp_path / "historical.md")
+    combined = (summary["threshold_selection_note"] + report.read_text(encoding="utf-8")).lower()
+    forbidden = ("unbiased", "production performance", "real-world performance", "blocked", "approved", "acceptable level")
+    assert not any(term in combined for term in forbidden)
+    assert "historical" in combined
+
+
 def test_build_summary_and_save_outputs(tmp_path: Path) -> None:
     metrics = evaluate_locked_model([0, 0, 1, 1], [0.05, 0.2, 0.8, 0.95], 0.53)
     summary = build_final_evaluation_summary(
@@ -57,3 +73,28 @@ def test_build_summary_and_save_outputs(tmp_path: Path) -> None:
     assert saved["threshold"] == pytest.approx(0.53)
     assert "validation" in saved["threshold_selection_note"].lower()
     assert "Final Model Evaluation" in report_path.read_text(encoding="utf-8")
+
+
+def test_summary_uses_caller_threshold_source_without_stale_constants(tmp_path: Path) -> None:
+    metrics = evaluate_locked_model([0, 0, 1, 1], [0.1, 0.2, 0.74, 0.9], 0.73)
+    summary = build_final_evaluation_summary(
+        metrics,
+        model_name="synthetic_model",
+        threshold=0.73,
+        split_name="development_validation",
+        threshold_source="synthetic policy recall_target=0.73",
+    )
+    report = write_final_evaluation_report(summary, tmp_path / "alternate.md")
+    combined = json.dumps(summary) + report.read_text(encoding="utf-8")
+    assert "0.73" in combined
+    assert "0.53" not in combined
+    assert "0.80" not in combined
+    assert "Average precision" in combined
+
+
+def test_evaluation_evidence_refuses_overwrite(tmp_path: Path) -> None:
+    output = tmp_path / "existing.json"
+    output.write_text("preserve me", encoding="utf-8")
+    with pytest.raises(FileExistsError, match="Refusing to overwrite"):
+        save_final_evaluation({"metric": 1}, output)
+    assert output.read_text(encoding="utf-8") == "preserve me"

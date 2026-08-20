@@ -8,15 +8,15 @@
 | Champion model | `xgboost_baseline` |
 | Evaluated split | `test` |
 | Locked threshold | `0.53` |
-| Threshold source | Day 6 recall-target (validation-only selection) |
+| Threshold source | development_validation — highest_precision_meeting_recall_target (minimum_recall=0.8) |
 
 ---
 
 ## Integrity Note — Threshold Selection
 
-The operating threshold was selected exclusively on the validation set during Day 6.  Test-set results were not used in any threshold or model decision.  This evaluation is therefore an honest, unbiased estimate of real-world performance.
+Historical observation: repository history records model and threshold selection on validation before this random held-out split was evaluated. The result has now been observed and must not be reused for tuning. Exact duplicate rows were reported in the source dataset, but cross-split overlap was not recorded, so this is not out-of-time or real-world evidence.
 
-This ensures the final test-set evaluation is a truthful, unbiased estimate of production performance.
+This preserves the recorded result as historical evidence; it is not a claim about deployment or future performance.
 
 ---
 
@@ -35,7 +35,7 @@ This ensures the final test-set evaluation is a truthful, unbiased estimate of p
 
 | Metric | Value |
 |---|---|
-| **PR-AUC** | **0.8288** |
+| **Average precision** | **0.8288** |
 | ROC-AUC | 0.9613 |
 | Precision | 0.6966 |
 | Recall | 0.8378 |
@@ -55,23 +55,23 @@ This ensures the final test-set evaluation is a truthful, unbiased estimate of p
 
 ### Interpretation
 
-- **Fraud caught (TP):** 62 — fraudulent transactions correctly blocked.
-- **Fraud missed (FN):** 12 — fraudulent transactions that slipped through.
-- **False alerts (FP):** 27 — legitimate transactions incorrectly flagged.
-- **True negatives (TN):** 42,621 — legitimate transactions correctly approved.
+- **True positives:** 62 — labelled fraud rows flagged at this threshold.
+- **False negatives:** 12 — labelled fraud rows not flagged.
+- **False positives:** 27 — labelled legitimate rows flagged.
+- **True negatives:** 42,621 — labelled legitimate rows not flagged.
 
-> **Business context:** In fraud detection, false negatives (missed fraud) typically carry higher cost than false positives (false alerts). The recall-target threshold (0.53) was chosen to catch as much fraud as possible while keeping false alerts at an acceptable level.
+> **Decision context:** The historical threshold was selected on validation for the point estimate recall constraint recorded in its source artifact. No fraud-loss, review-cost, recovery, or authorization policy was evaluated.
 
 ---
 
-## Why PR-AUC Is the Primary Metric
+## Why Average Precision Is the Primary Metric
 
-The dataset contains roughly **0.17 % fraud** — an extreme class imbalance.
+This evaluation split contains **0.1732 % fraud** when the recorded counts are available — an extreme class imbalance.
 Under these conditions:
 
 - **Accuracy** is misleading.  A model that always predicts 'legitimate' achieves ~99.8 % accuracy while catching zero fraud.
 - **ROC-AUC** is influenced heavily by the large number of true negatives and can appear strong even when fraud detection is poor.
-- **PR-AUC** (Average Precision) measures the quality of the precision–recall trade-off for the fraud class only.  It is the most meaningful single-number summary for this problem.
+- **Average precision** measures the quality of the precision–recall trade-off for the fraud class only.  It is the most meaningful single-number summary for this problem.
 
 ---
 
@@ -79,11 +79,9 @@ Under these conditions:
 
 | Stage | Result |
 |---|---|
-| Champion model | XGBoost (scale_pos_weight balanced) |
-| Validation PR-AUC | 0.8129 |
-| Validation ROC-AUC | 0.9851 |
-| Operating threshold | 0.53 (recall-target, Day 6 validation) |
-| **Final test PR-AUC** | **0.8288** |
+| Recorded model | `xgboost_baseline` |
+| Recorded threshold | 0.53 |
+| **Final test average precision** | **0.8288** |
 | Final test Recall | 0.8378 |
 | Final test Precision | 0.6966 |
 | Final test F1-score | 0.7607 |

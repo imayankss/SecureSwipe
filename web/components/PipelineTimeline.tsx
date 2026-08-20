@@ -9,7 +9,7 @@ export function PipelineTimeline() {
       id="pipeline"
       eyebrow="Pipeline"
       title="Expensive ML work stays outside the request path"
-      description="Training, threshold search, curve generation, and SHAP analysis run in the Python workflow. Vercel serves only the reviewed export."
+      description="Training, threshold search, curve generation, and SHAP analysis run in the Python workflow. The deployable frontend serves only the reviewed export; no provider deployment is verified here."
     >
       <Card>
         <CardContent className="p-5">
@@ -18,7 +18,7 @@ export function PipelineTimeline() {
               <li key={step} className="relative">
                 <div className="flex h-full flex-col gap-3 rounded-lg border border-white/10 bg-slate-950/60 p-4">
                   <CheckCircle2 className="h-5 w-5 text-emerald-300" />
-                  <span className="text-xs text-slate-500">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="text-xs text-slate-400">{String(index + 1).padStart(2, "0")}</span>
                   <span className="text-sm font-medium leading-5 text-white">{step}</span>
                 </div>
               </li>

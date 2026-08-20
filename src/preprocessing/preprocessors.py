@@ -15,9 +15,12 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 import joblib
+import numpy as np
 import pandas as pd
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler
+
+from src.artifacts.bundle import load_verified_joblib, write_checksum_sidecar
 
 from src.preprocessing.feature_config import (
     ALL_FEATURES,
@@ -63,6 +66,18 @@ def validate_features_for_preprocessing(
             f"Input feature DataFrame is missing expected columns: {missing_columns}"
         )
 
+    extra_columns = [col for col in X.columns if col not in expected_features]
+    if extra_columns:
+        raise ValueError(
+            f"Input feature DataFrame contains unexpected columns: {extra_columns}"
+        )
+
+    if list(X.columns) != list(expected_features):
+        raise ValueError(
+            "Input features are not in canonical order. "
+            f"Expected {list(expected_features)}; found {list(X.columns)}."
+        )
+
     if TARGET_COLUMN in X.columns:
         raise ValueError(
             f"Target column '{TARGET_COLUMN}' must not be present in the "
@@ -81,14 +96,21 @@ def validate_features_for_preprocessing(
             f"{non_numeric_columns}"
         )
 
-    fully_empty_columns = [
-        col for col in expected_features if X[col].isna().all()
-    ]
-    if fully_empty_columns:
+    missing_counts = X[expected_features].isna().sum()
+    if int(missing_counts.sum()) > 0:
         raise ValueError(
-            f"Expected columns must not be fully empty. Fully empty columns "
-            f"found: {fully_empty_columns}"
+            "Expected columns must contain no missing values. Found: "
+            f"{missing_counts[missing_counts > 0].to_dict()}"
         )
+
+    numeric_values = X[expected_features].to_numpy(dtype=float, copy=False)
+    if not np.isfinite(numeric_values).all():
+        raise ValueError("Expected columns must contain only finite numeric values.")
+
+    if (X["Time"] < 0).any():
+        raise ValueError("Time values must be non-negative.")
+    if (X["Amount"] < 0).any():
+        raise ValueError("Amount values must be non-negative.")
 
 
 def build_preprocessor(
@@ -309,6 +331,7 @@ def save_preprocessor(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     joblib.dump(fitted_preprocessor, output_path)
+    write_checksum_sidecar(output_path)
     return output_path
 
 
@@ -334,7 +357,16 @@ def load_preprocessor(
             "Run the Day 3 preprocessing script to generate it: "
             "python3 scripts/run_day3_preprocessing.py"
         )
-    return joblib.load(preprocessor_path)
+    trusted_root = (
+        preprocessor_path.parent.parent
+        if preprocessor_path.parent.name == "preprocessing"
+        else preprocessor_path.parent
+    )
+    return load_verified_joblib(
+        preprocessor_path,
+        trusted_root=trusted_root,
+        required_attributes=("transform",),
+    )
 
 
 def get_preprocessing_summary(

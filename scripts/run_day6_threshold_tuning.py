@@ -17,11 +17,9 @@ from __future__ import annotations
 
 import argparse
 import sys
-from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict
 
-import joblib
 import numpy as np
 import pandas as pd
 
@@ -46,13 +44,17 @@ from src.evaluation.curves import (  # noqa: E402
 from src.evaluation.confusion_analysis import (  # noqa: E402
     plot_confusion_matrix,
 )
+from src.artifacts.bundle import load_verified_joblib  # noqa: E402
+from src.utils.config import load_project_config  # noqa: E402
 
-DEFAULT_MODEL_PATH = Path("artifacts/models/xgboost_baseline.joblib")
-DEFAULT_PROCESSED_DIR = Path("data/processed")
-DEFAULT_THRESHOLD_DIR = Path("reports/threshold_tuning")
-DEFAULT_FIGURES_DIR = Path("reports/figures")
+PROJECT_CONFIG = load_project_config()
+DEFAULT_MODEL_PATH = PROJECT_CONFIG.artifacts.legacy_model_dir / "xgboost_baseline.joblib"
+DEFAULT_PROCESSED_DIR = PROJECT_CONFIG.data.processed_dir
+DEFAULT_THRESHOLD_DIR = PROJECT_CONFIG.reports.threshold_dir
+DEFAULT_FIGURES_DIR = PROJECT_CONFIG.reports.figures_dir
 DEFAULT_REPORT_PATH = Path("reports/threshold_tuning/day6_threshold_tuning_report.md")
-DEFAULT_MIN_RECALL = 0.80
+DEFAULT_MIN_RECALL = PROJECT_CONFIG.evaluation.recall_target
+DEFAULT_THRESHOLD = PROJECT_CONFIG.evaluation.default_threshold
 
 
 def load_champion_model(model_path: Path) -> Any:
@@ -72,7 +74,11 @@ def load_champion_model(model_path: Path) -> Any:
             f"Champion model not found at {model_path}. "
             "Please run Day 5 (scripts/run_day5_advanced_models.py) first."
         )
-    return joblib.load(model_path)
+    return load_verified_joblib(
+        model_path,
+        trusted_root=_REPO_ROOT / "artifacts",
+        required_attributes=("predict_proba",),
+    )
 
 
 def load_validation_data(processed_dir: Path) -> tuple[pd.DataFrame, pd.Series]:
@@ -165,13 +171,15 @@ def select_operating_thresholds(
         threshold_table: Metrics table produced by
             build_threshold_metrics_table.
         min_recall: Minimum recall required for the recall-target
-            threshold. Defaults to 0.80.
+            threshold. Defaults to the configured development recall target.
 
     Returns:
         Dictionary with keys "default", "best_f1", and "recall_target",
         each mapping to a metrics dictionary.
     """
-    default_metrics = calculate_threshold_metrics(y_val, y_val_proba, threshold=0.50)
+    default_metrics = calculate_threshold_metrics(
+        y_val, y_val_proba, threshold=DEFAULT_THRESHOLD
+    )
     best_f1_metrics = select_best_f1_threshold(threshold_table)
     recall_target_metrics = select_recall_target_threshold(
         threshold_table, min_recall=min_recall
@@ -180,7 +188,12 @@ def select_operating_thresholds(
     return {
         "default": default_metrics,
         "best_f1": best_f1_metrics,
-        "recall_target": recall_target_metrics,
+        "recall_target": {
+            **recall_target_metrics,
+            "evaluation_scope": PROJECT_CONFIG.evaluation.development_scope,
+            "minimum_recall": float(min_recall),
+            "selection_method": "highest_precision_meeting_recall_target",
+        },
     }
 
 
@@ -287,6 +300,8 @@ def build_day6_threshold_tuning_report(
     validation_rows: int,
     validation_frauds: int,
     selected_thresholds: Dict[str, Dict[str, Any]],
+    min_recall: float,
+    generated_at: str | None = None,
 ) -> str:
     """Build the Day 6 Markdown threshold tuning report.
 
@@ -299,7 +314,7 @@ def build_day6_threshold_tuning_report(
     Returns:
         Complete Markdown report content as a string.
     """
-    generated_at = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    generated_at = generated_at or "omitted for deterministic evidence; see run manifest"
     recall_target = selected_thresholds["recall_target"]
 
     sections = [
@@ -315,7 +330,8 @@ def build_day6_threshold_tuning_report(
         "",
         "## Why Threshold Tuning Matters",
         "",
-        "The default classification threshold of 0.50 is rarely optimal for "
+        f"The configured default classification threshold of {DEFAULT_THRESHOLD:.2f} "
+        "is rarely optimal for "
         "highly imbalanced fraud detection problems. Lowering the threshold "
         "tends to catch more fraud (higher recall) at the cost of more false "
         "alerts (lower precision). Raising the threshold reduces false alerts "
@@ -323,26 +339,23 @@ def build_day6_threshold_tuning_report(
         "threshold here because the fraud class is rare; precision, recall, "
         "F1-score, and the confusion matrix are far more informative.",
         "",
-        "## Default Threshold (0.50)",
+        f"## Default Threshold ({DEFAULT_THRESHOLD:.2f})",
         "",
         _format_metrics_block("Default Threshold Performance", selected_thresholds["default"]),
         "## Best F1 Threshold",
         "",
         _format_metrics_block("Best F1 Threshold Performance", selected_thresholds["best_f1"]),
-        "## Recall-Target Threshold (recall >= 0.80)",
+        f"## Recall-Target Threshold (recall >= {min_recall:.2f})",
         "",
         _format_metrics_block(
             "Recall-Target Threshold Performance", selected_thresholds["recall_target"]
         ),
-        "## Recommended Operating Threshold",
+        "## Development Operating Point",
         "",
-        f"The recommended operating threshold is **{recall_target['threshold']:.2f}** "
-        "(the recall-target threshold). In fraud detection, missing a fraudulent "
-        "transaction (a false negative) is typically far more costly than "
-        "reviewing a legitimate transaction that was flagged (a false positive). "
-        "This threshold prioritizes catching at least 80% of fraud while keeping "
-        "precision as high as possible at that recall level. The final choice "
-        "should still be confirmed against business cost analysis.",
+        f"The development recall-target operating point is **{recall_target['threshold']:.2f}**. "
+        f"It has the highest observed precision among sweep points with recall >= {min_recall:.2f}. "
+        "This point estimate is not a business policy: false-positive, review, loss, "
+        "recovery, capacity, and uncertainty assumptions must be reviewed before use.",
         "",
         "## Generated Artifacts",
         "",
@@ -356,10 +369,9 @@ def build_day6_threshold_tuning_report(
         "",
         "## Note on Data Usage",
         "",
-        "Only the validation set was used for this analysis. The held-out "
-        "test set was not loaded, referenced, or evaluated at any point in "
-        "this Day 6 pipeline. The test set remains untouched for the final "
-        "evaluation stage.",
+        "Only the validation set was used for this analysis. The repository's "
+        "historical random holdout has already been observed and is not loaded "
+        "or reused by this development command.",
         "",
     ]
     return "\n".join(sections)
@@ -458,6 +470,7 @@ def run_day6_threshold_tuning(
         validation_rows=len(y_val),
         validation_frauds=int(y_val.sum()),
         selected_thresholds=selected_thresholds,
+        min_recall=min_recall,
     )
     saved_report_path = save_day6_threshold_tuning_report(report_content, report_path)
     print("Saved Day 6 threshold report")
@@ -492,6 +505,13 @@ def print_success_message(results: Dict[str, Any]) -> None:
 
 def main() -> None:
     """Parse arguments, run the Day 6 pipeline, and handle errors."""
+    print(
+        "Direct unmanifested execution is disabled. Use "
+        "`python scripts/run_reference_stage.py --stage day6 --output-dir <new-dir>`. ",
+        file=sys.stderr,
+    )
+    raise SystemExit(2)
+
     args = parse_args()
     try:
         results = run_day6_threshold_tuning(

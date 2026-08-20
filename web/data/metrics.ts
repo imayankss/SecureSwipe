@@ -14,29 +14,29 @@ export const formatPercent = (value: number, digits = 2) =>
 
 export const heroMetrics = [
   {
-    label: "Evaluated transactions",
+    label: "Historical holdout rows",
     value: formatInteger(dashboardData.finalEvaluation.total_samples),
     description: "Locked held-out test split",
   },
   {
-    label: "Test fraud cases",
+    label: "Historical fraud cases",
     value: formatInteger(dashboardData.finalEvaluation.total_fraud),
     description: "Rare positive class",
   },
   {
-    label: "Test PR-AUC",
+    label: "Reported holdout AP",
     value: formatMetric(dashboardData.finalEvaluation.pr_auc),
-    description: "Primary final metric",
+    description: "Locked historical random-holdout metric",
   },
   {
-    label: "Fraud recall",
+    label: "Reported holdout recall",
     value: formatPercent(dashboardData.finalEvaluation.recall),
-    description: "At the locked 0.53 threshold",
+    description: `At the recorded ${dashboardData.finalEvaluation.threshold.toFixed(2)} threshold`,
   },
 ];
 
 export const finalMetrics = [
-  { label: "PR-AUC", value: formatMetric(dashboardData.finalEvaluation.pr_auc) },
+  { label: "Average precision", value: formatMetric(dashboardData.finalEvaluation.pr_auc) },
   { label: "ROC-AUC", value: formatMetric(dashboardData.finalEvaluation.roc_auc) },
   { label: "Precision", value: formatPercent(dashboardData.finalEvaluation.precision) },
   { label: "Recall", value: formatPercent(dashboardData.finalEvaluation.recall) },
@@ -50,7 +50,7 @@ export const pipelineSteps = [
   "Baseline comparison",
   "XGBoost selection",
   "Validation thresholding",
-  "Locked test + SHAP",
+  "Historical test + SHAP",
 ];
 
 export const modelComparison = dashboardData.modelComparison.map((item) => ({

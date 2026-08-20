@@ -13,9 +13,11 @@ export function Section({
   description?: string;
   children: ReactNode;
 }) {
+  const headingId = id ? `${id}-heading` : undefined;
   return (
     <section
       id={id}
+      aria-labelledby={headingId}
       className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8"
     >
       <div className="mb-8 max-w-3xl">
@@ -24,7 +26,7 @@ export function Section({
             {eyebrow}
           </p>
         ) : null}
-        <h2 className="text-3xl font-semibold text-white sm:text-4xl">
+        <h2 id={headingId} className="text-3xl font-semibold text-white sm:text-4xl">
           {title}
         </h2>
         {description ? (

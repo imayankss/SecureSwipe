@@ -1,39 +1,25 @@
-# Final Project Report: Credit Card Fraud Detection
+# Current Project Report: SecureSwipe
 
-## Executive Summary
+Audit status: **INCOMPLETE**
 
-This project is an end-to-end fraud detection ML pipeline for a highly imbalanced transaction dataset. It covers data validation, EDA, leakage-safe preprocessing, baseline models, XGBoost, validation-only threshold tuning, SHAP explainability, and one locked final test-set evaluation.
+SecureSwipe is a portfolio reference for offline fraud-risk modelling and
+a bundle-gated inference API. It is not a bank authorization or compliance
+system and no verified trained fraud model is present in this checkout.
 
-## Locked Model And Threshold
+## Historical reported test observation
 
-- Champion model: `xgboost_baseline`
-- Threshold source: Day 6 validation recall-target selection
-- Locked business threshold: `0.53`
+- Model: `xgboost_baseline`
+- Recorded validation-selected threshold: `0.53`
+- Average precision (historical key `pr_auc`): `0.8287848539773868`
+- Precision / recall / F1: `0.6966292134831461` / `0.8378378378378378` / `0.7607361963190185`
+- Confusion counts TP/FP/FN/TN: `62` / `27` / `12` / `42621`
 
-## Final Test Evaluation
+The random test result has already been observed, has possible duplicate
+contamination, lacks original artifact/runtime provenance, and is excluded
+from all new decisions. It is not out-of-time or deployment evidence.
 
-| Metric | Value |
-|---|---:|
-| PR-AUC | 0.8287848539773868 |
-| ROC-AUC | 0.9613432016710013 |
-| Precision | 0.6966292134831461 |
-| Recall | 0.8378378378378378 |
-| F1-score | 0.7607361963190185 |
-| True positives | 62 |
-| False positives | 27 |
-| False negatives | 12 |
-| True negatives | 42621 |
+## Current evidence
 
-## Integrity Notes
-
-- The model was selected using validation metrics only.
-- The operating threshold was selected using validation data only.
-- The test split was used once for final locked evaluation.
-- SHAP was used for explanation only, not tuning or feature selection.
-
-## Key Outputs
-
-- `reports/explainability/shap_summary_report.md`
-- `reports/final/final_evaluation_report.md`
-- `reports/final/final_model_evaluation.json`
-- `reports/final/project_audit_checklist.md`
+See `docs/industrialization/STATE.md` and `QUALITY_SCORECARD.md` for
+executed commands, external blockers, and the next action. File presence
+alone is never reported as a passing quality gate.

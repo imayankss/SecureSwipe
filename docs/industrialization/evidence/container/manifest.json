@@ -1,0 +1,167 @@
+{
+  "evidence_format_version": "1",
+  "image": {
+    "architecture": "arm64",
+    "image_id": "sha256:afb032c3c614edb5a0c743c166a52bbab1f9e265592043cc766ad9c14d9779e7",
+    "oci_labels": {
+      "org.opencontainers.image.revision": "050d4f1b2963c0123e265c76b1c9a1f26e1836d5",
+      "org.opencontainers.image.source": "https://github.com/imayankss/SecureSwipe"
+    },
+    "operating_system": "linux",
+    "reference": "secureswipe-api:audit-arm64",
+    "repo_digests": []
+  },
+  "scan": {
+    "artifact_id": "sha256:44f508f18bb02995a35fef56e743eb88d55b3988d8c34b53083509cba93d1a52",
+    "created_at": "2026-08-20T10:58:18.925433552Z",
+    "database": {
+      "downloaded_at": "2026-08-20T10:57:34.435601878Z",
+      "next_update": "2026-08-21T07:02:00.713536389Z",
+      "schema_version": 2,
+      "updated_at": "2026-08-20T07:02:00.713536770Z"
+    },
+    "dispositions": [
+      {
+        "expires": "2026-09-20",
+        "finding_id": "CVE-2025-69720",
+        "occurrence_count": 4,
+        "packages": ["libncursesw6", "libtinfo6", "ncurses-base", "ncurses-bin"],
+        "severity": "HIGH",
+        "statement": "Debian 13 has no fix; the headless service has no terminal or ncurses input.",
+        "status": "temporary_no_fix_exception"
+      },
+      {
+        "expires": "2026-09-20",
+        "finding_id": "CVE-2026-13221",
+        "occurrence_count": 1,
+        "packages": ["perl-base"],
+        "severity": "CRITICAL",
+        "statement": "Debian 13 has no fix; Perl is never invoked and no user regular expression is evaluated.",
+        "status": "temporary_no_fix_exception"
+      },
+      {
+        "expires": "2026-09-20",
+        "finding_id": "CVE-2026-14456",
+        "occurrence_count": 3,
+        "packages": ["libssl3t64", "openssl", "openssl-provider-legacy"],
+        "severity": "HIGH",
+        "statement": "Debian deferred the fix; this reference container terminates no TLS.",
+        "status": "temporary_no_fix_exception"
+      },
+      {
+        "expires": "2026-09-20",
+        "finding_id": "CVE-2026-41992",
+        "occurrence_count": 1,
+        "packages": ["gzip"],
+        "severity": "HIGH",
+        "statement": "Debian 13 has no fix; the runtime never accepts or creates gzip archives.",
+        "status": "temporary_no_fix_exception"
+      },
+      {
+        "expires": "2026-09-20",
+        "finding_id": "CVE-2026-42496",
+        "occurrence_count": 1,
+        "packages": ["perl-base"],
+        "severity": "CRITICAL",
+        "statement": "Debian deferred the fix; Perl Archive-Tar is never invoked and the root filesystem is read-only.",
+        "status": "temporary_no_fix_exception"
+      },
+      {
+        "expires": "2026-09-20",
+        "finding_id": "CVE-2026-42497",
+        "occurrence_count": 1,
+        "packages": ["perl-base"],
+        "severity": "HIGH",
+        "statement": "Debian deferred the fix; Perl Archive-Tar is never invoked and the root filesystem is read-only.",
+        "status": "temporary_no_fix_exception"
+      },
+      {
+        "expires": "2026-09-20",
+        "finding_id": "CVE-2026-48962",
+        "occurrence_count": 1,
+        "packages": ["perl-base"],
+        "severity": "HIGH",
+        "statement": "Debian 13 has no fix; Perl is never invoked or exposed through the API.",
+        "status": "temporary_no_fix_exception"
+      },
+      {
+        "expires": "2026-09-20",
+        "finding_id": "CVE-2026-54369",
+        "occurrence_count": 1,
+        "packages": ["libacl1"],
+        "severity": "HIGH",
+        "statement": "Debian 13 has no fix; the non-root read-only service does not manipulate ACLs.",
+        "status": "temporary_no_fix_exception"
+      },
+      {
+        "expires": "2026-09-20",
+        "finding_id": "CVE-2026-57432",
+        "occurrence_count": 1,
+        "packages": ["perl-base"],
+        "severity": "HIGH",
+        "statement": "Debian 13 has no fix; Perl Storable is never invoked or given user data.",
+        "status": "temporary_no_fix_exception"
+      },
+      {
+        "expires": "2026-09-20",
+        "finding_id": "CVE-2026-57433",
+        "occurrence_count": 1,
+        "packages": ["perl-base"],
+        "severity": "CRITICAL",
+        "statement": "Debian 13 has no fix; Perl Storable is never invoked or given user data.",
+        "status": "temporary_no_fix_exception"
+      },
+      {
+        "expires": "2026-09-20",
+        "finding_id": "CVE-2026-8376",
+        "occurrence_count": 1,
+        "packages": ["perl-base"],
+        "severity": "CRITICAL",
+        "statement": "Debian 13 has no fix; Perl is never invoked and supported images are not 32-bit runtimes.",
+        "status": "temporary_no_fix_exception"
+      },
+      {
+        "expires": "2026-09-20",
+        "finding_id": "CVE-2026-9538",
+        "occurrence_count": 1,
+        "packages": ["perl-base"],
+        "severity": "HIGH",
+        "statement": "Debian deferred the fix; Perl is never invoked or exposed through the API.",
+        "status": "temporary_no_fix_exception"
+      }
+    ],
+    "evidence_file": {
+      "filename": "arm64-trivy.json",
+      "sha256": "72e7617b18dcf66088556b82743e4b601e9f47dd6e8990c987872879ecf4366b",
+      "size_bytes": 441549
+    },
+    "policy_active_findings": 0,
+    "raw_finding_records": 17,
+    "scanner": {
+      "name": "Trivy",
+      "version": "0.70.0"
+    },
+    "severities": ["HIGH", "CRITICAL"],
+    "unique_findings": 12
+  },
+  "sbom": {
+    "created_at": "2026-08-20T10:59:07.128325Z",
+    "document_namespace": "https://anchore.com/syft/image/secureswipe-api-audit-arm64-ab80c7d3-92da-4f45-a2e8-a60a68ee4e08",
+    "evidence_file": {
+      "filename": "arm64-sbom.spdx.json",
+      "sha256": "bdd9797cf0f36c75c2c5364d7ca0fe6be0bdde3afb72d9f5fcafa0919016c21d",
+      "size_bytes": 1190339
+    },
+    "format": "SPDX-2.2",
+    "generator": {
+      "docker_sbom_version": "0.6.0",
+      "provider": "syft",
+      "provider_version": "0.43.0"
+    },
+    "package_count": 117
+  },
+  "source": {
+    "git_revision": "050d4f1b2963c0123e265c76b1c9a1f26e1836d5",
+    "repository": "https://github.com/imayankss/SecureSwipe.git"
+  }
+}

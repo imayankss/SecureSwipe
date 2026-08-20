@@ -1,3 +1,1 @@
-"""Shared utility package."""
-
-# TODO: Implement this module in the development phase.
+"""Configuration, paths, logging, provenance, and atomic evidence utilities."""

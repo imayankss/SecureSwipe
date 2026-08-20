@@ -12,8 +12,8 @@ export function ModelPerformance() {
     <Section
       id="performance"
       eyebrow="Model Performance"
-      title="Validation selects the model; the test split estimates the result"
-      description="All four models below are compared on the same validation split. Final cards report XGBoost on the separately held-out test split at the locked threshold."
+      title="Validation selected the model; the test split records the historical result"
+      description="All four models below were compared on one validation split. Final cards preserve the separately held-out random test observation; they are not out-of-time or deployment evidence."
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm font-medium text-slate-300">Locked test evaluation</p>
@@ -30,7 +30,7 @@ export function ModelPerformance() {
         <CardHeader>
           <CardTitle>Validation-only model comparison</CardTitle>
           <CardDescription>
-            PR-AUC is the selection metric because the positive class is only {dashboardData.dataset.fraudPrevalencePercent.toFixed(4)}% of the full dataset.
+            Average precision is the recorded selection metric because the positive class is only {dashboardData.dataset.fraudPrevalencePercent.toFixed(4)}% of the full dataset.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -49,7 +49,7 @@ export function ModelPerformance() {
                   }}
                 />
                 <Legend />
-                <Bar dataKey="prAuc" name="PR-AUC" fill="#67e8f9" radius={[5, 5, 0, 0]} />
+                <Bar dataKey="prAuc" name="Average precision" fill="#67e8f9" radius={[5, 5, 0, 0]} />
                 <Bar dataKey="rocAuc" name="ROC-AUC" fill="#86efac" radius={[5, 5, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
@@ -59,7 +59,7 @@ export function ModelPerformance() {
               <THead>
                 <TR>
                   <TH>Model</TH>
-                  <TH>PR-AUC</TH>
+                  <TH>Average precision</TH>
                   <TH>ROC-AUC</TH>
                   <TH>Precision</TH>
                   <TH>Recall</TH>

@@ -61,7 +61,7 @@ export function DataProvenance() {
               </div>
             ))}
           </div>
-          <p className="mt-4 break-all text-xs text-slate-500">
+          <p className="mt-4 break-all text-xs text-slate-400">
             Source digest: {dashboardData.project.sourceDigestSha256}
           </p>
         </CardContent>

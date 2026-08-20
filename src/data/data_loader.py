@@ -1,16 +1,14 @@
 from __future__ import annotations
 
+import hashlib
 from pathlib import Path
 
+import numpy as np
 import pandas as pd
 
-DEFAULT_DATA_PATH = Path("data/raw/creditcard.csv")
+from src.preprocessing.feature_config import REQUIRED_COLUMNS
 
-REQUIRED_COLUMNS: list[str] = (
-    ["Time"]
-    + [f"V{i}" for i in range(1, 29)]
-    + ["Amount", "Class"]
-)
+DEFAULT_DATA_PATH = Path("data/raw/creditcard.csv")
 
 
 def get_required_columns() -> list[str]:
@@ -21,7 +19,8 @@ def get_required_columns() -> list[str]:
 def validate_dataset_schema(
     df: pd.DataFrame,
     allow_extra_columns: bool = False,
-    strict_order: bool = False,
+    strict_order: bool = True,
+    reject_duplicate_rows: bool = True,
 ) -> None:
     """Validate that a DataFrame matches the expected credit card fraud schema.
 
@@ -29,8 +28,10 @@ def validate_dataset_schema(
         df: The DataFrame to validate.
         allow_extra_columns: If False, raise an error when columns outside
             the required schema are present.
-        strict_order: If True, the required columns must appear in the
-            DataFrame in the same relative order as get_required_columns().
+        strict_order: If True (the safe default), required columns must use
+            the exact canonical order.
+        reject_duplicate_rows: Reject duplicate transaction feature vectors before any
+            split so identical rows cannot cross evaluation boundaries.
 
     Raises:
         ValueError: If any schema or data quality check fails.
@@ -88,9 +89,57 @@ def validate_dataset_schema(
     if non_numeric_columns:
         raise ValueError(f"Expected numeric columns are not numeric: {non_numeric_columns}.")
 
-    empty_columns = [column for column in required if df[column].isna().all()]
-    if empty_columns:
-        raise ValueError(f"The following columns are completely empty: {empty_columns}.")
+    missing_counts = df[required].isna().sum()
+    missing_value_counts = {
+        str(column): int(count) for column, count in missing_counts.items() if count
+    }
+    if missing_value_counts:
+        raise ValueError(
+            "Dataset contains missing values in required columns: "
+            f"{missing_value_counts}."
+        )
+
+    feature_values = df[required].to_numpy(dtype=float, copy=False)
+    if not np.isfinite(feature_values).all():
+        invalid_count = int((~np.isfinite(feature_values)).sum())
+        raise ValueError(
+            "Dataset contains non-finite values (NaN or infinity) in required "
+            f"columns: {invalid_count} value(s)."
+        )
+
+    if (df["Time"] < 0).any():
+        raise ValueError("Dataset contains negative Time values.")
+    if (df["Amount"] < 0).any():
+        raise ValueError("Dataset contains negative Amount values.")
+
+    if reject_duplicate_rows:
+        transaction_features = [column for column in required if column != "Class"]
+        duplicate_count = int(df.duplicated(subset=transaction_features, keep=False).sum())
+        if duplicate_count:
+            raise ValueError(
+                "Dataset contains duplicate transaction feature rows. Remove or explicitly "
+                f"resolve {duplicate_count} duplicated row occurrences before splitting."
+            )
+
+
+def fingerprint_dataframe(
+    df: pd.DataFrame, *, reject_duplicate_rows: bool = True
+) -> str:
+    """Return a deterministic SHA-256 fingerprint of schema, dtypes, and rows.
+
+    The digest contains no raw values and can be recorded in a manifest. Row
+    order is significant because the dataset's ``Time`` ordering matters for
+    future blocked evaluation.
+    """
+    validate_dataset_schema(df, reject_duplicate_rows=reject_duplicate_rows)
+    digest = hashlib.sha256()
+    digest.update("\x1f".join(map(str, df.columns)).encode("utf-8"))
+    digest.update(b"\x00")
+    digest.update("\x1f".join(map(str, df.dtypes)).encode("utf-8"))
+    digest.update(b"\x00")
+    row_hashes = pd.util.hash_pandas_object(df, index=False, categorize=True)
+    digest.update(row_hashes.to_numpy(dtype="uint64", copy=False).tobytes())
+    return digest.hexdigest()
 
 
 def load_credit_card_data(

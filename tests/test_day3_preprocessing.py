@@ -32,6 +32,7 @@ from src.preprocessing.feature_config import (
     validate_feature_config,
 )
 from src.data.split_data import (
+    assert_disjoint_split_rows,
     create_train_val_test_split,
     get_class_distribution,
     get_split_summary,
@@ -225,6 +226,20 @@ def test_no_target_column_in_split_features(
         assert TARGET_COLUMN not in synthetic_splits[key].columns
 
 
+def test_split_row_fingerprints_are_pairwise_disjoint(
+    synthetic_splits: dict[str, object],
+) -> None:
+    fingerprints = assert_disjoint_split_rows(synthetic_splits)
+    assert set(fingerprints) == {"train", "validation", "test"}
+    assert all(len(value) == 64 for value in fingerprints.values())
+
+
+def test_split_rejects_exact_duplicate_rows(synthetic_fraud_df: pd.DataFrame) -> None:
+    duplicated = pd.concat([synthetic_fraud_df, synthetic_fraud_df.iloc[[0]]], ignore_index=True)
+    with pytest.raises(ValueError, match="duplicate"):
+        separate_features_target(duplicated)
+
+
 # ---------------------------------------------------------------------------
 # split_data: summary tests
 # ---------------------------------------------------------------------------
@@ -264,6 +279,8 @@ def test_get_split_summary_returns_expected_keys(
         "test_class_distribution",
         "feature_count",
         "target_name",
+        "row_fingerprints",
+        "duplicate_policy",
     }
     assert expected_keys == set(summary.keys())
 
@@ -288,6 +305,26 @@ def test_validate_features_for_preprocessing_rejects_class_column(
 
     with pytest.raises(ValueError):
         validate_features_for_preprocessing(X_with_target)
+
+
+@pytest.mark.parametrize("invalid_value", [np.nan, np.inf, -np.inf])
+def test_validate_features_for_preprocessing_rejects_non_finite(
+    synthetic_splits: dict[str, object],
+    invalid_value: float,
+) -> None:
+    invalid = synthetic_splits["X_train"].copy()
+    invalid.iloc[0, invalid.columns.get_loc("V1")] = invalid_value
+    with pytest.raises(ValueError, match="missing|finite"):
+        validate_features_for_preprocessing(invalid)
+
+
+def test_validate_features_for_preprocessing_rejects_reordered_features(
+    synthetic_splits: dict[str, object],
+) -> None:
+    invalid = synthetic_splits["X_train"].copy()
+    invalid = invalid[[*invalid.columns[1:], invalid.columns[0]]]
+    with pytest.raises(ValueError, match="order"):
+        validate_features_for_preprocessing(invalid)
 
 
 # ---------------------------------------------------------------------------

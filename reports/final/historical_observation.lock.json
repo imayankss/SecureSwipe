@@ -1,0 +1,24 @@
+{
+  "canonical_metadata_migration": {
+    "script": "scripts/migrate_historical_metadata.py",
+    "source_guarded": true
+  },
+  "evaluation_scope": "historical_reported_test",
+  "files": {
+    "final_evaluation_json": {
+      "path": "reports/final/final_model_evaluation.json",
+      "sha256": "8fe0d96e9106cbe06f1632415c25fe0c59870231728553ec71109e1a7febc24f"
+    },
+    "final_evaluation_report": {
+      "path": "reports/final/final_evaluation_report.md",
+      "sha256": "c2c33e56dd5e0ece8b767a283a773a7b6f6b39078fef0e080ed71555b3365fb7"
+    },
+    "selected_validation_thresholds": {
+      "path": "reports/threshold_tuning/selected_thresholds.json",
+      "sha256": "c04727b5e4aedeb24c66934b5c457259134f2ed45a370348db84e0a7d6d0dd00"
+    }
+  },
+  "historical_observation_commit": "fc47df4d22b847d9dcacc7139daccc98eba59250",
+  "lock_version": "1",
+  "policy": "Already observed; verify only. Never use for tuning, selection, calibration, or threshold changes."
+}

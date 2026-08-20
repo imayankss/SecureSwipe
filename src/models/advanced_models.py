@@ -46,6 +46,9 @@ import joblib
 import numpy as np
 import pandas as pd
 
+from src.artifacts.bundle import load_verified_joblib, write_checksum_sidecar
+from src.preprocessing.feature_config import RANDOM_STATE
+
 logger = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
@@ -75,7 +78,6 @@ def _require_xgboost() -> None:
 # Constants
 # ---------------------------------------------------------------------------
 
-RANDOM_STATE: int = 42
 DEFAULT_MODELS_DIR: Path = Path("artifacts/models")
 
 # XGBoost hyper-parameters — centralised here so the runner script
@@ -527,6 +529,7 @@ def save_model(
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     joblib.dump(model, output_path)
+    write_checksum_sidecar(output_path)
     logger.info(
         "Saved %s → %s", type(model).__name__, output_path
     )
@@ -565,7 +568,12 @@ def load_model(model_path: str | Path) -> Any:
             "    python -m scripts.run_day5_advanced_models"
         )
 
-    model = joblib.load(model_path)
+    trusted_root = model_path.parent.parent if model_path.parent.name == "models" else model_path.parent
+    model = load_verified_joblib(
+        model_path,
+        trusted_root=trusted_root,
+        required_attributes=("predict_proba",),
+    )
     logger.info("Loaded %s ← %s", type(model).__name__, model_path)
     return model
 

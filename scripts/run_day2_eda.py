@@ -15,10 +15,12 @@ from src.eda.imbalance_analysis import (  # noqa: E402
     generate_imbalance_summary,
 )
 from src.eda.visualizations import generate_all_eda_figures  # noqa: E402
+from src.utils.config import load_project_config  # noqa: E402
 
-DEFAULT_DATA_PATH = Path("data/raw/creditcard.csv")
+PROJECT_CONFIG = load_project_config()
+DEFAULT_DATA_PATH = PROJECT_CONFIG.data.raw_path
 DEFAULT_REPORT_PATH = Path("reports/day2_eda_summary.md")
-DEFAULT_FIGURES_DIR = Path("reports/figures")
+DEFAULT_FIGURES_DIR = PROJECT_CONFIG.reports.figures_dir
 
 
 def parse_args() -> argparse.Namespace:
@@ -147,6 +149,13 @@ def print_success_message(results: dict[str, object]) -> None:
 
 def main() -> None:
     """Parse arguments, run Day 2 EDA, and report success or failure."""
+    print(
+        "Direct unmanifested execution is disabled. Use "
+        "`python scripts/run_reference_stage.py --stage day2 --output-dir <new-dir>`. ",
+        file=sys.stderr,
+    )
+    raise SystemExit(2)
+
     args = parse_args()
 
     try:
