@@ -62,16 +62,41 @@ test("mobile navigation exposes every dashboard section", async ({ page }) => {
   await expect(page.locator("#thresholds")).toBeVisible();
 });
 
-test("live demo stays opt-in and preserves the static fallback when no API is configured", async ({ page }) => {
-  const predictionRequests: string[] = [];
-  page.on("request", (request) => {
-    if (request.url().includes("/v1/predict")) predictionRequests.push(request.url());
+test("configured production live demo sends one synthetic request and validates the full response", async ({ page }) => {
+  const predictionRequests: { url: string; body: unknown }[] = [];
+  await page.route("http://127.0.0.1:3200/v1/predict", async (route) => {
+    const request = route.request();
+    predictionRequests.push({ url: request.url(), body: request.postDataJSON() });
+    await route.fulfill({
+      status: 200,
+      contentType: "application/json",
+      headers: { "Access-Control-Allow-Origin": "http://127.0.0.1:3100" },
+      body: JSON.stringify({
+        schema_version: "1.0",
+        request_id: "browser-live-1",
+        raw_score: 0.731,
+        calibrated_probability: null,
+        decision_score: 0.731,
+        score_type: "raw_score",
+        operating_threshold: 0.53,
+        decision: "review",
+        model_version: "synthetic-browser-1",
+      }),
+    });
   });
 
-  await page.goto("/");
+  const navigation = await page.goto("/");
+  expect(navigation?.headers()["content-security-policy"]).toContain(
+    "connect-src 'self' http://127.0.0.1:3200",
+  );
   await page.getByRole("button", { name: "Try synthetic API" }).click();
-  await expect(page.getByRole("status", { name: "Synthetic API status" })).toContainText("Live demo is not configured");
-  await expect(page.getByText("Static fallback active until the API check is requested.")).not.toBeVisible();
+  await expect(page.getByRole("status", { name: "Synthetic API status" })).toContainText(
+    "Synthetic API result: review at score 0.731.",
+  );
   await expect(page.getByText(/No customer or transaction data is used/)).toBeVisible();
-  expect(predictionRequests).toEqual([]);
+  expect(predictionRequests).toHaveLength(1);
+  expect(predictionRequests[0].url).toBe("http://127.0.0.1:3200/v1/predict");
+  expect(predictionRequests[0].body).toEqual(
+    Object.fromEntries(["Time", ...Array.from({ length: 28 }, (_, index) => `V${index + 1}`), "Amount"].map((key) => [key, 0])),
+  );
 });

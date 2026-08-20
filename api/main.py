@@ -13,11 +13,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, AsyncIterator, Callable
 
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 from starlette.concurrency import run_in_threadpool
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api.metrics import ApiMetrics
 from api.schemas import (
@@ -43,6 +44,13 @@ KNOWN_ROUTES = {
     "/v1/predict",
     "/v1/predict/batch",
     "/metrics",
+}
+ERROR_RESPONSE: dict[str, Any] = {"model": ErrorResponse}
+INFERENCE_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
+    413: ERROR_RESPONSE,
+    422: ERROR_RESPONSE,
+    500: ERROR_RESPONSE,
+    503: ERROR_RESPONSE,
 }
 
 
@@ -120,8 +128,16 @@ class RequestBodyLimitMiddleware:
             await self.app(scope, receive, send)
             return
 
-        request_id = _request_id_from_headers(scope.get("headers", []))
+        request_id = str(
+            scope.get("state", {}).get("request_id")
+            or _request_id_from_headers(scope.get("headers", []))
+        )
         scope.setdefault("state", {})["request_id"] = request_id
+        scope["headers"] = [
+            (key, value)
+            for key, value in scope.get("headers", [])
+            if key.lower() != b"x-request-id"
+        ] + [(b"x-request-id", request_id.encode("ascii"))]
         messages: list[dict[str, Any]] = []
         total = 0
         while True:
@@ -290,11 +306,12 @@ def create_app(
             ),
         )
 
-    @application.exception_handler(HTTPException)
-    async def http_error(request: Request, exc: HTTPException) -> JSONResponse:
+    @application.exception_handler(StarletteHTTPException)
+    async def http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         return JSONResponse(
             status_code=exc.status_code,
             content=_error_payload(_request_id(request), "http_error", str(exc.detail)),
+            headers=exc.headers,
         )
 
     @application.exception_handler(Exception)
@@ -341,7 +358,12 @@ def create_app(
             return JSONResponse(status_code=503, content=health.model_dump(mode="json"))
         return health
 
-    @application.get("/v1/model-info", response_model=ModelInfoResponse, tags=["model"])
+    @application.get(
+        "/v1/model-info",
+        response_model=ModelInfoResponse,
+        responses={500: ERROR_RESPONSE, 503: ERROR_RESPONSE},
+        tags=["model"],
+    )
     async def model_info() -> ModelInfoResponse:
         info = current_service().model_info()
         return ModelInfoResponse(
@@ -354,7 +376,12 @@ def create_app(
             training_data_fingerprint=info.training_data_fingerprint,
         )
 
-    @application.post("/v1/predict", response_model=PredictionResponse, tags=["inference"])
+    @application.post(
+        "/v1/predict",
+        response_model=PredictionResponse,
+        responses=INFERENCE_ERROR_RESPONSES,
+        tags=["inference"],
+    )
     async def predict(transaction: TransactionFeatures, request: Request) -> PredictionResponse:
         result = await run_in_threadpool(current_service().predict_one, transaction)
         application.state.metrics.observe_scores([result.decision_score])
@@ -363,6 +390,7 @@ def create_app(
     @application.post(
         "/v1/predict/batch",
         response_model=BatchPredictionResponse,
+        responses=INFERENCE_ERROR_RESPONSES,
         tags=["inference"],
     )
     async def predict_batch(

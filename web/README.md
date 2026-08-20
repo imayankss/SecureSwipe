@@ -66,6 +66,9 @@ NEXT_PUBLIC_SECURESWIPE_API_URL=http://127.0.0.1:8000 npm run build
 ```
 
 The API must allow the frontend origin through its explicit CORS configuration.
+The configured value must be an absolute `http://` or `https://` origin with no
+credentials, path, query, or fragment. The production CSP adds only that validated
+origin to `connect-src`.
 No live provider deployment or URL is verified by this repository.
 
 See the repository-level README for the full architecture, data refresh,

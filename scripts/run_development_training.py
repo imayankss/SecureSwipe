@@ -29,6 +29,7 @@ from src.artifacts.bundle import (  # noqa: E402
 )
 from src.data.curation import load_curated_dataset, row_content_fingerprints  # noqa: E402
 from src.data.data_loader import fingerprint_dataframe  # noqa: E402
+from src.data.source_approval import load_source_approval_evidence  # noqa: E402
 from src.evaluation.calibration import apply_calibrator, compare_calibrators  # noqa: E402
 from src.evaluation.statistical_metrics import (  # noqa: E402
     classification_wilson_intervals,
@@ -159,6 +160,16 @@ def run_development_training(
     )
     curation = {key: value for key, value in raw_curation.items()}
     curated_fingerprint = str(curation["curated_fingerprint"])
+    resolved_curation_record = curation_record_path.resolve(strict=True)
+    curation_manifest_path = resolved_curation_record.parent / "run_manifest.json"
+    source_approval_path = resolved_curation_record.parent / "source_approval.json"
+    approval_payload = load_source_approval_evidence(
+        source_approval_path,
+        approved_file_sha256=str(curation["raw_file_sha256"]),
+        source_reference=str(curation["source_reference"]),
+    )
+    if approval_payload["reviewed_by"] != curation["source_approval_reviewed_by"]:
+        raise ValueError("Retained source approval reviewer does not match curation.")
     factories = dict(candidate_factories or default_candidate_factories())
     if len(factories) < 2 or not 0 <= simplicity_margin <= 1:
         raise ValueError("At least two ordered candidates and a valid margin are required.")
@@ -401,7 +412,9 @@ def run_development_training(
             "lineage": temporary / "lineage.json",
             "selection": temporary / "selection.json",
             "development_scores": temporary / "development_scores.csv",
+            "source_approval": temporary / "source_approval.json",
         }
+        _json_write(approval_payload, outputs["source_approval"])
         score_evidence = pd.concat(
             [
                 pd.DataFrame(
@@ -452,6 +465,8 @@ def run_development_training(
             inputs={
                 "curated_dataset": curated_path,
                 "curation_record": curation_record_path,
+                "curation_run_manifest": curation_manifest_path,
+                "source_approval": source_approval_path,
             },
             outputs=outputs,
             parameters={

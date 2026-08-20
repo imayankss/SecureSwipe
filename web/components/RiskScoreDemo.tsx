@@ -51,16 +51,53 @@ type LiveState =
   | { status: "error"; message: string };
 
 type LivePrediction = {
-  decision?: unknown;
-  decision_score?: unknown;
+  schema_version: "1.0";
+  request_id: string;
+  raw_score: number;
+  calibrated_probability: number | null;
+  decision_score: number;
+  score_type: "raw_score" | "calibrated_probability";
+  operating_threshold: number;
+  decision: "review" | "pass";
+  model_version: string;
 };
 
 function apiUrlFromEnvironment() {
-  return process.env.NEXT_PUBLIC_SECURESWIPE_API_URL?.trim().replace(/\/$/, "") || null;
+  const raw = process.env.NEXT_PUBLIC_SECURESWIPE_API_URL?.trim();
+  if (!raw) return null;
+  try {
+    const parsed = new URL(raw);
+    if (
+      !["http:", "https:"].includes(parsed.protocol) ||
+      parsed.username ||
+      parsed.password ||
+      parsed.pathname !== "/" ||
+      parsed.search ||
+      parsed.hash
+    ) return null;
+    return parsed.origin;
+  } catch {
+    return null;
+  }
 }
 
 function isPrediction(value: unknown): value is LivePrediction {
-  return typeof value === "object" && value !== null;
+  if (typeof value !== "object" || value === null) return false;
+  const prediction = value as Record<string, unknown>;
+  return (
+    prediction.schema_version === "1.0" &&
+    typeof prediction.request_id === "string" && prediction.request_id.length > 0 &&
+    typeof prediction.raw_score === "number" && Number.isFinite(prediction.raw_score) &&
+    (prediction.calibrated_probability === null ||
+      (typeof prediction.calibrated_probability === "number" &&
+        Number.isFinite(prediction.calibrated_probability))) &&
+    typeof prediction.decision_score === "number" && Number.isFinite(prediction.decision_score) &&
+    (prediction.score_type === "raw_score" || prediction.score_type === "calibrated_probability") &&
+    typeof prediction.operating_threshold === "number" &&
+    Number.isFinite(prediction.operating_threshold) &&
+    (prediction.decision === "review" || prediction.decision === "pass") &&
+    typeof prediction.model_version === "string" && prediction.model_version.length > 0
+  );
 }
 
 export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBaseUrl?: string | null } = {}) {
@@ -96,7 +133,7 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
         throw new Error(`API returned ${response.status}.`);
       }
       const payload: unknown = await response.json();
-      if (!isPrediction(payload) || typeof payload.decision !== "string" || typeof payload.decision_score !== "number") {
+      if (!isPrediction(payload)) {
         setLiveState({ status: "empty" });
         return;
       }

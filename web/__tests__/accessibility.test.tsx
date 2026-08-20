@@ -38,7 +38,17 @@ describe("keyboard and accessibility contracts", () => {
 
     await user.click(screen.getByRole("button", { name: "Try synthetic API" }));
     expect(screen.getByRole("button", { name: "Checking API…" })).toBeDisabled();
-    resolveRequest?.(new Response(JSON.stringify({ decision: "review", decision_score: 0.91 }), { status: 200 }));
+    resolveRequest?.(new Response(JSON.stringify({
+      schema_version: "1.0",
+      request_id: "unit-live-1",
+      raw_score: 0.91,
+      calibrated_probability: null,
+      decision_score: 0.91,
+      score_type: "raw_score",
+      operating_threshold: 0.53,
+      decision: "review",
+      model_version: "synthetic-unit-1",
+    }), { status: 200 }));
     expect(await screen.findByText("Synthetic API result: review at score 0.910.")).toBeInTheDocument();
 
     vi.stubGlobal("fetch", vi.fn(async () => new Response("null", { status: 200 })));

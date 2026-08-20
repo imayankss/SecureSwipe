@@ -50,6 +50,7 @@ jobs:
           platforms: ${{ matrix.platform }}
           push: false
           tags: secureswipe-api:ci-${{ matrix.suffix }}
+          build-args: VCS_REF=${{ github.sha }}
       - name: Smoke liveness, readiness, and inference
         env:
           CONTAINER_NAME: secureswipe-api-ci-${{ matrix.suffix }}

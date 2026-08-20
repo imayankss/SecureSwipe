@@ -55,13 +55,14 @@ def curate_dataset(
         raise ValueError("Unsupported source_kind.")
     if not source_reference.strip():
         raise ValueError("source_reference must identify the authorized source.")
+    approval_payload = None
     if source_kind == "new_authorized_development":
         if source_approval_path is None:
             raise ValueError(
                 "New development data requires an explicit operator-reviewed source "
                 "approval bound to the exact CSV bytes."
             )
-        load_source_approval(
+        approval_payload = load_source_approval(
             source_approval_path,
             source_path=source,
             source_reference=source_reference,
@@ -107,6 +108,9 @@ def curate_dataset(
         validate_dataset_schema(reloaded)
         reloaded_summary = curate_exact_feature_duplicates(reloaded)[1]
 
+        retained_approval_path = temporary / "source_approval.json"
+        if approval_payload is not None:
+            _write_json(approval_payload, retained_approval_path)
         record_path = temporary / "curation.json"
         record = {
             "curation_format_version": "1",
@@ -133,9 +137,12 @@ def curate_dataset(
                 else "already_observed_historical_reference"
             ),
             "source_approval_sha256": (
-                sha256_file(source_approval_path.expanduser().resolve(strict=True))
-                if source_approval_path is not None
+                sha256_file(retained_approval_path)
+                if approval_payload is not None
                 else None
+            ),
+            "source_approval_reviewed_by": (
+                approval_payload["reviewed_by"] if approval_payload is not None else None
             ),
         }
         _write_json(record, record_path)
@@ -155,12 +162,21 @@ def curate_dataset(
                     else {}
                 ),
             },
-            outputs={"curated_dataset": curated_path, "curation_record": record_path},
+            outputs={
+                "curated_dataset": curated_path,
+                "curation_record": record_path,
+                **(
+                    {"source_approval": retained_approval_path}
+                    if approval_payload is not None
+                    else {}
+                ),
+            },
             parameters={
                 "duplicate_policy": record["duplicate_policy"],
                 "source_kind": source_kind,
                 "source_reference": source_reference.strip(),
                 "source_trust_basis": record["source_trust_basis"],
+                "source_approval_reviewed_by": record["source_approval_reviewed_by"],
             },
             seeds={},
             packages=["numpy", "pandas"],
@@ -168,11 +184,14 @@ def curate_dataset(
         )
         write_run_manifest(manifest, temporary / "run_manifest.json")
 
-    return {
+    result = {
         "curated_dataset": output_dir / "curated.csv",
         "curation_record": output_dir / "curation.json",
         "run_manifest": output_dir / "run_manifest.json",
     }
+    if approval_payload is not None:
+        result["source_approval"] = output_dir / "source_approval.json"
+    return result
 
 
 def parse_args() -> argparse.Namespace:

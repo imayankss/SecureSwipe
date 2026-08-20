@@ -54,6 +54,7 @@ def test_curation_is_deterministic_and_records_removed_class_counts(tmp_path: Pa
     assert first_record["removed_legitimate"] == 1
     assert first_record["decision_eligible"] is True
     assert first["curated_dataset"].read_bytes() == second["curated_dataset"].read_bytes()
+    assert first["source_approval"].read_bytes() == approval.read_bytes()
 
 
 def test_conflicting_duplicate_labels_fail_without_publishing(tmp_path: Path) -> None:
@@ -170,13 +171,67 @@ def test_curation_manifest_and_approval_provenance_are_verified(tmp_path: Path) 
         curated["curation_record"],
         require_decision_eligible=True,
     )
-
+    original_payload = json.loads(approval.read_text(encoding="utf-8"))
+    approval.unlink()
+    assert json.loads(curated["source_approval"].read_text(encoding="utf-8")) == original_payload
     manifest = json.loads(curated["run_manifest"].read_text(encoding="utf-8"))
+    assert manifest["outputs"]["source_approval"]["sha256"] == json.loads(
+        curated["curation_record"].read_text(encoding="utf-8")
+    )["source_approval_sha256"]
+    assert manifest["parameters"]["source_approval_reviewed_by"] == "test-fixture-reviewer"
+
     manifest["parameters"]["source_reference"] = "substituted-source"
     curated["run_manifest"].write_text(
         json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
     with pytest.raises(ValueError, match="source provenance is inconsistent"):
+        load_curated_dataset(
+            curated["curated_dataset"],
+            curated["curation_record"],
+            require_decision_eligible=True,
+        )
+
+
+def test_retained_source_approval_is_required_and_semantically_revalidated(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "new.csv"
+    _frame().to_csv(source, index=False)
+    approval = write_source_approval(source, "reviewed-new-v1")
+    curated = curate_dataset(
+        source_path=source,
+        output_dir=tmp_path / "curated",
+        source_kind="new_authorized_development",
+        source_reference="reviewed-new-v1",
+        source_approval_path=approval,
+    )
+    retained = curated["source_approval"]
+    payload = json.loads(retained.read_text(encoding="utf-8"))
+    retained.unlink()
+    with pytest.raises(ValueError, match="approval evidence is missing"):
+        load_curated_dataset(
+            curated["curated_dataset"],
+            curated["curation_record"],
+            require_decision_eligible=True,
+        )
+    retained.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    payload["reviewed_by"] = ""
+    retained.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    record = json.loads(curated["curation_record"].read_text(encoding="utf-8"))
+    record["source_approval_sha256"] = curation_script.sha256_file(retained)
+    curated["curation_record"].write_text(
+        json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    manifest = json.loads(curated["run_manifest"].read_text(encoding="utf-8"))
+    manifest["outputs"]["source_approval"].update(
+        sha256=curation_script.sha256_file(retained), size_bytes=retained.stat().st_size
+    )
+    curated["run_manifest"].write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    with pytest.raises(ValueError, match="identify the human reviewer"):
         load_curated_dataset(
             curated["curated_dataset"],
             curated["curation_record"],

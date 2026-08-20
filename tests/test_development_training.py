@@ -96,6 +96,18 @@ def test_new_authorized_data_reaches_verified_bundle_with_service_parity(
     assert parity["raw_score_sha256"] == parity["service_raw_score_sha256"]
     manifest = json.loads(outputs["run_manifest"].read_text(encoding="utf-8"))
     assert manifest["evaluation_scope"] == "new_authorized_four_role_reusable_backtest"
+    assert set(manifest["inputs"]) == {
+        "curated_dataset",
+        "curation_record",
+        "curation_run_manifest",
+        "source_approval",
+    }
+    assert manifest["inputs"]["source_approval"]["sha256"] == manifest["outputs"][
+        "source_approval"
+    ]["sha256"]
+    assert json.loads((tmp_path / "training-run" / "source_approval.json").read_text())[
+        "reviewed_by"
+    ] == "test-fixture-reviewer"
     assert "bundle/manifest.json" in manifest["outputs"]
     first_files = {
         path.relative_to(tmp_path / "training-run"): path.read_bytes()

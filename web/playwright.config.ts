@@ -18,7 +18,7 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: "npm run start -- --hostname 127.0.0.1 --port 3100",
+    command: "NEXT_PUBLIC_SECURESWIPE_API_URL=http://127.0.0.1:3200 npm run build && npm run start -- --hostname 127.0.0.1 --port 3100",
     url: "http://127.0.0.1:3100",
     reuseExistingServer: false,
     timeout: 30_000,

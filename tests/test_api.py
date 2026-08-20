@@ -96,6 +96,31 @@ def test_unavailable_model_is_live_but_not_ready(
         assert response.json()["error"]["code"] == "model_unavailable"
 
 
+@pytest.mark.parametrize(
+    ("method", "path", "status", "message"),
+    [
+        ("GET", "/does-not-exist", 404, "Not Found"),
+        ("POST", "/health/live", 405, "Method Not Allowed"),
+    ],
+)
+def test_starlette_http_errors_use_stable_error_contract(
+    ready_client: TestClient,
+    method: str,
+    path: str,
+    status: int,
+    message: str,
+) -> None:
+    response = ready_client.request(method, path)
+    assert response.status_code == status
+    assert response.json() == {
+        "schema_version": "1.0",
+        "request_id": response.headers["x-request-id"],
+        "error": {"code": "http_error", "message": message, "details": None},
+    }
+    if status == 405:
+        assert response.headers["allow"] == "GET"
+
+
 def test_single_prediction_matches_direct_bundle_path(
     ready_client: TestClient,
     fitted_bundle: ModelBundle,
@@ -314,6 +339,15 @@ def test_unexpected_model_exception_log_omits_exception_message_and_features(
     finally:
         logger.removeHandler(handler)
     assert response.status_code == 500
+    assert response.json() == {
+        "schema_version": "1.0",
+        "request_id": "exception-redaction-check",
+        "error": {
+            "code": "internal_error",
+            "message": "An internal error occurred.",
+            "details": None,
+        },
+    }
     output = stream.getvalue()
     assert sentinel not in output
     assert '"V28"' not in output
@@ -396,6 +430,15 @@ def test_openapi_contains_versioned_contracts(ready_client: TestClient) -> None:
     transaction_schema = schema["components"]["schemas"]["TransactionFeatures"]
     assert transaction_schema["additionalProperties"] is False
     assert set(transaction_schema["required"]) == set(ALL_FEATURES)
+    for path in ("/v1/predict", "/v1/predict/batch"):
+        responses = schema["paths"][path]["post"]["responses"]
+        assert set(responses) == {"200", "413", "422", "500", "503"}
+        for status in ("413", "422", "500", "503"):
+            assert responses[status]["content"]["application/json"]["schema"] == {
+                "$ref": "#/components/schemas/ErrorResponse"
+            }
+    model_info_responses = schema["paths"]["/v1/model-info"]["get"]["responses"]
+    assert set(model_info_responses) == {"200", "500", "503"}
 
 
 def test_configured_corrupt_bundle_refuses_startup(

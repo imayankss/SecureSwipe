@@ -10,6 +10,7 @@ from pathlib import Path
 import pandas as pd
 
 from src.data.data_loader import fingerprint_dataframe, validate_dataset_schema
+from src.data.source_approval import load_source_approval_evidence
 from src.preprocessing.feature_config import ALL_FEATURES
 
 
@@ -55,8 +56,11 @@ def load_curated_dataset(
         "decision_eligible",
         "source_kind",
         "historical_taint",
+        "raw_file_sha256",
+        "source_reference",
         "source_trust_basis",
         "source_approval_sha256",
+        "source_approval_reviewed_by",
     }
     if required - payload.keys():
         raise ValueError("Curation record is incomplete.")
@@ -95,6 +99,8 @@ def load_curated_dataset(
         or parameters.get("source_kind") != payload["source_kind"]
         or parameters.get("source_reference") != payload.get("source_reference")
         or parameters.get("source_trust_basis") != payload["source_trust_basis"]
+        or parameters.get("source_approval_reviewed_by")
+        != payload["source_approval_reviewed_by"]
     ):
         raise ValueError("Curation run manifest source provenance is inconsistent.")
     source_entry = inputs.get("source_dataset")
@@ -105,14 +111,40 @@ def load_curated_dataset(
         raise ValueError("Curation source checksum is inconsistent with its run manifest.")
     approval_digest = payload["source_approval_sha256"]
     approval_entry = inputs.get("source_approval")
+    retained_approval_entry = outputs.get("source_approval")
+    retained_approval_path = record_path.parent / "source_approval.json"
     if payload["decision_eligible"] is True:
         if (
             not isinstance(approval_digest, str)
             or not isinstance(approval_entry, dict)
-            or approval_entry.get("sha256") != approval_digest
+            or not isinstance(retained_approval_entry, dict)
         ):
             raise ValueError("Decision-eligible curation lacks a verified source approval.")
-    elif approval_digest is not None or approval_entry is not None:
+        if not retained_approval_path.is_file() or retained_approval_path.is_symlink():
+            raise ValueError("Retained source approval evidence is missing.")
+        if _sha256_file(retained_approval_path) != approval_digest:
+            raise ValueError("Retained source approval checksum does not match curation.")
+        approval_payload = load_source_approval_evidence(
+            retained_approval_path,
+            approved_file_sha256=str(payload.get("raw_file_sha256")),
+            source_reference=str(payload.get("source_reference")),
+        )
+        if approval_payload["reviewed_by"] != payload["source_approval_reviewed_by"]:
+            raise ValueError("Retained source approval reviewer does not match curation.")
+        if (
+            retained_approval_entry.get("filename") != retained_approval_path.name
+            or retained_approval_entry.get("sha256") != approval_digest
+            or retained_approval_entry.get("size_bytes")
+            != retained_approval_path.stat().st_size
+        ):
+            raise ValueError("Curation run manifest mismatch for source approval.")
+    elif (
+        approval_digest is not None
+        or payload["source_approval_reviewed_by"] is not None
+        or approval_entry is not None
+        or retained_approval_entry is not None
+        or retained_approval_path.exists()
+    ):
         raise ValueError("Historical curation must not contain a new-source approval.")
     expected = {
         "curated_dataset": (curated, payload["curated_file_sha256"]),

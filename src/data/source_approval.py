@@ -39,6 +39,21 @@ def load_source_approval(
     """Verify an operator approval bound to the exact source file."""
     approval = Path(approval_path).expanduser().resolve(strict=True)
     source = Path(source_path).expanduser().resolve(strict=True)
+    return load_source_approval_evidence(
+        approval,
+        approved_file_sha256=sha256_file(source),
+        source_reference=source_reference,
+    )
+
+
+def load_source_approval_evidence(
+    approval_path: str | Path,
+    *,
+    approved_file_sha256: str,
+    source_reference: str,
+) -> dict[str, Any]:
+    """Verify retained canonical approval evidence without the original CSV."""
+    approval = Path(approval_path).expanduser().resolve(strict=True)
     if approval.is_symlink() or not approval.is_file():
         raise ValueError("Source approval must be a regular non-symlink JSON file.")
     try:
@@ -52,7 +67,7 @@ def load_source_approval(
     digest = payload["approved_file_sha256"]
     if not isinstance(digest, str) or not _SHA256.fullmatch(digest):
         raise ValueError("Source approval has an invalid file checksum.")
-    if digest != sha256_file(source):
+    if digest != approved_file_sha256:
         raise ValueError("Source approval is not bound to these exact source bytes.")
     if payload["attestation"] != NEW_SOURCE_ATTESTATION:
         raise ValueError("Source approval does not contain the required attestation.")

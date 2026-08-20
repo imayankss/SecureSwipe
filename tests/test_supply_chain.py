@@ -62,6 +62,7 @@ def test_container_workflow_builds_without_push_and_scans_each_architecture() ->
     assert "linux/amd64" in text
     assert "linux/arm64" in text
     assert "push: false" in text
+    assert "build-args: VCS_REF=${{ github.sha }}" in text
     assert "severity: HIGH,CRITICAL" in text
     assert "exit-code: \"1\"" in text
     assert "trivyignores: .trivyignore.yaml" in text
@@ -70,6 +71,13 @@ def test_container_workflow_builds_without_push_and_scans_each_architecture() ->
     assert "smoke_expected.json" in text
     assert "os.getuid() == 10001" in text
     assert "find_spec('pip') is None" in text
+
+
+def test_container_image_declares_source_revision_binding() -> None:
+    dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
+    assert "ARG VCS_REF=unknown" in dockerfile
+    assert 'org.opencontainers.image.source="https://github.com/imayankss/SecureSwipe"' in dockerfile
+    assert 'org.opencontainers.image.revision="${VCS_REF}"' in dockerfile
 
 
 def test_container_scan_exceptions_are_narrow_documented_and_expiring() -> None:

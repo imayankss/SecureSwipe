@@ -10,8 +10,10 @@ and the synthetic smoke bundle must never be presented as a trained fraud model.
 From the repository root with Docker Desktop running:
 
 ```bash
+SECURESWIPE_VCS_REF="$(git rev-parse HEAD)"
 docker buildx build \
   --platform linux/arm64 \
+  --build-arg VCS_REF="$SECURESWIPE_VCS_REF" \
   --load \
   --tag secureswipe-api:local \
   .
@@ -90,9 +92,10 @@ docker sbom secureswipe-api:local \
 ```
 
 The SBOM is a generated local artifact and is not a substitute for the source
-dependency locks. Record the scanner versions, database timestamp, image digest,
-and every justified exception. Do not call this gate passed until both commands
-have actually run against the final image.
+dependency locks. Durable final evidence must retain the complete unfiltered scan
+JSON, SPDX JSON, scanner/database metadata, image ID, OCI revision label, Git SHA,
+both evidence-file checksums, and every exception disposition. Do not call this
+gate passed until those records verify against the same final image.
 
 The checked-in `.trivyignore.yaml` is not a blanket `ignore-unfixed` policy. It
 lists only residual Debian findings that had no fix on 2026-08-20, records why
