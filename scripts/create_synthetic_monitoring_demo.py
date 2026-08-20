@@ -28,6 +28,10 @@ def generate_demo(output: Path) -> dict[str, Any]:
     reference["Class"] = labels
     current["Class"] = labels
     report = monitor_batches(reference, current, bundle=bundle)
+    # The tracked fixture is verified byte-for-byte on macOS and Linux. Runtime
+    # provenance remains part of ordinary monitoring reports, but is host-specific
+    # and therefore intentionally excluded from this synthetic demonstration.
+    report.pop("runtime")
     write_report(report, output, check=False)
     return report
 

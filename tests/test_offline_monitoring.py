@@ -113,6 +113,7 @@ def test_demo_and_report_check_are_byte_deterministic(tmp_path: Path) -> None:
     generate_demo(second)
     assert first.read_bytes() == second.read_bytes()
     payload = json.loads(first.read_text(encoding="utf-8"))
+    assert "runtime" not in payload
     write_report(payload, first, check=True)
     with pytest.raises(FileExistsError, match="Refusing to overwrite"):
         write_report(payload, first, check=False)

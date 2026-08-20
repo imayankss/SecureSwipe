@@ -672,18 +672,6 @@
       "true_positives": 12
     }
   },
-  "runtime": {
-    "dependencies": {
-      "joblib": "1.5.3",
-      "numpy": "2.5.2",
-      "pandas": "3.0.5",
-      "scikit-learn": "1.9.0"
-    },
-    "machine": "arm64",
-    "platform": "macOS-26.5.2-arm64-arm-64bit",
-    "python": "3.12.10",
-    "python_implementation": "CPython"
-  },
   "schema": {
     "current": {
       "column_count": 31,
