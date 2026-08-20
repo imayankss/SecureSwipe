@@ -57,6 +57,8 @@ def test_history_secret_scan_does_not_suppress_unverified_candidates() -> None:
     text = (ROOT / ".github/workflows/security.yml").read_text(encoding="utf-8")
     assert "fetch-depth: 0" in text
     assert "--only-verified" not in text
+    assert "--exclude-detectors=Lob" in text
+    assert "--exclude-paths" not in text
 
 
 def test_container_workflow_builds_without_push_and_scans_each_architecture() -> None:
@@ -73,6 +75,9 @@ def test_container_workflow_builds_without_push_and_scans_each_architecture() ->
     assert "smoke_expected.json" in text
     assert "os.getuid() == 10001" in text
     assert "find_spec('pip') is None" in text
+    assert 'PLATFORM: ${{ matrix.platform }}' in text
+    assert 'docker run --detach --platform "$PLATFORM"' in text
+    assert "for attempt in {1..90}" in text
 
 
 def test_container_image_declares_source_revision_binding() -> None:

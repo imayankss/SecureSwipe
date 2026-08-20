@@ -14,6 +14,12 @@ from src.artifacts.bundle import sha256_file
 
 RUN_MANIFEST_VERSION = "1"
 
+# Runtime imports and distribution names differ for Linux CPU XGBoost. Keep the
+# manifest's stable import-facing name while recording the installed package.
+_DISTRIBUTION_ALIASES: dict[str, tuple[str, ...]] = {
+    "xgboost": ("xgboost", "xgboost-cpu"),
+}
+
 
 def _git_output(arguments: Sequence[str], repository: Path) -> str | None:
     try:
@@ -63,12 +69,23 @@ def file_records(files: Mapping[str, str | Path]) -> dict[str, dict[str, str | i
 
 def runtime_provenance(packages: Sequence[str]) -> dict[str, Any]:
     """Record the exact interpreter/platform/package versions used."""
+    dependencies: dict[str, str] = {}
+    for package in sorted(set(packages)):
+        distribution_names = _DISTRIBUTION_ALIASES.get(package, (package,))
+        for distribution_name in distribution_names:
+            try:
+                dependencies[package] = metadata.version(distribution_name)
+                break
+            except metadata.PackageNotFoundError:
+                continue
+        else:
+            raise metadata.PackageNotFoundError(package)
     return {
         "machine": platform.machine(),
         "platform": platform.platform(),
         "python": platform.python_version(),
         "python_implementation": platform.python_implementation(),
-        "dependencies": {name: metadata.version(name) for name in sorted(set(packages))},
+        "dependencies": dependencies,
     }
 
 

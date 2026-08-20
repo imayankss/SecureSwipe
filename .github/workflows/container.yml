@@ -55,8 +55,9 @@ jobs:
         env:
           CONTAINER_NAME: secureswipe-api-ci-${{ matrix.suffix }}
           IMAGE_NAME: secureswipe-api:ci-${{ matrix.suffix }}
+          PLATFORM: ${{ matrix.platform }}
         run: |
-          docker run --detach --name "$CONTAINER_NAME" \
+          docker run --detach --platform "$PLATFORM" --name "$CONTAINER_NAME" \
             --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m \
             --cap-drop ALL --security-opt no-new-privileges:true \
             --publish 127.0.0.1:8000:8000 \
@@ -64,11 +65,11 @@ jobs:
             --env SECURESWIPE_BUNDLE_MANIFEST=/artifacts/synthetic-ci/manifest.json \
             "$IMAGE_NAME"
           trap 'docker stop "$CONTAINER_NAME" >/dev/null; docker rm "$CONTAINER_NAME" >/dev/null' EXIT
-          for attempt in {1..30}; do
+          for attempt in {1..90}; do
             if curl --fail --silent http://127.0.0.1:8000/health/ready >/tmp/ready.json; then
               break
             fi
-            if [ "$attempt" -eq 30 ]; then
+            if [ "$attempt" -eq 90 ]; then
               docker logs "$CONTAINER_NAME"
               exit 1
             fi

@@ -25,6 +25,9 @@ jobs:
         with:
           path: ./
           version: 3.96.0
+          # Lob's `test_` detector pattern matches long pytest identifiers and
+          # reports them verified; this project has no Lob integration.
+          extra_args: --exclude-detectors=Lob
 
   codeql:
     runs-on: ubuntu-24.04
