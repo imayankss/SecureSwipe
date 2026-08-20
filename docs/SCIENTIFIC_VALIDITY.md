@@ -7,10 +7,10 @@ error:
    the repository. Its metrics are preserved, but it is unavailable for every
    new model, calibration, feature, and threshold choice. The source dataset and
    score vector are absent, so AP/ROC cannot currently be independently rerun.
-2. New authorized development data uses four ordered roles: model training,
-   calibration fit, operating-point selection, and untouched evaluation.
-   Fingerprint intersections are prohibited and only the final role receives
-   fixed-operating-point intervals.
+2. Operator-attested new development data uses four ordered roles: model
+   training, calibration fit, operating-point selection, and a reusable forward
+   development backtest. Fingerprint intersections are prohibited. Backtest
+   intervals are descriptive development evidence, not a locked release claim.
 3. `development_blocked` uses expanding training windows and later validation
    blocks. Equal timestamps stay together; preprocessing and the estimator are
    refit inside each fold. It measures temporal robustness on development data,
@@ -32,18 +32,25 @@ training rows only.
 
 The exact known Kaggle corpus is already test-observed. Its original historical
 holdout identities were not retained, so exclusion cannot be reconstructed
-honestly. It is permanently reference-only by configured path and known
-284,807-row/492-fraud signature; genuinely new authorized data is required for
-decision-eligible evidence.
+honestly. The configured file and known 284,807-row/492-fraud signature are
+reference-only, and project-created derivatives propagate `historical_taint`
+when verified lineage remains attached. A detached derivative cannot be
+identified from bytes alone. Decision-eligible curation therefore also requires
+an operator-reviewed exact-checksum source approval using `SOURCE_APPROVAL.md`.
+This is an auditable human trust boundary, not proof of origin.
 
 ## Uncertainty and model selection
 
 - Fixed-threshold precision, recall, and false-positive rate use Wilson intervals.
 - Model AP differences use a paired, class-stratified bootstrap. The same sampled
   rows are applied to both models, which preserves pairing under imbalance.
-- Unrounded metrics drive selection. The simpler model wins when its AP is no
-  more than a predeclared margin below the complex model. The example default in
-  code is 0.005, but a real run must record the chosen margin before comparison.
+- Unrounded metrics drive selection. For every candidate, the paired bootstrap
+  estimates best-candidate AP uncertainty. The first/simplest candidate wins only
+  when both its point deficit and upper confidence bound stay within the
+  predeclared margin. The default is 0.005 and every run records it.
+- The random diagnostic uses exactly the chronological training and selection
+  row/class budgets and excludes calibration/backtest rows. It is descriptive;
+  repeated blocked comparisons remain preferable on a larger real corpus.
 - With only 74 fraud cases in the historical validation partition, the recorded
   0.0004 AP difference does not establish XGBoost superiority. This observation
   does not retroactively select a replacement.
@@ -71,27 +78,30 @@ unitless ratios only and must not be used as a policy recommendation. A domain
 owner must supply currency, time horizon, review capacity, recovery definition,
 and sensitivity bounds before a cost-selected threshold can be approved.
 
-The executable development analysis accepts an exact CSV schema of
+The executable post-training analysis accepts an exact CSV schema of
 `row_fingerprint,partition,y_true,raw_score`. Fingerprints must be global,
-content-derived SHA-256 values. The permitted roles are disjoint
+content-derived SHA-256 values. The score CSV must be a hashed output of the
+supplied training manifest. The command reloads its verified bundle, recomputes
+every score from curated features, and refuses parity drift or attempts to
+change calibration policy. The permitted roles are disjoint
 `calibration_fit`, `operating_point_selection`, and
-`untouched_development_evaluation`; the last role alone receives intervals for
-the already-selected operating point:
+`forward_development_backtest`:
 
 ```bash
 .venv/bin/python scripts/run_development_analysis.py \
   --scores artifacts/development/scores.csv \
   --curated-data artifacts/development/curated-v1/curated.csv \
   --curation-record artifacts/development/curated-v1/curation.json \
+  --training-run-manifest artifacts/development/run-v1/run_manifest.json \
   --cost-scenarios configs/cost_scenarios.example.yaml \
-  --output-dir reports/development/run-001 \
-  --minimum-brier-improvement 0.001
+  --output-dir reports/development/run-001
 ```
 
-The command refuses historical/test namespaces and non-empty output directories.
-It writes calibration, threshold, Wilson-interval, and multi-scenario cost
-artifacts plus a timestamp-free manifest containing input/output hashes, code
-state, parameters, seeds, and exact runtime versions.
+The command refuses historical/test namespaces, invented/tampered scores, and
+non-empty output directories. It writes selection-partition calibration,
+threshold, and cost diagnostics plus a timestamp-free manifest. The source
+forward backtest remains frozen in its training artifact; this command does not
+relabel repeated analysis as new evaluation evidence.
 
 ## Explainability and fairness
 

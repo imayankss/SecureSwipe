@@ -111,6 +111,10 @@ def test_lock_generator_is_isolated_and_fixed_versions_are_pinned() -> None:
     lock_tools = (ROOT / "requirements/lock-tools.lock").read_text(encoding="utf-8")
     quality_input = (ROOT / "requirements/quality.in").read_text(encoding="utf-8")
     quality_lock = (ROOT / "requirements/quality.lock").read_text(encoding="utf-8")
+    api_linux_lock = (ROOT / "requirements/api-linux.lock").read_text(encoding="utf-8")
+    quality_linux_lock = (ROOT / "requirements/quality-linux.lock").read_text(
+        encoding="utf-8"
+    )
 
     assert "pip==26.2.1" in lock_tools_input
     assert "pip-tools==7.6.1" in lock_tools_input
@@ -120,3 +124,9 @@ def test_lock_generator_is_isolated_and_fixed_versions_are_pinned() -> None:
     assert "pip-tools" not in quality_lock
     assert "streamlit" not in quality_input.lower()
     assert "streamlit" not in quality_lock.lower()
+    assert "xgboost-cpu==3.3.0" in api_linux_lock
+    assert "xgboost-cpu==3.3.0" in quality_linux_lock
+    assert "\nxgboost==" not in api_linux_lock
+    assert "\nxgboost==" not in quality_linux_lock
+    assert "nvidia-" not in api_linux_lock
+    assert "nvidia-" not in quality_linux_lock

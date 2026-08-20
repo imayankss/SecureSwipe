@@ -1,4 +1,4 @@
-"""Generate calibration, threshold, uncertainty, and cost evidence from development scores."""
+"""Verify one training run and add frozen post-training cost diagnostics."""
 
 from __future__ import annotations
 
@@ -18,27 +18,23 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.evaluation.calibration import apply_calibrator, compare_calibrators, evaluate_calibration
-from src.evaluation.cost_analysis import CostScenario, analyze_cost_scenarios
-from src.evaluation.statistical_metrics import classification_wilson_intervals
-from src.evaluation.threshold_tuning import (
-    build_threshold_metrics_table,
-    select_best_f1_threshold,
-)
-from src.utils.evidence_directory import (
+from src.artifacts.bundle import load_model_bundle, sha256_file  # noqa: E402
+from src.data.curation import load_curated_dataset, row_content_fingerprints  # noqa: E402
+from src.evaluation.calibration import evaluate_calibration  # noqa: E402
+from src.evaluation.cost_analysis import CostScenario, analyze_cost_scenarios  # noqa: E402
+from src.evaluation.threshold_tuning import build_threshold_metrics_table  # noqa: E402
+from src.inference.batch_scoring import score_bundle_frame  # noqa: E402
+from src.utils.evidence_directory import (  # noqa: E402
     atomic_evidence_directory,
     require_absent_evidence_target,
 )
-from src.utils.run_manifest import build_run_manifest, write_run_manifest
-
-from sklearn.metrics import average_precision_score, roc_auc_score  # noqa: E402
-from src.data.curation import load_curated_dataset, row_content_fingerprints  # noqa: E402
+from src.utils.run_manifest import build_run_manifest, write_run_manifest  # noqa: E402
 
 REQUIRED_SCORE_COLUMNS = ["row_fingerprint", "partition", "y_true", "raw_score"]
 ALLOWED_PARTITIONS = {
     "calibration_fit",
     "operating_point_selection",
-    "untouched_development_evaluation",
+    "forward_development_backtest",
 }
 _SHA256 = re.compile(r"^[0-9a-f]{64}$")
 
@@ -62,7 +58,7 @@ def _json_write(payload: Any, path: Path) -> Path:
 
 
 def load_development_scores(path: str | Path) -> pd.DataFrame:
-    """Load only explicit development partitions; reject test-like namespaces."""
+    """Load explicit development partitions and reject malformed score evidence."""
     frame = pd.read_csv(path)
     if list(frame.columns) != REQUIRED_SCORE_COLUMNS:
         raise ValueError(f"Score CSV columns must be exactly {REQUIRED_SCORE_COLUMNS}.")
@@ -79,8 +75,7 @@ def load_development_scores(path: str | Path) -> pd.DataFrame:
     if set(frame["partition"]) != ALLOWED_PARTITIONS:
         raise ValueError(
             "Score CSV must contain exactly calibration_fit, operating_point_selection, "
-            "and untouched_development_evaluation; "
-            "historical/test partitions are prohibited."
+            "and forward_development_backtest; historical/test partitions are prohibited."
         )
     labels = frame["y_true"].to_numpy()
     scores = frame["raw_score"].to_numpy(dtype=float)
@@ -117,46 +112,84 @@ def load_cost_scenarios(path: str | Path) -> list[CostScenario]:
     return scenarios
 
 
+def _verify_file_record(records: dict[str, Any], logical_name: str, path: Path) -> None:
+    resolved = path.resolve(strict=True)
+    entry = records.get(logical_name)
+    if (
+        not isinstance(entry, dict)
+        or entry.get("filename") != resolved.name
+        or entry.get("size_bytes") != resolved.stat().st_size
+        or entry.get("sha256") != sha256_file(resolved)
+    ):
+        raise ValueError(f"Training run manifest mismatch for {logical_name}.")
+
+
 def run_development_analysis(
     *,
     scores_path: Path,
     curated_path: Path,
     curation_record_path: Path,
+    training_run_manifest_path: Path,
     scenarios_path: Path,
     output_dir: Path,
-    minimum_brier_improvement: float,
+    minimum_brier_improvement: float | None = None,
 ) -> dict[str, Path]:
-    """Compute first, then atomically publish deterministic development evidence."""
+    """Recompute every score from a verified bundle before publishing diagnostics."""
     output_dir = require_absent_evidence_target(output_dir)
     scores = load_development_scores(scores_path)
     curated, curation = load_curated_dataset(
-        curated_path,
-        curation_record_path,
-        require_decision_eligible=True,
+        curated_path, curation_record_path, require_decision_eligible=True
     )
+    training_manifest_path = training_run_manifest_path.resolve(strict=True)
+    if training_manifest_path.is_symlink():
+        raise ValueError("Training run manifest must not be a symbolic link.")
+    manifest = json.loads(training_manifest_path.read_text(encoding="utf-8"))
+    if (
+        not isinstance(manifest, dict)
+        or manifest.get("run_kind") != "development_training_and_bundle"
+        or manifest.get("data_fingerprint") != curation["curated_fingerprint"]
+    ):
+        raise ValueError("Scores require a matching verified development-training run.")
+    inputs = manifest.get("inputs")
+    outputs = manifest.get("outputs")
+    parameters = manifest.get("parameters")
+    if not all(isinstance(value, dict) for value in (inputs, outputs, parameters)):
+        raise ValueError("Training run manifest input/output/parameter records are missing.")
+    assert isinstance(inputs, dict) and isinstance(outputs, dict) and isinstance(parameters, dict)
+    trained_margin = parameters.get("minimum_brier_improvement")
+    if minimum_brier_improvement is not None and minimum_brier_improvement != trained_margin:
+        raise ValueError(
+            "Post-training analysis cannot change the frozen calibration-selection policy."
+        )
+    _verify_file_record(inputs, "curated_dataset", curated_path)
+    _verify_file_record(inputs, "curation_record", curation_record_path)
+    _verify_file_record(outputs, "development_scores", scores_path)
+    training_root = training_manifest_path.parent
+    bundle_manifest_path = training_root / "bundle" / "manifest.json"
+    lineage_path = training_root / "lineage.json"
+    source_backtest_path = training_root / "forward_backtest.json"
+    _verify_file_record(outputs, "bundle/manifest.json", bundle_manifest_path)
+    _verify_file_record(outputs, "lineage", lineage_path)
+    _verify_file_record(outputs, "backtest", source_backtest_path)
+    bundle = load_model_bundle(bundle_manifest_path, trusted_root=training_root)
+
     curated_fingerprints = row_content_fingerprints(curated)
     source_fingerprints = set(curated_fingerprints)
     score_fingerprints = set(scores["row_fingerprint"].astype(str))
     if not score_fingerprints <= source_fingerprints:
-        raise ValueError(
-            "Development scores contain row fingerprints outside the verified curated data."
-        )
+        raise ValueError("Development scores contain row fingerprints outside verified data.")
     source_metadata = {
-        fingerprint: (float(curated.iloc[index]["Time"]), int(curated.iloc[index]["Class"]))
+        fingerprint: (index, float(curated.iloc[index]["Time"]), int(curated.iloc[index]["Class"]))
         for index, fingerprint in enumerate(curated_fingerprints)
     }
     for row in scores.itertuples(index=False):
-        _time, source_label = source_metadata[str(row.row_fingerprint)]
+        _index, _time, source_label = source_metadata[str(row.row_fingerprint)]
         if int(row.y_true) != source_label:
             raise ValueError("Development score labels do not match curated source lineage.")
     role_bounds: dict[str, tuple[float, float]] = {}
-    for role in (
-        "calibration_fit",
-        "operating_point_selection",
-        "untouched_development_evaluation",
-    ):
+    for role in ALLOWED_PARTITIONS:
         role_times = [
-            source_metadata[fingerprint][0]
+            source_metadata[fingerprint][1]
             for fingerprint in scores.loc[
                 scores["partition"] == role, "row_fingerprint"
             ].astype(str)
@@ -166,61 +199,63 @@ def run_development_analysis(
         role_bounds["calibration_fit"][1]
         < role_bounds["operating_point_selection"][0]
         <= role_bounds["operating_point_selection"][1]
-        < role_bounds["untouched_development_evaluation"][0]
+        < role_bounds["forward_development_backtest"][0]
     ):
         raise ValueError("Development score roles must be strictly chronological.")
-    scenarios = load_cost_scenarios(scenarios_path)
-    calibration_fit = scores[scores["partition"] == "calibration_fit"]
-    selection = scores[scores["partition"] == "operating_point_selection"]
-    evaluation = scores[scores["partition"] == "untouched_development_evaluation"]
+    lineage = json.loads(lineage_path.read_text(encoding="utf-8"))
+    for role in ALLOWED_PARTITIONS:
+        digest = hashlib.sha256(
+            "".join(
+                sorted(
+                    scores.loc[scores["partition"] == role, "row_fingerprint"].astype(str)
+                )
+            ).encode("ascii")
+        ).hexdigest()
+        if (
+            not isinstance(lineage, dict)
+            or not isinstance(lineage.get(role), dict)
+            or lineage[role].get("content_fingerprint") != digest
+        ):
+            raise ValueError(f"Training lineage mismatch for {role}.")
 
-    comparison, calibrator, selected_method = compare_calibrators(
-        calibration_fit["raw_score"].to_numpy(),
-        calibration_fit["y_true"].to_numpy(),
-        selection["raw_score"].to_numpy(),
-        selection["y_true"].to_numpy(),
-        calibration_train_row_ids=calibration_fit["row_fingerprint"].astype(str).tolist(),
-        evaluation_row_ids=selection["row_fingerprint"].astype(str).tolist(),
-        minimum_brier_improvement=minimum_brier_improvement,
+    row_indices = [source_metadata[value][0] for value in scores["row_fingerprint"].astype(str)]
+    recomputed = score_bundle_frame(
+        bundle, curated.iloc[row_indices][list(bundle.feature_schema)]
     )
-    decision_scores = (
-        apply_calibrator(calibrator, selection["raw_score"].to_numpy())
-        if calibrator is not None
-        else selection["raw_score"].to_numpy(dtype=float)
-    )
+    if not np.allclose(
+        scores["raw_score"].to_numpy(dtype=float),
+        recomputed.raw_scores,
+        rtol=0.0,
+        atol=1e-12,
+    ):
+        raise ValueError(
+            "Development scores do not match scores recomputed from the verified bundle."
+        )
+
+    selection_mask = scores["partition"].to_numpy() == "operating_point_selection"
+    selection = scores.loc[selection_mask]
     selection_labels = selection["y_true"].to_numpy(dtype=int)
-    threshold_table = build_threshold_metrics_table(selection_labels, decision_scores)
-    best_f1 = select_best_f1_threshold(threshold_table)
-    calibration_metrics = evaluate_calibration(selection_labels, decision_scores)
+    selection_scores = recomputed.decision_scores[selection_mask]
+    calibration_metrics = evaluate_calibration(selection_labels, selection_scores)
+    threshold_table = build_threshold_metrics_table(selection_labels, selection_scores)
     cost_table, cost_selections = analyze_cost_scenarios(
-        selection_labels, decision_scores, scenarios
+        selection_labels, selection_scores, load_cost_scenarios(scenarios_path)
     )
-
-    evaluation_scores = (
-        apply_calibrator(calibrator, evaluation["raw_score"].to_numpy())
-        if calibrator is not None
-        else evaluation["raw_score"].to_numpy(dtype=float)
+    comparison = pd.DataFrame(
+        [
+            {
+                "brier_score": calibration_metrics["brier_score"],
+                "expected_calibration_error": calibration_metrics[
+                    "expected_calibration_error"
+                ],
+                "maximum_calibration_error": calibration_metrics[
+                    "maximum_calibration_error"
+                ],
+                "method": bundle.score_type,
+                "selected": True,
+            }
+        ]
     )
-    evaluation_labels = evaluation["y_true"].to_numpy(dtype=int)
-    evaluation_predictions = (
-        evaluation_scores >= float(best_f1["threshold"])
-    ).astype(int)
-    intervals = classification_wilson_intervals(
-        evaluation_labels, evaluation_predictions
-    )
-    untouched_evaluation = {
-        "average_precision": float(
-            average_precision_score(evaluation_labels, evaluation_scores)
-        ),
-        "calibration": evaluate_calibration(evaluation_labels, evaluation_scores),
-        "evaluation_scope": "untouched_development_evaluation",
-        "operating_threshold": float(best_f1["threshold"]),
-        "roc_auc": float(roc_auc_score(evaluation_labels, evaluation_scores)),
-        "row_fingerprint_digest": hashlib.sha256(
-            "".join(sorted(evaluation["row_fingerprint"].astype(str))).encode("ascii")
-        ).hexdigest(),
-        "wilson_intervals": intervals,
-    }
 
     filenames = {
         "calibration_comparison": "calibration_comparison.csv",
@@ -230,49 +265,46 @@ def run_development_analysis(
         "threshold_metrics": "threshold_metrics.csv",
     }
     with atomic_evidence_directory(output_dir) as temporary:
-        temporary_outputs = {
-            logical_name: temporary / filename
-            for logical_name, filename in filenames.items()
-        }
-        comparison.to_csv(temporary_outputs["calibration_comparison"], index=False)
-        threshold_table.to_csv(temporary_outputs["threshold_metrics"], index=False)
-        cost_table.to_csv(temporary_outputs["cost_sensitivity"], index=False)
-        _json_write(calibration_metrics, temporary_outputs["calibration_metrics"])
+        generated = {name: temporary / filename for name, filename in filenames.items()}
+        comparison.to_csv(generated["calibration_comparison"], index=False)
+        threshold_table.to_csv(generated["threshold_metrics"], index=False)
+        cost_table.to_csv(generated["cost_sensitivity"], index=False)
+        _json_write(calibration_metrics, generated["calibration_metrics"])
         _json_write(
             {
-                "calibration_method": selected_method,
+                "calibration_method": bundle.score_type,
                 "cost_scenarios": cost_selections,
-                "evaluation_scope": "operating_point_selection",
-                "score_type": (
-                    "calibrated_probability" if calibrator is not None else "raw_score"
-                ),
-                "threshold_best_f1": best_f1,
-                "untouched_evaluation": untouched_evaluation,
+                "evaluation_scope": "verified_post_training_selection_diagnostics",
+                "frozen_operating_threshold": bundle.operating_threshold,
+                "model_version": bundle.model_version,
+                "score_type": bundle.score_type,
+                "source_backtest_artifact_sha256": sha256_file(source_backtest_path),
             },
-            temporary_outputs["selected_operating_points"],
+            generated["selected_operating_points"],
         )
-        manifest = build_run_manifest(
-            run_kind="development_score_analysis",
-            evaluation_scope="three_way_development",
+        run_manifest = build_run_manifest(
+            run_kind="verified_post_training_analysis",
+            evaluation_scope="verified_post_training_selection_diagnostics",
             repository=PROJECT_ROOT,
             inputs={
                 "cost_scenarios": scenarios_path,
                 "curated_dataset": curated_path,
                 "curation_record": curation_record_path,
                 "development_scores": scores_path,
+                "training_run_manifest": training_manifest_path,
             },
-            outputs=temporary_outputs,
+            outputs=generated,
             parameters={
-                "calibration_methods": ["identity", "platt", "isotonic"],
+                "minimum_brier_improvement": trained_margin,
                 "partition_roles": sorted(ALLOWED_PARTITIONS),
-                "minimum_brier_improvement": minimum_brier_improvement,
+                "post_training_only": True,
                 "threshold_grid": {"minimum": 0.01, "maximum": 0.99, "step": 0.01},
             },
-            seeds={"calibration_logistic_regression": 42},
+            seeds={},
             packages=["numpy", "pandas", "pyyaml", "scikit-learn"],
             data_fingerprint=str(curation["curated_fingerprint"]),
         )
-        write_run_manifest(manifest, temporary / "run_manifest.json")
+        write_run_manifest(run_manifest, temporary / "run_manifest.json")
     return {
         **{name: output_dir / filename for name, filename in filenames.items()},
         "run_manifest": output_dir / "run_manifest.json",
@@ -280,15 +312,14 @@ def run_development_analysis(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Analyze development-only scores; historical/test partitions are rejected."
-    )
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scores", required=True, type=Path)
     parser.add_argument("--curated-data", required=True, type=Path)
     parser.add_argument("--curation-record", required=True, type=Path)
+    parser.add_argument("--training-run-manifest", required=True, type=Path)
     parser.add_argument("--cost-scenarios", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
-    parser.add_argument("--minimum-brier-improvement", type=float, default=0.0)
+    parser.add_argument("--minimum-brier-improvement", type=float)
     return parser.parse_args()
 
 
@@ -298,6 +329,7 @@ def main() -> int:
         scores_path=args.scores.resolve(strict=True),
         curated_path=args.curated_data.resolve(strict=True),
         curation_record_path=args.curation_record.resolve(strict=True),
+        training_run_manifest_path=args.training_run_manifest.resolve(strict=True),
         scenarios_path=args.cost_scenarios.resolve(strict=True),
         output_dir=args.output_dir.resolve(),
         minimum_brier_improvement=args.minimum_brier_improvement,

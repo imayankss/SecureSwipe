@@ -41,7 +41,8 @@ New evidence must use a genuinely new authorized corpus. The executable workflow
 uses chronological model-training, calibration-fit, operating-point-selection,
 and untouched-evaluation roles with content-hash isolation. Model comparisons
 use unrounded AP, a paired stratified bootstrap, a predeclared simplicity margin,
-calibration diagnostics, and a threshold selected before untouched evaluation.
+calibration diagnostics, and a threshold selected before a reusable forward
+development backtest. That backtest is not locked release evidence.
 Cost scenarios remain a separate explicit analysis; no example scenario is a
 business policy.
 

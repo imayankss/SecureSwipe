@@ -25,9 +25,9 @@ jobs:
         with:
           python-version: 3.12.10
           cache: pip
-          cache-dependency-path: requirements/quality.lock
+          cache-dependency-path: requirements/quality-linux.lock
       - name: Install hash-locked quality environment
-        run: python -m pip install --require-hashes -r requirements/quality.lock
+        run: python -m pip install --require-hashes -r requirements/quality-linux.lock
       - name: Verify dependencies
         run: python -m pip check
       - name: Compile
@@ -37,7 +37,8 @@ jobs:
       - name: Type-check critical paths
         run: >-
           python -m mypy --ignore-missing-imports api src/artifacts
-          src/data/curation.py src/inference src/monitoring src/evaluation/statistical_metrics.py
+          src/data/curation.py src/data/source_approval.py src/inference src/monitoring
+          src/evaluation/statistical_metrics.py
           src/evaluation/calibration.py src/evaluation/cost_analysis.py
           src/evaluation/temporal_validation.py src/evaluation/historical_lock.py
           src/utils/config.py src/utils/run_manifest.py
@@ -61,11 +62,11 @@ jobs:
           --output reports/monitoring/synthetic_shift_report.json --check
       - name: Audit API dependencies
         run: >-
-          python -m pip_audit -r requirements/api.lock --disable-pip
+          python -m pip_audit -r requirements/api-linux.lock --disable-pip
           --progress-spinner off
       - name: Audit quality dependencies
         run: >-
-          python -m pip_audit -r requirements/quality.lock --disable-pip
+          python -m pip_audit -r requirements/quality-linux.lock --disable-pip
           --progress-spinner off
       - name: Build wheel
         run: python -m build --no-isolation
@@ -74,7 +75,7 @@ jobs:
       - name: Prove clean API lock and wheel install
         run: |
           python -m venv /tmp/secureswipe-api-proof
-          /tmp/secureswipe-api-proof/bin/python -m pip install --require-hashes -r requirements/api.lock
+          /tmp/secureswipe-api-proof/bin/python -m pip install --require-hashes -r requirements/api-linux.lock
           /tmp/secureswipe-api-proof/bin/python -m pip install --no-deps dist/*.whl
           /tmp/secureswipe-api-proof/bin/python -m pip uninstall --yes pip
           cd /tmp

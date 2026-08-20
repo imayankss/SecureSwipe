@@ -33,9 +33,9 @@ jobs:
         with:
           python-version: 3.12.10
           cache: pip
-          cache-dependency-path: requirements/api.lock
+          cache-dependency-path: requirements/api-linux.lock
       - name: Install hash-locked API environment
-        run: python -m pip install --require-hashes -r requirements/api.lock
+        run: python -m pip install --require-hashes -r requirements/api-linux.lock
       - name: Generate synthetic-only smoke bundle
         run: python scripts/create_synthetic_bundle.py --output artifacts/synthetic-ci
       - name: Set up QEMU

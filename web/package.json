@@ -14,7 +14,7 @@
     "data:check": "python3 -S ../scripts/export_web_data.py --check"
   },
   "engines": {
-    "node": ">=22.13.1 <23"
+    "node": "22.13.1"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",

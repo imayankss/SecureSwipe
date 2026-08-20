@@ -9,7 +9,7 @@ flowchart LR
     subgraph Local["Local, authorized workspace"]
       Raw["Authorized local CSV\nignored by Git"] --> Curate["Manifested curation\nraw + curated lineage"]
       Curate --> Contract["Strict dataset contract\nfinite + duplicate-free"]
-      Contract --> Dev["Four chronological roles\nuntouched evaluation"]
+      Contract --> Dev["Four chronological roles\nreusable forward backtest"]
       Dev --> Evidence["Atomic run directory\nmanifest + hashes"]
       Dev --> Bundle["Versioned ModelBundle\npreprocessor + model + optional calibrator"]
       Bundle --> Verify["Trusted-root and checksum verification\nbefore deserialization"]
@@ -40,7 +40,7 @@ flowchart LR
 | Dataset schema and fingerprint | `src/data/data_loader.py` | Rejects wrong order/type, missing/non-finite values, negative Time/Amount, invalid Class, and unresolved exact duplicates |
 | Split isolation | `src/data/split_data.py` | Pairwise row-hash intersections must be empty |
 | Feature preprocessing | `src/preprocessing/preprocessors.py` | Fits scaling only on training rows and preserves the canonical 30-feature order |
-| New scientific decisions | `scripts/run_development_training.py` and `scripts/run_development_analysis.py` | New authorized data only; four content-hash-isolated roles; atomic bundle and untouched evaluation |
+| New scientific decisions | `scripts/run_development_training.py` and `scripts/run_development_analysis.py` | Operator-attested exact source; four content-hash-isolated roles; atomic bundle and verified reusable forward backtest |
 | Historical observation | `src/evaluation/historical_lock.py` | Verify-only three-file SHA-256 lock; no evaluation execution path |
 | Artifact persistence | `src/artifacts/bundle.py` | Trusted local root, complete manifest, sizes, hashes, runtime/dependency/schema/type checks before load |
 | Batch scoring | `src/inference/batch_scoring.py` | One ordered, finite scoring path shared by serving and monitoring |
@@ -56,9 +56,9 @@ The names are part of the scientific control, not presentation labels:
 - `historical_reported_test` is the one already-observed random holdout. Its
   confusion-derived values are internally consistent, but the original score
   vector/runtime is absent and duplicate contamination cannot be measured.
-- `new_authorized_three_way_development` packages a model trained on the first
-  chronological role, calibration fit/selection evidence, and one untouched
-  development evaluation; content fingerprints enforce isolation.
+- `new_authorized_four_role_reusable_backtest` packages a model trained on the
+  first chronological role, calibration fit/selection evidence, and a reusable
+  forward development diagnostic; content fingerprints enforce isolation.
 - forward/blocked development evidence estimates temporal sensitivity by keeping
   equal timestamps together and refitting inside each fold.
 - `legacy_random_*_reference` exists only to reproduce the old stage structure;

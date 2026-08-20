@@ -73,7 +73,7 @@ not justified by rounded leaderboard rank.
 
 Preprocessing fits on model-training rows only; duplicates undergo manifested
 curation; content hashes must be disjoint across chronological roles; calibration
-fit, operating-point selection, and untouched evaluation are separate; and the
+fit, operating-point selection, and reusable forward backtest are separate; and the
 already-observed Kaggle corpus is reference-only.
 
 ### Why use joblib at all if pickle is unsafe?

@@ -14,10 +14,20 @@ cd SecureSwipe
 python3 -m venv .venv
 .venv/bin/python -m pip install --require-hashes -r requirements/quality.lock
 .venv/bin/python -m pip check
+cd web
+nvm install 22.13.1
+nvm use 22.13.1
+test "$(node --version)" = "v22.13.1"
+npm ci
+npx playwright install --no-shell chromium
+cd ..
 ```
 
-The tracked lock resolves the complete test/training toolchain. The smaller
-`requirements/api.lock` is the service runtime closure. `configs/config.yaml`
+The Darwin locks (`requirements/quality.lock` and `requirements/api.lock`)
+resolve Apple Silicon CPU environments. Linux CI and the container use the
+separately compiled `requirements/quality-linux.lock` and
+`requirements/api-linux.lock`; those closures use `xgboost-cpu` and contain no
+NVIDIA packages. `configs/config.yaml`
 is parsed by strict frozen Pydantic models; unknown keys, invalid thresholds,
 unsafe artifact paths, and inconsistent split settings fail closed. Active
 day-by-day runners derive their data, artifact, report, and seed defaults from
@@ -32,13 +42,18 @@ python3 -m venv "$lock_env"
 "$lock_env/bin/python" -m pip install --require-hashes \
   -r requirements/lock-tools.lock
 cd requirements
-"$lock_env/bin/python" -m piptools compile --generate-hashes --allow-unsafe \
-  --strip-extras --output-file=quality.lock quality.in
+for target in api api-linux quality quality-linux; do
+  PIP_DEFAULT_TIMEOUT=120 "$lock_env/bin/python" -m piptools compile \
+    --reuse-hashes --generate-hashes --allow-unsafe --strip-extras \
+    --output-file="$target.lock" "$target.in"
+done
 cd ..
 ```
 
-Compile twice and compare SHA-256 digests. The current generator lock uses pip
-26.2.1 and pip-tools 7.6.1; both the generator and quality locks are reviewed.
+Compile twice and compare all four SHA-256 digests. The current generator lock
+uses pip 26.2.1 and pip-tools 7.6.1; the generator and platform closures are
+reviewed. `--reuse-hashes` avoids re-downloading every platform wheel while the
+resolver still validates the dependency graph.
 
 ## Checks that require no private data
 
@@ -76,18 +91,22 @@ at `data/raw/creditcard.csv` for reference curation/stages only. Never commit it
 or `kaggle.json`. Its holdout was already observed and original row identities
 were not retained, so renaming/restoring it cannot make it new evidence.
 
-New decisions require a separately authorized corpus. First run
-`scripts/curate_dataset.py --source-kind new_authorized_development`, then run
-the four-role training/bundle workflow:
+New decisions require a separately authorized corpus and the checksum-bound
+operator approval described in `SOURCE_APPROVAL.md`. First run
+`scripts/curate_dataset.py --source-kind new_authorized_development
+--source-approval <reviewed.json>`, then run the four-role training/bundle
+workflow:
 
 ```bash
 .venv/bin/python scripts/run_development_training.py --help
 .venv/bin/python scripts/run_development_analysis.py --help
 ```
 
-These commands require a checksum-matched, decision-eligible curation record and
-content-derived row fingerprints. They write
-deterministic run manifest containing the Git commit/dirty digest, parameters,
+The analysis command also requires the originating training `run_manifest.json`
+and recomputes every declared score through its verified bundle. These commands
+require a checksum-matched, decision-eligible curation record and content-derived
+row fingerprints. They write deterministic run manifests containing the Git
+commit/dirty digest, parameters,
 seed, runtime versions, input hashes, and output hashes. It rejects names that
 claim test or historical scope. The original historical AP/ROC-AUC cannot be
 independently regenerated in a clean clone because the original rows, score

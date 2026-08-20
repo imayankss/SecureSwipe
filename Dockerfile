@@ -5,12 +5,12 @@ FROM ${PYTHON_IMAGE} AS dependencies
 ENV PIP_DISABLE_PIP_VERSION_CHECK=1 \
     PIP_NO_CACHE_DIR=1
 WORKDIR /build
-COPY requirements/api.lock requirements/api.lock
+COPY requirements/api-linux.lock requirements/api-linux.lock
 RUN python -m pip install \
     --require-hashes \
     --prefix=/install \
     --no-compile \
-    -r requirements/api.lock
+    -r requirements/api-linux.lock
 
 FROM ${PYTHON_IMAGE} AS runtime
 

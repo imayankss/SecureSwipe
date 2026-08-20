@@ -1,0 +1,4 @@
+# Linux CPU inference runtime. xgboost-cpu exposes the same `xgboost` import
+# without the default distribution's unnecessary CUDA/NCCL dependency.
+-r api-common.in
+xgboost-cpu==3.3.0

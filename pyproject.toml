@@ -7,7 +7,7 @@ name = "credit-card-fraud-risk-scoring"
 version = "0.1.0"
 description = "Credit Card Fraud Detection & Risk Scoring System"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12,<3.13"
 license = "MIT"
 authors = [
     { name = "Mayank Suryavanshi" }

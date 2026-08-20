@@ -10,10 +10,10 @@ from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
+import joblib
 import numpy as np
 import pandas as pd
 from sklearn.metrics import average_precision_score, brier_score_loss, roc_auc_score
-from sklearn.model_selection import train_test_split
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -22,6 +22,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from api.schemas import TransactionFeatures  # noqa: E402
 from api.service import ModelService  # noqa: E402
 from src.artifacts.bundle import (  # noqa: E402
+    BUNDLE_FORMAT_VERSION,
     ModelBundle,
     load_model_bundle,
     save_model_bundle,
@@ -49,14 +50,18 @@ from src.models.baseline_models import (  # noqa: E402
 from src.preprocessing.feature_config import ALL_FEATURES, RANDOM_STATE  # noqa: E402
 from src.preprocessing.preprocessors import build_preprocessor, fit_preprocessor  # noqa: E402
 from src.utils.evidence_directory import atomic_evidence_directory  # noqa: E402
-from src.utils.run_manifest import build_run_manifest, write_run_manifest  # noqa: E402
+from src.utils.run_manifest import (  # noqa: E402
+    build_run_manifest,
+    code_provenance,
+    write_run_manifest,
+)
 
 CandidateFactory = Callable[[pd.Series], Any]
 ROLE_ORDER = (
     "model_training",
     "calibration_fit",
     "operating_point_selection",
-    "untouched_development_evaluation",
+    "forward_development_backtest",
 )
 
 
@@ -87,7 +92,7 @@ def _time_roles(frame: pd.DataFrame) -> dict[str, np.ndarray]:
         "model_training": np.concatenate(blocks[:10]),
         "calibration_fit": np.concatenate(blocks[10:13]),
         "operating_point_selection": np.concatenate(blocks[13:16]),
-        "untouched_development_evaluation": np.concatenate(blocks[16:]),
+        "forward_development_backtest": np.concatenate(blocks[16:]),
     }
     roles = {
         role: np.flatnonzero(frame["Time"].isin(times).to_numpy())
@@ -132,6 +137,10 @@ def _score_digest(values: np.ndarray) -> str:
     return hashlib.sha256(np.asarray(values, dtype="<f8").tobytes()).hexdigest()
 
 
+def _content_digest(values: set[str]) -> str:
+    return hashlib.sha256("".join(sorted(values)).encode("ascii")).hexdigest()
+
+
 def run_development_training(
     *,
     curated_path: Path,
@@ -142,7 +151,7 @@ def run_development_training(
     minimum_brier_improvement: float = 0.0,
     bootstrap_resamples: int = 2_000,
 ) -> dict[str, Path]:
-    """Use four temporal roles; the last remains untouched until final evidence."""
+    """Use four temporal roles and publish a reusable forward backtest."""
     frame, raw_curation = load_curated_dataset(
         curated_path,
         curation_record_path,
@@ -164,7 +173,7 @@ def run_development_training(
     training = frame.iloc[roles["model_training"]]
     calibration = frame.iloc[roles["calibration_fit"]]
     selection = frame.iloc[roles["operating_point_selection"]]
-    evaluation = frame.iloc[roles["untouched_development_evaluation"]]
+    backtest = frame.iloc[roles["forward_development_backtest"]]
     train_features, train_labels = training[ALL_FEATURES], training["Class"].astype(int)
 
     selection_scores: dict[str, np.ndarray] = {}
@@ -186,40 +195,46 @@ def run_development_training(
         )
 
     candidate_metrics = pd.DataFrame(candidate_rows)
-    best_metric = float(candidate_metrics["selection_average_precision"].max())
-    selected_name = next(
-        name
-        for name in factories
-        if float(
-            candidate_metrics.loc[
-                candidate_metrics["candidate"] == name, "selection_average_precision"
-            ].iloc[0]
-        )
-        >= best_metric - simplicity_margin
-    )
-    simple_name = next(iter(factories))
-    bootstrap = {
+    metrics_by_name = {
+        str(row["candidate"]): float(row["selection_average_precision"])
+        for row in candidate_rows
+    }
+    best_metric = max(metrics_by_name.values())
+    best_name = next(name for name in factories if metrics_by_name[name] == best_metric)
+    bootstrap_vs_best = {
         name: paired_average_precision_difference(
             selection["Class"].to_numpy(),
-            selection_scores[simple_name],
             selection_scores[name],
+            selection_scores[best_name],
             n_resamples=bootstrap_resamples,
             random_seed=RANDOM_STATE,
         )
         for name in factories
-        if name != simple_name
     }
-
-    # Random-split diagnostic uses only the pre-evaluation development pool and
-    # never participates in selection.
-    pre_evaluation = frame.drop(index=evaluation.index)
-    random_train, random_validation = train_test_split(
-        pre_evaluation,
-        test_size=len(selection) / len(pre_evaluation),
-        stratify=pre_evaluation["Class"],
-        random_state=RANDOM_STATE,
+    selected_name = next(
+        name
+        for name in factories
+        if metrics_by_name[name] >= best_metric - simplicity_margin
+        and float(bootstrap_vs_best[name]["upper"]) <= simplicity_margin
     )
-    random_diagnostic: dict[str, float] = {}
+
+    # The random diagnostic uses exactly the chronological training+selection
+    # population and preserves each side's row and class budgets. Calibration
+    # and forward-backtest rows remain excluded.
+    diagnostic_pool = pd.concat([training, selection])
+    rng = np.random.default_rng(RANDOM_STATE)
+    random_validation_indices: list[int] = []
+    for label in (0, 1):
+        pool_indices = diagnostic_pool.index[
+            diagnostic_pool["Class"].astype(int) == label
+        ].to_numpy()
+        required = int((selection["Class"].astype(int) == label).sum())
+        random_validation_indices.extend(
+            rng.choice(pool_indices, size=required, replace=False).tolist()
+        )
+    random_validation = diagnostic_pool.loc[sorted(random_validation_indices)]
+    random_train = diagnostic_pool.drop(index=random_validation.index)
+    random_diagnostic: dict[str, dict[str, Any]] = {}
     for name, factory in factories.items():
         preprocessor, model = _fit_candidate(
             random_train[ALL_FEATURES], random_train["Class"].astype(int), factory
@@ -227,9 +242,15 @@ def run_development_training(
         scores = _positive_scores(
             model, preprocessor.transform(random_validation[ALL_FEATURES])
         )
-        random_diagnostic[name] = float(
-            average_precision_score(random_validation["Class"], scores)
-        )
+        random_diagnostic[name] = {
+            "average_precision": float(
+                average_precision_score(random_validation["Class"], scores)
+            ),
+            "training_fraud_rows": int(random_train["Class"].sum()),
+            "training_rows": len(random_train),
+            "validation_fraud_rows": int(random_validation["Class"].sum()),
+            "validation_rows": len(random_validation),
+        }
 
     # Refit from a fresh selected estimator on the model-training role only;
     # later role labels remain outside model fitting.
@@ -259,17 +280,33 @@ def run_development_training(
     selected_threshold = select_best_f1_threshold(
         build_threshold_metrics_table(selection["Class"], selection_decision_scores)
     )
-    model_identity = hashlib.sha256(
-        json.dumps(
-            {
-                "candidate": selected_name,
-                "parameters": model.get_params(deep=True),
-            },
-            default=str,
-            separators=(",", ":"),
-            sort_keys=True,
-        ).encode("utf-8")
-    ).hexdigest()
+    role_content_digests = {role: _content_digest(role_hashes[role]) for role in ROLE_ORDER}
+    behavior = {
+        "bootstrap_resamples": bootstrap_resamples,
+        "bundle_format_version": BUNDLE_FORMAT_VERSION,
+        "calibration_method": calibration_method,
+        "calibrator_joblib_hash": (
+            joblib.hash(calibrator, hash_name="sha1") if calibrator is not None else None
+        ),
+        "candidate": selected_name,
+        "code_provenance": code_provenance(PROJECT_ROOT),
+        "canonical_random_state": RANDOM_STATE,
+        "curated_fingerprint": curated_fingerprint,
+        "minimum_brier_improvement": minimum_brier_improvement,
+        "model_joblib_hash": joblib.hash(model, hash_name="sha1"),
+        "operating_threshold": float(selected_threshold["threshold"]),
+        "preprocessor_joblib_hash": joblib.hash(preprocessor, hash_name="sha1"),
+        "role_content_digests": role_content_digests,
+        "score_type": (
+            "calibrated_probability" if calibrator is not None else "raw_score"
+        ),
+        "selected_model_parameters": model.get_params(deep=True),
+        "simplicity_margin": simplicity_margin,
+    }
+    behavior_encoded = json.dumps(
+        behavior, default=str, separators=(",", ":"), sort_keys=True, allow_nan=False
+    ).encode("utf-8")
+    model_identity = hashlib.sha256(behavior_encoded).hexdigest()
     bundle = ModelBundle(
         preprocessor=preprocessor,
         model=model,
@@ -278,7 +315,7 @@ def run_development_training(
         feature_schema=tuple(ALL_FEATURES),
         training_data_fingerprint=fingerprint_dataframe(training),
         model_version=(
-            f"development-{curated_fingerprint[:12]}-{selected_name}-{model_identity[:12]}"
+            f"development-{model_identity[:24]}"
         ),
         score_type=("calibrated_probability" if calibrator is not None else "raw_score"),
     )
@@ -286,11 +323,11 @@ def run_development_training(
     with atomic_evidence_directory(output_dir) as temporary:
         bundle_manifest = save_model_bundle(bundle, temporary / "bundle")
         loaded = load_model_bundle(bundle_manifest, trusted_root=temporary)
-        direct = score_bundle_frame(bundle, evaluation[ALL_FEATURES])
-        loaded_scores = score_bundle_frame(loaded, evaluation[ALL_FEATURES])
+        direct = score_bundle_frame(bundle, backtest[ALL_FEATURES])
+        loaded_scores = score_bundle_frame(loaded, backtest[ALL_FEATURES])
         transactions = [
             TransactionFeatures(**{feature: float(row[feature]) for feature in ALL_FEATURES})
-            for _, row in evaluation.iterrows()
+            for _, row in backtest.iterrows()
         ]
         service_results = ModelService(loaded).predict_many(transactions)
         service_raw = np.array([result.raw_score for result in service_results])
@@ -304,23 +341,21 @@ def run_development_training(
         ).astype(int)
         evaluation_payload = {
             "average_precision": float(
-                average_precision_score(evaluation["Class"], direct.decision_scores)
+                average_precision_score(backtest["Class"], direct.decision_scores)
             ),
             "brier_score": float(
-                brier_score_loss(evaluation["Class"], direct.decision_scores)
+                brier_score_loss(backtest["Class"], direct.decision_scores)
             ),
-            "evaluation_scope": "untouched_development_evaluation",
+            "evaluation_scope": "reusable_forward_development_backtest",
             "operating_threshold": bundle.operating_threshold,
-            "roc_auc": float(roc_auc_score(evaluation["Class"], direct.decision_scores)),
+            "roc_auc": float(roc_auc_score(backtest["Class"], direct.decision_scores)),
             "wilson_intervals": classification_wilson_intervals(
-                evaluation["Class"].to_numpy(), predictions
+                backtest["Class"].to_numpy(), predictions
             ),
         }
         lineage_payload = {
             role: {
-                "content_fingerprint": hashlib.sha256(
-                    "".join(sorted(role_hashes[role])).encode("ascii")
-                ).hexdigest(),
+                "content_fingerprint": role_content_digests[role],
                 "fraud_rows": int(frame.iloc[roles[role]]["Class"].sum()),
                 "rows": len(roles[role]),
                 "time_min": float(frame.iloc[roles[role]]["Time"].min()),
@@ -329,11 +364,13 @@ def run_development_training(
             for role in ROLE_ORDER
         }
         selection_payload = {
-            "bootstrap_complex_minus_simple": bootstrap,
+            "paired_bootstrap_best_minus_candidate": bootstrap_vs_best,
+            "best_metric_candidate": best_name,
             "calibration_method": calibration_method,
-            "evaluation_was_untouched_during_selection": True,
+            "backtest_was_not_used_during_selection": True,
+            "backtest_reuse_policy": "reusable_development_diagnostic_not_locked_release_evidence",
             "primary_metric": "average_precision",
-            "random_split_diagnostic_average_precision": random_diagnostic,
+            "random_split_matched_diagnostic": random_diagnostic,
             "selected_model": selected_name,
             "selected_model_identity_sha256": model_identity,
             "selected_candidate_refit_scope": "model_training",
@@ -343,7 +380,7 @@ def run_development_training(
         }
         parity_payload = {
             "decision_score_sha256": _score_digest(direct.decision_scores),
-            "evaluation_rows": len(evaluation),
+            "backtest_rows": len(backtest),
             "loaded_raw_score_sha256": _score_digest(loaded_scores.raw_scores),
             "maximum_absolute_difference": float(
                 max(
@@ -359,7 +396,7 @@ def run_development_training(
         outputs = {
             "calibration_comparison": temporary / "calibration_comparison.csv",
             "candidate_comparison": temporary / "candidate_comparison.csv",
-            "evaluation": temporary / "untouched_evaluation.json",
+            "backtest": temporary / "forward_backtest.json",
             "golden_parity": temporary / "golden_parity.json",
             "lineage": temporary / "lineage.json",
             "selection": temporary / "selection.json",
@@ -388,10 +425,10 @@ def run_development_training(
                 pd.DataFrame(
                     {
                         "row_fingerprint": list(
-                            hashes.iloc[roles["untouched_development_evaluation"]]
+                            hashes.iloc[roles["forward_development_backtest"]]
                         ),
-                        "partition": "untouched_development_evaluation",
-                        "y_true": evaluation["Class"].to_numpy(dtype=int),
+                        "partition": "forward_development_backtest",
+                        "y_true": backtest["Class"].to_numpy(dtype=int),
                         "raw_score": direct.raw_scores,
                     }
                 ),
@@ -401,7 +438,7 @@ def run_development_training(
         score_evidence.to_csv(outputs["development_scores"], index=False)
         calibration_comparison.to_csv(outputs["calibration_comparison"], index=False)
         candidate_metrics.to_csv(outputs["candidate_comparison"], index=False)
-        _json_write(evaluation_payload, outputs["evaluation"])
+        _json_write(evaluation_payload, outputs["backtest"])
         _json_write(parity_payload, outputs["golden_parity"])
         _json_write(lineage_payload, outputs["lineage"])
         _json_write(selection_payload, outputs["selection"])
@@ -410,7 +447,7 @@ def run_development_training(
                 outputs[f"bundle/{path.name}"] = path
         manifest = build_run_manifest(
             run_kind="development_training_and_bundle",
-            evaluation_scope="new_authorized_three_way_development",
+            evaluation_scope="new_authorized_four_role_reusable_backtest",
             repository=PROJECT_ROOT,
             inputs={
                 "curated_dataset": curated_path,
@@ -439,7 +476,7 @@ def run_development_training(
 
     return {
         "bundle_manifest": output_dir / "bundle" / "manifest.json",
-        "evaluation": output_dir / "untouched_evaluation.json",
+        "backtest": output_dir / "forward_backtest.json",
         "golden_parity": output_dir / "golden_parity.json",
         "run_manifest": output_dir / "run_manifest.json",
         "selection": output_dir / "selection.json",

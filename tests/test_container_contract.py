@@ -25,6 +25,7 @@ def test_dockerfile_has_restricted_reproducible_runtime_contract() -> None:
         "fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db" in dockerfile
     )
     assert "--require-hashes" in dockerfile
+    assert "requirements/api-linux.lock" in dockerfile
     assert "COPY --from=dependencies /install /usr/local" in dockerfile
     assert "USER 10001:10001" in dockerfile
     assert "/health/live" in dockerfile

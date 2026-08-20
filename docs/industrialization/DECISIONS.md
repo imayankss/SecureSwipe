@@ -16,7 +16,7 @@ provenance.
 Status: accepted, real new-data execution blocked
 
 New model, calibration, and threshold decisions use genuinely new authorized
-data with four chronological roles and an untouched evaluation. A random-split
+data with four chronological roles and a reusable forward backtest. A random-split
 diagnostic is recorded but cannot choose a model. The historical Kaggle corpus
 and its observed test are ineligible.
 
@@ -91,12 +91,13 @@ confirmation immediately before the action.
 
 Status: accepted
 
-`requirements/api.lock` contains only the production API closure and hashes;
-`requirements/quality.lock` adds training and verification tools. Human-reviewed
+The `api` locks contain only the production API closure and hashes; the
+`quality` locks add training and verification tools. Darwin and Linux variants
+are resolved separately (D-034). Human-reviewed
 top-level `.in` files are the source of each lock. Notebook tooling remains an
 explicit optional input rather than inflating the service or ordinary test
-environment. Locks target Python 3.12 and CPU execution on Apple Silicon/Linux;
-CUDA is neither required nor selected.
+environment. Locks target Python 3.12 and CPU execution; CUDA is neither
+required nor selected.
 
 ## D-011 — Missing artifacts mean not-ready, invalid artifacts abort startup
 
@@ -325,22 +326,53 @@ The probe contains no source transaction. Container CI compares the complete
 synthetic response and checks the final UID and absence of pip; this workflow is
 still intent, not execution evidence, until Docker/GitHub run it.
 
-## D-032 — The observed Kaggle corpus is reference-only; new data uses four roles
+## D-032 — Source eligibility is an explicit reviewed trust boundary
 
 Status: accepted
 
-The historical holdout row identities were not retained, so the old test cannot
-be reconstructed and quarantined row-by-row. The configured Kaggle path and its
-known 284,807-row/492-fraud signature are therefore permanently ineligible for
-new decisions, including renamed copies. Reference reruns first perform atomic
-deterministic duplicate curation; conflicting labels fail and removed class
-counts plus raw/curated lineage are recorded.
+The historical holdout row identities were not retained, so bytes alone cannot
+prove that a new file is unrelated. The configured Kaggle path and known
+284,807-row/492-fraud signature are ineligible. Project-created historical
+derivatives propagate taint when their verified lineage accompanies the CSV.
+Decision-eligible curation additionally requires an accountable reviewer to approve
+the exact file checksum, source reference, and fixed non-derivation attestation.
+This is deliberately documented as operator-attested provenance, not a technical
+guarantee that a detached/copy-modified derivative can be detected.
 
 Decision-eligible evidence requires a separately authorized source and four
 chronological, content-hash-isolated roles: model training, calibration fit,
-operating-point selection, and untouched development evaluation. Candidate
-selection includes a random-split diagnostic, paired AP bootstrap, and recorded
-simplicity margin. The selected candidate is freshly refit on model-training
-rows only, then calibration and threshold choices are fixed before untouched
-evaluation. Publication atomically couples metrics, lineage, scores, the fitted
-bundle, and direct/reloaded/API parity.
+operating-point selection, and a reusable forward development backtest. The
+random comparison uses matched row/class budgets and excludes calibration and
+backtest rows. Candidate-versus-best paired intervals participate in the
+predeclared simplicity decision. Calibration and threshold choices are fixed
+before the backtest. Publication atomically couples metrics, lineage, scores,
+the fitted bundle, and direct/reloaded/API parity.
+
+## D-033 — Imported score files cannot create scientific evidence
+
+Status: accepted
+
+Post-training cost analysis accepts only a score file declared and hashed by a
+verified development-training run manifest. It verifies the curated input and
+lineage artifacts, loads that run's trusted ModelBundle, and recomputes every raw
+score from source features before producing diagnostics. Calibration policy and
+operating threshold remain frozen. A caller-supplied score CSV cannot generate a
+new evaluation result, and the final chronological role is named a reusable
+development backtest rather than an “untouched once” release test.
+
+Model version is a behavioral identity: its digest covers model/preprocessor/
+calibrator state, threshold, score semantics, role fingerprints, data lineage,
+and decision-policy parameters. Any behavior-affecting change must yield a
+different version exposed consistently by API, monitoring, and evidence.
+
+## D-034 — Resolve Darwin and Linux dependency closures separately
+
+Status: accepted
+
+One marker-heavy lock did not reproduce correctly across Apple Silicon and
+Linux: Darwin resolution omitted the Linux-only CPU distribution, while the
+default Linux XGBoost distribution introduced CUDA/NCCL artifacts. The project
+therefore compiles four hash-locked closures from shared pinned inputs. Darwin
+uses `xgboost`; Linux uses `xgboost-cpu`. CI tests assert that Linux locks contain
+the CPU distribution and no NVIDIA packages. Docker and Linux workflows never
+install the Darwin lock.

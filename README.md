@@ -97,13 +97,24 @@ scripts/export_web_data.py  deterministic tracked-artifact export
 web/                    Next.js dashboard and public aggregate artifacts
 ```
 
-## Local Python Setup
+## Local Toolchain Setup
 
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 python3 -m pip install --require-hashes -r requirements/quality.lock
+cd web
+nvm install 22.13.1
+nvm use 22.13.1
+test "$(node --version)" = "v22.13.1"
+npm ci
+npx playwright install --no-shell chromium
+cd ..
 ```
+
+The default lock is the Apple Silicon/Darwin CPU closure. Linux CI and the
+container use the separately resolved `quality-linux.lock` and `api-linux.lock`
+closures with CPU-only XGBoost; neither Linux lock contains NVIDIA packages.
 
 The full ML pipeline requires the Kaggle dataset at:
 
@@ -153,6 +164,8 @@ That data-free/current-state audit passes its executable checks but reports the
 serving bundle as unavailable. The strict release audit is intentionally
 separate: configure `SECURESWIPE_BUNDLE_MANIFEST` to a reviewed real bundle and
 run `python3 -m scripts.run_project_audit` without `--allow-missing-model`.
+The audit expects the exact Node/browser setup above; it fails rather than
+silently accepting an unsupported ambient Node runtime.
 
 Run tests:
 
@@ -170,16 +183,20 @@ commands again.
 Use only a genuinely new, authorized dataset—not the already-observed Kaggle
 corpus. The curation step preserves raw input, rejects conflicting-label
 duplicates, deterministically keeps the first exact feature vector, and records
-raw/curated hashes plus removed class counts. The training command uses four
-chronological roles, applies the predeclared simplicity rule and paired AP
-bootstrap, fits calibration, selects a threshold, evaluates once on the
-untouched role, and atomically emits a real verified bundle plus service parity.
+raw/curated hashes plus removed class counts. Because bytes cannot prove where
+data came from, new data also requires a separately reviewed source approval
+bound to the exact CSV checksum and required attestation; this is an explicit
+human trust boundary, not cryptographic proof that no historical row was copied.
+The training command uses four chronological roles, applies an uncertainty-aware
+simplicity rule, fits calibration, selects a threshold, runs a reusable forward
+development backtest, and atomically emits a verified bundle plus service parity.
 
 ```bash
 python3 scripts/curate_dataset.py \
   --source /path/to/new-authorized-development.csv \
   --source-kind new_authorized_development \
   --source-reference owner-approved-source-version \
+  --source-approval /path/to/reviewed-source-approval.json \
   --output-dir artifacts/development/curated-v1
 python3 scripts/run_development_training.py \
   --curated-data artifacts/development/curated-v1/curated.csv \
@@ -187,14 +204,20 @@ python3 scripts/run_development_training.py \
   --output-dir artifacts/development/run-v1
 ```
 
-For configurable cost-scenario analysis of that run's three isolated score
-roles:
+The approval contract and exact attestation text are in
+[`docs/SOURCE_APPROVAL.md`](docs/SOURCE_APPROVAL.md). Project-created historical
+derivatives carry `historical_taint` and cannot be promoted when their lineage
+record is present. A detached/copied CSV is inherently indistinguishable by
+content alone and therefore still requires a reviewer to attest its origin.
+
+For configurable post-training cost-scenario diagnostics of that verified run:
 
 ```bash
 python3 scripts/run_development_analysis.py \
   --scores artifacts/development/run-v1/development_scores.csv \
   --curated-data artifacts/development/curated-v1/curated.csv \
   --curation-record artifacts/development/curated-v1/curation.json \
+  --training-run-manifest artifacts/development/run-v1/run_manifest.json \
   --cost-scenarios configs/cost_scenarios.example.yaml \
   --output-dir artifacts/development/cost-analysis-v1
 ```
@@ -257,7 +280,8 @@ npx playwright install --no-shell chromium
 npm run test:e2e
 ```
 
-Node.js 22.13.1 is selected through `web/package.json`. The lockfile is committed
+Node.js 22.13.1 is pinned by `web/.nvmrc` and selected through `web/package.json`.
+Use the exact setup commands above before the aggregate audit. The lockfile is committed
 and must remain authoritative. The production Chromium gate verifies keyboard
 and mobile behavior, WCAG A/AA rules, and that the static dashboard emits no
 `/v1/predict` request.

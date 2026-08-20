@@ -49,26 +49,84 @@ def load_curated_dataset(
     if not isinstance(payload, dict):
         raise ValueError("Curation record must be a JSON object.")
     required = {
+        "curation_format_version",
         "curated_file_sha256",
         "curated_fingerprint",
         "decision_eligible",
         "source_kind",
+        "historical_taint",
+        "source_trust_basis",
+        "source_approval_sha256",
     }
     if required - payload.keys():
         raise ValueError("Curation record is incomplete.")
     if require_decision_eligible and (
         payload["source_kind"] != "new_authorized_development"
         or payload["decision_eligible"] is not True
+        or payload["historical_taint"] is not False
+        or payload["source_trust_basis"] != "operator_attested_exact_file"
     ):
         raise ValueError(
             "Only genuinely new authorized development data may create decision evidence."
         )
+    if payload["curation_format_version"] != "1":
+        raise ValueError("Unsupported curation record format version.")
     if _sha256_file(curated) != payload["curated_file_sha256"]:
         raise ValueError("Curated file checksum does not match its curation record.")
     frame = pd.read_csv(curated)
     validate_dataset_schema(frame)
     if fingerprint_dataframe(frame) != payload["curated_fingerprint"]:
         raise ValueError("Curated data fingerprint does not match its curation record.")
+    manifest_path = record_path.parent / "run_manifest.json"
+    if not manifest_path.is_file() or manifest_path.is_symlink():
+        raise ValueError("Curation run manifest is required beside the curation record.")
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict) or manifest.get("run_kind") != "dataset_duplicate_curation":
+        raise ValueError("Curation run manifest has the wrong provenance scope.")
+    outputs = manifest.get("outputs")
+    inputs = manifest.get("inputs")
+    parameters = manifest.get("parameters")
+    if not all(isinstance(value, dict) for value in (outputs, inputs, parameters)):
+        raise ValueError("Curation run manifest inputs/outputs/parameters are missing.")
+    assert isinstance(outputs, dict) and isinstance(inputs, dict) and isinstance(parameters, dict)
+    if (
+        manifest.get("data_fingerprint") != payload["curated_fingerprint"]
+        or parameters.get("duplicate_policy") != payload.get("duplicate_policy")
+        or parameters.get("source_kind") != payload["source_kind"]
+        or parameters.get("source_reference") != payload.get("source_reference")
+        or parameters.get("source_trust_basis") != payload["source_trust_basis"]
+    ):
+        raise ValueError("Curation run manifest source provenance is inconsistent.")
+    source_entry = inputs.get("source_dataset")
+    if (
+        not isinstance(source_entry, dict)
+        or source_entry.get("sha256") != payload.get("raw_file_sha256")
+    ):
+        raise ValueError("Curation source checksum is inconsistent with its run manifest.")
+    approval_digest = payload["source_approval_sha256"]
+    approval_entry = inputs.get("source_approval")
+    if payload["decision_eligible"] is True:
+        if (
+            not isinstance(approval_digest, str)
+            or not isinstance(approval_entry, dict)
+            or approval_entry.get("sha256") != approval_digest
+        ):
+            raise ValueError("Decision-eligible curation lacks a verified source approval.")
+    elif approval_digest is not None or approval_entry is not None:
+        raise ValueError("Historical curation must not contain a new-source approval.")
+    expected = {
+        "curated_dataset": (curated, payload["curated_file_sha256"]),
+        "curation_record": (record_path, _sha256_file(record_path)),
+    }
+    for logical_name, (path, digest) in expected.items():
+        entry = outputs.get(logical_name)
+        if (
+            not isinstance(entry, dict)
+            or entry.get("filename") != path.name
+            or entry.get("sha256") != digest
+            or entry.get("size_bytes") != path.stat().st_size
+        ):
+            raise ValueError(f"Curation run manifest mismatch for {logical_name}.")
     return frame, payload
 
 

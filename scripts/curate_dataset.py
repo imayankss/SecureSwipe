@@ -17,6 +17,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from src.artifacts.bundle import sha256_file  # noqa: E402
 from src.data.curation import curate_exact_feature_duplicates  # noqa: E402
 from src.data.data_loader import validate_dataset_schema  # noqa: E402
+from src.data.source_approval import load_source_approval  # noqa: E402
 from src.utils.config import load_project_config  # noqa: E402
 from src.utils.evidence_directory import atomic_evidence_directory  # noqa: E402
 from src.utils.run_manifest import build_run_manifest, write_run_manifest  # noqa: E402
@@ -41,6 +42,7 @@ def curate_dataset(
     output_dir: Path,
     source_kind: SourceKind,
     source_reference: str,
+    source_approval_path: Path | None = None,
 ) -> dict[str, Path]:
     """Curate one local CSV without treating the historical corpus as new data."""
     source = source_path.expanduser().resolve(strict=True)
@@ -53,6 +55,19 @@ def curate_dataset(
         raise ValueError("Unsupported source_kind.")
     if not source_reference.strip():
         raise ValueError("source_reference must identify the authorized source.")
+    if source_kind == "new_authorized_development":
+        if source_approval_path is None:
+            raise ValueError(
+                "New development data requires an explicit operator-reviewed source "
+                "approval bound to the exact CSV bytes."
+            )
+        load_source_approval(
+            source_approval_path,
+            source_path=source,
+            source_reference=source_reference,
+        )
+    elif source_approval_path is not None:
+        raise ValueError("Historical reference curation must not use a new-source approval.")
     configured_historical = (PROJECT_ROOT / CONFIG.data.raw_path).resolve()
     if source_kind == "new_authorized_development" and source == configured_historical:
         raise ValueError(
@@ -71,6 +86,17 @@ def curate_dataset(
             f"({KNOWN_HISTORICAL_ROWS} rows/{KNOWN_HISTORICAL_FRAUD} fraud); it is "
             "reference-only even if copied or renamed."
         )
+    parent_record_path = source.parent / "curation.json"
+    if source_kind == "new_authorized_development" and parent_record_path.is_file():
+        parent = json.loads(parent_record_path.read_text(encoding="utf-8"))
+        if (
+            isinstance(parent, dict)
+            and parent.get("curated_file_sha256") == sha256_file(source)
+            and parent.get("historical_taint") is True
+        ):
+            raise ValueError(
+                "A historical-tainted curated derivative cannot become decision eligible."
+            )
     curated, summary = curate_exact_feature_duplicates(raw)
     decision_eligible = source_kind == "new_authorized_development"
 
@@ -88,6 +114,7 @@ def curate_dataset(
             "curated_fingerprint": reloaded_summary.curated_fingerprint,
             "curated_rows": summary.curated_rows,
             "decision_eligible": decision_eligible,
+            "historical_taint": not decision_eligible,
             "duplicate_groups": summary.duplicate_groups,
             "duplicate_policy": "keep_first_exact_feature_vector_conflicts_fail",
             "matches_known_historical_signature": looks_like_known_historical,
@@ -100,6 +127,16 @@ def curate_dataset(
             "row_lineage_fingerprint": reloaded_summary.row_lineage_fingerprint,
             "source_kind": source_kind,
             "source_reference": source_reference.strip(),
+            "source_trust_basis": (
+                "operator_attested_exact_file"
+                if decision_eligible
+                else "already_observed_historical_reference"
+            ),
+            "source_approval_sha256": (
+                sha256_file(source_approval_path.expanduser().resolve(strict=True))
+                if source_approval_path is not None
+                else None
+            ),
         }
         _write_json(record, record_path)
         manifest = build_run_manifest(
@@ -110,12 +147,20 @@ def curate_dataset(
                 else "historical_kaggle_reference_curation"
             ),
             repository=PROJECT_ROOT,
-            inputs={"source_dataset": source},
+            inputs={
+                "source_dataset": source,
+                **(
+                    {"source_approval": source_approval_path}
+                    if source_approval_path is not None
+                    else {}
+                ),
+            },
             outputs={"curated_dataset": curated_path, "curation_record": record_path},
             parameters={
                 "duplicate_policy": record["duplicate_policy"],
                 "source_kind": source_kind,
                 "source_reference": source_reference.strip(),
+                "source_trust_basis": record["source_trust_basis"],
             },
             seeds={},
             packages=["numpy", "pandas"],
@@ -140,6 +185,11 @@ def parse_args() -> argparse.Namespace:
         required=True,
     )
     parser.add_argument("--source-reference", required=True)
+    parser.add_argument(
+        "--source-approval",
+        type=Path,
+        help="Reviewed JSON approval bound to new-development source bytes.",
+    )
     return parser.parse_args()
 
 
@@ -150,6 +200,7 @@ def main() -> int:
         output_dir=args.output_dir.resolve(),
         source_kind=args.source_kind,
         source_reference=args.source_reference,
+        source_approval_path=args.source_approval,
     )
     print(json.dumps({key: str(value) for key, value in sorted(outputs.items())}))
     return 0

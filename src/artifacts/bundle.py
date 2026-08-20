@@ -255,7 +255,16 @@ def load_verified_joblib(
 
 
 def _runtime_versions() -> dict[str, str]:
-    return {package: metadata.version(package) for package in _RUNTIME_PACKAGES}
+    versions: dict[str, str] = {}
+    for package in _RUNTIME_PACKAGES:
+        if package == "xgboost":
+            try:
+                versions[package] = metadata.version("xgboost")
+            except metadata.PackageNotFoundError:
+                versions[package] = metadata.version("xgboost-cpu")
+        else:
+            versions[package] = metadata.version(package)
+    return versions
 
 
 def _artifact_entry(path: Path, payload: Any) -> dict[str, Any]:
