@@ -1,4 +1,4 @@
-ARG PYTHON_IMAGE=python:3.12.10-slim-bookworm@sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db
+ARG PYTHON_IMAGE=python:3.12.13-slim-trixie@sha256:229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36
 
 FROM ${PYTHON_IMAGE} AS dependencies
 
@@ -23,6 +23,23 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONPATH=/app \
     SECURESWIPE_ARTIFACT_ROOT=/artifacts \
     SECURESWIPE_MAX_REQUEST_BYTES=65536
+
+# Apply the reviewed Debian fixes published after the immutable upstream Python
+# image was assembled. Explicit versions prevent a future repository update
+# from silently changing this layer; the final image digest is the deployable
+# identity.
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends --only-upgrade \
+        bsdutils=1:2.41.5-0+deb13u1 \
+        libblkid1=2.41.5-0+deb13u1 \
+        liblastlog2-2=2.41.5-0+deb13u1 \
+        libmount1=2.41.5-0+deb13u1 \
+        libsmartcols1=2.41.5-0+deb13u1 \
+        libuuid1=2.41.5-0+deb13u1 \
+        login=1:4.16.0-2+really2.41.5-0+deb13u1 \
+        mount=2.41.5-0+deb13u1 \
+        util-linux=2.41.5-0+deb13u1 \
+    && rm -rf /var/lib/apt/lists/*
 
 RUN groupadd --gid 10001 secureswipe \
     && useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin secureswipe \

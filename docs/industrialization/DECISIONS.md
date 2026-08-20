@@ -302,14 +302,15 @@ against the current source tree and rejects either missing or unexpected files.
 
 ## D-030 — The runtime image has no package installer
 
-Status: accepted, Docker execution still blocked
+Status: accepted and container-verified
 
 The final API image never installs packages after construction, so it removes
 the Python base image's pip before switching to the non-root user. This avoids
 shipping an unnecessary installer and its advisory surface. Dependencies remain
 installed only in the build stage from the hash-locked API closure. A clean
-pip-free virtual-environment proof imports the wheel successfully; final image
-behavior and vulnerability evidence still require the Docker smoke/scan gate.
+pip-free virtual-environment proof imports the wheel successfully. The final
+ARM64 image also passed non-root/read-only startup, readiness, exact golden
+inference, bounded load, reviewed Trivy high/critical scanning, and SBOM gates.
 
 ## D-031 — Bundle readiness includes class semantics and a golden runtime probe
 
@@ -376,3 +377,15 @@ therefore compiles four hash-locked closures from shared pinned inputs. Darwin
 uses `xgboost`; Linux uses `xgboost-cpu`. CI tests assert that Linux locks contain
 the CPU distribution and no NVIDIA packages. Docker and Linux workflows never
 install the Darwin lock.
+
+## D-035 — Pin reviewed OS fixes and expire every scan exception
+
+Status: accepted
+
+The runtime starts from a reviewed multi-architecture Python 3.12.13 Trixie
+digest and installs only explicit Debian security-update versions rather than a
+floating full-system upgrade. The final image digest remains the deployable
+identity. Trivy high/critical scanning has no blanket `ignore-unfixed` switch:
+each residual no-fix Debian advisory is listed separately with a mitigation and
+a 2026-09-20 expiry. Any new, fixed, or expired finding fails the gate and must
+be reviewed against a rebuilt image.

@@ -17,9 +17,10 @@ docker buildx build \
   .
 ```
 
-The image uses the reviewed multi-architecture digest for Python 3.12.10 on
-Debian Bookworm, installs the hash-locked API closure in a separate dependency
-stage, and runs as UID/GID 10001. A single
+The image uses the reviewed multi-architecture digest for Python 3.12.13 on
+Debian Trixie, applies explicitly versioned Debian security upgrades, installs
+the hash-locked API closure in a separate dependency stage, and runs as UID/GID
+10001. A single
 Uvicorn worker avoids duplicating the in-memory model. Scale and concurrency
 claims require measurement; none are implied by this configuration.
 
@@ -75,9 +76,13 @@ These two commands affect only the explicitly named disposable container.
 ## Vulnerability scan and SBOM
 
 ```bash
-docker scout cves \
-  --only-severity critical,high \
-  --exit-code \
+docker run --rm \
+  --volume /var/run/docker.sock:/var/run/docker.sock \
+  --volume "$PWD/.trivyignore.yaml:/.trivyignore.yaml:ro" \
+  aquasec/trivy:0.70.0 image \
+  --severity HIGH,CRITICAL \
+  --exit-code 1 \
+  --ignorefile /.trivyignore.yaml \
   secureswipe-api:local
 docker sbom secureswipe-api:local \
   --format spdx-json \
@@ -88,6 +93,14 @@ The SBOM is a generated local artifact and is not a substitute for the source
 dependency locks. Record the scanner versions, database timestamp, image digest,
 and every justified exception. Do not call this gate passed until both commands
 have actually run against the final image.
+
+The checked-in `.trivyignore.yaml` is not a blanket `ignore-unfixed` policy. It
+lists only residual Debian findings that had no fix on 2026-08-20, records why
+the affected tool/library is outside this restricted service's input and
+execution paths, and expires every exception on 2026-09-20. CI still fails for
+any unlisted high/critical finding. Rebuild on a newer base or remove an
+exception as soon as Debian publishes a fix; never extend an expiry without a
+new scan and review.
 
 ## Artifact replacement and rollback
 

@@ -64,10 +64,22 @@ def test_container_workflow_builds_without_push_and_scans_each_architecture() ->
     assert "push: false" in text
     assert "severity: HIGH,CRITICAL" in text
     assert "exit-code: \"1\"" in text
+    assert "trivyignores: .trivyignore.yaml" in text
+    assert "ignore-unfixed" not in text
     assert "format: spdx-json" in text
     assert "smoke_expected.json" in text
     assert "os.getuid() == 10001" in text
     assert "find_spec('pip') is None" in text
+
+
+def test_container_scan_exceptions_are_narrow_documented_and_expiring() -> None:
+    payload = yaml.safe_load((ROOT / ".trivyignore.yaml").read_text(encoding="utf-8"))
+    exceptions = payload["vulnerabilities"]
+    assert len(exceptions) == 12
+    assert len({item["id"] for item in exceptions}) == len(exceptions)
+    assert all(set(item) == {"id", "expired_at", "statement"} for item in exceptions)
+    assert all(str(item["expired_at"]) == "2026-09-20" for item in exceptions)
+    assert all(len(item["statement"]) >= 50 for item in exceptions)
 
 
 def test_dependabot_covers_python_npm_and_actions() -> None:

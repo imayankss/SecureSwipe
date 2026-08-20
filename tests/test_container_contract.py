@@ -21,8 +21,8 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_dockerfile_has_restricted_reproducible_runtime_contract() -> None:
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert (
-        "python:3.12.10-slim-bookworm@sha256:"
-        "fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db" in dockerfile
+        "python:3.12.13-slim-trixie@sha256:"
+        "229a2c5bfa27522db7815ea81f9bed70af17ccb9de9fc7ad142b1877b5830d36" in dockerfile
     )
     assert "--require-hashes" in dockerfile
     assert "requirements/api-linux.lock" in dockerfile
@@ -35,7 +35,11 @@ def test_dockerfile_has_restricted_reproducible_runtime_contract() -> None:
         "USER 10001:10001"
     )
     assert "COPY ." not in dockerfile
-    assert "apt-get" not in dockerfile
+    assert "apt-get upgrade" not in dockerfile
+    assert "--no-install-recommends --only-upgrade" in dockerfile
+    assert "util-linux=2.41.5-0+deb13u1" in dockerfile
+    assert "login=1:4.16.0-2+really2.41.5-0+deb13u1" in dockerfile
+    assert "rm -rf /var/lib/apt/lists/*" in dockerfile
 
 
 @pytest.mark.parametrize(
