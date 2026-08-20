@@ -5,10 +5,10 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 
 | Category | Available | Initial | Current | Evidence |
 |---|---:|---:|---:|---|
-| ML correctness and scientific validity | 20 | 5 | 17 | Historical-corpus quarantine, deterministic curation, four chronological content-hash-isolated roles, random diagnostic, paired uncertainty/simplicity selection, calibration, untouched fixed-threshold evaluation, constrained/cost metrics, and raw-margin SHAP protocols are synthetic-tested; real new-data and historical SHAP execution remain external blockers. |
+| ML correctness and scientific validity | 20 | 5 | 17 | Historical-corpus quarantine, operator-attested exact-file approval, deterministic curation, four chronological content-hash-isolated roles, matched random diagnostic, paired uncertainty/simplicity selection, calibration, reusable forward backtest, constrained/cost metrics, and raw-margin SHAP protocols are synthetic-tested; real new-data and historical SHAP execution remain external blockers. |
 | Reproducibility and data lineage | 15 | 2 | 15 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, atomic timestamp-free manifests for development and every legacy stage, typed configuration, historical lock, and read-only export verification are tested. |
 | Architecture and maintainability | 15 | 4 | 15 | Offline/static, blocked-development, reference-stage, and verified serving paths have explicit boundaries; direct partial legacy CLIs fail closed; mounted bundles, current audit, workflow separation, typed configuration, and governance are tested. |
-| Testing and quality gates | 15 | 6 | 15 | 323 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain/wheel-inventory tests, clean package proof, four component tests, and two production Chromium keyboard/mobile/WCAG/static-boundary tests pass; Docker execution remains explicitly blocked. |
+| Testing and quality gates | 15 | 6 | 15 | 342 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain/wheel-inventory tests, clean package proof, five component tests, and two production Chromium keyboard/mobile/WCAG/static-boundary tests pass; final container execution is pending. |
 | API/container reliability | 10 | 0 | 8 | Versioned API, readiness, limits, OpenAPI, exact parity, threadpool offload, runtime log evidence, health responsiveness, and 500-request loopback behavior pass; container remains unverified. |
 | Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean API/quality/resolver/npm audits, pip-free runtime policy, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
 | Observability and operations | 10 | 0 | 8 | Bounded metrics, runtime JSON/redaction evidence, deterministic schema/feature/score/delayed-label monitoring, shifted demo, repeated M2 load evidence, local objectives, and incident/rollback guides pass; container/provider operations remain unmeasured. |
@@ -115,5 +115,11 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   row fingerprints, source-label mismatch, chronology violations, reference-
   only curation, and partial/overwrite paths fail closed. Untouched evaluation,
   reloaded bundle, and API service score hashes match exactly.
+- Evidence-provenance/platform-lock batch: 342 tests pass in 17.40 seconds;
+  Ruff, 29-file mypy, and 40 focused adversarial tests pass. Curation manifests,
+  exact-file approvals, and score recomputation reject tampering. Darwin/Linux
+  API and quality locks regenerate byte-identically twice and all four audit with
+  no known vulnerabilities; Linux closures use CPU-only XGBoost with no NVIDIA
+  packages. Container evidence is not upgraded until the rebuilt image passes.
 
 The score will be updated only after each batch's acceptance commands pass.

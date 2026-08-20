@@ -10,6 +10,10 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Preserve the historical result while removing unsupported unbiased/real-world/authorization claims.
 - [x] Replace unchecked deserialization with trusted-root, checksum, manifest, type, schema, and runtime verification.
 - [x] Add corrupt/mismatch/untrusted-path tests proving failure occurs before deserialization.
+- [x] Prevent historical-derivative promotion with operator-attested exact-file
+  approval, project-lineage taint, and verified curation-manifest provenance.
+- [x] Reject invented score evidence by reloading the originating bundle and
+  recomputing all scores, including a forged-score-plus-forged-hash test.
 
 ## P1 — scientific validity
 
@@ -46,9 +50,13 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
   checksummed full-path startup probe in bundle format 2.
 - [x] Add deterministic manifested duplicate curation with conflicting-label failure.
 - [x] Enforce source-row fingerprint isolation across calibration, selection,
-  untouched evaluation, and the already-observed historical namespace.
+  reusable forward backtest, and the already-observed historical namespace.
 - [x] Add a real development training-to-bundle command that persists the selected
   calibrator/threshold and evaluation/service golden parity evidence.
+- [x] Make behavior-affecting code/seed/policy/calibration/threshold/role changes
+  produce a distinct model version.
+- [x] Resolve and audit separate deterministic Darwin and Linux CPU locks; Linux
+  uses `xgboost-cpu` and contains no NVIDIA packages.
 
 ## P1 — API/container/operations
 
@@ -59,8 +67,8 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Configurable explicit CORS allowlist and request-body cap.
 - [x] Replace Dockerfile, add `.dockerignore`, non-root user, pinned runtime, and health check.
 - [x] Remove the unnecessary package installer from the final runtime image.
-- [B] Test linux/arm64 image startup/readiness/inference; Docker Desktop must be started.
-- [B] Scan image and produce SBOM; Docker Desktop must be started.
+- [~] Rebuild and test linux/arm64 image startup/readiness/inference from the final lock.
+- [~] Scan the rebuilt image and produce an SBOM.
 - [x] Add bounded latency/request/error/score-distribution metrics.
 - [x] Implement deterministic offline drift monitor with synthetic shifted demonstration.
 - [x] Run local load test and record p50/p95/p99/error rate.
@@ -105,8 +113,8 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 
 ## Exit audit
 
-- [B] No open locally actionable P0/P1; original data/model, Docker, remote CI,
-  and public integration prerequisites are documented external blockers.
+- [~] No open locally actionable P0/P1; final container gates are in progress;
+  original data/model and remote CI remain documented external blockers.
 - [x] Evidence score >= 92/100 and every category >= 80%.
 - [ ] Two consecutive full quality-gate runs pass with no code changes between them.
 - [x] Golden predictions identical in evaluation and API service paths on the

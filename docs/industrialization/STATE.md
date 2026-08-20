@@ -1,6 +1,6 @@
 # SecureSwipe industrialization state
 
-Last updated: 2026-08-14 (Asia/Kolkata)
+Last updated: 2026-08-20 (Asia/Kolkata)
 
 ## Repository identity
 
@@ -8,8 +8,11 @@ Last updated: 2026-08-14 (Asia/Kolkata)
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
-- Current committed phase: `69889e47a338e3c42db686cc0078c8142fe80801`
-  (taint-aware scientific lineage and development-to-bundle workflow)
+- Implementation commit audited by this state snapshot:
+  `6e260c4f9966c0d83e5edb3ccd423d7070d40381` (scientific evidence provenance
+  and separate deterministic Darwin/Linux dependency closures). The control-file
+  commit containing this snapshot is intentionally one commit later; obtain it
+  with `git log -1 --format=%H -- docs/industrialization/STATE.md`.
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
 - Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
@@ -20,7 +23,8 @@ Last updated: 2026-08-14 (Asia/Kolkata)
 - Python: CPython 3.12.10, isolated environment at `.venv`
 - Node.js used for final verified frontend checks: isolated official 22.13.1;
   npm 10.9.2 (baseline host runtime was 22.11.0/npm 10.9.0)
-- Docker client: 27.3.1, arm64; Docker daemon unavailable during baseline
+- Docker client: 27.3.1, arm64; Docker daemon is currently stopped. It ran the
+  pre-lock-split ARM64 smoke successfully, but the final image must be rebuilt.
 - GitHub CLI: not installed; no push, PR, release, or deployment attempted
 
 The baseline `requirements.txt` had no version bounds. It has been replaced by
@@ -98,6 +102,8 @@ not included in the service or required quality runtime.
 | adversarial wheel inspection | PASS after defect correction | first direct wheel build reused ignored stale modules and was rejected as evidence; sdist-boundary rebuild has exactly the 49 current source modules (54 archive members), 3 new inventory tests pass, and the 16-command audit passes |
 | pip-free API runtime proof | PASS locally, image execution blocked | clean API closure + wheel installed, pip removed, and API/bundle imports passed; Dockerfile contract enforces removal before non-root switch |
 | taint-aware scientific workflow regression | PASS | 339 tests, Ruff, 28-file mypy, historical lock, and web export pass; two synthetic development runs produce byte-identical real bundle/evidence and exact service parity |
+| evidence-provenance and platform-lock regression | PASS | 342 tests in 17.40 s; Ruff; 29-file mypy; 40 focused adversarial tests; four dependency audits clean |
+| four-lock regeneration | PASS | two byte-identical passes: Darwin API `465ca25d...`, Linux API `b72a0222...`, Darwin quality `b6a31eb7...`, Linux quality `b033c14e...`; Linux locks contain `xgboost-cpu` and no NVIDIA packages |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -279,6 +285,19 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
   serialized-bundle, and `ModelService` raw/decision scores; standalone cost
   analysis now consumes the same curated lineage and rejects renamed identities,
   label mismatch, chronology violations, and historical/reference scope.
+- Closed the historical-derivative promotion gap with checksum-bound operator
+  approval, inherited project-lineage taint, curation-manifest verification, and
+  explicit documentation that provenance is operator-attested rather than an
+  impossible content-only proof of origin.
+- Made post-training diagnostics require the originating training manifest and
+  recompute every score through its verified bundle; forged scores fail even if
+  their manifest hash is also rewritten.
+- Replaced the misleading one-use “untouched” development role with a reusable
+  forward backtest, matched random/chronological row and class budgets, made
+  paired uncertainty participate in simplicity selection, and made model version
+  cover behavior, policy, role, code, seed, and bundle-format identity.
+- Split deterministic Darwin and Linux CPU dependency closures. Docker/Linux CI
+  use `xgboost-cpu`; Apple Silicon uses `xgboost`; four clean audits pass.
 
 ## Current issues
 
@@ -291,12 +310,11 @@ the entire known corpus is ineligible for new decisions.
 
 ### P1
 
-No open locally actionable P1 remains. The deterministic curation command and
-four-role development workflow are synthetic-fixture tested, including paired
-selection evidence, calibration, fixed-threshold untouched evaluation, atomic
-real-bundle packaging, and direct/reloaded/API parity. The known Kaggle corpus is
-reference-only by path and known row/fraud signature, so a renamed copy cannot
-be used by the decision workflow.
+No open scientific or application-code P1 remains. The deterministic curation
+and four-role workflow are synthetic-tested, including operator-attested exact-
+file approval, taint propagation, score recomputation, paired selection evidence,
+calibration, reusable forward backtest, atomic real-bundle packaging, and exact
+direct/reloaded/API parity. Final container execution/scan remains in progress.
 
 External evidence blockers remain:
 
@@ -305,10 +323,9 @@ External evidence blockers remain:
   serving bundle is claimed. Example cost assumptions remain non-policy.
 - Applying the verified SHAP protocol to the historical ranking is blocked by
   the absent original model and aligned sample row identities.
-- Optional synthetic live-demo mode remains deliberately disabled until the API
-  image passes startup, readiness, inference, and vulnerability-scan gates.
-- Workflow definitions have not run on GitHub because pushing is not authorized;
-  the local Docker daemon also prevents executing the container scan/SBOM job.
+- Optional synthetic live-demo mode remains deliberately disabled until the
+  rebuilt API image passes startup, readiness, inference, and scan gates.
+- Workflow definitions have not run on GitHub because pushing is not authorized.
 - Current checkout cannot reproduce the original-data evaluation because the
   intentionally uncommitted CSV and fitted artifacts are unavailable.
 
@@ -320,13 +337,15 @@ architecture, and secret requirements are time-sensitive selection inputs.
 
 ## Next executable action
 
-Commit the completed scientific-lineage workflow, then run two unchanged full
-data-free quality cycles and repeat the independent adversarial audit at the new
-commit.
+Start Docker Desktop; rebuild the final ARM64 image from the Linux CPU lock; run
+startup/readiness/inference, non-root/read-only/pip-free/log/load checks; scan it
+for high/critical findings and generate an SBOM. Then run two unchanged full
+quality cycles and the final independent adversarial audit.
 
-Acceptance: all 339 Python tests, lint, both mypy scopes, evidence checks,
-dependency audits, clean wheel proof, and frontend unit/build/browser/audit gates
-pass twice with no code change; the final re-audit finds no new local P0/P1.
+Acceptance: container golden response and security/runtime checks pass; all 342
+Python tests, lint, both mypy scopes, evidence checks, four dependency audits,
+clean wheel proof, and frontend unit/build/browser/audit gates pass twice with no
+code change; the final re-audit finds no new local P0/P1.
 
 ## External blockers and user action
 
@@ -334,6 +353,6 @@ pass twice with no code change; the final re-audit finds no new local P0/P1.
   official flow and place it at `data/raw/creditcard.csv`; it remains
   reference-only. Real decision evidence requires a separate authorized corpus.
   Never commit either data file or `kaggle.json`.
-- Container validation: start Docker Desktop. No paid service is needed.
+- Container validation: Docker Desktop must be running. No paid service is needed.
 - Push, PR, release, public deployment, DNS, or paid infrastructure: not
   authorized and will require explicit confirmation immediately before action.
