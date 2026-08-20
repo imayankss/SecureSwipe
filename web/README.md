@@ -55,9 +55,18 @@ select Next.js, with `npm ci`/the committed lockfile and `npm run build`. The
 deployable static configuration requires no environment variables. No live
 provider deployment or URL is verified by this repository.
 
-An optional live-demo build is intentionally absent until the versioned API has
-passed the documented container startup, readiness, inference, and image-scan
-gates.
+The dashboard includes an optional synthetic API check. It is disabled unless
+`NEXT_PUBLIC_SECURESWIPE_API_URL` is set at build time, sends one fixed all-zero
+feature vector only after the user clicks the button, and never accepts user
+transaction data. Loading, timeout, unavailable, empty, and error responses
+keep the static score demonstration visible as the fallback. For example:
+
+```bash
+NEXT_PUBLIC_SECURESWIPE_API_URL=http://127.0.0.1:8000 npm run build
+```
+
+The API must allow the frontend origin through its explicit CORS configuration.
+No live provider deployment or URL is verified by this repository.
 
 See the repository-level README for the full architecture, data refresh,
 security, Git, and deployment workflow.

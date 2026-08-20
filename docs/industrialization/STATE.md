@@ -301,6 +301,13 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
   cover behavior, policy, role, code, seed, and bundle-format identity.
 - Split deterministic Darwin and Linux CPU dependency closures. Docker/Linux CI
   use `xgboost-cpu`; Apple Silicon uses `xgboost`; four clean audits pass.
+- Added an opt-in synthetic frontend API check controlled by
+  `NEXT_PUBLIC_SECURESWIPE_API_URL`. It posts one fixed all-zero feature vector,
+  uses a three-second abort timeout, and preserves the static score demo for
+  loading, timeout, unavailable, empty, and error outcomes. Component coverage
+  passes 7 focused Vitest tests; the production Chromium dashboard suite passes
+  3 tests including no-request behavior when the API URL is absent. Frontend
+  build, data check, lint, and TypeScript checks pass.
 
 ## Current issues
 
@@ -317,8 +324,8 @@ No open scientific, backend, container, or supply-chain P1 remains. The determin
 and four-role workflow are synthetic-tested, including operator-attested exact-
 file approval, taint propagation, score recomputation, paired selection evidence,
 calibration, reusable forward backtest, atomic real-bundle packaging, and exact
-direct/reloaded/API parity. The remaining local P1 is the optional synthetic-only
-frontend live-demo mode now that the container gate has passed.
+direct/reloaded/API parity. The optional synthetic-only frontend live-demo mode
+is implemented and locally verified.
 
 External evidence blockers remain:
 
@@ -339,9 +346,8 @@ requirements are time-sensitive selection inputs.
 
 ## Next executable action
 
-Add the optional synthetic-only frontend live-demo mode with static fallback,
-timeout/loading/error/empty states and browser/component coverage. Then run two
-unchanged full quality cycles and the final independent adversarial audit.
+Run two unchanged full quality cycles and the final independent adversarial
+audit. This phase intentionally did not run those full cycles.
 
 Acceptance: the live-demo boundary and fallback tests pass; all 343+
 Python tests, lint, both mypy scopes, evidence checks, four dependency audits,

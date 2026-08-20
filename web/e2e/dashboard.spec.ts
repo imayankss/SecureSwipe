@@ -61,3 +61,17 @@ test("mobile navigation exposes every dashboard section", async ({ page }) => {
   await expect(page).toHaveURL(/#thresholds$/);
   await expect(page.locator("#thresholds")).toBeVisible();
 });
+
+test("live demo stays opt-in and preserves the static fallback when no API is configured", async ({ page }) => {
+  const predictionRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/v1/predict")) predictionRequests.push(request.url());
+  });
+
+  await page.goto("/");
+  await page.getByRole("button", { name: "Try synthetic API" }).click();
+  await expect(page.getByRole("status", { name: "Synthetic API status" })).toContainText("Live demo is not configured");
+  await expect(page.getByText("Static fallback active until the API check is requested.")).not.toBeVisible();
+  await expect(page.getByText(/No customer or transaction data is used/)).toBeVisible();
+  expect(predictionRequests).toEqual([]);
+});

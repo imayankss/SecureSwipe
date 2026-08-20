@@ -1,7 +1,7 @@
 import axe from "axe-core";
 import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { Navigation } from "@/components/Navigation";
 import { ConfusionMatrix } from "@/components/ConfusionMatrix";
@@ -17,6 +17,41 @@ async function expectNoAxeViolations(container: HTMLElement) {
 }
 
 describe("keyboard and accessibility contracts", () => {
+  it("keeps the live demo opt-in and shows the safe unavailable fallback", async () => {
+    const user = userEvent.setup();
+    render(<RiskScoreDemo apiBaseUrl={null} />);
+
+    expect(screen.getByText("Static fallback active until the API check is requested.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Try synthetic API" }));
+    expect(screen.getByRole("status", { name: "Synthetic API status" })).toHaveTextContent("Live demo is not configured");
+    expect(screen.getByText(/No customer or transaction data is used/)).toBeInTheDocument();
+  });
+
+  it("renders loading, success, empty, and API error states without replacing the static demo", async () => {
+    const user = userEvent.setup();
+    let resolveRequest: ((response: Response) => void) | undefined;
+    const request = new Promise<Response>((resolve) => {
+      resolveRequest = resolve;
+    });
+    vi.stubGlobal("fetch", vi.fn(() => request));
+    const { rerender } = render(<RiskScoreDemo apiBaseUrl="https://synthetic.example" />);
+
+    await user.click(screen.getByRole("button", { name: "Try synthetic API" }));
+    expect(screen.getByRole("button", { name: "Checking API…" })).toBeDisabled();
+    resolveRequest?.(new Response(JSON.stringify({ decision: "review", decision_score: 0.91 }), { status: 200 }));
+    expect(await screen.findByText("Synthetic API result: review at score 0.910.")).toBeInTheDocument();
+
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("null", { status: 200 })));
+    rerender(<RiskScoreDemo apiBaseUrl="https://synthetic.example" />);
+    await user.click(screen.getByRole("button", { name: "Try synthetic API" }));
+    expect(await screen.findByRole("status", { name: "Synthetic API status" })).toHaveTextContent("no usable prediction");
+
+    vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("offline"); }));
+    rerender(<RiskScoreDemo apiBaseUrl="https://synthetic.example" />);
+    await user.click(screen.getByRole("button", { name: "Try synthetic API" }));
+    expect(await screen.findByRole("status", { name: "Synthetic API status" })).toHaveTextContent("could not be reached");
+  });
+
   it("exposes responsive navigation and safe external-link semantics", async () => {
     const user = userEvent.setup();
     const { container } = render(<Navigation />);

@@ -8,7 +8,7 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | ML correctness and scientific validity | 20 | 5 | 17 | Historical-corpus quarantine, operator-attested exact-file approval, deterministic curation, four chronological content-hash-isolated roles, matched random diagnostic, paired uncertainty/simplicity selection, calibration, reusable forward backtest, constrained/cost metrics, and raw-margin SHAP protocols are synthetic-tested; real new-data and historical SHAP execution remain external blockers. |
 | Reproducibility and data lineage | 15 | 2 | 15 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, atomic timestamp-free manifests for development and every legacy stage, typed configuration, historical lock, and read-only export verification are tested. |
 | Architecture and maintainability | 15 | 4 | 15 | Offline/static, blocked-development, reference-stage, and verified serving paths have explicit boundaries; direct partial legacy CLIs fail closed; mounted bundles, current audit, workflow separation, typed configuration, and governance are tested. |
-| Testing and quality gates | 15 | 6 | 15 | 343 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain/wheel-inventory tests, clean package proof, five component tests, and two production Chromium keyboard/mobile/WCAG/static-boundary tests pass; two unchanged final cycles remain. |
+| Testing and quality gates | 15 | 6 | 15 | 343 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain/wheel-inventory tests, clean package proof, seven focused component tests, and three production Chromium keyboard/mobile/WCAG/static-boundary/live-fallback tests pass; two unchanged final cycles remain. |
 | API/container reliability | 10 | 0 | 10 | Versioned API, readiness, limits, OpenAPI, exact parity, threadpool offload, runtime log evidence, health responsiveness, and the final ARM64 read-only/non-root/pip-free container pass. |
 | Security and privacy | 10 | 3 | 10 | Trusted-root loading, validation/limits/CORS/redacted logs, clean dependency audits, least-privilege CI, final-image Trivy review, expiring per-CVE mitigations, and an SPDX SBOM pass locally; remote secret/code workflows remain external evidence. |
 | Observability and operations | 10 | 0 | 9 | Bounded metrics/logs, deterministic offline monitoring, incident/rollback guides, repeated host measurements, and a zero-error 500-request final-container probe pass; provider behavior remains unmeasured. |
@@ -76,11 +76,12 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   manifest failures leave no published directory; existing empty targets are
   preserved. The executable audit's 12 commands pass twice while the missing
   serving model remains truthfully `UNAVAILABLE`/`INCOMPLETE`.
-- Frontend behavior batch: four Vitest/Testing Library component tests and two
-  production Chromium tests pass on Node 22.13.1. The browser verifies skip-link
-  focus, keyboard score changes, responsive section navigation, named status/
-  table/progress/chart semantics, a clean WCAG A/AA Axe scan, and zero requests
-  to `/v1/predict`; full npm audit reports zero vulnerabilities.
+- Frontend behavior batch: seven Vitest/Testing Library component tests and
+  three production Chromium tests pass on Node 22.13.1. The browser verifies
+  skip-link focus, keyboard score changes, responsive section navigation, named
+  status/table/progress/chart semantics, a clean WCAG A/AA Axe scan, the
+  unconfigured synthetic-demo fallback, and zero requests to `/v1/predict`;
+  full npm audit reports zero vulnerabilities.
 - Maintainability/supply-chain/documentation batch: 21 unreachable source/script
   placeholders, four zero-test files, one stale report, and the unused Streamlit
   closure were removed after reference search; all 320 tests still pass. The

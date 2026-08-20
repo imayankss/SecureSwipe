@@ -264,18 +264,21 @@ produce byte-identical evidence in separate targets. Direct Day 2–7 CLIs refus
 execution; `run_reference_stage.py` is the manifested compatibility boundary and
 its `legacy_random_*_reference` scopes are ineligible for new decisions.
 
-## D-027 — Browser behavior is tested; live mode remains container-gated
+## D-027 — Browser behavior is tested; live mode is synthetic and opt-in
 
 Status: accepted
 
 Vitest and Testing Library cover deterministic component interaction and
 screen-reader semantics without expanding the runtime bundle. A single
 Playwright Chromium gate exercises the production build, responsive/keyboard
-navigation, a WCAG A/AA Axe scan, and the static no-inference boundary. Adding
-multiple browser engines has no demonstrated reference-project benefit. The
-optional synthetic live demo is not implemented or enabled until the API image
-passes startup, readiness, inference, and vulnerability gates; this preserves
-the reviewed static fallback and avoids presenting an unverified integration.
+navigation, a WCAG A/AA Axe scan, the static no-inference boundary, and the
+unconfigured live-demo fallback. The optional demo is enabled only by the
+build-time `NEXT_PUBLIC_SECURESWIPE_API_URL` setting, posts one fixed all-zero
+synthetic feature vector to `/v1/predict`, aborts after three seconds, and
+preserves the static example for loading, timeout, unavailable, empty, and
+error outcomes. It must never accept transaction input or imply real-data
+serving. Multiple browser engines have no demonstrated reference-project
+benefit.
 
 ## D-028 — Isolate the current lock generator from the quality runtime
 

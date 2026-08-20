@@ -82,8 +82,9 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Make export check side-effect-free and checksum every public artifact.
 - [x] Fully validate metric/confusion/threshold invariants and tamper cases.
 - [x] Gate frontend build on export verification.
-- [~] Add synthetic-only optional live API demo with static fallback,
-  timeout/loading/error/empty states; the Docker prerequisite now passes.
+- [x] Add synthetic-only optional live API demo with static fallback,
+  timeout/loading/error/empty/unavailable states and focused component/browser
+  coverage; the Docker prerequisite and local API gates pass.
 - [x] Add component, keyboard, accessibility, responsive, and browser-smoke tests.
 - [x] Add Python lint/type/unit/integration/export-determinism gates.
 - [x] Add frontend lint/type/test/build/data gates.
@@ -113,7 +114,7 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 
 ## Exit audit
 
-- [~] No open P0; the optional frontend live-demo is the remaining local P1;
+- [~] No open P0; the optional frontend live-demo is now locally implemented;
   original data/model and remote CI remain documented external blockers.
 - [x] Evidence score >= 92/100 and every category >= 80%.
 - [ ] Two consecutive full quality-gate runs pass with no code changes between them.

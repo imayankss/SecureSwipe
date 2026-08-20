@@ -8,10 +8,108 @@ import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/Section";
 import { dashboardData } from "@/data/metrics";
 
-export function RiskScoreDemo() {
+const REQUEST_TIMEOUT_MS = 3_000;
+const SYNTHETIC_FEATURES = {
+  Time: 0,
+  V1: 0,
+  V2: 0,
+  V3: 0,
+  V4: 0,
+  V5: 0,
+  V6: 0,
+  V7: 0,
+  V8: 0,
+  V9: 0,
+  V10: 0,
+  V11: 0,
+  V12: 0,
+  V13: 0,
+  V14: 0,
+  V15: 0,
+  V16: 0,
+  V17: 0,
+  V18: 0,
+  V19: 0,
+  V20: 0,
+  V21: 0,
+  V22: 0,
+  V23: 0,
+  V24: 0,
+  V25: 0,
+  V26: 0,
+  V27: 0,
+  V28: 0,
+  Amount: 0,
+} as const;
+
+type LiveState =
+  | { status: "idle" }
+  | { status: "loading" }
+  | { status: "success"; decision: string; score: number }
+  | { status: "empty" }
+  | { status: "unavailable"; message: string }
+  | { status: "error"; message: string };
+
+type LivePrediction = {
+  decision?: unknown;
+  decision_score?: unknown;
+};
+
+function apiUrlFromEnvironment() {
+  return process.env.NEXT_PUBLIC_SECURESWIPE_API_URL?.trim().replace(/\/$/, "") || null;
+}
+
+function isPrediction(value: unknown): value is LivePrediction {
+  return typeof value === "object" && value !== null;
+}
+
+export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBaseUrl?: string | null } = {}) {
   const thresholdPercent = dashboardData.finalEvaluation.threshold * 100;
   const [score, setScore] = useState(thresholdPercent);
+  const [liveState, setLiveState] = useState<LiveState>({ status: "idle" });
   const requiresReview = score >= thresholdPercent;
+
+  async function runSyntheticPrediction() {
+    if (!apiBaseUrl) {
+      setLiveState({
+        status: "unavailable",
+        message: "Live demo is not configured; the safe static example remains active.",
+      });
+      return;
+    }
+
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+    setLiveState({ status: "loading" });
+    try {
+      const response = await fetch(`${apiBaseUrl}/v1/predict`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(SYNTHETIC_FEATURES),
+        signal: controller.signal,
+      });
+      if (response.status === 503) {
+        setLiveState({ status: "unavailable", message: "The reference API is not ready." });
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(`API returned ${response.status}.`);
+      }
+      const payload: unknown = await response.json();
+      if (!isPrediction(payload) || typeof payload.decision !== "string" || typeof payload.decision_score !== "number") {
+        setLiveState({ status: "empty" });
+        return;
+      }
+      setLiveState({ status: "success", decision: payload.decision, score: payload.decision_score });
+    } catch (error) {
+      const message = error instanceof DOMException && error.name === "AbortError"
+        ? "The live API timed out; the static example is still available."
+        : "The live API could not be reached; the static example is still available.";
+      setLiveState({ status: "error", message });
+    } finally {
+      window.clearTimeout(timeout);
+    }
+  }
 
   return (
     <Section
@@ -103,6 +201,39 @@ export function RiskScoreDemo() {
           <div className="mt-6 flex gap-3 rounded-lg border border-cyan-200/15 bg-cyan-300/[0.035] p-4 text-sm leading-6 text-slate-300">
             <Info className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200" aria-hidden="true" />
             The project has not calibrated this class-weighted XGBoost score as a real-world fraud probability. Production policy would also need cost, latency, monitoring, and human-review controls.
+          </div>
+          <div className="mt-6 rounded-lg border border-white/10 bg-slate-950/30 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-medium text-white">Optional synthetic API check</p>
+                <p className="mt-1 text-xs leading-5 text-slate-400">
+                  Sends an all-zero synthetic feature vector only when you opt in. No customer or transaction data is used.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={runSyntheticPrediction}
+                disabled={liveState.status === "loading"}
+                className="rounded-lg border border-cyan-200/25 bg-cyan-300/10 px-3 py-2 text-xs font-medium text-cyan-100 transition hover:bg-cyan-300/20 disabled:cursor-wait disabled:opacity-60"
+              >
+                {liveState.status === "loading" ? "Checking API…" : "Try synthetic API"}
+              </button>
+            </div>
+            <div className="mt-4" aria-live="polite">
+              {liveState.status === "idle" ? (
+                <p className="text-xs text-slate-400">Static fallback active until the API check is requested.</p>
+              ) : null}
+              {liveState.status === "loading" ? <p role="status" aria-label="Synthetic API status" className="text-sm text-cyan-100">Contacting the reference API…</p> : null}
+              {liveState.status === "success" ? (
+                <p role="status" aria-label="Synthetic API status" className="text-sm text-emerald-100">
+                  Synthetic API result: {liveState.decision} at score {liveState.score.toFixed(3)}.
+                </p>
+              ) : null}
+              {liveState.status === "empty" ? <p role="status" aria-label="Synthetic API status" className="text-sm text-amber-100">The API returned no usable prediction; static fallback remains active.</p> : null}
+              {liveState.status === "unavailable" || liveState.status === "error" ? (
+                <p role="status" aria-label="Synthetic API status" className="text-sm text-amber-100">{liveState.message}</p>
+              ) : null}
+            </div>
           </div>
         </CardContent>
       </Card>
