@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
 import re
 from pathlib import Path
 
@@ -88,6 +90,60 @@ def test_container_scan_exceptions_are_narrow_documented_and_expiring() -> None:
     assert all(set(item) == {"id", "expired_at", "statement"} for item in exceptions)
     assert all(str(item["expired_at"]) == "2026-09-20" for item in exceptions)
     assert all(len(item["statement"]) >= 50 for item in exceptions)
+
+
+def test_durable_container_scan_and_sbom_evidence_is_self_consistent() -> None:
+    evidence = ROOT / "docs/industrialization/evidence/container"
+    manifest = json.loads((evidence / "manifest.json").read_text(encoding="utf-8"))
+    scan_path = evidence / manifest["scan"]["evidence_file"]["filename"]
+    sbom_path = evidence / manifest["sbom"]["evidence_file"]["filename"]
+    for path, record in (
+        (scan_path, manifest["scan"]["evidence_file"]),
+        (sbom_path, manifest["sbom"]["evidence_file"]),
+    ):
+        assert path.stat().st_size == record["size_bytes"]
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == record["sha256"]
+
+    scan = json.loads(scan_path.read_text(encoding="utf-8"))
+    image = manifest["image"]
+    assert scan["ArtifactID"] == manifest["scan"]["artifact_id"]
+    assert scan["Metadata"]["ImageID"] == image["image_id"]
+    assert scan["Metadata"]["ImageConfig"]["architecture"] == image["architecture"]
+    labels = scan["Metadata"]["ImageConfig"]["config"]["Labels"]
+    assert labels["org.opencontainers.image.revision"] == manifest["source"]["git_revision"]
+    assert labels["org.opencontainers.image.source"] == image["oci_labels"][
+        "org.opencontainers.image.source"
+    ]
+    assert scan["Trivy"]["Version"] == manifest["scan"]["scanner"]["version"]
+
+    findings = [
+        finding
+        for result in scan["Results"]
+        for finding in result.get("Vulnerabilities") or []
+    ]
+    dispositions = {item["finding_id"]: item for item in manifest["scan"]["dispositions"]}
+    exceptions = {
+        item["id"]: item
+        for item in yaml.safe_load((ROOT / ".trivyignore.yaml").read_text(encoding="utf-8"))[
+            "vulnerabilities"
+        ]
+    }
+    assert len(findings) == manifest["scan"]["raw_finding_records"]
+    assert {item["VulnerabilityID"] for item in findings} == set(dispositions) == set(exceptions)
+    assert manifest["scan"]["policy_active_findings"] == 0
+    for finding_id, disposition in dispositions.items():
+        matching = [item for item in findings if item["VulnerabilityID"] == finding_id]
+        assert disposition["occurrence_count"] == len(matching)
+        assert disposition["packages"] == sorted(item["PkgName"] for item in matching)
+        assert {item["Severity"] for item in matching} == {disposition["severity"]}
+        assert all(not item.get("FixedVersion") for item in matching)
+        assert disposition["expires"] == str(exceptions[finding_id]["expired_at"])
+        assert disposition["statement"] == exceptions[finding_id]["statement"]
+
+    sbom = json.loads(sbom_path.read_text(encoding="utf-8"))
+    assert sbom["spdxVersion"] == manifest["sbom"]["format"]
+    assert sbom["documentNamespace"] == manifest["sbom"]["document_namespace"]
+    assert len(sbom["packages"]) == manifest["sbom"]["package_count"]
 
 
 def test_dependabot_covers_python_npm_and_actions() -> None:
