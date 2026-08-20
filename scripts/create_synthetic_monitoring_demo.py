@@ -67,6 +67,10 @@ def _fixture_bundle(reference: pd.DataFrame, labels: np.ndarray) -> ModelBundle:
 
 def generate_demo(output: Path) -> dict[str, Any]:
     reference, labels = synthetic_training_data()
+    # Numpy's transcendental functions may differ in the least-significant bits
+    # across platforms. Canonicalize the static demo inputs before calculating
+    # their monitoring fingerprints and metrics.
+    reference = reference.round(12)
     bundle = _fixture_bundle(reference, labels)
     current = reference.copy()
     current["Amount"] = current["Amount"] * 4.0 + 100.0
