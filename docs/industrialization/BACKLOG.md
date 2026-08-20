@@ -117,7 +117,7 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [~] No open P0; the optional frontend live-demo is now locally implemented;
   original data/model and remote CI remain documented external blockers.
 - [x] Evidence score >= 92/100 and every category >= 80%.
-- [ ] Two consecutive full quality-gate runs pass with no code changes between them.
+- [x] Two consecutive full quality-gate runs pass with no code changes between them.
 - [x] Golden predictions identical in evaluation and API service paths on the
   deterministic new-development fixture; real-data execution is externally blocked.
 - [x] Container startup/readiness/inference pass.

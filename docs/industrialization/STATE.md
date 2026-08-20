@@ -107,6 +107,8 @@ not included in the service or required quality runtime.
 | final ARM64 image build/runtime | PASS | image `sha256:a16cb318edec7b34407ddaaec2aa5e3ee38154abb73023929292d63013866b40`; Python 3.12.13/aarch64; healthy, read-only, UID/GID 10001, all capabilities dropped, no-new-privileges, pip absent |
 | container API/golden/load probe | PASS | live/ready/model-info/OpenAPI/metrics and exact golden response passed; 500/500 predictions, p50/p95/p99 28.33/38.08/147.06 ms, concurrent health 20.01 ms, zero errors |
 | final image Trivy/SBOM | PASS with reviewed exceptions | Trivy 0.70.0: 12 unique Debian high/critical advisories had no fix; all are individually mitigated and expire 2026-09-20; reviewed scan has zero active findings. SPDX 2.2 SBOM: 117 packages, SHA-256 `03559fcf...` |
+| final unchanged quality cycle 1 | PASS | CPython 3.12.10 quality venv and isolated official Node 22.13.1/npm 10.9.2; all 18 `run_project_audit.py --allow-missing-model --check` executable gates passed: compile, Ruff, both mypy scopes, pytest, web export, historical lock, synthetic monitoring, four pip audits, sdist/wheel build and inventory, frontend test/build/Chromium, and npm audit. The clean Darwin API lock installed, passed `pip check`, installed the freshly built wheel, removed `pip`, and imported `api.main` plus `ModelBundle` from `/tmp`. Audit status remained `INCOMPLETE` only because no serving bundle is configured. |
+| final unchanged quality cycle 2 | PASS | Same CPython 3.12.10 quality venv and the same verified isolated official Node 22.13.1/npm 10.9.2; the identical 18 audit gates and separate clean pip-free Darwin API wheel-import proof all passed again. No tracked source, configuration, or control file changed between the two successful cycles. Audit status remained `INCOMPLETE` only because no serving bundle is configured. |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -346,13 +348,15 @@ requirements are time-sensitive selection inputs.
 
 ## Next executable action
 
-Run two unchanged full quality cycles and the final independent adversarial
-audit. This phase intentionally did not run those full cycles.
+Run the final independent adversarial audit. The two unchanged full quality
+cycles were completed locally on 2026-08-20; the adversarial audit was not run
+in this session by owner instruction.
 
-Acceptance: the live-demo boundary and fallback tests pass; all 343+
-Python tests, lint, both mypy scopes, evidence checks, four dependency audits,
-clean wheel proof, and frontend unit/build/browser/audit gates pass twice with no
-code change; the final re-audit finds no new local P0/P1.
+Completed acceptance: the live-demo boundary and fallback tests pass; compile,
+lint, both mypy scopes, Python tests, evidence checks, four dependency audits,
+clean wheel proof, and frontend unit/build/browser/audit gates passed twice with
+no tracked code or configuration change. Remaining acceptance: the final
+independent re-audit finds no new local P0/P1.
 
 ## External blockers and user action
 
