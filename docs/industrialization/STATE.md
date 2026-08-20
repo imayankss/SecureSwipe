@@ -9,8 +9,8 @@ Last updated: 2026-08-20 (Asia/Kolkata)
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
 - Implementation commit audited by this state snapshot:
-  `6e260c4f9966c0d83e5edb3ccd423d7070d40381` (scientific evidence provenance
-  and separate deterministic Darwin/Linux dependency closures). The control-file
+  `77c2664390df8605727ed209bf81156f15d1658d` (verified container runtime,
+  pinned OS fixes, and expiring scan exceptions). The control-file
   commit containing this snapshot is intentionally one commit later; obtain it
   with `git log -1 --format=%H -- docs/industrialization/STATE.md`.
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
@@ -23,8 +23,8 @@ Last updated: 2026-08-20 (Asia/Kolkata)
 - Python: CPython 3.12.10, isolated environment at `.venv`
 - Node.js used for final verified frontend checks: isolated official 22.13.1;
   npm 10.9.2 (baseline host runtime was 22.11.0/npm 10.9.0)
-- Docker client: 27.3.1, arm64; Docker daemon is currently stopped. It ran the
-  pre-lock-split ARM64 smoke successfully, but the final image must be rebuilt.
+- Docker client/server: 27.3.1 on Apple M2; Buildx supports arm64 and amd64.
+  The final ARM64 image was built and verified locally.
 - GitHub CLI: not installed; no push, PR, release, or deployment attempted
 
 The baseline `requirements.txt` had no version bounds. It has been replaced by
@@ -104,6 +104,9 @@ not included in the service or required quality runtime.
 | taint-aware scientific workflow regression | PASS | 339 tests, Ruff, 28-file mypy, historical lock, and web export pass; two synthetic development runs produce byte-identical real bundle/evidence and exact service parity |
 | evidence-provenance and platform-lock regression | PASS | 342 tests in 17.40 s; Ruff; 29-file mypy; 40 focused adversarial tests; four dependency audits clean |
 | four-lock regeneration | PASS | two byte-identical passes: Darwin API `465ca25d...`, Linux API `b72a0222...`, Darwin quality `b6a31eb7...`, Linux quality `b033c14e...`; Linux locks contain `xgboost-cpu` and no NVIDIA packages |
+| final ARM64 image build/runtime | PASS | image `sha256:a16cb318edec7b34407ddaaec2aa5e3ee38154abb73023929292d63013866b40`; Python 3.12.13/aarch64; healthy, read-only, UID/GID 10001, all capabilities dropped, no-new-privileges, pip absent |
+| container API/golden/load probe | PASS | live/ready/model-info/OpenAPI/metrics and exact golden response passed; 500/500 predictions, p50/p95/p99 28.33/38.08/147.06 ms, concurrent health 20.01 ms, zero errors |
+| final image Trivy/SBOM | PASS with reviewed exceptions | Trivy 0.70.0: 12 unique Debian high/critical advisories had no fix; all are individually mitigated and expire 2026-09-20; reviewed scan has zero active findings. SPDX 2.2 SBOM: 117 packages, SHA-256 `03559fcf...` |
 
 Limited tracked-file and Git-history signature searches found no committed
 credential, private key, Kaggle credential file, raw CSV, or model artifact.
@@ -310,11 +313,12 @@ the entire known corpus is ineligible for new decisions.
 
 ### P1
 
-No open scientific or application-code P1 remains. The deterministic curation
+No open scientific, backend, container, or supply-chain P1 remains. The deterministic curation
 and four-role workflow are synthetic-tested, including operator-attested exact-
 file approval, taint propagation, score recomputation, paired selection evidence,
 calibration, reusable forward backtest, atomic real-bundle packaging, and exact
-direct/reloaded/API parity. Final container execution/scan remains in progress.
+direct/reloaded/API parity. The remaining local P1 is the optional synthetic-only
+frontend live-demo mode now that the container gate has passed.
 
 External evidence blockers remain:
 
@@ -323,26 +327,23 @@ External evidence blockers remain:
   serving bundle is claimed. Example cost assumptions remain non-policy.
 - Applying the verified SHAP protocol to the historical ranking is blocked by
   the absent original model and aligned sample row identities.
-- Optional synthetic live-demo mode remains deliberately disabled until the
-  rebuilt API image passes startup, readiness, inference, and scan gates.
 - Workflow definitions have not run on GitHub because pushing is not authorized.
 - Current checkout cannot reproduce the original-data evaluation because the
   intentionally uncommitted CSV and fitted artifacts are unavailable.
 
 ### P2
 
-No open locally actionable P2 remains. Provider comparison is intentionally
-deferred until the Docker gate passes because pricing, free-tier, cold-start,
-architecture, and secret requirements are time-sensitive selection inputs.
+No open locally actionable P2 remains. Provider comparison remains a later
+product choice because pricing, free-tier, cold-start, architecture, and secret
+requirements are time-sensitive selection inputs.
 
 ## Next executable action
 
-Start Docker Desktop; rebuild the final ARM64 image from the Linux CPU lock; run
-startup/readiness/inference, non-root/read-only/pip-free/log/load checks; scan it
-for high/critical findings and generate an SBOM. Then run two unchanged full
-quality cycles and the final independent adversarial audit.
+Add the optional synthetic-only frontend live-demo mode with static fallback,
+timeout/loading/error/empty states and browser/component coverage. Then run two
+unchanged full quality cycles and the final independent adversarial audit.
 
-Acceptance: container golden response and security/runtime checks pass; all 342
+Acceptance: the live-demo boundary and fallback tests pass; all 343+
 Python tests, lint, both mypy scopes, evidence checks, four dependency audits,
 clean wheel proof, and frontend unit/build/browser/audit gates pass twice with no
 code change; the final re-audit finds no new local P0/P1.
@@ -353,6 +354,5 @@ code change; the final re-audit finds no new local P0/P1.
   official flow and place it at `data/raw/creditcard.csv`; it remains
   reference-only. Real decision evidence requires a separate authorized corpus.
   Never commit either data file or `kaggle.json`.
-- Container validation: Docker Desktop must be running. No paid service is needed.
 - Push, PR, release, public deployment, DNS, or paid infrastructure: not
   authorized and will require explicit confirmation immediately before action.

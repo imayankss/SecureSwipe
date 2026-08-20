@@ -67,8 +67,9 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Configurable explicit CORS allowlist and request-body cap.
 - [x] Replace Dockerfile, add `.dockerignore`, non-root user, pinned runtime, and health check.
 - [x] Remove the unnecessary package installer from the final runtime image.
-- [~] Rebuild and test linux/arm64 image startup/readiness/inference from the final lock.
-- [~] Scan the rebuilt image and produce an SBOM.
+- [x] Rebuild and test linux/arm64 image startup/readiness/inference from the final lock.
+- [x] Scan the rebuilt image and produce an SPDX SBOM; individually reviewed
+  no-fix Debian exceptions expire 2026-09-20.
 - [x] Add bounded latency/request/error/score-distribution metrics.
 - [x] Implement deterministic offline drift monitor with synthetic shifted demonstration.
 - [x] Run local load test and record p50/p95/p99/error rate.
@@ -81,9 +82,8 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Make export check side-effect-free and checksum every public artifact.
 - [x] Fully validate metric/confusion/threshold invariants and tamper cases.
 - [x] Gate frontend build on export verification.
-- [B] Add synthetic-only optional live API demo with static fallback,
-  timeout/loading/error/empty states; deliberately gated on Docker image startup,
-  readiness, inference, and scan evidence.
+- [~] Add synthetic-only optional live API demo with static fallback,
+  timeout/loading/error/empty states; the Docker prerequisite now passes.
 - [x] Add component, keyboard, accessibility, responsive, and browser-smoke tests.
 - [x] Add Python lint/type/unit/integration/export-determinism gates.
 - [x] Add frontend lint/type/test/build/data gates.
@@ -113,12 +113,12 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 
 ## Exit audit
 
-- [~] No open locally actionable P0/P1; final container gates are in progress;
+- [~] No open P0; the optional frontend live-demo is the remaining local P1;
   original data/model and remote CI remain documented external blockers.
 - [x] Evidence score >= 92/100 and every category >= 80%.
 - [ ] Two consecutive full quality-gate runs pass with no code changes between them.
 - [x] Golden predictions identical in evaluation and API service paths on the
   deterministic new-development fixture; real-data execution is externally blocked.
-- [ ] Container startup/readiness/inference pass.
-- [ ] Security/dependency scans have no unresolved high/critical issue or justified exception.
+- [x] Container startup/readiness/inference pass.
+- [x] Security/dependency scans have no unresolved high/critical issue or justified exception.
 - [ ] Independent adversarial re-audit finds no new P0/P1.

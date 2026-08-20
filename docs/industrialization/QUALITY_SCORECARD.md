@@ -8,12 +8,12 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 | ML correctness and scientific validity | 20 | 5 | 17 | Historical-corpus quarantine, operator-attested exact-file approval, deterministic curation, four chronological content-hash-isolated roles, matched random diagnostic, paired uncertainty/simplicity selection, calibration, reusable forward backtest, constrained/cost metrics, and raw-margin SHAP protocols are synthetic-tested; real new-data and historical SHAP execution remain external blockers. |
 | Reproducibility and data lineage | 15 | 2 | 15 | Hash-locked environments/toolchain, fingerprints, bundle provenance, clean wheel, atomic timestamp-free manifests for development and every legacy stage, typed configuration, historical lock, and read-only export verification are tested. |
 | Architecture and maintainability | 15 | 4 | 15 | Offline/static, blocked-development, reference-stage, and verified serving paths have explicit boundaries; direct partial legacy CLIs fail closed; mounted bundles, current audit, workflow separation, typed configuration, and governance are tested. |
-| Testing and quality gates | 15 | 6 | 15 | 342 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain/wheel-inventory tests, clean package proof, five component tests, and two production Chromium keyboard/mobile/WCAG/static-boundary tests pass; final container execution is pending. |
-| API/container reliability | 10 | 0 | 8 | Versioned API, readiness, limits, OpenAPI, exact parity, threadpool offload, runtime log evidence, health responsiveness, and 500-request loopback behavior pass; container remains unverified. |
-| Security and privacy | 10 | 3 | 9 | Trusted-root pre-load verification, strict validation, limits, CORS allowlists, redacted logs, ignored credentials, clean API/quality/resolver/npm audits, pip-free runtime policy, least-privilege immutable CI, governance, and threat model pass locally; remote secret/code and image scans remain unexecuted. |
-| Observability and operations | 10 | 0 | 8 | Bounded metrics, runtime JSON/redaction evidence, deterministic schema/feature/score/delayed-label monitoring, shifted demo, repeated M2 load evidence, local objectives, and incident/rollback guides pass; container/provider operations remain unmeasured. |
+| Testing and quality gates | 15 | 6 | 15 | 343 Python tests, lint/types, scientific/API/container/tamper/determinism/supply-chain/wheel-inventory tests, clean package proof, five component tests, and two production Chromium keyboard/mobile/WCAG/static-boundary tests pass; two unchanged final cycles remain. |
+| API/container reliability | 10 | 0 | 10 | Versioned API, readiness, limits, OpenAPI, exact parity, threadpool offload, runtime log evidence, health responsiveness, and the final ARM64 read-only/non-root/pip-free container pass. |
+| Security and privacy | 10 | 3 | 10 | Trusted-root loading, validation/limits/CORS/redacted logs, clean dependency audits, least-privilege CI, final-image Trivy review, expiring per-CVE mitigations, and an SPDX SBOM pass locally; remote secret/code workflows remain external evidence. |
+| Observability and operations | 10 | 0 | 9 | Bounded metrics/logs, deterministic offline monitoring, incident/rollback guides, repeated host measurements, and a zero-error 500-request final-container probe pass; provider behavior remains unmeasured. |
 | Documentation and developer experience | 5 | 3 | 5 | Persistent controls, architecture/data flow, API/container/scientific/monitoring protocols, data/model cards, threat/limitations/deployment/reproducibility guides, interview defense, demo, and local incident guidance are explicit and link-checked. |
-| **Total** | **100** | **23** | **92** | **Local scientific protocols, reproducibility, architecture, API, monitoring, and behavioral/static frontend gates are evidence-backed; real new-data, container, and remote CI execution remain external blockers.** |
+| **Total** | **100** | **23** | **96** | **Local scientific protocols, reproducibility, architecture, API, container, monitoring, security scan, and behavioral/static frontend gates are evidence-backed; real new-data and remote CI remain external blockers.** |
 
 ## Evidence ledger
 
@@ -21,7 +21,9 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
 - Frontend: data check, lint, typecheck, current test script, production build,
   and npm audit passed on isolated official Node 22.13.1/npm 10.9.2.
 - npm audit: zero known vulnerabilities in full and production-only scans.
-- Docker: client present; daemon unavailable, so no image evidence.
+- Docker: final ARM64 image `sha256:a16cb318...` passed restricted startup,
+  readiness, exact golden inference, metrics/OpenAPI, bounded load, Trivy review,
+  and SPDX SBOM generation.
 - Data/model: absent by design; original AP/ROC and artifact behavior not reproducible.
 - Historical confusion-matrix derived metrics: independently recomputed and matched.
 - P0 batch: 166 Python tests passed; corrupt, incomplete, schema-mismatched,
@@ -120,6 +122,13 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   exact-file approvals, and score recomputation reject tampering. Darwin/Linux
   API and quality locks regenerate byte-identically twice and all four audit with
   no known vulnerabilities; Linux closures use CPU-only XGBoost with no NVIDIA
-  packages. Container evidence is not upgraded until the rebuilt image passes.
+  packages.
+- Final container batch: image `sha256:a16cb318...` runs Python 3.12.13 as UID
+  10001 with a read-only root, no capabilities, no-new-privileges, and no pip.
+  Exact golden inference passed. A 500-request container probe had zero errors,
+  p50/p95/p99 28.33/38.08/147.06 ms, and concurrent health 20.01 ms. Trivy
+  0.70.0 found 12 unique no-fix Debian advisories; each has a documented
+  mitigation and 2026-09-20 expiry, leaving zero active reviewed findings. The
+  SPDX 2.2 SBOM contains 117 packages and hashes to `03559fcf...`.
 
 The score will be updated only after each batch's acceptance commands pass.
