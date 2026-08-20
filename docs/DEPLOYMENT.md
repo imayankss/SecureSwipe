@@ -2,8 +2,9 @@
 
 ## Current status
 
-- Frontend: a static Next.js deployment configuration exists under `web/`; no
-  live URL is recorded or independently verified in this repository.
+- Frontend: the static Next.js portfolio dashboard is deployed on Vercel at
+  `https://secure-swipe.vercel.app`. The Vercel project root is `web/`; it
+  deploys no FastAPI service, model bundle, raw data, or environment file.
 - Backend: no public deployment is authorized or verified.
 - Model storage: no external store is selected; bundles remain ignored local
   artifacts mounted read-only for container testing.
@@ -13,6 +14,39 @@
 Do not describe this state as a production deployment. Pushes, pull requests,
 releases, public deployments, DNS changes, and paid resources require explicit
 owner confirmation immediately before the action.
+
+## Static frontend deployment record
+
+- Provider: Vercel (local CLI deployment; no GitHub connection or push).
+- Public URL: `https://secure-swipe.vercel.app`
+- Deployed: 2026-08-20 (Asia/Kolkata).
+- Exact deployed frontend source commit:
+  `943d021c4757ac4102615eb26ceca0cf476baa76` (`Configure standalone Vercel
+  frontend build`). This commit configures Vercel to run `next build` because
+  the deployable `web/` directory intentionally does not include the parent
+  Python exporter; the local release gate still runs `npm run data:check`.
+- Environment variables: none. In particular,
+  `NEXT_PUBLIC_SECURESWIPE_API_URL` is unset, so the optional synthetic API
+  check has no configured origin and the static fallback remains active.
+- Verification results:
+  - Node 22.13.1: `npm test` passed (7 tests), `npm run build` passed (two
+    statically prerendered routes), and `npm audit --audit-level=high` reported
+    0 vulnerabilities.
+  - `curl -sS -D - -o /dev/null https://secure-swipe.vercel.app/` returned
+    HTTP 200 with `connect-src 'self'`, `X-Frame-Options: DENY`,
+    `X-Content-Type-Options: nosniff`, and the stated referrer and permissions
+    policies.
+  - Browser verification found the visible locked-historical,
+    already-observed-random-holdout, portfolio/educational, and non-production
+    limitations. No backend request occurs by default; the static fallback is
+    visible until an API check is explicitly requested.
+  - The deployed HTML and JavaScript were checked for the local Vercel OIDC
+    credential marker, Kaggle credential filename, private-key marker, and
+    common live-key prefixes; none was present. The bundled client code retains
+    the optional API feature name and `/v1/predict` implementation, but no API
+    origin or credential is configured.
+- No backend, API, model artifact, raw transaction data, Kaggle data, or
+  credential is publicly deployed.
 
 ## Local release-candidate gates
 
