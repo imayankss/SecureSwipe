@@ -83,6 +83,20 @@ MODEL_DISPLAY_NAMES = {
     "xgboost_baseline": "XGBoost",
 }
 
+ILLUSTRATIVE_COST_SCENARIO_LABEL = (
+    "Illustrative cost scenario — not Razorpay economics / not business savings"
+)
+ILLUSTRATIVE_COST_ASSUMPTIONS = {
+    "falsePositiveCost": 10.0,
+    "falseNegativeCost": 100.0,
+    "reviewCost": 1.0,
+    "recoveryRate": 0.5,
+}
+ILLUSTRATIVE_COST_FORMULA = (
+    "(TP + FP) × review cost + FP × false-positive cost + FN × false-negative cost "
+    "+ TP × false-negative cost × (1 − recovery rate)"
+)
+
 
 def _read_text(path: Path) -> str:
     if not path.is_file():
@@ -531,6 +545,37 @@ def _selection_methodology(selected_threshold: float) -> str:
     )
 
 
+def _illustrative_cost_scenario(final: Mapping[str, Any]) -> dict[str, Any]:
+    """Expose only deterministic arithmetic over locked aggregate confusion counts."""
+    tp = int(final["true_positives"])
+    fp = int(final["false_positives"])
+    fn = int(final["false_negatives"])
+    tn = int(final["true_negatives"])
+    total_transactions = int(final["total_samples"])
+    review_workload = tp + fp
+    if review_workload + fn + tn != total_transactions:
+        raise ValueError("Illustrative scenario does not reconcile to final confusion counts.")
+    return {
+        "label": ILLUSTRATIVE_COST_SCENARIO_LABEL,
+        "source": "reports/final/final_model_evaluation.json",
+        "currency": "USD",
+        "timeHorizon": (
+            f"One already-observed historical test split ({total_transactions:,} transactions); "
+            "not a monthly or annual forecast."
+        ),
+        "formula": ILLUSTRATIVE_COST_FORMULA,
+        "assumptions": ILLUSTRATIVE_COST_ASSUMPTIONS,
+        "confusion": {
+            "truePositives": tp,
+            "falsePositives": fp,
+            "falseNegatives": fn,
+            "trueNegatives": tn,
+            "reviewWorkload": review_workload,
+            "totalTransactions": total_transactions,
+        },
+    }
+
+
 def build_web_payload() -> dict[str, Any]:
     verify_historical_observation(HISTORICAL_LOCK, PROJECT_ROOT)
     dataset = _parse_dataset_summary()
@@ -615,6 +660,7 @@ def build_web_payload() -> dict[str, Any]:
                 "so the dashboard does not claim an economic optimum."
             ),
         },
+        "illustrativeCostScenario": _illustrative_cost_scenario(final_evaluation),
         "explainability": {
             "method": "SHAP mean absolute feature importance",
             "split": "validation sample",

@@ -4,6 +4,7 @@ import { DataProvenance } from "@/components/DataProvenance";
 import { Footer } from "@/components/Footer";
 import { GithubCTA } from "@/components/GithubCTA";
 import { Hero } from "@/components/Hero";
+import { IllustrativeCostScenario } from "@/components/IllustrativeCostScenario";
 import { Methodology } from "@/components/Methodology";
 import { ModelPerformance } from "@/components/ModelPerformance";
 import { Navigation } from "@/components/Navigation";
@@ -31,6 +32,7 @@ export default function Home() {
         <PipelineTimeline />
         <ModelPerformance />
         <ThresholdCards />
+        <IllustrativeCostScenario />
         <ConfusionMatrix />
         <CurveAnalysis />
         <ShapSection />

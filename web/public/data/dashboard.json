@@ -1682,6 +1682,27 @@
     "costAnalysisAvailable": false,
     "costAnalysisNote": "No defensible fraud-loss or manual-review cost assumptions are tracked, so the dashboard does not claim an economic optimum."
   },
+  "illustrativeCostScenario": {
+    "label": "Illustrative cost scenario — not Razorpay economics / not business savings",
+    "source": "reports/final/final_model_evaluation.json",
+    "currency": "USD",
+    "timeHorizon": "One already-observed historical test split (42,722 transactions); not a monthly or annual forecast.",
+    "formula": "(TP + FP) × review cost + FP × false-positive cost + FN × false-negative cost + TP × false-negative cost × (1 − recovery rate)",
+    "assumptions": {
+      "falsePositiveCost": 10.0,
+      "falseNegativeCost": 100.0,
+      "reviewCost": 1.0,
+      "recoveryRate": 0.5
+    },
+    "confusion": {
+      "truePositives": 62,
+      "falsePositives": 27,
+      "falseNegatives": 12,
+      "trueNegatives": 42621,
+      "reviewWorkload": 89,
+      "totalTransactions": 42722
+    }
+  },
   "explainability": {
     "method": "SHAP mean absolute feature importance",
     "split": "validation sample",

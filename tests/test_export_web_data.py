@@ -25,10 +25,53 @@ def test_web_payload_matches_locked_project_outputs() -> None:
     assert payload["finalEvaluation"]["true_positives"] == 62
     assert len(payload["thresholdAnalysis"]["points"]) == 99
     assert payload["thresholdAnalysis"]["costAnalysisAvailable"] is False
+    scenario = payload["illustrativeCostScenario"]
+    assert scenario["label"] == (
+        "Illustrative cost scenario — not Razorpay economics / not business savings"
+    )
+    assert scenario["currency"] == "USD"
+    assert scenario["assumptions"] == {
+        "falsePositiveCost": 10.0,
+        "falseNegativeCost": 100.0,
+        "reviewCost": 1.0,
+        "recoveryRate": 0.5,
+    }
+    assert scenario["confusion"] == {
+        "truePositives": 62,
+        "falsePositives": 27,
+        "falseNegatives": 12,
+        "trueNegatives": 42_621,
+        "reviewWorkload": 89,
+        "totalTransactions": 42_722,
+    }
+    assert "TP + FP" in scenario["formula"]
+    assert "not a monthly or annual forecast" in scenario["timeHorizon"]
     assert payload["explainability"]["features"][0]["feature"] == "V4"
     assert payload["curves"]["precisionRecall"]["averagePrecision"] == 0.8129
     assert "0.53" in payload["methodology"]["selection"]
     assert "future-performance guarantee" in payload["methodology"]["selection"]
+
+
+def test_illustrative_scenario_uses_its_validated_aggregate_fixture() -> None:
+    scenario = exporter._illustrative_cost_scenario(
+        {
+            "true_positives": 2,
+            "false_positives": 3,
+            "false_negatives": 4,
+            "true_negatives": 11,
+            "total_samples": 20,
+        }
+    )
+
+    assert scenario["confusion"] == {
+        "truePositives": 2,
+        "falsePositives": 3,
+        "falseNegatives": 4,
+        "trueNegatives": 11,
+        "reviewWorkload": 5,
+        "totalTransactions": 20,
+    }
+    assert "20 transactions" in scenario["timeHorizon"]
 
 
 def test_web_payload_verifies_historical_lock_before_export(
