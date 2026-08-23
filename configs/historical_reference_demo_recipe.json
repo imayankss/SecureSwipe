@@ -1,5 +1,5 @@
 {
-  "approval_status": "unapproved",
+  "approval_status": "approved",
   "candidate_identity_status": "pending_independent_verification",
   "candidate_sources": {
     "x_train": {
