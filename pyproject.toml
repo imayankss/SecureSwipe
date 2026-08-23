@@ -17,6 +17,9 @@ authors = [
 where = ["."]
 include = ["src*", "api*"]
 
+[tool.setuptools.package-data]
+"src.artifacts" = ["bundle_v3_producer_policies.json"]
+
 [tool.pytest.ini_options]
 minversion = "7.0"
 pythonpath = ["."]

@@ -19,6 +19,9 @@ from scripts.run_development_training import run_development_training
 from src.artifacts.bundle import sha256_file
 from src.preprocessing.feature_config import REQUIRED_COLUMNS
 from tests.historical_quarantine_helpers import (
+    SYNTHETIC_QUARANTINE_FRAUD,
+    SYNTHETIC_QUARANTINE_ROWS,
+    approved_quarantine_environment,
     write_nonoverlapping_quarantine,
 )
 from tests.source_approval_helpers import write_source_approval
@@ -59,14 +62,14 @@ def _training_run(directory: Path) -> tuple[dict[str, Path], dict[str, Path]]:
     )
     training_dir = directory / "training"
     quarantine, quarantine_anchor = write_nonoverlapping_quarantine(directory)
-    with patch.object(
-        quarantine_module,
-        "DEFAULT_HISTORICAL_QUARANTINE_ANCHOR",
-        quarantine_anchor,
-    ), patch.object(
-        quarantine_module, "HISTORICAL_TEST_ROWS", 2
-    ), patch.object(
-        quarantine_module, "HISTORICAL_TEST_FRAUD", 1
+    with (
+        patch.object(
+            quarantine_module,
+            "DEFAULT_HISTORICAL_QUARANTINE_ANCHOR",
+            quarantine_anchor,
+        ),
+        patch.object(quarantine_module, "HISTORICAL_TEST_ROWS", 2),
+        patch.object(quarantine_module, "HISTORICAL_TEST_FRAUD", 1),
     ):
         training = run_development_training(
             curated_path=curated["curated_dataset"],
@@ -77,20 +80,28 @@ def _training_run(directory: Path) -> tuple[dict[str, Path], dict[str, Path]]:
             bootstrap_resamples=100,
         )
     training["scores"] = training_dir / "development_scores.csv"
+    training["quarantine_anchor"] = quarantine_anchor
     return curated, training
 
 
 def _analyze(
     *, directory: Path, curated: dict[str, Path], training: dict[str, Path]
 ) -> dict[str, Path]:
-    return run_development_analysis(
-        scores_path=training["scores"],
-        curated_path=curated["curated_dataset"],
-        curation_record_path=curated["curation_record"],
-        training_run_manifest_path=training["run_manifest"],
-        scenarios_path=ROOT / "configs" / "cost_scenarios.example.yaml",
-        output_dir=directory,
-    )
+    anchor = training["quarantine_anchor"]
+    with approved_quarantine_environment(
+        anchor,
+        anchor.parent,
+        rows=SYNTHETIC_QUARANTINE_ROWS,
+        fraud=SYNTHETIC_QUARANTINE_FRAUD,
+    ):
+        return run_development_analysis(
+            scores_path=training["scores"],
+            curated_path=curated["curated_dataset"],
+            curation_record_path=curated["curation_record"],
+            training_run_manifest_path=training["run_manifest"],
+            scenarios_path=ROOT / "configs" / "cost_scenarios.example.yaml",
+            output_dir=directory,
+        )
 
 
 def test_verified_analysis_is_deterministic_and_post_training_only(tmp_path: Path) -> None:

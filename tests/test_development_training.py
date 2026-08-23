@@ -29,9 +29,7 @@ def _authorized_source(path: Path) -> Path:
         "Amount": 1.25 + indices % 31,
     }
     for feature in range(1, 29):
-        values[f"V{feature}"] = (
-            np.sin(indices * (feature + 1) / 23.0) + indices / 10_000
-        )
+        values[f"V{feature}"] = np.sin(indices * (feature + 1) / 23.0) + indices / 10_000
     values["Class"] = ((indices.astype(int) % 7) == 0).astype(int)
     pd.DataFrame(values, columns=REQUIRED_COLUMNS).to_csv(path, index=False)
     return path
@@ -86,10 +84,23 @@ def test_new_authorized_data_reaches_verified_bundle_with_service_parity(
         bootstrap_resamples=100,
     )
 
-    bundle = load_model_bundle(
-        outputs["bundle_manifest"], trusted_root=tmp_path / "training-run"
-    )
+    bundle = load_model_bundle(outputs["bundle_manifest"], trusted_root=tmp_path / "training-run")
     assert bundle.model_version.startswith("development-")
+    bundle_manifest = json.loads(outputs["bundle_manifest"].read_text(encoding="utf-8"))
+    declared_roles = bundle_manifest["training_provenance"]["data_roles"]
+    assert all(
+        declared_roles[role] is not None
+        for role in (
+            "model_fit",
+            "calibrator_fit",
+            "threshold_selection",
+            "evaluation",
+        )
+    )
+    assert (
+        bundle_manifest["training_data_fingerprint"]
+        == bundle_manifest["training_provenance"]["data_roles_sha256"]
+    )
     selection = json.loads(outputs["selection"].read_text(encoding="utf-8"))
     assert selection["backtest_was_not_used_during_selection"] is True
     assert selection["selected_model"] in _factories()
@@ -119,24 +130,24 @@ def test_new_authorized_data_reaches_verified_bundle_with_service_parity(
         "historical_quarantine_anchor",
         "source_approval",
     }
-    assert manifest["inputs"]["source_approval"]["sha256"] == manifest["outputs"][
-        "source_approval"
-    ]["sha256"]
-    assert manifest["inputs"]["historical_quarantine"]["sha256"] == sha256_file(
-        quarantine
+    assert (
+        manifest["inputs"]["source_approval"]["sha256"]
+        == manifest["outputs"]["source_approval"]["sha256"]
     )
-    assert manifest["inputs"]["historical_quarantine_anchor"][
-        "sha256"
-    ] == sha256_file(quarantine_anchor)
+    assert manifest["inputs"]["historical_quarantine"]["sha256"] == sha256_file(quarantine)
+    assert manifest["inputs"]["historical_quarantine_anchor"]["sha256"] == sha256_file(
+        quarantine_anchor
+    )
     quarantine_evidence = manifest["parameters"]
     assert quarantine_evidence["historical_quarantine_total_row_count"] == 2
     assert quarantine_evidence["historical_quarantine_unique_row_count"] == 2
     assert quarantine_evidence["historical_quarantine_duplicate_row_count"] == 0
     assert quarantine_evidence["historical_quarantine_fraud_count"] == 1
     assert quarantine_evidence["historical_quarantine_overlap_rows"] == 0
-    assert json.loads((tmp_path / "training-run" / "source_approval.json").read_text())[
-        "reviewed_by"
-    ] == "test-fixture-reviewer"
+    assert (
+        json.loads((tmp_path / "training-run" / "source_approval.json").read_text())["reviewed_by"]
+        == "test-fixture-reviewer"
+    )
     assert "bundle/manifest.json" in manifest["outputs"]
     first_files = {
         path.relative_to(tmp_path / "training-run"): path.read_bytes()

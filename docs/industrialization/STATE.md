@@ -270,9 +270,10 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
 - Removed the now-vulnerable, operationally unnecessary pip installer from the
   final API image; a clean pip-free environment still imports the packaged API
   and bundle code, while Docker scan evidence remains explicitly blocked.
-- Closed the adversarial bundle/class-runtime gap with bundle format 2: explicit
-  positive-label/index semantics, SciPy/XGBoost pre-load version checks, and a
-  checksummed synthetic end-to-end compatibility probe before readiness.
+- Closed the original bundle/class-runtime gap with explicit positive-label/index
+  semantics, SciPy/XGBoost pre-load version checks, and a checksummed synthetic
+  compatibility probe; Bundle Format v3 supersedes v2 with immutable, policy-bound
+  provenance and descriptor-safe verification/publication.
 - Strengthened container workflow intent to compare score/decision/threshold
   semantics and prove UID 10001 plus pip absence in the final image.
 - Removed `--only-verified` from the full-history secret scan so revoked,

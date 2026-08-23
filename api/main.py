@@ -374,6 +374,11 @@ def create_app(
             operating_threshold=info.operating_threshold,
             feature_schema=list(info.feature_schema),
             training_data_fingerprint=info.training_data_fingerprint,
+            evidence_category=info.evidence_category,
+            historical_taint=info.historical_taint,
+            decision_eligible=info.decision_eligible,
+            historical_metrics_claimed=info.historical_metrics_claimed,
+            evaluation_performed=info.evaluation_performed,
         )
 
     @application.post(

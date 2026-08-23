@@ -319,13 +319,15 @@ inference, bounded load, reviewed Trivy high/critical scanning, and SBOM gates.
 
 Status: accepted
 
-Bundle format 2 records the fraud label and its exact probability-column index,
+Bundle Format v3 records the fraud label and its exact probability-column index,
 rejects any model or probabilistic calibrator whose fitted classes are not
 exactly `[0, 1]`, and records SciPy/XGBoost alongside the core Python runtime.
-Every payload and runtime dependency is verified before deserialization. After
-deserialization, a checksummed fixed synthetic raw-feature probe must traverse
-the fitted preprocessor, estimator, optional calibrator, and score-integrity
-checks within a fixed numerical tolerance before the bundle can become ready.
+It also binds immutable intended-use, threshold, producer-policy, recipe, data-role,
+and quarantine provenance. Every manifest field, payload hash, and runtime
+dependency is verified before deserialization from the exact retained byte
+snapshot. After deserialization, a checksummed fixed synthetic raw-feature probe
+must traverse the fitted preprocessor, estimator, optional calibrator, and
+score-integrity checks within a fixed numerical tolerance before the bundle can become ready.
 The probe contains no source transaction. Container CI compares the complete
 synthetic response and checks the final UID and absence of pip; this workflow is
 still intent, not execution evidence, until Docker/GitHub run it.

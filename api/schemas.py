@@ -6,6 +6,7 @@ from typing import Annotated, Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field, FiniteFloat
 
+from src.artifacts.bundle import EvidenceCategory
 from src.preprocessing.feature_config import ALL_FEATURES
 
 API_SCHEMA_VERSION: Literal["1.0"] = "1.0"
@@ -109,6 +110,11 @@ class ModelInfoResponse(StrictContract):
     operating_threshold: float
     feature_schema: list[str]
     training_data_fingerprint: str
+    evidence_category: EvidenceCategory
+    historical_taint: bool
+    decision_eligible: bool
+    historical_metrics_claimed: bool
+    evaluation_performed: bool
 
 
 class ErrorDetail(StrictContract):

@@ -1,0 +1,153 @@
+{
+  "format_version": "1",
+  "policies": {
+    "historical_reference_demo_v1": {
+      "evidence_category": "historical_reference_demo_inference",
+      "intended_use": {
+        "decision_eligible": false,
+        "evaluation_performed": false,
+        "historical_metrics_claimed": false,
+        "historical_taint": true
+      },
+      "model_version_pattern": "^historical-reference-[a-z0-9.-]+-demo-v[0-9]+$",
+      "recipe": {
+        "configuration": {
+          "calibration": "none",
+          "evaluation": "prohibited",
+          "historical_test_access": "prohibited",
+          "model_family": "xgboost_binary_classifier",
+          "selection": "none",
+          "training_mode": "fixed_quarantine_filtered_historical_reference"
+        },
+        "name": "historical-reference-demo-training",
+        "version": "1"
+      },
+      "required_roles": {
+        "calibrator_fit": false,
+        "evaluation": false,
+        "model_fit": true,
+        "threshold_selection": false
+      },
+      "threshold": {
+        "calibration_binding": "false",
+        "cost_optimal": false,
+        "fixed_value": 0.53,
+        "model_linkage": "unverified_for_current_runtime_reference_model",
+        "production_approved": false,
+        "purpose": "demo_human_review_policy_only",
+        "razorpay_approved": false,
+        "source": "historical_validation_selected_threshold"
+      }
+    },
+    "new_authorized_development_v1": {
+      "evidence_category": "new_authorized_development_evidence",
+      "intended_use": {
+        "decision_eligible": true,
+        "evaluation_performed": true,
+        "historical_metrics_claimed": false,
+        "historical_taint": false
+      },
+      "model_version_pattern": "^development-[0-9a-f]{24}$",
+      "recipe": {
+        "configuration": {
+          "calibration": "dedicated_chronological_calibration_role",
+          "candidate_selection": "uncertainty_aware_simplicity_rule",
+          "evaluation": "reusable_forward_development_backtest",
+          "historical_quarantine": "required_zero_overlap",
+          "model_fit": "first_chronological_role_only",
+          "threshold_selection": "best_f1_on_dedicated_selection_role"
+        },
+        "name": "new-authorized-development-training",
+        "version": "1"
+      },
+      "required_roles": {
+        "calibrator_fit": true,
+        "evaluation": true,
+        "model_fit": true,
+        "threshold_selection": true
+      },
+      "threshold": {
+        "calibration_binding": "score_type",
+        "cost_optimal": false,
+        "fixed_value": null,
+        "model_linkage": "verified_for_this_development_bundle",
+        "production_approved": false,
+        "purpose": "reusable_development_reference_only",
+        "razorpay_approved": false,
+        "source": "new_authorized_development_selection"
+      }
+    },
+    "synthetic_api_smoke_v1": {
+      "evidence_category": "synthetic_demo_inference",
+      "intended_use": {
+        "decision_eligible": false,
+        "evaluation_performed": false,
+        "historical_metrics_claimed": false,
+        "historical_taint": false
+      },
+      "model_version_pattern": "^synthetic-smoke-1$",
+      "recipe": {
+        "configuration": {
+          "algorithm": "logistic_regression",
+          "feature_generator": "deterministic_trigonometric_v1",
+          "max_iter": 1000,
+          "random_state": 42
+        },
+        "name": "synthetic-api-smoke-training",
+        "version": "1"
+      },
+      "required_roles": {
+        "calibrator_fit": false,
+        "evaluation": false,
+        "model_fit": true,
+        "threshold_selection": false
+      },
+      "threshold": {
+        "calibration_binding": "false",
+        "cost_optimal": false,
+        "fixed_value": 0.53,
+        "model_linkage": "synthetic_fixture_only",
+        "production_approved": false,
+        "purpose": "api_smoke_testing_only",
+        "razorpay_approved": false,
+        "source": "synthetic_smoke_policy"
+      }
+    },
+    "synthetic_monitoring_fixture_v1": {
+      "evidence_category": "synthetic_demo_inference",
+      "intended_use": {
+        "decision_eligible": false,
+        "evaluation_performed": false,
+        "historical_metrics_claimed": false,
+        "historical_taint": false
+      },
+      "model_version_pattern": "^synthetic-smoke-1$",
+      "recipe": {
+        "configuration": {
+          "algorithm": "deterministic_amount_rule",
+          "high_score": 0.8,
+          "low_score": 0.2,
+          "threshold_amount": 50.0
+        },
+        "name": "synthetic-monitoring-fixture",
+        "version": "1"
+      },
+      "required_roles": {
+        "calibrator_fit": false,
+        "evaluation": false,
+        "model_fit": true,
+        "threshold_selection": false
+      },
+      "threshold": {
+        "calibration_binding": "false",
+        "cost_optimal": false,
+        "fixed_value": 0.53,
+        "model_linkage": "synthetic_fixture_only",
+        "production_approved": false,
+        "purpose": "monitoring_smoke_testing_only",
+        "razorpay_approved": false,
+        "source": "synthetic_monitoring_policy"
+      }
+    }
+  }
+}

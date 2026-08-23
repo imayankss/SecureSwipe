@@ -16,15 +16,29 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from scripts.create_synthetic_bundle import SYNTHETIC_MODEL_VERSION, synthetic_training_data
-from src.artifacts.bundle import ModelBundle
+from src.artifacts.bundle import (
+    ModelBundle,
+    data_role_metadata,
+    intended_use_metadata,
+    threshold_provenance_metadata,
+    training_provenance_metadata,
+)
 from src.data.data_loader import fingerprint_dataframe
 from src.monitoring.io import write_report
 from src.monitoring.offline import monitor_batches
 from src.preprocessing.feature_config import ALL_FEATURES
 
+SYNTHETIC_MONITORING_PRODUCER_POLICY = "synthetic_monitoring_fixture_v1"
+
 
 class _FixturePreprocessor:
     """Minimal deterministic transformer for the tracked monitoring fixture."""
+
+    n_features_in_ = len(ALL_FEATURES)
+    feature_names_in_ = np.asarray(ALL_FEATURES)
+
+    def get_feature_names_out(self) -> np.ndarray:
+        return np.asarray(ALL_FEATURES)
 
     def transform(self, frame: pd.DataFrame) -> np.ndarray:
         return frame.to_numpy(dtype=float, copy=True)
@@ -34,6 +48,8 @@ class _FixtureModel:
     """Simple rule model that avoids platform-specific solver variation."""
 
     classes_ = np.array([0, 1])
+    n_features_in_ = len(ALL_FEATURES)
+    feature_names_in_ = np.asarray(ALL_FEATURES)
 
     def predict_proba(self, values: np.ndarray) -> np.ndarray:
         positive = np.where(values[:, -1] >= 50.0, 0.8, 0.2)
@@ -54,14 +70,36 @@ def _portable_fixture_value(value: Any) -> Any:
 def _fixture_bundle(reference: pd.DataFrame, labels: np.ndarray) -> ModelBundle:
     labeled = reference.copy()
     labeled["Class"] = labels
+    training_fingerprint = fingerprint_dataframe(labeled)
+    model_fit = data_role_metadata(
+        fingerprint_sha256=training_fingerprint,
+        total_row_count=len(labeled),
+        fraud_row_count=int(labeled["Class"].sum()),
+        duplicate_row_count=0,
+    )
+    training_provenance = training_provenance_metadata(
+        producer_policy=SYNTHETIC_MONITORING_PRODUCER_POLICY,
+        model_fit=model_fit,
+        calibrator_fit=None,
+        threshold_selection=None,
+        evaluation=None,
+        quarantine=None,
+    )
     return ModelBundle(
         preprocessor=_FixturePreprocessor(),
         model=_FixtureModel(),
         calibrator=None,
         operating_threshold=0.53,
         feature_schema=tuple(ALL_FEATURES),
-        training_data_fingerprint=fingerprint_dataframe(labeled),
+        training_data_fingerprint=training_provenance.data_roles_sha256,
         model_version=SYNTHETIC_MODEL_VERSION,
+        intended_use=intended_use_metadata(SYNTHETIC_MONITORING_PRODUCER_POLICY),
+        threshold_provenance=threshold_provenance_metadata(
+            producer_policy=SYNTHETIC_MONITORING_PRODUCER_POLICY,
+            value=0.53,
+            calibrated=False,
+        ),
+        training_provenance=training_provenance,
     )
 
 

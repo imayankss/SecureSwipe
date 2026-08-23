@@ -47,7 +47,8 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Build the wheel through a fresh sdist boundary and reject missing/stale modules.
 - [x] Protect historical test outputs from accidental overwrite and separate result namespaces.
 - [x] Record/verify positive-class semantics, SciPy/XGBoost runtime, and a
-  checksummed full-path startup probe in bundle format 2.
+  checksummed full-path startup probe; Bundle Format v3 additionally binds strict
+  producer policy, immutable provenance, and descriptor-safe artifact loading.
 - [x] Add deterministic manifested duplicate curation with conflicting-label failure.
 - [x] Enforce source-row fingerprint isolation across calibration, selection,
   reusable forward backtest, and the already-observed historical namespace.

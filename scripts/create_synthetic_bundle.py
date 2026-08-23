@@ -16,12 +16,20 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from src.artifacts.bundle import ModelBundle, save_model_bundle
+from src.artifacts.bundle import (  # noqa: E402
+    ModelBundle,
+    data_role_metadata,
+    intended_use_metadata,
+    save_model_bundle,
+    threshold_provenance_metadata,
+    training_provenance_metadata,
+)
 from src.data.data_loader import fingerprint_dataframe
 from src.preprocessing.feature_config import ALL_FEATURES, RANDOM_STATE
 from src.preprocessing.preprocessors import build_preprocessor, fit_preprocessor
 
 SYNTHETIC_MODEL_VERSION = "synthetic-smoke-1"
+SYNTHETIC_PRODUCER_POLICY = "synthetic_api_smoke_v1"
 
 
 def synthetic_training_data() -> tuple[pd.DataFrame, np.ndarray]:
@@ -45,32 +53,49 @@ def build_synthetic_bundle() -> tuple[ModelBundle, dict[str, float]]:
     """Fit a deterministic CPU model and return one canonical smoke request."""
     frame, labels = synthetic_training_data()
     preprocessor = fit_preprocessor(frame, build_preprocessor())
+    preprocessor.set_output(transform="pandas")
     transformed = preprocessor.transform(frame)
-    model = LogisticRegression(random_state=RANDOM_STATE, max_iter=1_000).fit(
-        transformed, labels
-    )
+    model = LogisticRegression(random_state=RANDOM_STATE, max_iter=1_000).fit(transformed, labels)
     request = {feature: float(frame.iloc[3][feature]) for feature in ALL_FEATURES}
     labeled_frame = frame.copy()
     labeled_frame["Class"] = labels
+    training_fingerprint = fingerprint_dataframe(labeled_frame)
+    model_fit = data_role_metadata(
+        fingerprint_sha256=training_fingerprint,
+        total_row_count=len(labeled_frame),
+        fraud_row_count=int(labeled_frame["Class"].sum()),
+        duplicate_row_count=0,
+    )
+    training_provenance = training_provenance_metadata(
+        producer_policy=SYNTHETIC_PRODUCER_POLICY,
+        model_fit=model_fit,
+        calibrator_fit=None,
+        threshold_selection=None,
+        evaluation=None,
+        quarantine=None,
+    )
     bundle = ModelBundle(
         preprocessor=preprocessor,
         model=model,
         calibrator=None,
         operating_threshold=0.53,
         feature_schema=tuple(ALL_FEATURES),
-        training_data_fingerprint=fingerprint_dataframe(labeled_frame),
+        training_data_fingerprint=training_provenance.data_roles_sha256,
         model_version=SYNTHETIC_MODEL_VERSION,
+        intended_use=intended_use_metadata(SYNTHETIC_PRODUCER_POLICY),
+        threshold_provenance=threshold_provenance_metadata(
+            producer_policy=SYNTHETIC_PRODUCER_POLICY,
+            value=0.53,
+            calibrated=False,
+        ),
+        training_provenance=training_provenance,
     )
     return bundle, request
 
 
 def create_synthetic_bundle(output_dir: Path) -> Path:
     """Persist the bundle and deterministic smoke request/expected response."""
-    if output_dir.exists() and any(output_dir.iterdir()):
-        raise FileExistsError(f"Refusing to overwrite non-empty output directory: {output_dir}")
-    output_dir.mkdir(parents=True, exist_ok=True)
     bundle, request = build_synthetic_bundle()
-    manifest = save_model_bundle(bundle, output_dir)
     frame = pd.DataFrame([request], columns=ALL_FEATURES)
     raw_score = float(bundle.model.predict_proba(bundle.preprocessor.transform(frame))[0, 1])
     expected = {
@@ -81,13 +106,17 @@ def create_synthetic_bundle(output_dir: Path) -> Path:
         "raw_score": raw_score,
         "score_type": bundle.score_type,
     }
-    (output_dir / "smoke_request.json").write_text(
-        json.dumps(request, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
-    )
-    (output_dir / "smoke_expected.json").write_text(
-        json.dumps(expected, indent=2, sort_keys=True, allow_nan=False) + "\n",
-        encoding="utf-8",
+    manifest = save_model_bundle(
+        bundle,
+        output_dir,
+        additional_files={
+            "smoke_request.json": (
+                json.dumps(request, indent=2, sort_keys=True, allow_nan=False) + "\n"
+            ).encode("utf-8"),
+            "smoke_expected.json": (
+                json.dumps(expected, indent=2, sort_keys=True, allow_nan=False) + "\n"
+            ).encode("utf-8"),
+        },
     )
     return manifest
 

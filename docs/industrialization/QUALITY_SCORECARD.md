@@ -107,9 +107,10 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   final image execution/scan remains blocked by the stopped daemon.
 - Bundle/public-claim adversarial batch: 328 Python tests, Ruff, critical mypy,
   dependency-free export verification, five component tests, and the production
-  frontend build pass. Bundle format 2 rejects reversed class mappings and
-  preprocessor/model skew, records/checks SciPy and XGBoost before loading, and
-  executes a checksummed canonical probe before readiness. Workflow policy now
+  frontend build pass. Bundle Format v3 rejects reversed class mappings and
+  preprocessor/model skew, records/checks SciPy and XGBoost before loading,
+  binds producer policy and immutable role-complete provenance, and executes a
+  checksummed canonical probe before readiness. Workflow policy now
   scans non-verified history candidates and specifies exact golden response,
   UID, and pip-free container checks; remote/container execution remains blocked.
 - Scientific-lineage batch: 339 tests collect and the focused 33-test

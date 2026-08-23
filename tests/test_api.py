@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+from dataclasses import replace
 from io import StringIO
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
@@ -19,9 +20,32 @@ from api.main import ApiSettings, create_app
 from api.metrics import ApiMetrics
 from api.schemas import TransactionFeatures
 from api.service import ModelService
-from src.artifacts.bundle import ModelBundle, save_model_bundle
+from src.artifacts.bundle import (
+    ModelBundle,
+    data_role_metadata,
+    intended_use_metadata,
+    save_model_bundle,
+    threshold_provenance_metadata,
+    training_provenance_metadata,
+)
 from src.preprocessing.feature_config import ALL_FEATURES
 from src.preprocessing.preprocessors import build_preprocessor, fit_preprocessor
+
+
+def _synthetic_training_provenance(fingerprint: str):
+    return training_provenance_metadata(
+        producer_policy="synthetic_api_smoke_v1",
+        model_fit=data_role_metadata(
+            fingerprint_sha256=fingerprint,
+            total_row_count=80,
+            fraud_row_count=40,
+            duplicate_row_count=0,
+        ),
+        calibrator_fit=None,
+        threshold_selection=None,
+        evaluation=None,
+        quarantine=None,
+    )
 
 
 @pytest.fixture(scope="module")
@@ -43,15 +67,24 @@ def fitted_bundle() -> ModelBundle:
     training["Amount"] = np.abs(training["Amount"] * 100.0)
     labels = np.array([0, 1] * 40)
     preprocessor = fit_preprocessor(training, build_preprocessor())
+    preprocessor.set_output(transform="pandas")
     model = LogisticRegression(random_state=42).fit(preprocessor.transform(training), labels)
+    training_provenance = _synthetic_training_provenance("b" * 64)
     return ModelBundle(
         preprocessor=preprocessor,
         model=model,
         calibrator=None,
         operating_threshold=0.53,
         feature_schema=tuple(ALL_FEATURES),
-        training_data_fingerprint="b" * 64,
-        model_version="api-fixture-1",
+        training_data_fingerprint=training_provenance.data_roles_sha256,
+        model_version="synthetic-smoke-1",
+        intended_use=intended_use_metadata("synthetic_api_smoke_v1"),
+        threshold_provenance=threshold_provenance_metadata(
+            producer_policy="synthetic_api_smoke_v1",
+            value=0.53,
+            calibrated=False,
+        ),
+        training_provenance=training_provenance,
     )
 
 
@@ -80,6 +113,11 @@ def test_liveness_readiness_and_model_info(
     assert info.json()["score_type"] == "raw_score"
     assert info.json()["calibrated"] is False
     assert info.json()["feature_schema"] == list(ALL_FEATURES)
+    assert info.json()["evidence_category"] == "synthetic_demo_inference"
+    assert info.json()["historical_taint"] is False
+    assert info.json()["decision_eligible"] is False
+    assert info.json()["historical_metrics_claimed"] is False
+    assert info.json()["evaluation_performed"] is False
 
 
 def test_unavailable_model_is_live_but_not_ready(
@@ -139,7 +177,7 @@ def test_single_prediction_matches_direct_bundle_path(
     assert body["calibrated_probability"] is None
     assert body["score_type"] == "raw_score"
     assert body["operating_threshold"] == 0.53
-    assert body["model_version"] == "api-fixture-1"
+    assert body["model_version"] == "synthetic-smoke-1"
     assert body["request_id"] == "golden-parity-1"
     assert response.headers["x-request-id"] == "golden-parity-1"
 
@@ -291,7 +329,7 @@ def test_api_info_logging_is_enabled_and_emits_parseable_redacted_json(
     assert record["method"] == "POST"
     assert record["route"] == "/v1/predict"
     assert record["status"] == 200
-    assert record["model_version"] == "api-fixture-1"
+    assert record["model_version"] == "synthetic-smoke-1"
     assert isinstance(record["latency_ms"], float)
     assert "123.456789" not in stream.getvalue()
     assert '"V28"' not in stream.getvalue()
@@ -305,17 +343,20 @@ def test_unexpected_model_exception_log_omits_exception_message_and_features(
     sentinel = "SENSITIVE-123.456789-V1-V28"
 
     class ExplodingPreprocessor:
+        n_features_in_ = fitted_bundle.preprocessor.n_features_in_
+        feature_names_in_ = fitted_bundle.preprocessor.feature_names_in_
+
+        def get_feature_names_out(self) -> np.ndarray:
+            return fitted_bundle.preprocessor.get_feature_names_out()
+
         def transform(self, _frame: pd.DataFrame) -> np.ndarray:
             raise RuntimeError(sentinel)
 
-    broken = ModelBundle(
+    broken = replace(
+        fitted_bundle,
         preprocessor=ExplodingPreprocessor(),
-        model=fitted_bundle.model,
-        calibrator=None,
-        operating_threshold=0.53,
-        feature_schema=tuple(ALL_FEATURES),
-        training_data_fingerprint="c" * 64,
-        model_version="broken-fixture-1",
+        training_data_fingerprint=_synthetic_training_provenance("c" * 64).data_roles_sha256,
+        training_provenance=_synthetic_training_provenance("c" * 64),
     )
     service = ModelService(fitted_bundle)
     service._bundle = broken
@@ -352,9 +393,7 @@ def test_unexpected_model_exception_log_omits_exception_message_and_features(
     assert sentinel not in output
     assert '"V28"' not in output
     error_record = next(
-        json.loads(line)
-        for line in output.splitlines()
-        if '"event":"unhandled_error"' in line
+        json.loads(line) for line in output.splitlines() if '"event":"unhandled_error"' in line
     )
     assert error_record == {
         "event": "unhandled_error",
@@ -371,18 +410,21 @@ def test_slow_inference_is_offloaded_so_liveness_remains_responsive(
     original = fitted_bundle.preprocessor
 
     class SlowPreprocessor:
+        n_features_in_ = original.n_features_in_
+        feature_names_in_ = original.feature_names_in_
+
+        def get_feature_names_out(self) -> np.ndarray:
+            return original.get_feature_names_out()
+
         def transform(self, frame: pd.DataFrame) -> object:
             time.sleep(0.2)
             return original.transform(frame)
 
-    slow = ModelBundle(
+    slow = replace(
+        fitted_bundle,
         preprocessor=SlowPreprocessor(),
-        model=fitted_bundle.model,
-        calibrator=None,
-        operating_threshold=0.53,
-        feature_schema=tuple(ALL_FEATURES),
-        training_data_fingerprint="d" * 64,
-        model_version="slow-fixture-1",
+        training_data_fingerprint=_synthetic_training_provenance("d" * 64).data_roles_sha256,
+        training_provenance=_synthetic_training_provenance("d" * 64),
     )
     with TestClient(
         create_app(service=ModelService(slow), settings=ApiSettings(tmp_path, None, ()))

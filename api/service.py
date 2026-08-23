@@ -11,6 +11,7 @@ import pandas as pd
 from api.schemas import PredictionResult, ScoreType, TransactionFeatures
 from src.artifacts.bundle import (
     BUNDLE_FORMAT_VERSION,
+    EvidenceCategory,
     ModelBundle,
     probe_bundle_runtime,
 )
@@ -35,6 +36,11 @@ class ModelInfo:
     operating_threshold: float
     feature_schema: tuple[str, ...]
     training_data_fingerprint: str
+    evidence_category: EvidenceCategory
+    historical_taint: bool
+    decision_eligible: bool
+    historical_metrics_claimed: bool
+    evaluation_performed: bool
 
 
 class ModelService:
@@ -72,6 +78,11 @@ class ModelService:
             operating_threshold=bundle.operating_threshold,
             feature_schema=bundle.feature_schema,
             training_data_fingerprint=bundle.training_data_fingerprint,
+            evidence_category=bundle.intended_use.evidence_category,
+            historical_taint=bundle.intended_use.historical_taint,
+            decision_eligible=bundle.intended_use.decision_eligible,
+            historical_metrics_claimed=bundle.intended_use.historical_metrics_claimed,
+            evaluation_performed=bundle.intended_use.evaluation_performed,
         )
 
     def predict_many(self, transactions: Iterable[TransactionFeatures]) -> list[PredictionResult]:

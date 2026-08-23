@@ -24,8 +24,13 @@ from api.service import ModelService  # noqa: E402
 from src.artifacts.bundle import (  # noqa: E402
     BUNDLE_FORMAT_VERSION,
     ModelBundle,
+    data_role_metadata,
+    intended_use_metadata,
     load_model_bundle,
+    quarantine_provenance_metadata,
     save_model_bundle,
+    threshold_provenance_metadata,
+    training_provenance_metadata,
 )
 from src.data.curation import load_curated_dataset, row_content_fingerprints  # noqa: E402
 from src.data.data_loader import fingerprint_dataframe  # noqa: E402
@@ -69,15 +74,14 @@ ROLE_ORDER = (
     "operating_point_selection",
     "forward_development_backtest",
 )
+DEVELOPMENT_PRODUCER_POLICY = "new_authorized_development_v1"
 
 
 def default_candidate_factories() -> dict[str, CandidateFactory]:
     return {
         "logistic_regression": lambda _labels: create_logistic_regression_baseline(),
         "random_forest": lambda _labels: create_random_forest_baseline(),
-        "xgboost": lambda labels: build_xgboost_classifier(
-            calculate_scale_pos_weight(labels)
-        ),
+        "xgboost": lambda labels: build_xgboost_classifier(calculate_scale_pos_weight(labels)),
     }
 
 
@@ -122,6 +126,7 @@ def _fit_candidate(
     raw_train: pd.DataFrame, labels: pd.Series, factory: CandidateFactory
 ) -> tuple[Any, Any]:
     preprocessor = fit_preprocessor(raw_train, build_preprocessor())
+    preprocessor.set_output(transform="pandas")
     model = factory(labels)
     model.fit(preprocessor.transform(raw_train), labels)
     return preprocessor, model
@@ -132,9 +137,7 @@ def _positive_scores(model: Any, transformed: object) -> np.ndarray:
         raise ValueError("Candidate classes_ must be exactly [0, 1].")
     probabilities = np.asarray(model.predict_proba(transformed), dtype=float)
     scores = probabilities[:, 1]
-    if probabilities.ndim != 2 or probabilities.shape[1] != 2 or not np.isfinite(
-        scores
-    ).all():
+    if probabilities.ndim != 2 or probabilities.shape[1] != 2 or not np.isfinite(scores).all():
         raise ValueError("Candidate produced malformed scores.")
     return scores
 
@@ -164,9 +167,7 @@ def run_development_training(
         curation_record_path,
         require_decision_eligible=True,
     )
-    historical_quarantine = require_no_historical_test_overlap(
-        frame, historical_quarantine_path
-    )
+    historical_quarantine = require_no_historical_test_overlap(frame, historical_quarantine_path)
     curation = {key: value for key, value in raw_curation.items()}
     curated_fingerprint = str(curation["curated_fingerprint"])
     resolved_curation_record = curation_record_path.resolve(strict=True)
@@ -200,9 +201,7 @@ def run_development_training(
     candidate_rows: list[dict[str, Any]] = []
     for name, factory in factories.items():
         preprocessor, model = _fit_candidate(train_features, train_labels, factory)
-        scores = _positive_scores(
-            model, preprocessor.transform(selection[ALL_FEATURES])
-        )
+        scores = _positive_scores(model, preprocessor.transform(selection[ALL_FEATURES]))
         selection_scores[name] = scores
         candidate_rows.append(
             {
@@ -216,8 +215,7 @@ def run_development_training(
 
     candidate_metrics = pd.DataFrame(candidate_rows)
     metrics_by_name = {
-        str(row["candidate"]): float(row["selection_average_precision"])
-        for row in candidate_rows
+        str(row["candidate"]): float(row["selection_average_precision"]) for row in candidate_rows
     }
     best_metric = max(metrics_by_name.values())
     best_name = next(name for name in factories if metrics_by_name[name] == best_metric)
@@ -259,13 +257,9 @@ def run_development_training(
         preprocessor, model = _fit_candidate(
             random_train[ALL_FEATURES], random_train["Class"].astype(int), factory
         )
-        scores = _positive_scores(
-            model, preprocessor.transform(random_validation[ALL_FEATURES])
-        )
+        scores = _positive_scores(model, preprocessor.transform(random_validation[ALL_FEATURES]))
         random_diagnostic[name] = {
-            "average_precision": float(
-                average_precision_score(random_validation["Class"], scores)
-            ),
+            "average_precision": float(average_precision_score(random_validation["Class"], scores)),
             "training_fraud_rows": int(random_train["Class"].sum()),
             "training_rows": len(random_train),
             "validation_fraud_rows": int(random_validation["Class"].sum()),
@@ -274,15 +268,9 @@ def run_development_training(
 
     # Refit from a fresh selected estimator on the model-training role only;
     # later role labels remain outside model fitting.
-    preprocessor, model = _fit_candidate(
-        train_features, train_labels, factories[selected_name]
-    )
-    calibration_scores = _positive_scores(
-        model, preprocessor.transform(calibration[ALL_FEATURES])
-    )
-    selected_raw_scores = _positive_scores(
-        model, preprocessor.transform(selection[ALL_FEATURES])
-    )
+    preprocessor, model = _fit_candidate(train_features, train_labels, factories[selected_name])
+    calibration_scores = _positive_scores(model, preprocessor.transform(calibration[ALL_FEATURES]))
+    selected_raw_scores = _positive_scores(model, preprocessor.transform(selection[ALL_FEATURES]))
     calibration_comparison, calibrator, calibration_method = compare_calibrators(
         calibration_scores,
         calibration["Class"].to_numpy(),
@@ -317,9 +305,7 @@ def run_development_training(
         "operating_threshold": float(selected_threshold["threshold"]),
         "preprocessor_joblib_hash": joblib.hash(preprocessor, hash_name="sha1"),
         "role_content_digests": role_content_digests,
-        "score_type": (
-            "calibrated_probability" if calibrator is not None else "raw_score"
-        ),
+        "score_type": ("calibrated_probability" if calibrator is not None else "raw_score"),
         "selected_model_parameters": model.get_params(deep=True),
         "simplicity_margin": simplicity_margin,
     }
@@ -327,16 +313,47 @@ def run_development_training(
         behavior, default=str, separators=(",", ":"), sort_keys=True, allow_nan=False
     ).encode("utf-8")
     model_identity = hashlib.sha256(behavior_encoded).hexdigest()
+    role_provenance = {
+        role: data_role_metadata(
+            fingerprint_sha256=fingerprint_dataframe(frame.iloc[roles[role]]),
+            total_row_count=len(roles[role]),
+            fraud_row_count=int(frame.iloc[roles[role]]["Class"].sum()),
+            duplicate_row_count=0,
+        )
+        for role in ROLE_ORDER
+    }
+    quarantine_provenance = quarantine_provenance_metadata(
+        anchor_sha256=historical_quarantine.anchor_sha256,
+        row_hashes_sha256=historical_quarantine.row_hashes_sha256,
+        total_row_count=historical_quarantine.total_row_count,
+        fraud_row_count=historical_quarantine.fraud_count,
+        unique_row_count=historical_quarantine.unique_row_count,
+        duplicate_row_count=historical_quarantine.duplicate_row_count,
+        overlap_row_count=0,
+    )
+    training_provenance = training_provenance_metadata(
+        producer_policy=DEVELOPMENT_PRODUCER_POLICY,
+        model_fit=role_provenance["model_training"],
+        calibrator_fit=role_provenance["calibration_fit"],
+        threshold_selection=role_provenance["operating_point_selection"],
+        evaluation=role_provenance["forward_development_backtest"],
+        quarantine=quarantine_provenance,
+    )
     bundle = ModelBundle(
         preprocessor=preprocessor,
         model=model,
         calibrator=calibrator,
         operating_threshold=float(selected_threshold["threshold"]),
         feature_schema=tuple(ALL_FEATURES),
-        training_data_fingerprint=fingerprint_dataframe(training),
-        model_version=(
-            f"development-{model_identity[:24]}"
+        training_data_fingerprint=training_provenance.data_roles_sha256,
+        model_version=(f"development-{model_identity[:24]}"),
+        intended_use=intended_use_metadata(DEVELOPMENT_PRODUCER_POLICY),
+        threshold_provenance=threshold_provenance_metadata(
+            producer_policy=DEVELOPMENT_PRODUCER_POLICY,
+            value=float(selected_threshold["threshold"]),
+            calibrated=calibrator is not None,
         ),
+        training_provenance=training_provenance,
         score_type=("calibrated_probability" if calibrator is not None else "raw_score"),
     )
 
@@ -356,16 +373,12 @@ def run_development_training(
         np.testing.assert_allclose(direct.raw_scores, service_raw, atol=1e-12, rtol=0)
         np.testing.assert_allclose(direct.decision_scores, service_decision, atol=1e-12, rtol=0)
 
-        predictions = (
-            direct.decision_scores >= bundle.operating_threshold
-        ).astype(int)
+        predictions = (direct.decision_scores >= bundle.operating_threshold).astype(int)
         evaluation_payload = {
             "average_precision": float(
                 average_precision_score(backtest["Class"], direct.decision_scores)
             ),
-            "brier_score": float(
-                brier_score_loss(backtest["Class"], direct.decision_scores)
-            ),
+            "brier_score": float(brier_score_loss(backtest["Class"], direct.decision_scores)),
             "evaluation_scope": "reusable_forward_development_backtest",
             "operating_threshold": bundle.operating_threshold,
             "roc_auc": float(roc_auc_score(backtest["Class"], direct.decision_scores)),
@@ -436,9 +449,7 @@ def run_development_training(
                 ),
                 pd.DataFrame(
                     {
-                        "row_fingerprint": list(
-                            hashes.iloc[roles["operating_point_selection"]]
-                        ),
+                        "row_fingerprint": list(hashes.iloc[roles["operating_point_selection"]]),
                         "partition": "operating_point_selection",
                         "y_true": selection["Class"].to_numpy(dtype=int),
                         "raw_score": selected_raw_scores,
@@ -446,9 +457,7 @@ def run_development_training(
                 ),
                 pd.DataFrame(
                     {
-                        "row_fingerprint": list(
-                            hashes.iloc[roles["forward_development_backtest"]]
-                        ),
+                        "row_fingerprint": list(hashes.iloc[roles["forward_development_backtest"]]),
                         "partition": "forward_development_backtest",
                         "y_true": backtest["Class"].to_numpy(dtype=int),
                         "raw_score": direct.raw_scores,
@@ -485,19 +494,13 @@ def run_development_training(
                 "historical_quarantine_duplicate_row_count": (
                     historical_quarantine.duplicate_row_count
                 ),
-                "historical_quarantine_fraud_count": (
-                    historical_quarantine.fraud_count
-                ),
+                "historical_quarantine_fraud_count": (historical_quarantine.fraud_count),
                 "historical_quarantine_overlap_rows": 0,
                 "historical_quarantine_row_hashes_sha256": (
                     historical_quarantine.row_hashes_sha256
                 ),
-                "historical_quarantine_total_row_count": (
-                    historical_quarantine.total_row_count
-                ),
-                "historical_quarantine_unique_row_count": (
-                    historical_quarantine.unique_row_count
-                ),
+                "historical_quarantine_total_row_count": (historical_quarantine.total_row_count),
+                "historical_quarantine_unique_row_count": (historical_quarantine.unique_row_count),
                 "minimum_brier_improvement": minimum_brier_improvement,
                 "role_order": list(ROLE_ORDER),
                 "simplicity_margin": simplicity_margin,
@@ -513,9 +516,7 @@ def run_development_training(
             ],
             data_fingerprint=curated_fingerprint,
         )
-        manifest["inputs"].update(
-            historical_quarantine_input_records(historical_quarantine)
-        )
+        manifest["inputs"].update(historical_quarantine_input_records(historical_quarantine))
         write_run_manifest(manifest, temporary / "run_manifest.json")
 
     return {
