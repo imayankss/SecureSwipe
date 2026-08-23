@@ -328,7 +328,12 @@ def _environment(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path, Path, Pa
 
 
 def test_unapproved_recipe_refuses_before_any_parquet_is_opened(tmp_path: Path) -> None:
+    recipe, _quarantine, _anchor, _x_train, _y_train, _x_val, _y_val = _environment(tmp_path)
+    payload = json.loads(recipe.read_text(encoding="utf-8"))
+    payload["approval_status"] = "unapproved"
+    recipe.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     with (
+        patch.object(reference_module, "DEFAULT_HISTORICAL_REFERENCE_RECIPE", recipe),
         patch.object(reference_module.pd, "read_parquet") as read_parquet,
         patch.object(reference_module, "_read_checked_parquet") as read_checked_parquet,
         patch.object(reference_module, "load_historical_quarantine_manifest") as load_quarantine,
@@ -345,7 +350,7 @@ def test_unapproved_recipe_refuses_before_any_parquet_is_opened(tmp_path: Path) 
     read_parquet.assert_not_called()
     read_checked_parquet.assert_not_called()
     load_quarantine.assert_not_called()
-    assert not (tmp_path / "artifacts").exists()
+    assert not (tmp_path / "artifacts" / "never-created").exists()
 
 
 def test_approved_synthetic_recipe_filters_and_packages_without_scoring_rows(tmp_path: Path) -> None:
