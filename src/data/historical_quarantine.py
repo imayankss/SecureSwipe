@@ -26,9 +26,11 @@ DEFAULT_HISTORICAL_QUARANTINE_ANCHOR = (
 )
 HISTORICAL_QUARANTINE_FORMAT_VERSION = "1"
 HISTORICAL_QUARANTINE_ANCHOR_FORMAT_VERSION = "1"
+HISTORICAL_QUARANTINE_ANCHOR_CANDIDATE_FORMAT_VERSION = "1"
 HISTORICAL_TEST_ROWS = 42_722
 HISTORICAL_TEST_FRAUD = 74
 ROW_HASH_ALGORITHM = "sha256-canonical-float64-le-class-uint8-v1"
+MANIFEST_SERIALIZATION = "json-utf8-indent-2-sort-keys-newline-v1"
 FEATURE_DTYPE = "float64"
 TARGET_DTYPE = "int64"
 _ROW_HASH_DOMAIN = b"SecureSwipe historical test quarantine row v1\x00"
@@ -332,17 +334,15 @@ def _require_anchor_match(
         )
 
 
-def build_historical_quarantine_manifest(
+def _build_historical_quarantine_payload(
     *,
     x_test_path: Path,
     y_test_path: Path,
 ) -> dict[str, Any]:
-    """Build a deterministic manifest only after loading an approved anchor."""
-    anchor = load_historical_quarantine_anchor()
     frame, sources = _read_aligned_historical_split(x_test_path, y_test_path)
     row_hashes = sorted(canonical_row_hashes(frame))
     unique_row_count = len(set(row_hashes))
-    payload = {
+    return {
         "format_version": HISTORICAL_QUARANTINE_FORMAT_VERSION,
         "manifest_kind": "historical_test_row_quarantine",
         "feature_schema": list(ALL_FEATURES),
@@ -358,6 +358,81 @@ def build_historical_quarantine_manifest(
         "contains_raw_transaction_values": False,
         "sources": sources,
     }
+
+
+def _canonical_manifest_bytes(manifest: dict[str, Any]) -> bytes:
+    return (
+        json.dumps(manifest, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    ).encode("utf-8")
+
+
+def build_historical_quarantine_anchor_candidate(
+    *,
+    x_test_path: Path,
+    y_test_path: Path,
+) -> dict[str, Any]:
+    """Derive review-only anchor evidence without trusting or writing an anchor."""
+    payload = _build_historical_quarantine_payload(
+        x_test_path=x_test_path,
+        y_test_path=y_test_path,
+    )
+    if (
+        payload["total_row_count"] != HISTORICAL_TEST_ROWS
+        or payload["fraud_count"] != HISTORICAL_TEST_FRAUD
+    ):
+        raise ValueError(
+            "Historical quarantine anchor candidate does not match the predeclared "
+            f"retained split counts: expected {HISTORICAL_TEST_ROWS} rows and "
+            f"{HISTORICAL_TEST_FRAUD} fraud rows."
+        )
+    sources = payload["sources"]
+    return {
+        "approval_required": True,
+        "approval_status": "unapproved_candidate",
+        "candidate_contains_row_hashes": False,
+        "candidate_format_version": (
+            HISTORICAL_QUARANTINE_ANCHOR_CANDIDATE_FORMAT_VERSION
+        ),
+        "candidate_kind": "historical_test_quarantine_anchor_candidate",
+        "contains_raw_transaction_values": False,
+        "decision_eligible": False,
+        "dtype_contract": payload["dtype_contract"],
+        "duplicate_row_count": payload["duplicate_row_count"],
+        "fraud_count": payload["fraud_count"],
+        "manifest_serialization": MANIFEST_SERIALIZATION,
+        "manifest_sha256": hashlib.sha256(
+            _canonical_manifest_bytes(payload)
+        ).hexdigest(),
+        "quarantine_format_version": payload["format_version"],
+        "row_hash_algorithm": payload["row_hash_algorithm"],
+        "row_hashes_sha256": payload["row_hashes_sha256"],
+        "source_files": {
+            name: {
+                "filename": record["filename"],
+                "size_bytes": record["size_bytes"],
+            }
+            for name, record in sources.items()
+        },
+        "source_sha256": {
+            name: record["sha256"] for name, record in sources.items()
+        },
+        "total_row_count": payload["total_row_count"],
+        "training_use_prohibited": True,
+        "unique_row_count": payload["unique_row_count"],
+    }
+
+
+def build_historical_quarantine_manifest(
+    *,
+    x_test_path: Path,
+    y_test_path: Path,
+) -> dict[str, Any]:
+    """Build a deterministic manifest only after loading an approved anchor."""
+    anchor = load_historical_quarantine_anchor()
+    payload = _build_historical_quarantine_payload(
+        x_test_path=x_test_path,
+        y_test_path=y_test_path,
+    )
     _require_anchor_match(payload, anchor)
     return payload
 
@@ -576,9 +651,7 @@ def _create_temporary_file(parent_fd: int, final_name: str) -> tuple[int, str]:
 def _publish_manifest_with_directory_fds(
     manifest: dict[str, Any], opened: _OpenedOutputParent
 ) -> None:
-    encoded = (
-        json.dumps(manifest, indent=2, sort_keys=True, allow_nan=False) + "\n"
-    ).encode("utf-8")
+    encoded = _canonical_manifest_bytes(manifest)
     descriptor, temporary_name = _create_temporary_file(
         opened.descriptor, opened.final_name
     )
