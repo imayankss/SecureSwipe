@@ -141,17 +141,46 @@ def _write_split(directory: Path, prefix: str, frame: pd.DataFrame) -> tuple[Pat
     return x_path, y_path
 
 
-def _filtered_unique(frame: pd.DataFrame, quarantine_hashes: frozenset[str]) -> pd.DataFrame:
+def _filter_quarantine(frame: pd.DataFrame, quarantine_hashes: frozenset[str]) -> pd.DataFrame:
     hashes = canonical_row_hashes(frame)
-    filtered = frame.iloc[[index for index, value in enumerate(hashes) if value not in quarantine_hashes]]
-    filtered_hashes = canonical_row_hashes(filtered)
-    keep: list[int] = []
-    seen: set[str] = set()
-    for index, value in enumerate(filtered_hashes):
-        if value not in seen:
-            seen.add(value)
-            keep.append(index)
-    return filtered.iloc[keep].copy()
+    return frame.iloc[
+        [index for index, value in enumerate(hashes) if value not in quarantine_hashes]
+    ].copy()
+
+
+def _global_keep_first_pool(
+    train: pd.DataFrame, validation: pd.DataFrame
+) -> tuple[pd.DataFrame, int]:
+    train_hashes = canonical_row_hashes(train)
+    validation_hashes = canonical_row_hashes(validation)
+    seen_train: set[str] = set()
+    train_keep: list[bool] = []
+    for value in train_hashes:
+        train_keep.append(value not in seen_train)
+        seen_train.add(value)
+    seen_validation: set[str] = set()
+    validation_keep: list[bool] = []
+    cross_split_duplicates = 0
+    for value in validation_hashes:
+        if value in seen_validation:
+            validation_keep.append(False)
+            continue
+        seen_validation.add(value)
+        if value in seen_train:
+            cross_split_duplicates += 1
+            validation_keep.append(False)
+            continue
+        validation_keep.append(True)
+    return (
+        pd.concat(
+            (
+                train.iloc[np.flatnonzero(train_keep)].copy(),
+                validation.iloc[np.flatnonzero(validation_keep)].copy(),
+            ),
+            ignore_index=True,
+        ),
+        cross_split_duplicates,
+    )
 
 
 def _approved_recipe(
@@ -166,23 +195,11 @@ def _approved_recipe(
     quarantine_path: Path,
 ) -> Path:
     quarantine = load_historical_quarantine_manifest(quarantine_path)
-    train = _filtered_unique(train_frame, quarantine.row_hashes)
-    validation = _filtered_unique(validation_frame, quarantine.row_hashes)
-    train_after_quarantine = train_frame.iloc[
-        [
-            index
-            for index, value in enumerate(canonical_row_hashes(train_frame))
-            if value not in quarantine.row_hashes
-        ]
-    ]
-    validation_after_quarantine = validation_frame.iloc[
-        [
-            index
-            for index, value in enumerate(canonical_row_hashes(validation_frame))
-            if value not in quarantine.row_hashes
-        ]
-    ]
-    pool = pd.concat((train, validation), ignore_index=True)
+    train_after_quarantine = _filter_quarantine(train_frame, quarantine.row_hashes)
+    validation_after_quarantine = _filter_quarantine(validation_frame, quarantine.row_hashes)
+    pool, cross_split_duplicates = _global_keep_first_pool(
+        train_after_quarantine, validation_after_quarantine
+    )
     hashes = canonical_row_hashes(pool)
     source_paths = {
         "x_train": (x_train, train_frame, None),
@@ -203,24 +220,22 @@ def _approved_recipe(
             }
             for key, (source, frame, fraud) in source_paths.items()
         },
-        "cross_split_overlap_policy": "reject",
-        "duplicate_policy": "filter_quarantine_then_keep_first_by_original_position",
+        "conflicting_feature_identical_labels": "reject",
+        "cross_split_identical_labeled_rows": "deduplicate_deterministically_into_final_fitting_pool",
+        "duplicate_policy": "filter_quarantine_then_global_keep_first_train_then_validation",
         "dtype_contract": {
             "features": {feature: "float64" for feature in ALL_FEATURES},
             "target": {"Class": "int64"},
         },
         "feature_schema": list(ALL_FEATURES),
-        "final_training_pool": "filtered_deduplicated_train_then_filtered_deduplicated_validation",
+        "expected_cross_split_duplicate_count": cross_split_duplicates,
+        "final_training_pool": "quarantine_filtered_train_then_validation_global_keep_first_deduplicated_fitting_pool",
         "filtering": {
-            "quarantine_occurrences_removed": (
-                len(train_frame)
-                + len(validation_frame)
-                - len(train_after_quarantine)
-                - len(validation_after_quarantine)
-            ),
+            "quarantine_occurrences_removed": len(train_frame) + len(validation_frame) - len(train_after_quarantine) - len(validation_after_quarantine),
             "duplicate_rows_removed": (
                 len(train_after_quarantine) + len(validation_after_quarantine) - len(pool)
             ),
+            "cross_split_duplicate_rows_removed": cross_split_duplicates,
             "feature_label_conflicts": 0,
         },
         "format_version": "1",
@@ -234,6 +249,7 @@ def _approved_recipe(
             },
         },
         "model_version": "historical-reference-synthetic-fixture-demo-v1",
+        "post_quarantine_split_roles": "abolished_merged_fitting_pool_only_no_evaluation",
         "preprocessing": {
             "column_transformer": {
                 "n_jobs": None,
@@ -366,12 +382,15 @@ def test_approved_synthetic_recipe_filters_and_packages_without_scoring_rows(tmp
     evidence = payload["historical_reference_provenance"]
     assert evidence["filtering"]["quarantine_occurrences_removed"] == 1
     assert evidence["filtering"]["duplicate_rows_removed"] == 1
+    assert evidence["filtering"]["cross_split_duplicate_rows_removed"] == 0
     assert evidence["final_pool"]["total_row_count"] == 6
     assert "/" not in evidence["recipe"]["filename"]
     assert str(tmp_path) not in json.dumps(evidence)
 
 
-def test_cross_split_overlap_refuses_before_model_construction_or_output(tmp_path: Path) -> None:
+def test_cross_split_identical_labeled_rows_are_deduplicated_into_fitting_pool(
+    tmp_path: Path,
+) -> None:
     recipe, quarantine_path, anchor_path, x_train, y_train, _x_val, y_val = _environment(tmp_path)
     train = _frame([(31.0, 0), (32.0, 1)], index_start=1)
     validation = _frame([(31.0, 0), (41.0, 1)], index_start=100)
@@ -396,19 +415,28 @@ def test_cross_split_overlap_refuses_before_model_construction_or_output(tmp_pat
         with (
             patch.object(reference_module, "PROJECT_ROOT", tmp_path),
             patch.object(reference_module, "DEFAULT_HISTORICAL_REFERENCE_RECIPE", recipe),
-            patch.object(reference_module, "_build_exact_preprocessor") as build_preprocessor,
+            patch.object(reference_module, "XGBClassifier", _NoHistoricalPredictionModel),
+            _synthetic_recipe_policy(recipe),
         ):
-            with pytest.raises(ValueError, match="content overlap"):
-                reference_module.create_historical_reference_demo_bundle(
-                    x_train=x_train,
-                    y_train=y_train,
-                    x_val=x_val,
-                    y_val=y_val,
-                    historical_quarantine=quarantine_path,
-                    output="artifacts/refusal",
-                )
-    build_preprocessor.assert_not_called()
-    assert not (tmp_path / "artifacts" / "refusal").exists()
+            manifest = reference_module.create_historical_reference_demo_bundle(
+                x_train=x_train,
+                y_train=y_train,
+                x_val=x_val,
+                y_val=y_val,
+                historical_quarantine=quarantine_path,
+                output="artifacts/reference-fixture",
+            )
+            bundle = load_model_bundle(manifest, trusted_root=tmp_path / "artifacts")
+    evidence = json.loads(manifest.read_text(encoding="utf-8"))["historical_reference_provenance"]
+    assert evidence["filtering"] == {
+        "quarantine_occurrences_removed": 0,
+        "duplicate_rows_removed": 1,
+        "cross_split_duplicate_rows_removed": 1,
+        "feature_label_conflicts": 0,
+    }
+    assert evidence["final_pool"]["total_row_count"] == 3
+    assert bundle.training_provenance.data_roles.evaluation is None
+    assert bundle.training_provenance.data_roles.threshold_selection is None
 
 
 def test_rejects_test_named_or_outside_output_before_parquet_parse(tmp_path: Path) -> None:

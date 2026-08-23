@@ -3,8 +3,8 @@
   "policies": {
     "historical_reference_demo_v1": {
       "evidence_category": "historical_reference_demo_inference",
-      "canonical_recipe_sha256": "904bcac9401816d7271b6513bcd5842ce2079f43f92b0b9892a6ceaae78943d1",
-      "canonical_reference_evidence_sha256": "b7900c2e0d1e50edf8147cad973a3737e1e822229db6480d82521fde3503ea53",
+      "canonical_recipe_sha256": "a933c9d595b7f26b39fd48dcb63cc03f5dbdaed488eb191ca602fc8c236553fc",
+      "canonical_reference_evidence_sha256": "ab83e8cd8686c8474afe4d77c1ebc32c2bd34c318b290958cc21f7e8f5cd5d00",
       "intended_use": {
         "decision_eligible": false,
         "evaluation_performed": false,
@@ -15,9 +15,12 @@
       "recipe": {
         "configuration": {
           "calibration": "none",
+          "conflicting_feature_identical_labels": "reject",
+          "cross_split_identical_labeled_rows": "deduplicate_deterministically_into_final_fitting_pool",
           "evaluation": "prohibited",
           "historical_test_access": "prohibited",
           "model_family": "xgboost_binary_classifier",
+          "post_quarantine_split_roles": "abolished_merged_fitting_pool_only_no_evaluation",
           "selection": "none",
           "training_mode": "fixed_quarantine_filtered_historical_reference"
         },

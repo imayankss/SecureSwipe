@@ -63,7 +63,8 @@ _RECIPE_FIELDS = {
     "approval_status",
     "candidate_identity_status",
     "candidate_sources",
-    "cross_split_overlap_policy",
+    "conflicting_feature_identical_labels",
+    "cross_split_identical_labeled_rows",
     "duplicate_policy",
     "dtype_contract",
     "feature_schema",
@@ -72,6 +73,8 @@ _RECIPE_FIELDS = {
     "format_version",
     "model",
     "model_version",
+    "expected_cross_split_duplicate_count",
+    "post_quarantine_split_roles",
     "preprocessing",
     "producer_policy",
     "quarantine",
@@ -83,6 +86,7 @@ _RECIPE_FIELDS = {
 _FILTERING_FIELDS = {
     "quarantine_occurrences_removed",
     "duplicate_rows_removed",
+    "cross_split_duplicate_rows_removed",
     "feature_label_conflicts",
 }
 _POOL_FIELDS = {
@@ -172,6 +176,7 @@ class SourceExpectation:
 class FilteringExpectation:
     quarantine_occurrences_removed: int
     duplicate_rows_removed: int
+    cross_split_duplicate_rows_removed: int
     feature_label_conflicts: int
 
 
@@ -199,6 +204,7 @@ class HistoricalReferenceRecipe:
     quarantine_fraud_count: int
     quarantine_unique_row_count: int
     quarantine_duplicate_row_count: int
+    expected_cross_split_duplicate_count: int
 
     def source(self, key: str) -> SourceExpectation:
         return next(source for source in self.sources if source.key == key)
@@ -216,7 +222,13 @@ class _RetainedFile:
 class _FilteredSplit:
     frame: pd.DataFrame
     quarantine_occurrences_removed: int
+
+
+@dataclass(frozen=True)
+class _FinalFittingPool:
+    frame: pd.DataFrame
     duplicate_rows_removed: int
+    cross_split_duplicate_rows_removed: int
 
 
 def _without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -365,10 +377,15 @@ def _parse_recipe(retained: _RetainedFile) -> HistoricalReferenceRecipe:
         or payload["feature_schema"] != list(ALL_FEATURES)
         or payload["dtype_contract"] != _dtype_contract()
         or payload["quarantine_overlap_policy"] != "filter_all_occurrences_before_construction"
-        or payload["duplicate_policy"] != "filter_quarantine_then_keep_first_by_original_position"
-        or payload["cross_split_overlap_policy"] != "reject"
+        or payload["duplicate_policy"]
+        != "filter_quarantine_then_global_keep_first_train_then_validation"
+        or payload["cross_split_identical_labeled_rows"]
+        != "deduplicate_deterministically_into_final_fitting_pool"
+        or payload["conflicting_feature_identical_labels"] != "reject"
+        or payload["post_quarantine_split_roles"]
+        != "abolished_merged_fitting_pool_only_no_evaluation"
         or payload["final_training_pool"]
-        != "filtered_deduplicated_train_then_filtered_deduplicated_validation"
+        != "quarantine_filtered_train_then_validation_global_keep_first_deduplicated_fitting_pool"
     ):
         raise ValueError("Historical reference recipe contract is invalid.")
     if payload["preprocessing"] != _PREPROCESSING_RECIPE:
@@ -415,6 +432,18 @@ def _parse_recipe(retained: _RetainedFile) -> HistoricalReferenceRecipe:
     })
     if filtering.feature_label_conflicts != 0:
         raise ValueError("Historical reference recipe must declare zero feature-label conflicts.")
+    expected_cross_split_duplicates = _require_nonnegative_int(
+        payload["expected_cross_split_duplicate_count"],
+        label="expected_cross_split_duplicate_count",
+    )
+    if filtering.cross_split_duplicate_rows_removed != expected_cross_split_duplicates:
+        raise ValueError(
+            "Historical reference cross-split duplicate count contradicts filtering evidence."
+        )
+    if filtering.cross_split_duplicate_rows_removed > filtering.duplicate_rows_removed:
+        raise ValueError(
+            "Historical reference cross-split duplicate count exceeds all duplicates removed."
+        )
     pool_payload = payload["training_pool"]
     if not isinstance(pool_payload, dict) or set(pool_payload) != _POOL_FIELDS:
         raise ValueError("Historical reference final-pool fields are invalid.")
@@ -457,6 +486,7 @@ def _parse_recipe(retained: _RetainedFile) -> HistoricalReferenceRecipe:
         quarantine_row_hashes_sha256=_require_sha256(quarantine["row_hashes_sha256"], label="quarantine.row_hashes"),
         quarantine_total_row_count=counts["total_row_count"], quarantine_fraud_count=counts["fraud_count"],
         quarantine_unique_row_count=counts["unique_row_count"], quarantine_duplicate_row_count=counts["duplicate_row_count"],
+        expected_cross_split_duplicate_count=expected_cross_split_duplicates,
     )
     if payload["approval_status"] != "approved":
         raise ValueError("Historical reference recipe is unapproved; refusing before opening historical Parquet inputs.")
@@ -512,18 +542,42 @@ def _reject_feature_label_conflicts(*frames: pd.DataFrame) -> None:
                 raise ValueError("Historical reference contains contradictory labels for one feature vector.")
 
 
-def _filter_and_deduplicate(frame: pd.DataFrame, quarantine: HistoricalTestQuarantine) -> _FilteredSplit:
+def _filter_quarantine(frame: pd.DataFrame, quarantine: HistoricalTestQuarantine) -> _FilteredSplit:
     hashes = canonical_row_hashes(frame)
     keep_after_quarantine = [row_hash not in quarantine.row_hashes for row_hash in hashes]
     filtered = frame.iloc[np.flatnonzero(keep_after_quarantine)].copy()
-    filtered_hashes = [row_hash for row_hash, keep in zip(hashes, keep_after_quarantine) if keep]
-    seen: set[str] = set()
-    keep_first: list[bool] = []
-    for row_hash in filtered_hashes:
-        keep_first.append(row_hash not in seen)
-        seen.add(row_hash)
-    deduplicated = filtered.iloc[np.flatnonzero(keep_first)].copy()
-    return _FilteredSplit(deduplicated, len(frame) - len(filtered), len(filtered) - len(deduplicated))
+    return _FilteredSplit(filtered, len(frame) - len(filtered))
+
+
+def _deduplicate_final_fitting_pool(
+    train: pd.DataFrame, validation: pd.DataFrame
+) -> _FinalFittingPool:
+    """Keep first occurrences globally in canonical train-then-validation order."""
+    train_hashes = canonical_row_hashes(train)
+    validation_hashes = canonical_row_hashes(validation)
+    seen_train: set[str] = set()
+    train_keep: list[bool] = []
+    for row_hash in train_hashes:
+        train_keep.append(row_hash not in seen_train)
+        seen_train.add(row_hash)
+    seen_validation: set[str] = set()
+    validation_keep: list[bool] = []
+    cross_split_duplicates = 0
+    for row_hash in validation_hashes:
+        if row_hash in seen_validation:
+            validation_keep.append(False)
+            continue
+        seen_validation.add(row_hash)
+        if row_hash in seen_train:
+            cross_split_duplicates += 1
+            validation_keep.append(False)
+            continue
+        validation_keep.append(True)
+    train_unique = train.iloc[np.flatnonzero(train_keep)].copy()
+    validation_unique = validation.iloc[np.flatnonzero(validation_keep)].copy()
+    pool = pd.concat((train_unique, validation_unique), axis=0, ignore_index=True)
+    duplicate_rows_removed = len(train) + len(validation) - len(pool)
+    return _FinalFittingPool(pool, duplicate_rows_removed, cross_split_duplicates)
 
 
 def _validate_quarantine(recipe: HistoricalReferenceRecipe, quarantine: HistoricalTestQuarantine) -> None:
@@ -616,16 +670,25 @@ def create_historical_reference_demo_bundle(*, x_train: str | Path, y_train: str
     train_frame = _validate_split(x_train_file, y_train_file, recipe.source("x_train"), recipe.source("y_train"))
     validation_frame = _validate_split(x_val_file, y_val_file, recipe.source("x_val"), recipe.source("y_val"))
     _reject_feature_label_conflicts(train_frame, validation_frame)
-    train = _filter_and_deduplicate(train_frame, quarantine)
-    validation = _filter_and_deduplicate(validation_frame, quarantine)
-    train_hashes = set(canonical_row_hashes(train.frame))
-    validation_hashes = set(canonical_row_hashes(validation.frame))
-    if train_hashes & validation_hashes:
-        raise ValueError("Historical reference train/validation content overlap is prohibited.")
-    pool = pd.concat((train.frame, validation.frame), axis=0, ignore_index=True)
+    train = _filter_quarantine(train_frame, quarantine)
+    validation = _filter_quarantine(validation_frame, quarantine)
+    final_fitting_pool = _deduplicate_final_fitting_pool(train.frame, validation.frame)
+    pool = final_fitting_pool.frame
     actual_pool = _pool_identity(pool)
-    actual_filtering = FilteringExpectation(train.quarantine_occurrences_removed + validation.quarantine_occurrences_removed, train.duplicate_rows_removed + validation.duplicate_rows_removed, 0)
-    if actual_pool != recipe.pool or actual_filtering != recipe.filtering or not train_hashes.isdisjoint(quarantine.row_hashes) or not validation_hashes.isdisjoint(quarantine.row_hashes):
+    actual_filtering = FilteringExpectation(
+        train.quarantine_occurrences_removed + validation.quarantine_occurrences_removed,
+        final_fitting_pool.duplicate_rows_removed,
+        final_fitting_pool.cross_split_duplicate_rows_removed,
+        0,
+    )
+    pool_hashes = set(canonical_row_hashes(pool))
+    if (
+        actual_pool != recipe.pool
+        or actual_filtering != recipe.filtering
+        or actual_filtering.cross_split_duplicate_rows_removed
+        != recipe.expected_cross_split_duplicate_count
+        or not pool_hashes.isdisjoint(quarantine.row_hashes)
+    ):
         raise ValueError("Historical reference filtering or final pool does not match the fixed recipe.")
     features = pool[ALL_FEATURES]
     labels = pool[TARGET_COLUMN]
@@ -642,6 +705,9 @@ def create_historical_reference_demo_bundle(*, x_train: str | Path, y_train: str
         quarantine=quarantine_metadata,
         quarantine_occurrences_removed=actual_filtering.quarantine_occurrences_removed,
         duplicate_rows_removed=actual_filtering.duplicate_rows_removed,
+        cross_split_duplicate_rows_removed=(
+            actual_filtering.cross_split_duplicate_rows_removed
+        ),
         feature_label_conflicts=0,
         final_pool=HistoricalReferencePool(actual_pool.row_hashes_sha256, actual_pool.total_row_count, actual_pool.legitimate_row_count, actual_pool.fraud_row_count, actual_pool.unique_row_count, actual_pool.duplicate_row_count),
     )

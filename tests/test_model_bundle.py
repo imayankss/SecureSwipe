@@ -140,6 +140,9 @@ def _historical_bundle() -> ModelBundle:
         quarantine=quarantine,
         quarantine_occurrences_removed=recipe_payload["filtering"]["quarantine_occurrences_removed"],
         duplicate_rows_removed=recipe_payload["filtering"]["duplicate_rows_removed"],
+        cross_split_duplicate_rows_removed=recipe_payload["filtering"][
+            "cross_split_duplicate_rows_removed"
+        ],
         feature_label_conflicts=0,
         final_pool=HistoricalReferencePool(
             row_hashes_sha256=pool_payload["row_hashes_sha256"],
@@ -577,6 +580,24 @@ def test_historical_reference_invariant_tampering_fails_before_deserialization(
 
     with patch("src.artifacts.bundle.joblib.load") as deserialize:
         with pytest.raises(ArtifactVerificationError, match="Intended use contradicts"):
+            load_model_bundle(manifest, trusted_root=tmp_path / "trusted")
+        deserialize.assert_not_called()
+
+
+def test_historical_cross_split_deduplication_evidence_tampering_fails_before_deserialization(
+    tmp_path: Path,
+) -> None:
+    manifest = save_model_bundle(
+        _historical_bundle(), tmp_path / "trusted" / "historical-reference"
+    )
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    payload["historical_reference_provenance"]["filtering"][
+        "cross_split_duplicate_rows_removed"
+    ] -= 1
+    manifest.write_text(json.dumps(payload), encoding="utf-8")
+
+    with patch("src.artifacts.bundle.joblib.load") as deserialize:
+        with pytest.raises(ArtifactVerificationError, match="evidence contradicts"):
             load_model_bundle(manifest, trusted_root=tmp_path / "trusted")
         deserialize.assert_not_called()
 

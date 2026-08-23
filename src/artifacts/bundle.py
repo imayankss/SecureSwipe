@@ -129,6 +129,7 @@ _HISTORICAL_REFERENCE_SOURCE_FIELDS = {
 _HISTORICAL_REFERENCE_FILTERING_FIELDS = {
     "quarantine_occurrences_removed",
     "duplicate_rows_removed",
+    "cross_split_duplicate_rows_removed",
     "feature_label_conflicts",
 }
 _HISTORICAL_REFERENCE_POOL_FIELDS = {
@@ -139,7 +140,7 @@ _HISTORICAL_REFERENCE_POOL_FIELDS = {
     "unique_row_count",
     "duplicate_row_count",
 }
-HISTORICAL_REFERENCE_PROVENANCE_FORMAT_VERSION = "1"
+HISTORICAL_REFERENCE_PROVENANCE_FORMAT_VERSION = "2"
 _DIRECTORY_FLAGS = (
     os.O_RDONLY
     | getattr(os, "O_CLOEXEC", 0)
@@ -309,12 +310,14 @@ class HistoricalReferenceSourceIdentity:
 class HistoricalReferenceFiltering:
     quarantine_occurrences_removed: int
     duplicate_rows_removed: int
+    cross_split_duplicate_rows_removed: int
     feature_label_conflicts: int
 
     def to_dict(self) -> dict[str, int]:
         return {
             "quarantine_occurrences_removed": self.quarantine_occurrences_removed,
             "duplicate_rows_removed": self.duplicate_rows_removed,
+            "cross_split_duplicate_rows_removed": self.cross_split_duplicate_rows_removed,
             "feature_label_conflicts": self.feature_label_conflicts,
         }
 
@@ -790,6 +793,10 @@ def _parse_historical_reference_provenance(
     )
     if filtering.feature_label_conflicts != 0:
         raise ValueError("Historical-reference bundles must not retain feature-label conflicts.")
+    if filtering.cross_split_duplicate_rows_removed > filtering.duplicate_rows_removed:
+        raise ValueError(
+            "Historical-reference cross-split duplicate count exceeds total duplicates removed."
+        )
     pool_payload = _require_exact_mapping(
         payload["final_pool"],
         _HISTORICAL_REFERENCE_POOL_FIELDS,
@@ -1111,6 +1118,7 @@ def historical_reference_provenance_metadata(
     quarantine: QuarantineProvenance,
     quarantine_occurrences_removed: int,
     duplicate_rows_removed: int,
+    cross_split_duplicate_rows_removed: int,
     feature_label_conflicts: int,
     final_pool: HistoricalReferencePool,
 ) -> HistoricalReferenceProvenance:
@@ -1123,6 +1131,7 @@ def historical_reference_provenance_metadata(
         filtering=HistoricalReferenceFiltering(
             quarantine_occurrences_removed=quarantine_occurrences_removed,
             duplicate_rows_removed=duplicate_rows_removed,
+            cross_split_duplicate_rows_removed=cross_split_duplicate_rows_removed,
             feature_label_conflicts=feature_label_conflicts,
         ),
         final_pool=final_pool,

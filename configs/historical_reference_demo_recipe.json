@@ -31,8 +31,9 @@
       "size_bytes": 290665
     }
   },
-  "cross_split_overlap_policy": "reject",
-  "duplicate_policy": "filter_quarantine_then_keep_first_by_original_position",
+  "conflicting_feature_identical_labels": "reject",
+  "cross_split_identical_labeled_rows": "deduplicate_deterministically_into_final_fitting_pool",
+  "duplicate_policy": "filter_quarantine_then_global_keep_first_train_then_validation",
   "dtype_contract": {
     "features": {
       "Amount": "float64",
@@ -75,8 +76,10 @@
     "V10", "V11", "V12", "V13", "V14", "V15", "V16", "V17", "V18", "V19",
     "V20", "V21", "V22", "V23", "V24", "V25", "V26", "V27", "V28", "Amount"
   ],
-  "final_training_pool": "filtered_deduplicated_train_then_filtered_deduplicated_validation",
+  "expected_cross_split_duplicate_count": 160,
+  "final_training_pool": "quarantine_filtered_train_then_validation_global_keep_first_deduplicated_fitting_pool",
   "filtering": {
+    "cross_split_duplicate_rows_removed": 160,
     "duplicate_rows_removed": 647,
     "feature_label_conflicts": 0,
     "quarantine_occurrences_removed": 382
@@ -128,6 +131,7 @@
     }
   },
   "model_version": "historical-reference-xgboost-20260624-demo-v1",
+  "post_quarantine_split_roles": "abolished_merged_fitting_pool_only_no_evaluation",
   "preprocessing": {
     "column_transformer": {
       "n_jobs": null,
