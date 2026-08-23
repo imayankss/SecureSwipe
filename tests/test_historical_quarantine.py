@@ -18,7 +18,6 @@ from scripts.curate_dataset import curate_dataset
 from scripts.run_development_training import run_development_training
 from src.artifacts.bundle import sha256_file
 from src.data.historical_quarantine import (
-    DEFAULT_HISTORICAL_QUARANTINE_ANCHOR,
     build_historical_quarantine_manifest,
     canonical_row_hashes,
     load_historical_quarantine_anchor,
@@ -245,9 +244,33 @@ def test_duplicate_hashes_are_recorded_and_overlap_is_rejected(tmp_path: Path) -
 def test_unapproved_bootstrap_anchor_refuses_generation(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    x_path, y_path = _split_paths(_frame(), tmp_path)
-    assert DEFAULT_HISTORICAL_QUARANTINE_ANCHOR.is_file()
+    frame = _frame()
+    x_path, y_path = _split_paths(frame, tmp_path)
+    anchor = write_approved_quarantine_anchor(
+        frame,
+        x_path,
+        y_path,
+        tmp_path / "synthetic-unapproved-anchor.json",
+    )
+    payload = json.loads(anchor.read_text(encoding="utf-8"))
+    payload.update(
+        {
+            "approval_status": "unapproved",
+            "duplicate_row_count": None,
+            "review_reference": None,
+            "reviewed_by": None,
+            "row_hashes_sha256": None,
+            "source_sha256": {"x_test": None, "y_test": None},
+            "unique_row_count": None,
+        }
+    )
+    _write_payload(anchor, payload)
     monkeypatch.setattr(quarantine_module, "PROJECT_ROOT", tmp_path)
+    monkeypatch.setattr(
+        quarantine_module,
+        "DEFAULT_HISTORICAL_QUARANTINE_ANCHOR",
+        anchor,
+    )
     with pytest.raises(ValueError, match="not populated and independently approved"):
         write_historical_quarantine_manifest(
             x_test_path=x_path,
