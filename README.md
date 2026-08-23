@@ -427,7 +427,7 @@ or investigate real transactions.
 - Execute the implemented monitoring/calibration protocols on authorized
   development data and establish reviewed reference windows.
 - Pass Docker startup/readiness/inference, image scan, and SBOM gates before any
-  
+  optional synthetic live-demo integration.
 
 Detailed limitations/non-goals and interview/demo guides are in
 [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md),
