@@ -328,12 +328,76 @@ def _environment(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path, Path, Pa
 
 
 def test_unapproved_recipe_refuses_before_any_parquet_is_opened(tmp_path: Path) -> None:
-    recipe, _quarantine, _anchor, _x_train, _y_train, _x_val, _y_val = _environment(tmp_path)
-    payload = json.loads(recipe.read_text(encoding="utf-8"))
-    payload["approval_status"] = "unapproved"
+    recipe = tmp_path / "historical_reference_demo_recipe.json"
+    source = {
+        "sha256": "0" * 64,
+        "size_bytes": 0,
+        "fraud_count": None,
+    }
+    payload = {
+        "approval_status": "unapproved",
+        "candidate_identity_status": "pending_independent_verification",
+        "candidate_sources": {
+            "x_train": {**source, "filename": "X_train.parquet", "row_count": 2},
+            "y_train": {**source, "filename": "y_train.parquet", "row_count": 2, "fraud_count": 1},
+            "x_val": {**source, "filename": "X_val.parquet", "row_count": 0},
+            "y_val": {**source, "filename": "y_val.parquet", "row_count": 0, "fraud_count": 0},
+        },
+        "conflicting_feature_identical_labels": "reject",
+        "cross_split_identical_labeled_rows": "deduplicate_deterministically_into_final_fitting_pool",
+        "duplicate_policy": "filter_quarantine_then_global_keep_first_train_then_validation",
+        "dtype_contract": reference_module._dtype_contract(),
+        "feature_schema": list(ALL_FEATURES),
+        "expected_cross_split_duplicate_count": 0,
+        "filtering": {
+            "quarantine_occurrences_removed": 0,
+            "duplicate_rows_removed": 0,
+            "cross_split_duplicate_rows_removed": 0,
+            "feature_label_conflicts": 0,
+        },
+        "final_training_pool": "quarantine_filtered_train_then_validation_global_keep_first_deduplicated_fitting_pool",
+        "format_version": reference_module.HISTORICAL_REFERENCE_RECIPE_FORMAT_VERSION,
+        "model": {
+            "family": "xgboost_binary_classifier",
+            "parameters": {**reference_module._XGBOOST_STATIC_PARAMETERS, "scale_pos_weight": 1.0},
+        },
+        "model_version": "historical-reference-synthetic-demo-v1",
+        "post_quarantine_split_roles": "abolished_merged_fitting_pool_only_no_evaluation",
+        "preprocessing": reference_module._PREPROCESSING_RECIPE,
+        "producer_policy": reference_module.HISTORICAL_REFERENCE_POLICY,
+        "quarantine": {
+            "anchor_sha256": "0" * 64,
+            "row_hashes_sha256": "0" * 64,
+            "total_row_count": 0,
+            "fraud_count": 0,
+            "unique_row_count": 0,
+            "duplicate_row_count": 0,
+        },
+        "quarantine_overlap_policy": "filter_all_occurrences_before_construction",
+        "recipe_kind": "historical_reference_demo_bundle",
+        "threshold": {
+            "value": 0.53,
+            "source": "historical_validation_selected_threshold",
+            "historical_component_linkage": "unverified",
+            "purpose": "demo_human_review_policy_only",
+            "calibrated": False,
+            "cost_optimal": False,
+            "razorpay_approved": False,
+            "production_approved": False,
+        },
+        "training_pool": {
+            "row_hashes_sha256": "0" * 64,
+            "total_row_count": 2,
+            "legitimate_row_count": 1,
+            "fraud_count": 1,
+            "unique_row_count": 2,
+            "duplicate_row_count": 0,
+        },
+    }
     recipe.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8")
     with (
         patch.object(reference_module, "DEFAULT_HISTORICAL_REFERENCE_RECIPE", recipe),
+        _synthetic_recipe_policy(recipe),
         patch.object(reference_module.pd, "read_parquet") as read_parquet,
         patch.object(reference_module, "_read_checked_parquet") as read_checked_parquet,
         patch.object(reference_module, "load_historical_quarantine_manifest") as load_quarantine,
