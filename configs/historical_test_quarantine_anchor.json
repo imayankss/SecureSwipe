@@ -1,6 +1,6 @@
 {
   "anchor_format_version": "1",
-  "approval_status": "unapproved",
+  "approval_status": "approved",
   "dtype_contract": {
     "features": {
       "Amount": "float64",
@@ -38,17 +38,17 @@
       "Class": "int64"
     }
   },
-  "duplicate_row_count": null,
+  "duplicate_row_count": 52,
   "fraud_count": 74,
   "quarantine_format_version": "1",
-  "review_reference": null,
-  "reviewed_by": null,
+  "review_reference": "independent-recomputation-2026-08-23",
+  "reviewed_by": "mayanksuryavanshi",
   "row_hash_algorithm": "sha256-canonical-float64-le-class-uint8-v1",
-  "row_hashes_sha256": null,
+  "row_hashes_sha256": "2aa4710dd87c9660bd824b20aadefff5e1e3764a0ebeeaf227acf9b0b7a9ad33",
   "source_sha256": {
-    "x_test": null,
-    "y_test": null
+    "x_test": "0f6659a14351c40f41b0fc9cc5f99b39e2d883c65523440bddee5afeaab9899f",
+    "y_test": "7ad7fe81b7f2ff8239aeb650b73972e711ccc6ac3aace93d2fabc30cddd89df3"
   },
   "total_row_count": 42722,
-  "unique_row_count": null
+  "unique_row_count": 42670
 }
