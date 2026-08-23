@@ -10,10 +10,14 @@ import pandas as pd
 import pytest
 from sklearn.linear_model import LogisticRegression
 
+import src.data.historical_quarantine as quarantine_module
 from scripts.curate_dataset import curate_dataset
 from scripts.run_development_training import run_development_training
-from src.artifacts.bundle import load_model_bundle
+from src.artifacts.bundle import load_model_bundle, sha256_file
 from src.preprocessing.feature_config import REQUIRED_COLUMNS
+from tests.historical_quarantine_helpers import (
+    write_nonoverlapping_quarantine,
+)
 from tests.source_approval_helpers import write_source_approval
 
 
@@ -21,8 +25,8 @@ def _authorized_source(path: Path) -> Path:
     rows = 200
     indices = np.arange(rows, dtype=float)
     values: dict[str, np.ndarray] = {
-        "Time": indices,
-        "Amount": 1.0 + indices % 31,
+        "Time": indices + 0.125,
+        "Amount": 1.25 + indices % 31,
     }
     for feature in range(1, 29):
         values[f"V{feature}"] = (
@@ -46,6 +50,7 @@ def _factories():
 
 def test_new_authorized_data_reaches_verified_bundle_with_service_parity(
     tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     source = _authorized_source(tmp_path / "new-source.csv")
     approval = write_source_approval(source, "synthetic-new-source-v1")
@@ -56,9 +61,18 @@ def test_new_authorized_data_reaches_verified_bundle_with_service_parity(
         source_reference="synthetic-new-source-v1",
         source_approval_path=approval,
     )
+    quarantine, quarantine_anchor = write_nonoverlapping_quarantine(tmp_path)
+    monkeypatch.setattr(
+        quarantine_module,
+        "DEFAULT_HISTORICAL_QUARANTINE_ANCHOR",
+        quarantine_anchor,
+    )
+    monkeypatch.setattr(quarantine_module, "HISTORICAL_TEST_ROWS", 2)
+    monkeypatch.setattr(quarantine_module, "HISTORICAL_TEST_FRAUD", 1)
     outputs = run_development_training(
         curated_path=curated["curated_dataset"],
         curation_record_path=curated["curation_record"],
+        historical_quarantine_path=quarantine,
         output_dir=tmp_path / "training-run",
         candidate_factories=_factories(),
         bootstrap_resamples=100,
@@ -66,6 +80,7 @@ def test_new_authorized_data_reaches_verified_bundle_with_service_parity(
     second = run_development_training(
         curated_path=curated["curated_dataset"],
         curation_record_path=curated["curation_record"],
+        historical_quarantine_path=quarantine,
         output_dir=tmp_path / "training-run-second",
         candidate_factories=_factories(),
         bootstrap_resamples=100,
@@ -100,11 +115,25 @@ def test_new_authorized_data_reaches_verified_bundle_with_service_parity(
         "curated_dataset",
         "curation_record",
         "curation_run_manifest",
+        "historical_quarantine",
+        "historical_quarantine_anchor",
         "source_approval",
     }
     assert manifest["inputs"]["source_approval"]["sha256"] == manifest["outputs"][
         "source_approval"
     ]["sha256"]
+    assert manifest["inputs"]["historical_quarantine"]["sha256"] == sha256_file(
+        quarantine
+    )
+    assert manifest["inputs"]["historical_quarantine_anchor"][
+        "sha256"
+    ] == sha256_file(quarantine_anchor)
+    quarantine_evidence = manifest["parameters"]
+    assert quarantine_evidence["historical_quarantine_total_row_count"] == 2
+    assert quarantine_evidence["historical_quarantine_unique_row_count"] == 2
+    assert quarantine_evidence["historical_quarantine_duplicate_row_count"] == 0
+    assert quarantine_evidence["historical_quarantine_fraud_count"] == 1
+    assert quarantine_evidence["historical_quarantine_overlap_rows"] == 0
     assert json.loads((tmp_path / "training-run" / "source_approval.json").read_text())[
         "reviewed_by"
     ] == "test-fixture-reviewer"
@@ -125,6 +154,7 @@ def test_new_authorized_data_reaches_verified_bundle_with_service_parity(
     alternate = run_development_training(
         curated_path=curated["curated_dataset"],
         curation_record_path=curated["curation_record"],
+        historical_quarantine_path=quarantine,
         output_dir=tmp_path / "alternate-policy",
         candidate_factories=_factories(),
         minimum_brier_improvement=1.0,
@@ -136,7 +166,9 @@ def test_new_authorized_data_reaches_verified_bundle_with_service_parity(
     assert alternate_bundle.model_version != bundle.model_version
 
 
-def test_reference_only_curation_cannot_create_decision_bundle(tmp_path: Path) -> None:
+def test_reference_only_curation_cannot_create_decision_bundle(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     source = _authorized_source(tmp_path / "reference.csv")
     curated = curate_dataset(
         source_path=source,
@@ -144,10 +176,19 @@ def test_reference_only_curation_cannot_create_decision_bundle(tmp_path: Path) -
         source_kind="historical_kaggle_reference",
         source_reference="historical-reference-fixture",
     )
+    quarantine, quarantine_anchor = write_nonoverlapping_quarantine(tmp_path)
+    monkeypatch.setattr(
+        quarantine_module,
+        "DEFAULT_HISTORICAL_QUARANTINE_ANCHOR",
+        quarantine_anchor,
+    )
+    monkeypatch.setattr(quarantine_module, "HISTORICAL_TEST_ROWS", 2)
+    monkeypatch.setattr(quarantine_module, "HISTORICAL_TEST_FRAUD", 1)
     with pytest.raises(ValueError, match="genuinely new authorized development data"):
         run_development_training(
             curated_path=curated["curated_dataset"],
             curation_record_path=curated["curation_record"],
+            historical_quarantine_path=quarantine,
             output_dir=tmp_path / "training-run",
             candidate_factories=_factories(),
             bootstrap_resamples=100,

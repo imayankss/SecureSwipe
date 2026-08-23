@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -11,11 +12,15 @@ import pytest
 from sklearn.linear_model import LogisticRegression
 
 import scripts.run_development_analysis as development_script
+import src.data.historical_quarantine as quarantine_module
 from scripts.curate_dataset import curate_dataset
 from scripts.run_development_analysis import load_development_scores, run_development_analysis
 from scripts.run_development_training import run_development_training
 from src.artifacts.bundle import sha256_file
 from src.preprocessing.feature_config import REQUIRED_COLUMNS
+from tests.historical_quarantine_helpers import (
+    write_nonoverlapping_quarantine,
+)
 from tests.source_approval_helpers import write_source_approval
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -36,8 +41,8 @@ def _training_run(directory: Path) -> tuple[dict[str, Path], dict[str, Path]]:
     rows = 200
     indices = np.arange(rows, dtype=float)
     values: dict[str, np.ndarray] = {
-        "Time": indices,
-        "Amount": indices % 37 + 1,
+        "Time": indices + 0.125,
+        "Amount": indices % 37 + 1.25,
     }
     for feature in range(1, 29):
         values[f"V{feature}"] = np.sin(indices * (feature + 1) / 29.0)
@@ -53,13 +58,24 @@ def _training_run(directory: Path) -> tuple[dict[str, Path], dict[str, Path]]:
         source_approval_path=write_source_approval(source, reference),
     )
     training_dir = directory / "training"
-    training = run_development_training(
-        curated_path=curated["curated_dataset"],
-        curation_record_path=curated["curation_record"],
-        output_dir=training_dir,
-        candidate_factories=_factories(),
-        bootstrap_resamples=100,
-    )
+    quarantine, quarantine_anchor = write_nonoverlapping_quarantine(directory)
+    with patch.object(
+        quarantine_module,
+        "DEFAULT_HISTORICAL_QUARANTINE_ANCHOR",
+        quarantine_anchor,
+    ), patch.object(
+        quarantine_module, "HISTORICAL_TEST_ROWS", 2
+    ), patch.object(
+        quarantine_module, "HISTORICAL_TEST_FRAUD", 1
+    ):
+        training = run_development_training(
+            curated_path=curated["curated_dataset"],
+            curation_record_path=curated["curation_record"],
+            historical_quarantine_path=quarantine,
+            output_dir=training_dir,
+            candidate_factories=_factories(),
+            bootstrap_resamples=100,
+        )
     training["scores"] = training_dir / "development_scores.csv"
     return curated, training
 

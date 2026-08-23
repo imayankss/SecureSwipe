@@ -201,6 +201,7 @@ python3 scripts/curate_dataset.py \
 python3 scripts/run_development_training.py \
   --curated-data artifacts/development/curated-v1/curated.csv \
   --curation-record artifacts/development/curated-v1/curation.json \
+  --historical-quarantine artifacts/historical-test-quarantine-v1/manifest.json \
   --output-dir artifacts/development/run-v1
 ```
 

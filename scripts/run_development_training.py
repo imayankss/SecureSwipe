@@ -29,6 +29,11 @@ from src.artifacts.bundle import (  # noqa: E402
 )
 from src.data.curation import load_curated_dataset, row_content_fingerprints  # noqa: E402
 from src.data.data_loader import fingerprint_dataframe  # noqa: E402
+from src.data.historical_quarantine import (  # noqa: E402
+    historical_quarantine_input_records,
+    reverify_historical_quarantine_identity,
+    require_no_historical_test_overlap,
+)
 from src.data.source_approval import load_source_approval_evidence  # noqa: E402
 from src.evaluation.calibration import apply_calibrator, compare_calibrators  # noqa: E402
 from src.evaluation.statistical_metrics import (  # noqa: E402
@@ -146,6 +151,7 @@ def run_development_training(
     *,
     curated_path: Path,
     curation_record_path: Path,
+    historical_quarantine_path: Path,
     output_dir: Path,
     candidate_factories: Mapping[str, CandidateFactory] | None = None,
     simplicity_margin: float = 0.005,
@@ -157,6 +163,9 @@ def run_development_training(
         curated_path,
         curation_record_path,
         require_decision_eligible=True,
+    )
+    historical_quarantine = require_no_historical_test_overlap(
+        frame, historical_quarantine_path
     )
     curation = {key: value for key, value in raw_curation.items()}
     curated_fingerprint = str(curation["curated_fingerprint"])
@@ -458,6 +467,7 @@ def run_development_training(
         for path in sorted((temporary / "bundle").iterdir()):
             if path.is_file():
                 outputs[f"bundle/{path.name}"] = path
+        reverify_historical_quarantine_identity(historical_quarantine)
         manifest = build_run_manifest(
             run_kind="development_training_and_bundle",
             evaluation_scope="new_authorized_four_role_reusable_backtest",
@@ -472,6 +482,22 @@ def run_development_training(
             parameters={
                 "bootstrap_resamples": bootstrap_resamples,
                 "candidate_order": list(factories),
+                "historical_quarantine_duplicate_row_count": (
+                    historical_quarantine.duplicate_row_count
+                ),
+                "historical_quarantine_fraud_count": (
+                    historical_quarantine.fraud_count
+                ),
+                "historical_quarantine_overlap_rows": 0,
+                "historical_quarantine_row_hashes_sha256": (
+                    historical_quarantine.row_hashes_sha256
+                ),
+                "historical_quarantine_total_row_count": (
+                    historical_quarantine.total_row_count
+                ),
+                "historical_quarantine_unique_row_count": (
+                    historical_quarantine.unique_row_count
+                ),
                 "minimum_brier_improvement": minimum_brier_improvement,
                 "role_order": list(ROLE_ORDER),
                 "simplicity_margin": simplicity_margin,
@@ -486,6 +512,9 @@ def run_development_training(
                 "xgboost",
             ],
             data_fingerprint=curated_fingerprint,
+        )
+        manifest["inputs"].update(
+            historical_quarantine_input_records(historical_quarantine)
         )
         write_run_manifest(manifest, temporary / "run_manifest.json")
 
@@ -502,6 +531,7 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--curated-data", required=True, type=Path)
     parser.add_argument("--curation-record", required=True, type=Path)
+    parser.add_argument("--historical-quarantine", required=True, type=Path)
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--simplicity-margin", type=float, default=0.005)
     parser.add_argument("--minimum-brier-improvement", type=float, default=0.0)
@@ -514,6 +544,7 @@ def main() -> int:
     outputs = run_development_training(
         curated_path=args.curated_data,
         curation_record_path=args.curation_record,
+        historical_quarantine_path=args.historical_quarantine,
         output_dir=args.output_dir.resolve(),
         simplicity_margin=args.simplicity_margin,
         minimum_brier_improvement=args.minimum_brier_improvement,
