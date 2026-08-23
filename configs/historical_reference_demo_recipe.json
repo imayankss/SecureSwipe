@@ -113,7 +113,7 @@
       "max_depth": 4,
       "max_leaves": null,
       "min_child_weight": null,
-      "missing": null,
+      "missing": "nan",
       "monotone_constraints": null,
       "multi_strategy": null,
       "n_estimators": 300,

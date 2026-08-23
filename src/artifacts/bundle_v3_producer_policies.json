@@ -3,7 +3,7 @@
   "policies": {
     "historical_reference_demo_v1": {
       "evidence_category": "historical_reference_demo_inference",
-      "canonical_recipe_sha256": "a8a930c7dd039f13df751ba74674bca1564d80985e98d29d1ff35b6b4d42d624",
+      "canonical_recipe_sha256": "55670d71abd7a52131fe58576de1771b2b381ba8cdd085f9e4c420dd9ba0c5dd",
       "canonical_reference_evidence_sha256": "ab83e8cd8686c8474afe4d77c1ebc32c2bd34c318b290958cc21f7e8f5cd5d00",
       "intended_use": {
         "decision_eligible": false,

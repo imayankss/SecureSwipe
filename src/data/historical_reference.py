@@ -144,7 +144,7 @@ _XGBOOST_STATIC_PARAMETERS: dict[str, object] = {
     "max_depth": 4,
     "max_leaves": None,
     "min_child_weight": None,
-    "missing": None,
+    "missing": "nan",
     "monotone_constraints": None,
     "multi_strategy": None,
     "n_estimators": 300,
@@ -229,6 +229,28 @@ class _FinalFittingPool:
     frame: pd.DataFrame
     duplicate_rows_removed: int
     cross_split_duplicate_rows_removed: int
+
+
+def _is_nan_parameter(value: object) -> bool:
+    return isinstance(value, (float, np.floating)) and bool(np.isnan(value))
+
+
+def _xgboost_parameters_match(
+    declared: dict[str, object], actual: dict[str, object]
+) -> bool:
+    """Compare the complete XGBoost contract, treating NaN as self-equal only."""
+    if set(declared) != set(actual):
+        return False
+    for name, declared_value in declared.items():
+        actual_value = actual[name]
+        declared_nan = _is_nan_parameter(declared_value)
+        actual_nan = _is_nan_parameter(actual_value)
+        if declared_nan or actual_nan:
+            if not (declared_nan and actual_nan):
+                return False
+        elif declared_value != actual_value:
+            return False
+    return True
 
 
 def _without_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -650,8 +672,11 @@ def _build_exact_model(recipe: HistoricalReferenceRecipe) -> Any:
     if XGBClassifier is None:
         raise ImportError("xgboost is required for the historical-reference demo runner.")
     parameters = dict(recipe.model_parameters)
+    if parameters["missing"] != "nan":
+        raise ValueError("Historical reference missing-value sentinel is not canonical.")
+    parameters["missing"] = float("nan")
     model = XGBClassifier(**parameters)
-    if model.get_params(deep=False) != parameters:
+    if not _xgboost_parameters_match(parameters, model.get_params(deep=False)):
         raise ValueError("Constructed XGBoost model contradicts the fixed historical reference recipe.")
     return model
 

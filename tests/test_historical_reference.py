@@ -704,11 +704,26 @@ def test_output_symlink_and_existing_output_refuse_without_target_write(tmp_path
     assert list(outside.iterdir()) == []
 
 
-def test_real_xgboost_constructor_matches_exhaustive_recipe(tmp_path: Path) -> None:
+def test_real_xgboost_nan_missing_parameter_fits_and_scores_synthetic_golden_probe(
+    tmp_path: Path,
+) -> None:
     recipe_path, _quarantine_path, _anchor_path, _x_train, _y_train, _x_val, _y_val = _environment(
         tmp_path
     )
     with patch.object(reference_module, "DEFAULT_HISTORICAL_REFERENCE_RECIPE", recipe_path):
         recipe = reference_module.load_historical_reference_recipe()
+    declared_parameters = dict(recipe.model_parameters)
+    assert declared_parameters["missing"] == "nan"
     model = reference_module._build_exact_model(recipe)
-    assert model.get_params(deep=False) == dict(recipe.model_parameters)
+    actual_parameters = model.get_params(deep=False)
+    runtime_parameters = {**declared_parameters, "missing": float("nan")}
+    assert np.isnan(actual_parameters["missing"])
+    assert not reference_module._xgboost_parameters_match(declared_parameters, actual_parameters)
+    assert reference_module._xgboost_parameters_match(runtime_parameters, actual_parameters)
+    assert not reference_module._xgboost_parameters_match(
+        runtime_parameters, {**actual_parameters, "missing": None}
+    )
+    synthetic_training = _frame([(1.0, 0), (2.0, 1)], index_start=0)
+    model.fit(synthetic_training[ALL_FEATURES], synthetic_training["Class"])
+    probabilities = model.predict_proba(bundle_module.canonical_golden_frame())
+    assert probabilities.shape == (1, 2)
