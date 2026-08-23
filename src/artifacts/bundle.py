@@ -22,7 +22,7 @@ import sys
 from contextlib import contextmanager
 from dataclasses import dataclass
 from importlib import metadata, resources
-from pathlib import Path
+from pathlib import Path, PureWindowsPath
 from typing import Any, Iterator, Literal, Mapping, Sequence, cast
 
 import joblib
@@ -110,6 +110,36 @@ _QUARANTINE_FIELDS = {
     "duplicate_row_count",
     "overlap_row_count",
 }
+_HISTORICAL_REFERENCE_FIELDS = {
+    "format_version",
+    "recipe",
+    "sources",
+    "quarantine",
+    "filtering",
+    "final_pool",
+}
+_HISTORICAL_REFERENCE_FILE_FIELDS = {"filename", "sha256", "size_bytes"}
+_HISTORICAL_REFERENCE_SOURCE_FIELDS = {
+    "filename",
+    "sha256",
+    "size_bytes",
+    "total_row_count",
+    "fraud_row_count",
+}
+_HISTORICAL_REFERENCE_FILTERING_FIELDS = {
+    "quarantine_occurrences_removed",
+    "duplicate_rows_removed",
+    "feature_label_conflicts",
+}
+_HISTORICAL_REFERENCE_POOL_FIELDS = {
+    "row_hashes_sha256",
+    "total_row_count",
+    "legitimate_row_count",
+    "fraud_row_count",
+    "unique_row_count",
+    "duplicate_row_count",
+}
+HISTORICAL_REFERENCE_PROVENANCE_FORMAT_VERSION = "1"
 _DIRECTORY_FLAGS = (
     os.O_RDONLY
     | getattr(os, "O_CLOEXEC", 0)
@@ -244,6 +274,95 @@ class QuarantineProvenance:
 
 
 @dataclass(frozen=True)
+class HistoricalReferenceFileIdentity:
+    filename: str
+    sha256: str
+    size_bytes: int
+
+    def to_dict(self) -> dict[str, str | int]:
+        return {
+            "filename": self.filename,
+            "sha256": self.sha256,
+            "size_bytes": self.size_bytes,
+        }
+
+
+@dataclass(frozen=True)
+class HistoricalReferenceSourceIdentity:
+    filename: str
+    sha256: str
+    size_bytes: int
+    total_row_count: int
+    fraud_row_count: int | None
+
+    def to_dict(self) -> dict[str, str | int | None]:
+        return {
+            "filename": self.filename,
+            "sha256": self.sha256,
+            "size_bytes": self.size_bytes,
+            "total_row_count": self.total_row_count,
+            "fraud_row_count": self.fraud_row_count,
+        }
+
+
+@dataclass(frozen=True)
+class HistoricalReferenceFiltering:
+    quarantine_occurrences_removed: int
+    duplicate_rows_removed: int
+    feature_label_conflicts: int
+
+    def to_dict(self) -> dict[str, int]:
+        return {
+            "quarantine_occurrences_removed": self.quarantine_occurrences_removed,
+            "duplicate_rows_removed": self.duplicate_rows_removed,
+            "feature_label_conflicts": self.feature_label_conflicts,
+        }
+
+
+@dataclass(frozen=True)
+class HistoricalReferencePool:
+    row_hashes_sha256: str
+    total_row_count: int
+    legitimate_row_count: int
+    fraud_row_count: int
+    unique_row_count: int
+    duplicate_row_count: int
+
+    def to_dict(self) -> dict[str, str | int]:
+        return {
+            "row_hashes_sha256": self.row_hashes_sha256,
+            "total_row_count": self.total_row_count,
+            "legitimate_row_count": self.legitimate_row_count,
+            "fraud_row_count": self.fraud_row_count,
+            "unique_row_count": self.unique_row_count,
+            "duplicate_row_count": self.duplicate_row_count,
+        }
+
+
+@dataclass(frozen=True)
+class HistoricalReferenceProvenance:
+    format_version: str
+    recipe: HistoricalReferenceFileIdentity
+    sources: tuple[HistoricalReferenceSourceIdentity, ...]
+    quarantine: QuarantineProvenance
+    filtering: HistoricalReferenceFiltering
+    final_pool: HistoricalReferencePool
+
+    def to_dict(self) -> dict[str, Any]:
+        keys = ("x_train", "y_train", "x_val", "y_val")
+        return {
+            "format_version": self.format_version,
+            "recipe": self.recipe.to_dict(),
+            "sources": {
+                key: source.to_dict() for key, source in zip(keys, self.sources, strict=True)
+            },
+            "quarantine": self.quarantine.to_dict(),
+            "filtering": self.filtering.to_dict(),
+            "final_pool": self.final_pool.to_dict(),
+        }
+
+
+@dataclass(frozen=True)
 class TrainingProvenance:
     format_version: str
     producer_policy: str
@@ -278,6 +397,7 @@ class ModelBundle:
     threshold_provenance: ThresholdProvenance
     training_provenance: TrainingProvenance
     score_type: ScoreType = "raw_score"
+    historical_reference_provenance: HistoricalReferenceProvenance | None = None
 
     def validate(self) -> None:
         if self.preprocessor is None or not hasattr(self.preprocessor, "transform"):
@@ -314,6 +434,12 @@ class ModelBundle:
             raise ValueError("ModelBundle threshold_provenance must be immutable typed metadata.")
         if not isinstance(self.training_provenance, TrainingProvenance):
             raise ValueError("ModelBundle training_provenance must be immutable typed metadata.")
+        if self.historical_reference_provenance is not None and not isinstance(
+            self.historical_reference_provenance, HistoricalReferenceProvenance
+        ):
+            raise ValueError(
+                "ModelBundle historical_reference_provenance must be immutable typed metadata."
+            )
         _validate_policy_binding(
             intended_use=self.intended_use,
             threshold_provenance=self.threshold_provenance,
@@ -332,6 +458,12 @@ class ModelBundle:
             raise ValueError(
                 "Historical-reference demo bundles must expose raw_score without calibration."
             )
+        _validate_historical_reference_binding(
+            evidence_category=self.intended_use.evidence_category,
+            historical_reference=self.historical_reference_provenance,
+            data_roles=self.training_provenance.data_roles,
+            quarantine=self.training_provenance.quarantine,
+        )
         _validate_component_feature_identities(self.preprocessor, self.model)
         positive_class_index(self.model, component="model")
         if self.calibrator is not None and hasattr(self.calibrator, "predict_proba"):
@@ -409,6 +541,9 @@ def _producer_policy(policy_id: str) -> Mapping[str, Any]:
         "required_roles",
         "threshold",
     }
+    if policy_id == "historical_reference_demo_v1":
+        expected_fields.add("canonical_recipe_sha256")
+        expected_fields.add("canonical_reference_evidence_sha256")
     if not isinstance(policy, dict) or set(policy) != expected_fields:
         raise ValueError("Unsupported or malformed bundle producer policy.")
     return policy
@@ -552,6 +687,195 @@ def _parse_quarantine(value: object) -> QuarantineProvenance:
         duplicate_row_count=duplicates,
         overlap_row_count=overlap,
     )
+
+
+def _parse_historical_reference_file(
+    value: object, *, label: str, expected_filename: str | None = None
+) -> HistoricalReferenceFileIdentity:
+    payload = _require_exact_mapping(value, _HISTORICAL_REFERENCE_FILE_FIELDS, label=label)
+    filename = payload["filename"]
+    if (
+        not isinstance(filename, str)
+        or not filename
+        or filename in {".", ".."}
+        or "/" in filename
+        or "\\" in filename
+        or Path(filename).is_absolute()
+        or PureWindowsPath(filename).is_absolute()
+        or bool(PureWindowsPath(filename).drive)
+        or Path(filename).name != filename
+        or (expected_filename is not None and filename != expected_filename)
+    ):
+        raise ValueError(f"{label}.filename is invalid.")
+    return HistoricalReferenceFileIdentity(
+        filename=filename,
+        sha256=_require_sha256(payload["sha256"], label=f"{label}.sha256"),
+        size_bytes=_require_nonnegative_int(payload["size_bytes"], label=f"{label}.size_bytes"),
+    )
+
+
+def _parse_historical_reference_provenance(
+    value: object,
+) -> HistoricalReferenceProvenance:
+    payload = _require_exact_mapping(
+        value, _HISTORICAL_REFERENCE_FIELDS, label="historical_reference_provenance"
+    )
+    if payload["format_version"] != HISTORICAL_REFERENCE_PROVENANCE_FORMAT_VERSION:
+        raise ValueError("Unsupported historical_reference_provenance format_version.")
+    recipe = _parse_historical_reference_file(
+        payload["recipe"],
+        label="historical_reference_provenance.recipe",
+        expected_filename="historical_reference_demo_recipe.json",
+    )
+    sources_payload = payload["sources"]
+    source_keys = ("x_train", "y_train", "x_val", "y_val")
+    expected_filenames = ("X_train.parquet", "y_train.parquet", "X_val.parquet", "y_val.parquet")
+    if not isinstance(sources_payload, Mapping) or set(sources_payload) != set(source_keys):
+        raise ValueError("Historical reference source identities are incomplete or unexpected.")
+    sources: list[HistoricalReferenceSourceIdentity] = []
+    for key, expected_filename in zip(source_keys, expected_filenames, strict=True):
+        source = _require_exact_mapping(
+            sources_payload[key],
+            _HISTORICAL_REFERENCE_SOURCE_FIELDS,
+            label=f"historical_reference_provenance.sources.{key}",
+        )
+        file_identity = _parse_historical_reference_file(
+            {
+                "filename": source["filename"],
+                "sha256": source["sha256"],
+                "size_bytes": source["size_bytes"],
+            },
+            label=f"historical_reference_provenance.sources.{key}",
+            expected_filename=expected_filename,
+        )
+        total = _require_nonnegative_int(
+            source["total_row_count"], label=f"historical_reference_provenance.sources.{key}.total"
+        )
+        if total == 0:
+            raise ValueError("Historical reference source identities must not be empty.")
+        fraud = source["fraud_row_count"]
+        if key.startswith("x_"):
+            if fraud is not None:
+                raise ValueError("Historical reference feature sources must not claim label counts.")
+        else:
+            fraud = _require_nonnegative_int(
+                fraud, label=f"historical_reference_provenance.sources.{key}.fraud"
+            )
+            if fraud > total:
+                raise ValueError("Historical reference source fraud count is inconsistent.")
+        sources.append(
+            HistoricalReferenceSourceIdentity(
+                filename=file_identity.filename,
+                sha256=file_identity.sha256,
+                size_bytes=file_identity.size_bytes,
+                total_row_count=total,
+                fraud_row_count=fraud,
+            )
+        )
+    if sources[0].total_row_count != sources[1].total_row_count or sources[2].total_row_count != sources[3].total_row_count:
+        raise ValueError("Historical reference feature/label source row counts disagree.")
+    quarantine = _parse_quarantine(payload["quarantine"])
+    filtering_payload = _require_exact_mapping(
+        payload["filtering"],
+        _HISTORICAL_REFERENCE_FILTERING_FIELDS,
+        label="historical_reference_provenance.filtering",
+    )
+    filtering = HistoricalReferenceFiltering(
+        **{
+            field: _require_nonnegative_int(
+                filtering_payload[field], label=f"historical_reference_provenance.filtering.{field}"
+            )
+            for field in _HISTORICAL_REFERENCE_FILTERING_FIELDS
+        }
+    )
+    if filtering.feature_label_conflicts != 0:
+        raise ValueError("Historical-reference bundles must not retain feature-label conflicts.")
+    pool_payload = _require_exact_mapping(
+        payload["final_pool"],
+        _HISTORICAL_REFERENCE_POOL_FIELDS,
+        label="historical_reference_provenance.final_pool",
+    )
+    pool = HistoricalReferencePool(
+        row_hashes_sha256=_require_sha256(
+            pool_payload["row_hashes_sha256"],
+            label="historical_reference_provenance.final_pool.row_hashes_sha256",
+        ),
+        total_row_count=_require_nonnegative_int(
+            pool_payload["total_row_count"], label="historical_reference_provenance.final_pool.total"
+        ),
+        legitimate_row_count=_require_nonnegative_int(
+            pool_payload["legitimate_row_count"],
+            label="historical_reference_provenance.final_pool.legitimate",
+        ),
+        fraud_row_count=_require_nonnegative_int(
+            pool_payload["fraud_row_count"], label="historical_reference_provenance.final_pool.fraud"
+        ),
+        unique_row_count=_require_nonnegative_int(
+            pool_payload["unique_row_count"], label="historical_reference_provenance.final_pool.unique"
+        ),
+        duplicate_row_count=_require_nonnegative_int(
+            pool_payload["duplicate_row_count"],
+            label="historical_reference_provenance.final_pool.duplicates",
+        ),
+    )
+    input_rows = sources[0].total_row_count + sources[2].total_row_count
+    if (
+        pool.total_row_count == 0
+        or pool.total_row_count != pool.legitimate_row_count + pool.fraud_row_count
+        or pool.total_row_count != pool.unique_row_count + pool.duplicate_row_count
+        or input_rows
+        != pool.total_row_count
+        + filtering.quarantine_occurrences_removed
+        + filtering.duplicate_rows_removed
+    ):
+        raise ValueError("Historical reference filtering or final-pool counts are inconsistent.")
+    return HistoricalReferenceProvenance(
+        format_version=HISTORICAL_REFERENCE_PROVENANCE_FORMAT_VERSION,
+        recipe=recipe,
+        sources=tuple(sources),
+        quarantine=quarantine,
+        filtering=filtering,
+        final_pool=pool,
+    )
+
+
+def _validate_historical_reference_binding(
+    *,
+    evidence_category: EvidenceCategory,
+    historical_reference: HistoricalReferenceProvenance | None,
+    data_roles: DataRolesProvenance,
+    quarantine: QuarantineProvenance | None,
+) -> None:
+    if evidence_category != "historical_reference_demo_inference":
+        if historical_reference is not None:
+            raise ValueError("Only historical-reference bundles may contain historical reference provenance.")
+        return
+    if historical_reference is None or quarantine is None:
+        raise ValueError("Historical-reference bundles require quarantine-bound reference provenance.")
+    policy = _producer_policy("historical_reference_demo_v1")
+    expected_recipe_sha256 = _require_sha256(
+        policy["canonical_recipe_sha256"], label="historical-reference policy recipe SHA-256"
+    )
+    if historical_reference.recipe.sha256 != expected_recipe_sha256:
+        raise ValueError("Historical-reference recipe identity does not match tracked policy.")
+    if historical_reference.quarantine != quarantine:
+        raise ValueError("Historical-reference quarantine identity contradicts training provenance.")
+    expected_evidence_sha256 = _require_sha256(
+        policy["canonical_reference_evidence_sha256"],
+        label="historical-reference policy evidence SHA-256",
+    )
+    if _historical_reference_evidence_sha256(historical_reference) != expected_evidence_sha256:
+        raise ValueError("Historical-reference evidence contradicts tracked policy.")
+    pool = historical_reference.final_pool
+    model_fit = data_roles.model_fit
+    if (
+        model_fit.fingerprint_sha256 != pool.row_hashes_sha256
+        or model_fit.total_row_count != pool.total_row_count
+        or model_fit.legitimate_row_count != pool.legitimate_row_count
+        or model_fit.fraud_row_count != pool.fraud_row_count
+        or model_fit.duplicate_row_count != pool.duplicate_row_count
+    ):
+        raise ValueError("Historical-reference final pool contradicts model-fit provenance.")
 
 
 def _parse_training_provenance(value: object) -> TrainingProvenance:
@@ -776,6 +1100,53 @@ def quarantine_provenance_metadata(
             "unique_row_count": unique_row_count,
             "duplicate_row_count": duplicate_row_count,
             "overlap_row_count": overlap_row_count,
+        }
+    )
+
+
+def historical_reference_provenance_metadata(
+    *,
+    recipe: HistoricalReferenceFileIdentity,
+    sources: tuple[HistoricalReferenceSourceIdentity, ...],
+    quarantine: QuarantineProvenance,
+    quarantine_occurrences_removed: int,
+    duplicate_rows_removed: int,
+    feature_label_conflicts: int,
+    final_pool: HistoricalReferencePool,
+) -> HistoricalReferenceProvenance:
+    """Build fully loader-validated provenance for a historical-reference bundle."""
+    provenance = HistoricalReferenceProvenance(
+        format_version=HISTORICAL_REFERENCE_PROVENANCE_FORMAT_VERSION,
+        recipe=recipe,
+        sources=sources,
+        quarantine=quarantine,
+        filtering=HistoricalReferenceFiltering(
+            quarantine_occurrences_removed=quarantine_occurrences_removed,
+            duplicate_rows_removed=duplicate_rows_removed,
+            feature_label_conflicts=feature_label_conflicts,
+        ),
+        final_pool=final_pool,
+    )
+    return _parse_historical_reference_provenance(provenance.to_dict())
+
+
+def _historical_reference_evidence_sha256(
+    provenance: HistoricalReferenceProvenance,
+) -> str:
+    """Digest every canonical historical-reference evidence field except recipe identity."""
+    return _canonical_json_sha256(
+        {
+            "sources": {
+                key: source.to_dict()
+                for key, source in zip(
+                    ("x_train", "y_train", "x_val", "y_val"),
+                    provenance.sources,
+                    strict=True,
+                )
+            },
+            "quarantine": provenance.quarantine.to_dict(),
+            "filtering": provenance.filtering.to_dict(),
+            "final_pool": provenance.final_pool.to_dict(),
         }
     )
 
@@ -1127,6 +1498,11 @@ def _bundle_manifest(
         "intended_use": bundle.intended_use.to_dict(),
         "threshold_provenance": bundle.threshold_provenance.to_dict(),
         "training_provenance": bundle.training_provenance.to_dict(),
+        "historical_reference_provenance": (
+            None
+            if bundle.historical_reference_provenance is None
+            else bundle.historical_reference_provenance.to_dict()
+        ),
         "positive_class_label": POSITIVE_CLASS_LABEL,
         "positive_class_index": positive_class_index(bundle.model),
         "golden_probe": golden_probe,
@@ -1466,7 +1842,12 @@ def save_model_bundle(
 
 def _validate_manifest(
     manifest: Mapping[str, Any],
-) -> tuple[IntendedUse, ThresholdProvenance, TrainingProvenance]:
+) -> tuple[
+    IntendedUse,
+    ThresholdProvenance,
+    TrainingProvenance,
+    HistoricalReferenceProvenance | None,
+]:
     required = {
         "bundle_format_version",
         "model_version",
@@ -1482,6 +1863,7 @@ def _validate_manifest(
         "intended_use",
         "threshold_provenance",
         "training_provenance",
+        "historical_reference_provenance",
     }
     if "bundle_format_version" not in manifest:
         raise ArtifactVerificationError("Bundle manifest is missing bundle_format_version.")
@@ -1514,6 +1896,12 @@ def _validate_manifest(
         intended_use = _parse_intended_use(manifest["intended_use"])
         threshold_provenance = _parse_threshold_provenance(manifest["threshold_provenance"])
         training_provenance = _parse_training_provenance(manifest["training_provenance"])
+        historical_reference_value = manifest["historical_reference_provenance"]
+        historical_reference = (
+            None
+            if historical_reference_value is None
+            else _parse_historical_reference_provenance(historical_reference_value)
+        )
         _validate_policy_binding(
             intended_use=intended_use,
             threshold_provenance=threshold_provenance,
@@ -1524,6 +1912,12 @@ def _validate_manifest(
         )
         if manifest["training_data_fingerprint"] != training_provenance.data_roles_sha256:
             raise ValueError("training_data_fingerprint does not bind declared data roles.")
+        _validate_historical_reference_binding(
+            evidence_category=intended_use.evidence_category,
+            historical_reference=historical_reference,
+            data_roles=training_provenance.data_roles,
+            quarantine=training_provenance.quarantine,
+        )
     except ValueError as exc:
         raise ArtifactVerificationError(f"Bundle provenance validation failed: {exc}") from None
     artifacts = manifest["artifacts"]
@@ -1615,14 +2009,19 @@ def _validate_manifest(
                 f"Dependency mismatch for {package}: bundle {dependencies.get(package)!r}, "
                 f"current {current!r}."
             )
-    return intended_use, threshold_provenance, training_provenance
+    return intended_use, threshold_provenance, training_provenance, historical_reference
 
 
 def _load_model_bundle_from_directory_fd(directory_fd: int) -> ModelBundle:
     manifest_bytes = _read_regular_file_at(directory_fd, MANIFEST_FILENAME, label="Bundle manifest")
     try:
         manifest = _strict_json_object(manifest_bytes, label="Bundle manifest")
-        intended_use, threshold_provenance, training_provenance = _validate_manifest(manifest)
+        (
+            intended_use,
+            threshold_provenance,
+            training_provenance,
+            historical_reference,
+        ) = _validate_manifest(manifest)
     except ValueError as exc:
         raise ArtifactVerificationError(f"Invalid bundle manifest: {exc}") from exc
 
@@ -1663,6 +2062,7 @@ def _load_model_bundle_from_directory_fd(directory_fd: int) -> ModelBundle:
         threshold_provenance=threshold_provenance,
         training_provenance=training_provenance,
         score_type=cast(ScoreType, manifest["score_type"]),
+        historical_reference_provenance=historical_reference,
     )
     try:
         bundle.validate()

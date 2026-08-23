@@ -19,8 +19,12 @@ from src.artifacts import bundle as bundle_module
 from src.artifacts.bundle import (
     ArtifactVerificationError,
     BUNDLE_FORMAT_VERSION,
+    HistoricalReferenceFileIdentity,
+    HistoricalReferencePool,
+    HistoricalReferenceSourceIdentity,
     ModelBundle,
     data_role_metadata,
+    historical_reference_provenance_metadata,
     intended_use_metadata,
     load_model_bundle,
     load_verified_joblib,
@@ -89,6 +93,9 @@ def _bundle() -> tuple[ModelBundle, pd.DataFrame]:
 
 def _historical_bundle() -> ModelBundle:
     bundle, _ = _bundle()
+    recipe_path = Path(__file__).parents[1] / "configs" / "historical_reference_demo_recipe.json"
+    recipe_payload = json.loads(recipe_path.read_text(encoding="utf-8"))
+    pool_payload = recipe_payload["training_pool"]
     anchor = load_historical_quarantine_anchor()
     quarantine = quarantine_provenance_metadata(
         anchor_sha256=anchor.sha256,
@@ -101,11 +108,47 @@ def _historical_bundle() -> ModelBundle:
     )
     training_provenance = training_provenance_metadata(
         producer_policy="historical_reference_demo_v1",
-        model_fit=bundle.training_provenance.data_roles.model_fit,
+        model_fit=data_role_metadata(
+            fingerprint_sha256=pool_payload["row_hashes_sha256"],
+            total_row_count=pool_payload["total_row_count"],
+            fraud_row_count=pool_payload["fraud_count"],
+            duplicate_row_count=pool_payload["duplicate_row_count"],
+        ),
         calibrator_fit=None,
         threshold_selection=None,
         evaluation=None,
         quarantine=quarantine,
+    )
+    historical_reference = historical_reference_provenance_metadata(
+        recipe=HistoricalReferenceFileIdentity(
+            filename="historical_reference_demo_recipe.json",
+            sha256=sha256_file(recipe_path),
+            size_bytes=recipe_path.stat().st_size,
+        ),
+        sources=(
+            *(
+                HistoricalReferenceSourceIdentity(
+                    recipe_payload["candidate_sources"][key]["filename"],
+                    recipe_payload["candidate_sources"][key]["sha256"],
+                    recipe_payload["candidate_sources"][key]["size_bytes"],
+                    recipe_payload["candidate_sources"][key]["row_count"],
+                    recipe_payload["candidate_sources"][key]["fraud_count"],
+                )
+                for key in ("x_train", "y_train", "x_val", "y_val")
+            ),
+        ),
+        quarantine=quarantine,
+        quarantine_occurrences_removed=recipe_payload["filtering"]["quarantine_occurrences_removed"],
+        duplicate_rows_removed=recipe_payload["filtering"]["duplicate_rows_removed"],
+        feature_label_conflicts=0,
+        final_pool=HistoricalReferencePool(
+            row_hashes_sha256=pool_payload["row_hashes_sha256"],
+            total_row_count=pool_payload["total_row_count"],
+            legitimate_row_count=pool_payload["legitimate_row_count"],
+            fraud_row_count=pool_payload["fraud_count"],
+            unique_row_count=pool_payload["unique_row_count"],
+            duplicate_row_count=pool_payload["duplicate_row_count"],
+        ),
     )
     return replace(
         bundle,
@@ -118,6 +161,7 @@ def _historical_bundle() -> ModelBundle:
         ),
         training_data_fingerprint=training_provenance.data_roles_sha256,
         training_provenance=training_provenance,
+        historical_reference_provenance=historical_reference,
     )
 
 
@@ -573,6 +617,66 @@ def test_historical_recipe_identity_tampering_fails_before_deserialization(
 
     with patch("src.artifacts.bundle.joblib.load") as deserialize:
         with pytest.raises(ArtifactVerificationError, match="Training recipe"):
+            load_model_bundle(manifest, trusted_root=tmp_path / "trusted")
+        deserialize.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    [
+        (
+            lambda payload: payload["historical_reference_provenance"]["recipe"].update(
+                {"sha256": "0" * 64}
+            ),
+            "recipe identity",
+        ),
+        (
+            lambda payload: payload["historical_reference_provenance"]["sources"]["x_train"].update(
+                {"total_row_count": 19}
+            ),
+            "row counts disagree",
+        ),
+        (
+            lambda payload: payload["historical_reference_provenance"]["sources"]["x_train"].update(
+                {"sha256": "0" * 64, "size_bytes": 1}
+            ),
+            "evidence contradicts tracked policy",
+        ),
+        (
+            lambda payload: payload["historical_reference_provenance"]["filtering"].update(
+                {"feature_label_conflicts": 1}
+            ),
+            "conflicts",
+        ),
+        (
+            lambda payload: payload["historical_reference_provenance"]["filtering"].update(
+                {
+                    "quarantine_occurrences_removed": 381,
+                    "duplicate_rows_removed": 648,
+                }
+            ),
+            "evidence contradicts tracked policy",
+        ),
+        (
+            lambda payload: payload["historical_reference_provenance"]["final_pool"].update(
+                {"row_hashes_sha256": "9" * 64}
+            ),
+            "evidence contradicts tracked policy",
+        ),
+    ],
+)
+def test_historical_reference_provenance_tampering_fails_before_deserialization(
+    tmp_path: Path, mutation: object, message: str
+) -> None:
+    manifest = save_model_bundle(
+        _historical_bundle(), tmp_path / "trusted" / "historical-reference"
+    )
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    mutation(payload)  # type: ignore[operator]
+    manifest.write_text(json.dumps(payload), encoding="utf-8")
+
+    with patch("src.artifacts.bundle.joblib.load") as deserialize:
+        with pytest.raises(ArtifactVerificationError, match=message):
             load_model_bundle(manifest, trusted_root=tmp_path / "trusted")
         deserialize.assert_not_called()
 
