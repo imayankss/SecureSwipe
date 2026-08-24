@@ -46,10 +46,11 @@ anywhere in this project.
 ### Preliminary local serving-path evidence
 
 The fixed synthetic loopback baseline recorded 500/500 successful requests at
-8 concurrency with 0 errors/timeouts: p50 33.60 ms, p95 39.75 ms, p99 70.24
-ms, and 246.10 TPS (transactions per second). It uses a temporary synthetic-only
-bundle on one local Apple M2 Uvicorn worker; it is neither real-model nor
-public-network evidence and will be rerun against the final release candidate.
+8 concurrency with 0 errors/timeouts: p50 33.28 ms, p95 42.41 ms, p99 48.73
+ms, and 252.36 TPS (transactions per second). It uses a temporary synthetic-only
+bundle on one local Apple M2 Uvicorn worker and was rerun against repaired
+serving-code commit `5a8b653e939bf77d71cea6ce3f99667449fa4ad3`; it remains preliminary pending
+final CI and is neither real-model nor public-network evidence.
 See the [dated benchmark report](reports/operations/2026-08-24_local_single_node_serving_benchmark.md).
 
 ## Live Demo

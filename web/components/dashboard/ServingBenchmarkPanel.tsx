@@ -7,10 +7,10 @@ const benchmarkReportHref =
   "https://github.com/imayankss/SecureSwipe/blob/main/reports/operations/2026-08-24_local_single_node_serving_benchmark.md";
 
 const latencyMetrics = [
-  ["p50", "33.60 ms"],
-  ["p95", "39.75 ms"],
-  ["p99", "70.24 ms"],
-  ["Throughput", "246.10 TPS"],
+  ["p50", "33.28 ms"],
+  ["p95", "42.41 ms"],
+  ["p99", "48.73 ms"],
+  ["Throughput", "252.36 TPS"],
 ] as const;
 
 export function ServingBenchmarkPanel() {
@@ -19,7 +19,7 @@ export function ServingBenchmarkPanel() {
       <DashboardPanel
         eyebrow="Measured local evidence"
         title="Preliminary local synthetic serving-path benchmark"
-        description="Fixed loopback baseline from a temporary synthetic-only bundle; this is preliminary and will be rerun against the final release candidate."
+        description="Fixed loopback baseline from a temporary synthetic-only bundle, rerun against the repaired serving-code commit; preliminary pending final CI."
         aside={<EvidenceLabel type="synthetic-plumbing-test" />}
         bodyClassName="space-y-4"
       >
@@ -58,7 +58,7 @@ export function ServingBenchmarkPanel() {
         </div>
 
         <div role="note" className="rounded-md border border-amber-200/20 bg-amber-300/[0.045] p-3 text-xs leading-5 text-amber-50">
-          Local synthetic serving-path measurement only. It does not measure real-model accuracy, public-network performance, Indian/Razorpay traffic, or production capacity. It will be rerun against the final release candidate.
+          Local synthetic serving-path measurement only. It does not measure real-model accuracy, public-network performance, Indian/Razorpay traffic, or production capacity. It remains preliminary pending final CI.
         </div>
 
         <a
