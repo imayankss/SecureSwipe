@@ -3,23 +3,45 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 
 import { SyntheticPlumbingSimulator } from "@/components/SyntheticPlumbingSimulator";
+import { formatSyntheticInr } from "@/data/displayCurrency";
 import { createSimulator } from "@/data/syntheticFixture";
 
-const FORBIDDEN_WORDS = ["approve", "approved", "block", "blocked", "fraud_probability", "razorpay risk score"];
+const FORBIDDEN_WORDS = [
+  "approve",
+  "approved",
+  "block",
+  "blocked",
+  "fraud_probability",
+  "razorpay risk score",
+];
 
 describe("synthetic plumbing-test generator (pure module)", () => {
+  it("uses Indian number formatting for synthetic INR display", () => {
+    expect(formatSyntheticInr(100_000, "INR")).toBe("₹1,00,000.00");
+  });
+
   it("is deterministic for a fixed seed", () => {
     const first = createSimulator({ seed: 42 });
     const second = createSimulator({ seed: 42 });
-    const firstEvents = [first.generateEvent(), first.generateEvent(), first.generateEvent()];
-    const secondEvents = [second.generateEvent(), second.generateEvent(), second.generateEvent()];
-    expect(firstEvents.map((record) => record.input)).toEqual(secondEvents.map((record) => record.input));
+    const firstEvents = [
+      first.generateEvent(),
+      first.generateEvent(),
+      first.generateEvent(),
+    ];
+    const secondEvents = [
+      second.generateEvent(),
+      second.generateEvent(),
+      second.generateEvent(),
+    ];
+    expect(firstEvents.map((record) => record.input)).toEqual(
+      secondEvents.map((record) => record.input),
+    );
     expect(firstEvents.map((record) => record.output.decision)).toEqual(
       secondEvents.map((record) => record.output.decision),
     );
-    expect(firstEvents.map((record) => record.output.context_signal_score)).toEqual(
-      secondEvents.map((record) => record.output.context_signal_score),
-    );
+    expect(
+      firstEvents.map((record) => record.output.context_signal_score),
+    ).toEqual(secondEvents.map((record) => record.output.context_signal_score));
   });
 
   it("tags every decision with the synthetic_plumbing_test evidence type and a legal decision value", () => {
@@ -27,7 +49,11 @@ describe("synthetic plumbing-test generator (pure module)", () => {
     for (let i = 0; i < 10; i += 1) {
       const record = simulator.generateEvent();
       expect(record.output.evidence_type).toBe("synthetic_plumbing_test");
-      expect(["below_review_threshold", "human_review", "unavailable_fail_closed"]).toContain(record.output.decision);
+      expect([
+        "below_review_threshold",
+        "human_review",
+        "unavailable_fail_closed",
+      ]).toContain(record.output.decision);
       expect(record.output.context_signal_score).toBeGreaterThanOrEqual(0);
       expect(record.output.context_signal_score).toBeLessThanOrEqual(1);
     }
@@ -39,7 +65,9 @@ describe("synthetic plumbing-test generator (pure module)", () => {
     const replayed = simulator.replay(original.input.event_id);
     expect(replayed).not.toBeNull();
     expect(replayed?.output.decision).toBe(original.output.decision);
-    expect(replayed?.output.context_signal_score).toBe(original.output.context_signal_score);
+    expect(replayed?.output.context_signal_score).toBe(
+      original.output.context_signal_score,
+    );
     expect(replayed?.output.request_id).not.toBe(original.output.request_id);
     expect(replayed?.output.is_duplicate).toBe(true);
     expect(original.output.is_duplicate).toBe(false);
@@ -96,25 +124,64 @@ describe("SyntheticPlumbingSimulator UI", () => {
     render(<SyntheticPlumbingSimulator />);
 
     expect(screen.getByText(/No synthetic events yet/)).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Generate next synthetic event" }));
-    expect(screen.getAllByText("Synthetic plumbing test").length).toBeGreaterThan(0);
-    expect(screen.getByLabelText("Synthetic event timeline")).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Generate next synthetic event" }),
+    );
+    expect(
+      screen.getAllByText("Synthetic plumbing test").length,
+    ).toBeGreaterThan(0);
+    expect(
+      screen.getByLabelText("Synthetic event timeline"),
+    ).toBeInTheDocument();
+  });
+
+  it("defaults fabricated example amounts to accessible INR formatting and offers USD display conversion", async () => {
+    const user = userEvent.setup();
+    render(<SyntheticPlumbingSimulator />);
+
+    const currencySelector = screen.getByLabelText(
+      "Synthetic amount display currency",
+    );
+    expect(currencySelector).toHaveValue("INR");
+    expect(
+      screen.getByText(/INR is the default for fabricated example amounts/),
+    ).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Generate next synthetic event" }),
+    );
+    expect(screen.getByText("₹4,805.00")).toBeInTheDocument();
+
+    await user.selectOptions(currencySelector, "USD");
+    expect(screen.getByText("$57.89")).toBeInTheDocument();
+    expect(
+      screen.getByText(/never changes genuine-model input semantics/),
+    ).toBeInTheDocument();
   });
 
   it("marks a replayed event as a duplicate without changing its decision", async () => {
     const user = userEvent.setup();
     render(<SyntheticPlumbingSimulator />);
 
-    await user.click(screen.getByRole("button", { name: "Generate next synthetic event" }));
-    await user.click(screen.getByRole("button", { name: "Replay last event ID (duplicate)" }));
-    expect(screen.getByText(/Duplicate submission of an existing event_id/)).toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Generate next synthetic event" }),
+    );
+    await user.click(
+      screen.getByRole("button", { name: "Replay last event ID (duplicate)" }),
+    );
+    expect(
+      screen.getByText(/Duplicate submission of an existing event_id/),
+    ).toBeInTheDocument();
   });
 
   it("demonstrates the fail-closed path on an out-of-bounds event", async () => {
     const user = userEvent.setup();
     render(<SyntheticPlumbingSimulator />);
 
-    await user.click(screen.getByRole("button", { name: "Simulate out-of-bounds event (fail closed)" }));
+    await user.click(
+      screen.getByRole("button", {
+        name: "Simulate out-of-bounds event (fail closed)",
+      }),
+    );
     expect(screen.getAllByText("Unavailable / fail closed")).toHaveLength(2);
   });
 
@@ -122,16 +189,24 @@ describe("SyntheticPlumbingSimulator UI", () => {
     const user = userEvent.setup();
     render(<SyntheticPlumbingSimulator />);
 
-    await user.click(screen.getByRole("button", { name: "Generate next synthetic event" }));
-    expect(screen.queryByText(/No synthetic events yet/)).not.toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Reset demo session" }));
+    await user.click(
+      screen.getByRole("button", { name: "Generate next synthetic event" }),
+    );
+    expect(
+      screen.queryByText(/No synthetic events yet/),
+    ).not.toBeInTheDocument();
+    await user.click(
+      screen.getByRole("button", { name: "Reset demo session" }),
+    );
     expect(screen.getByText(/No synthetic events yet/)).toBeInTheDocument();
   });
 
   it("never renders forbidden approve/block/fraud-probability wording", async () => {
     const user = userEvent.setup();
     const { container } = render(<SyntheticPlumbingSimulator />);
-    await user.click(screen.getByRole("button", { name: "Generate next synthetic event" }));
+    await user.click(
+      screen.getByRole("button", { name: "Generate next synthetic event" }),
+    );
     const text = container.textContent?.toLowerCase() ?? "";
     for (const word of FORBIDDEN_WORDS) {
       expect(text).not.toContain(word);

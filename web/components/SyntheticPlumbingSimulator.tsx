@@ -1,10 +1,29 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { AlertOctagon, Copy, PlayCircle, RefreshCcw, ShieldAlert } from "lucide-react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  AlertOctagon,
+  Copy,
+  PlayCircle,
+  RefreshCcw,
+  ShieldAlert,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Section } from "@/components/Section";
 import { EvidenceLabel } from "@/components/EvidenceLabel";
+import {
+  DEFAULT_DISPLAY_CURRENCY,
+  DISPLAY_CURRENCIES,
+  ILLUSTRATIVE_INR_PER_USD,
+  formatSyntheticInr,
+  type DisplayCurrency,
+} from "@/data/displayCurrency";
 import {
   createSimulator,
   type SyntheticEventRecord,
@@ -12,15 +31,23 @@ import {
 } from "@/data/syntheticFixture";
 
 const DECISION_COPY: Record<string, { label: string; className: string }> = {
-  below_review_threshold: { label: "Below review threshold", className: "text-emerald-100" },
+  below_review_threshold: {
+    label: "Below review threshold",
+    className: "text-emerald-100",
+  },
   human_review: { label: "Human review", className: "text-amber-100" },
-  unavailable_fail_closed: { label: "Unavailable / fail closed", className: "text-rose-100" },
+  unavailable_fail_closed: {
+    label: "Unavailable / fail closed",
+    className: "text-rose-100",
+  },
 };
 
 function useSimulator() {
   const [simulator] = useState<Simulator>(() => createSimulator({ seed: 42 }));
   const [events, setEvents] = useState<SyntheticEventRecord[]>([]);
-  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(null);
+  const [selectedRequestId, setSelectedRequestId] = useState<string | null>(
+    null,
+  );
 
   function refresh(latest: SyntheticEventRecord) {
     setEvents([...simulator.getEvents()]);
@@ -48,10 +75,24 @@ function useSimulator() {
 }
 
 export function SyntheticPlumbingSimulator() {
-  const { generate, generateInvalid, replay, reset, events, selectedRequestId, setSelectedRequestId } = useSimulator();
+  const {
+    generate,
+    generateInvalid,
+    replay,
+    reset,
+    events,
+    selectedRequestId,
+    setSelectedRequestId,
+  } = useSimulator();
+  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>(
+    DEFAULT_DISPLAY_CURRENCY,
+  );
 
   const selected = useMemo(
-    () => events.find((record) => record.output.request_id === selectedRequestId) ?? events[events.length - 1] ?? null,
+    () =>
+      events.find((record) => record.output.request_id === selectedRequestId) ??
+      events[events.length - 1] ??
+      null,
     [events, selectedRequestId],
   );
 
@@ -71,13 +112,48 @@ export function SyntheticPlumbingSimulator() {
                 <EvidenceLabel type="synthetic-plumbing-test" />
               </div>
               <CardDescription>
-                Demonstrates event → bounded contextual features → bounded heuristic score → decision plumbing across
-                eight synthetic signal families. Single-process, in-browser, demo-only state.
+                Demonstrates event → bounded contextual features → bounded
+                heuristic score → decision plumbing across eight synthetic
+                signal families. Single-process, in-browser, demo-only state.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
+          <div className="flex flex-col gap-3 rounded-lg border border-violet-200/15 bg-violet-300/[0.04] p-4 text-sm text-slate-300 sm:flex-row sm:items-end sm:justify-between">
+            <label
+              className="grid gap-2 font-medium text-slate-200"
+              htmlFor="synthetic-display-currency"
+            >
+              Synthetic amount display currency
+              <select
+                id="synthetic-display-currency"
+                aria-describedby="synthetic-currency-note"
+                className="rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-white"
+                value={displayCurrency}
+                onChange={(event) =>
+                  setDisplayCurrency(
+                    event.currentTarget.value as DisplayCurrency,
+                  )
+                }
+              >
+                {DISPLAY_CURRENCIES.map((currency) => (
+                  <option key={currency} value={currency}>
+                    {currency}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <p
+              className="max-w-2xl text-xs leading-5 text-slate-400"
+              id="synthetic-currency-note"
+            >
+              INR is the default for fabricated example amounts. USD is a fixed
+              illustrative display conversion at 1 USD = ₹
+              {ILLUSTRATIVE_INR_PER_USD.toFixed(2)}; no live FX is fetched, and
+              this never changes genuine-model input semantics.
+            </p>
+          </div>
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
@@ -114,9 +190,13 @@ export function SyntheticPlumbingSimulator() {
             </button>
           </div>
           <p className="flex items-start gap-2 rounded-lg border border-violet-200/15 bg-violet-300/[0.04] p-3 text-xs leading-5 text-slate-300">
-            <AlertOctagon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-200" aria-hidden="true" />
-            Reset clears this browser tab&apos;s in-memory demo state only. It is not a recovery, backup, or
-            reconciliation operation, and it never touches the historical evaluation or the genuine-inference API.
+            <AlertOctagon
+              className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-200"
+              aria-hidden="true"
+            />
+            Reset clears this browser tab&apos;s in-memory demo state only. It
+            is not a recovery, backup, or reconciliation operation, and it never
+            touches the historical evaluation or the genuine-inference API.
           </p>
 
           {events.length === 0 ? (
@@ -129,18 +209,28 @@ export function SyntheticPlumbingSimulator() {
                 <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
                   Event timeline ({events.length})
                 </p>
-                <ul className="max-h-80 space-y-1.5 overflow-y-auto pr-1" aria-label="Synthetic event timeline">
+                <ul
+                  className="max-h-80 space-y-1.5 overflow-y-auto pr-1"
+                  aria-label="Synthetic event timeline"
+                >
                   {events
                     .slice()
                     .reverse()
                     .map((record) => {
-                      const decisionCopy = DECISION_COPY[record.output.decision];
-                      const isSelected = record.output.request_id === selected?.output.request_id;
+                      const decisionCopy =
+                        DECISION_COPY[record.output.decision];
+                      const isSelected =
+                        record.output.request_id ===
+                        selected?.output.request_id;
                       return (
-                        <li key={`${record.input.event_id}-${record.output.request_id}`}>
+                        <li
+                          key={`${record.input.event_id}-${record.output.request_id}`}
+                        >
                           <button
                             type="button"
-                            onClick={() => setSelectedRequestId(record.output.request_id)}
+                            onClick={() =>
+                              setSelectedRequestId(record.output.request_id)
+                            }
                             aria-pressed={isSelected}
                             className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition ${
                               isSelected
@@ -149,14 +239,25 @@ export function SyntheticPlumbingSimulator() {
                             }`}
                           >
                             <div className="flex items-center justify-between gap-2">
-                              <span className="font-mono text-slate-200">{record.input.event_id}</span>
-                              <span className={decisionCopy?.className}>{decisionCopy?.label}</span>
+                              <span className="font-mono text-slate-200">
+                                {record.input.event_id}
+                              </span>
+                              <span className={decisionCopy?.className}>
+                                {decisionCopy?.label}
+                              </span>
                             </div>
                             <div className="mt-1 flex items-center justify-between text-slate-500">
-                              <span>score {record.output.context_signal_score.toFixed(3)}</span>
                               <span>
-                                {record.output.is_duplicate ? "duplicate · " : ""}
-                                {record.output.is_late_or_out_of_order ? "late/out-of-order" : ""}
+                                score{" "}
+                                {record.output.context_signal_score.toFixed(3)}
+                              </span>
+                              <span>
+                                {record.output.is_duplicate
+                                  ? "duplicate · "
+                                  : ""}
+                                {record.output.is_late_or_out_of_order
+                                  ? "late/out-of-order"
+                                  : ""}
                               </span>
                             </div>
                           </button>
@@ -166,7 +267,12 @@ export function SyntheticPlumbingSimulator() {
                 </ul>
               </div>
 
-              {selected ? <EventDetail record={selected} /> : null}
+              {selected ? (
+                <EventDetail
+                  record={selected}
+                  displayCurrency={displayCurrency}
+                />
+              ) : null}
             </div>
           )}
         </CardContent>
@@ -175,24 +281,33 @@ export function SyntheticPlumbingSimulator() {
   );
 }
 
-function EventDetail({ record }: { record: SyntheticEventRecord }) {
+function EventDetail({
+  record,
+  displayCurrency,
+}: {
+  record: SyntheticEventRecord;
+  displayCurrency: DisplayCurrency;
+}) {
   const decisionCopy = DECISION_COPY[record.output.decision];
   return (
     <div className="space-y-4 rounded-lg border border-white/10 bg-slate-950/30 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-mono text-sm text-white">{record.input.event_id}</p>
-        <p className={`text-sm font-medium ${decisionCopy?.className}`}>{decisionCopy?.label}</p>
+        <p className={`text-sm font-medium ${decisionCopy?.className}`}>
+          {decisionCopy?.label}
+        </p>
       </div>
       <dl className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs text-slate-300 sm:grid-cols-3">
         <div>
           <dt className="text-slate-500">Context signal score</dt>
-          <dd>{record.output.context_signal_score.toFixed(3)} (not a fraud probability)</dd>
+          <dd>
+            {record.output.context_signal_score.toFixed(3)} (not a fraud
+            probability)
+          </dd>
         </div>
         <div>
-          <dt className="text-slate-500">Amount</dt>
-          <dd>
-            {record.input.amount.toLocaleString("en-IN")} {record.input.currency}
-          </dd>
+          <dt className="text-slate-500">Synthetic example amount</dt>
+          <dd>{formatSyntheticInr(record.input.amount, displayCurrency)}</dd>
         </div>
         <div>
           <dt className="text-slate-500">Outcome</dt>
@@ -215,16 +330,27 @@ function EventDetail({ record }: { record: SyntheticEventRecord }) {
       </dl>
 
       <div>
-        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-400">Triggered signals</p>
+        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-400">
+          Triggered signals
+        </p>
         {record.output.triggered_signals.length === 0 ? (
-          <p className="text-xs text-slate-500">No signal families triggered for this synthetic event.</p>
+          <p className="text-xs text-slate-500">
+            No signal families triggered for this synthetic event.
+          </p>
         ) : (
           <ul className="space-y-1.5">
             {record.output.triggered_signals.map((signal) => (
-              <li key={signal.code} className="rounded-md border border-white/10 bg-white/[0.02] p-2 text-xs text-slate-300">
+              <li
+                key={signal.code}
+                className="rounded-md border border-white/10 bg-white/[0.02] p-2 text-xs text-slate-300"
+              >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-violet-200">{signal.code}</span>
-                  <span className="text-slate-500">+{signal.contribution.toFixed(2)}</span>
+                  <span className="font-mono text-violet-200">
+                    {signal.code}
+                  </span>
+                  <span className="text-slate-500">
+                    +{signal.contribution.toFixed(2)}
+                  </span>
                 </div>
                 <p className="mt-0.5 text-slate-400">{signal.explanation}</p>
               </li>
@@ -239,10 +365,23 @@ function EventDetail({ record }: { record: SyntheticEventRecord }) {
         </p>
         <div className="grid grid-cols-3 gap-2 text-xs text-slate-300">
           {(["1m", "1h", "24h"] as const).map((windowLabel) => (
-            <div key={windowLabel} className="rounded-md border border-white/10 bg-white/[0.02] p-2">
+            <div
+              key={windowLabel}
+              className="rounded-md border border-white/10 bg-white/[0.02] p-2"
+            >
               <p className="text-slate-500">{windowLabel}</p>
-              <p>{record.output.window_features.account[windowLabel].count} events</p>
-              <p>{record.output.window_features.account[windowLabel].amountTotal.toLocaleString("en-IN")} total</p>
+              <p>
+                {record.output.window_features.account[windowLabel].count}{" "}
+                events
+              </p>
+              <p>
+                {formatSyntheticInr(
+                  record.output.window_features.account[windowLabel]
+                    .amountTotal,
+                  displayCurrency,
+                )}{" "}
+                total
+              </p>
             </div>
           ))}
         </div>
@@ -250,14 +389,15 @@ function EventDetail({ record }: { record: SyntheticEventRecord }) {
 
       {record.output.is_duplicate ? (
         <p className="text-xs text-amber-200">
-          Duplicate submission of an existing event_id. Per the idempotency policy, the original decision was not
-          rewritten.
+          Duplicate submission of an existing event_id. Per the idempotency
+          policy, the original decision was not rewritten.
         </p>
       ) : null}
       {record.output.is_late_or_out_of_order ? (
         <p className="text-xs text-amber-200">
-          This event&apos;s timestamp is earlier than the latest event already processed for this account. Prior
-          emitted decisions were not rewritten.
+          This event&apos;s timestamp is earlier than the latest event already
+          processed for this account. Prior emitted decisions were not
+          rewritten.
         </p>
       ) : null}
     </div>
