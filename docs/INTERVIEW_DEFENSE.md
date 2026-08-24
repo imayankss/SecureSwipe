@@ -86,10 +86,14 @@ not claim arbitrary pickle is safe.
 
 ### Why not Kubernetes, Kafka, or online retraining?
 
-There is no measured traffic, latency, data-volume, or organizational requirement
-that justifies them. A single verified bundle, one service, offline monitoring,
-and a static dashboard make the important failure modes inspectable. Additional
-infrastructure would add operational claims without evidence.
+There is no measured real-model, public-network, data-volume, or organizational
+requirement that justifies them. The preliminary local synthetic serving-path
+benchmark is limited to one loopback worker and does not establish a deployment
+requirement or capacity claim; see the
+[dated report](../reports/operations/2026-08-24_local_single_node_serving_benchmark.md).
+A single verified bundle, one service, offline monitoring, and a static dashboard
+make the important failure modes inspectable. Additional infrastructure would
+add operational claims without evidence.
 
 ### What would you do next with the missing inputs?
 

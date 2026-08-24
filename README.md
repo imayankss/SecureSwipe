@@ -28,11 +28,11 @@ before treating anything as a claim:
   all-zero example feature vector — never real transaction data — and reports
   the live bundle/model version alongside the result.
 - **Synthetic plumbing test** — output from a fully synthetic, in-browser event
-  simulator that exercises the *shape* of a decisioning pipeline (event →
-  context features → bounded decision → review queue) using fabricated,
-  clearly-labeled fixture data. It never calls a model, a database, or a
-  network endpoint, and its numbers carry no evidentiary weight about
-  real-world fraud detection.
+  simulator, or an explicitly local synthetic serving-path measurement. The
+  simulator exercises the *shape* of a decisioning pipeline (event → context
+  features → bounded decision → review queue) using fabricated fixture data and
+  never calls a model, database, or network endpoint. Neither form carries
+  evidentiary weight about real-world fraud detection.
 - **Illustrative cost scenario** — a what-if calculator built on the locked
   confusion-matrix counts and user-editable cost assumptions. It is not a
   Razorpay economics figure, a savings claim, or a forecast.
@@ -42,6 +42,15 @@ of anything. Every decision surface — genuine or synthetic — resolves to one
 of exactly three bounded outcomes: `below review threshold`, `human review`,
 or `unavailable / fail closed`. There is no autonomous approve/block action
 anywhere in this project.
+
+### Preliminary local serving-path evidence
+
+The fixed synthetic loopback baseline recorded 500/500 successful requests at
+8 concurrency with 0 errors/timeouts: p50 33.60 ms, p95 39.75 ms, p99 70.24
+ms, and 246.10 TPS (transactions per second). It uses a temporary synthetic-only
+bundle on one local Apple M2 Uvicorn worker; it is neither real-model nor
+public-network evidence and will be rerun against the final release candidate.
+See the [dated benchmark report](reports/operations/2026-08-24_local_single_node_serving_benchmark.md).
 
 ## Live Demo
 
