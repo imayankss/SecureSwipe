@@ -2,16 +2,18 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import os
 import re
+import threading
 import time
 import uuid
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, AsyncIterator, Callable
+from typing import Any, AsyncIterator, Awaitable, Callable
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -51,7 +53,103 @@ INFERENCE_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
     422: ERROR_RESPONSE,
     500: ERROR_RESPONSE,
     503: ERROR_RESPONSE,
+    504: ERROR_RESPONSE,
 }
+
+
+class PredictionTimeoutError(Exception):
+    """Raised when synchronous inference exceeds the configured deadline."""
+
+
+class CapacityExceededError(Exception):
+    """Raised when in-flight prediction work exceeds the configured admission limit."""
+
+
+class ConcurrencyGate:
+    """Bounded, non-blocking admission control for synchronous inference work.
+
+    Deliberately dependency-free: a thread-safe counter guarded by a lock,
+    checked once per request with no queueing. When the limit is reached the
+    caller fails closed immediately (503) instead of piling up work behind
+    the single-writer model lock in ModelService.
+    """
+
+    def __init__(self, limit: int) -> None:
+        if limit < 1:
+            raise ValueError("limit must be at least 1.")
+        self._limit = limit
+        self._in_flight = 0
+        self._lock = threading.Lock()
+
+    def try_acquire(self) -> bool:
+        with self._lock:
+            if self._in_flight >= self._limit:
+                return False
+            self._in_flight += 1
+            return True
+
+    def release(self) -> None:
+        with self._lock:
+            self._in_flight = max(0, self._in_flight - 1)
+
+    @property
+    def in_flight(self) -> int:
+        with self._lock:
+            return self._in_flight
+
+
+async def _run_admitted_inference(
+    operation: Callable[..., Any],
+    *args: Any,
+    gate: ConcurrencyGate,
+    timeout_seconds: float,
+) -> Any:
+    """Run one admitted worker without releasing its slot on client timeout.
+
+    The worker task is shielded from request timeout/cancellation. Its done
+    callback owns the admission slot and releases it only after the underlying
+    threadpool operation has actually finished.
+    """
+    if not gate.try_acquire():
+        raise CapacityExceededError(f"Prediction capacity exceeded ({gate.in_flight} in flight).")
+
+    try:
+        worker_task = asyncio.create_task(run_in_threadpool(operation, *args))
+    except BaseException:
+        gate.release()
+        raise
+
+    def release_when_worker_finishes(completed: asyncio.Task[Any]) -> None:
+        try:
+            completed.exception()
+        except asyncio.CancelledError:
+            pass
+        finally:
+            gate.release()
+
+    worker_task.add_done_callback(release_when_worker_finishes)
+    return await _run_bounded(
+        asyncio.shield(worker_task),
+        timeout_seconds=timeout_seconds,
+    )
+
+
+async def _run_bounded(awaitable: Awaitable[Any], *, timeout_seconds: float) -> Any:
+    """Await coro with a hard deadline, converting timeout into a stable error.
+
+    Note: cancelling the awaited coroutine does not forcibly stop the
+    underlying threadpool worker (CPython threads cannot be killed). The
+    caller reliably gets a timely error and the connection is not held open;
+    the worker thread still finishes in the background and releases the
+    model lock when it does. This bounds client-facing latency, not raw
+    server-side compute -- documented as a known limitation, not hidden.
+    """
+    try:
+        return await asyncio.wait_for(awaitable, timeout=timeout_seconds)
+    except asyncio.TimeoutError as exc:
+        raise PredictionTimeoutError(
+            f"Prediction exceeded the {timeout_seconds}s deadline."
+        ) from exc
 
 
 def configure_api_logging() -> None:
@@ -70,12 +168,18 @@ class ApiSettings:
     bundle_manifest: Path | None
     cors_origins: tuple[str, ...]
     max_request_bytes: int = 65_536
+    prediction_timeout_seconds: float = 5.0
+    max_concurrent_predictions: int = 16
 
     def __post_init__(self) -> None:
         if "*" in self.cors_origins:
             raise ValueError("CORS origins must not contain wildcard '*'.")
         if not 1_024 <= self.max_request_bytes <= 1_048_576:
             raise ValueError("max_request_bytes must be between 1024 and 1048576.")
+        if not 0.1 <= self.prediction_timeout_seconds <= 30.0:
+            raise ValueError("prediction_timeout_seconds must be between 0.1 and 30.0.")
+        if not 1 <= self.max_concurrent_predictions <= 256:
+            raise ValueError("max_concurrent_predictions must be between 1 and 256.")
 
     @classmethod
     def from_environment(cls) -> "ApiSettings":
@@ -91,11 +195,19 @@ class ApiSettings:
         max_bytes = int(os.getenv("SECURESWIPE_MAX_REQUEST_BYTES", "65536"))
         if not 1_024 <= max_bytes <= 1_048_576:
             raise ValueError("SECURESWIPE_MAX_REQUEST_BYTES must be between 1024 and 1048576.")
+        timeout_seconds = float(os.getenv("SECURESWIPE_PREDICTION_TIMEOUT_SECONDS", "5.0"))
+        if not 0.1 <= timeout_seconds <= 30.0:
+            raise ValueError("SECURESWIPE_PREDICTION_TIMEOUT_SECONDS must be between 0.1 and 30.0.")
+        max_concurrent = int(os.getenv("SECURESWIPE_MAX_CONCURRENT_PREDICTIONS", "16"))
+        if not 1 <= max_concurrent <= 256:
+            raise ValueError("SECURESWIPE_MAX_CONCURRENT_PREDICTIONS must be between 1 and 256.")
         return cls(
             artifact_root=root,
             bundle_manifest=Path(manifest_value).expanduser() if manifest_value else None,
             cors_origins=origins,
             max_request_bytes=max_bytes,
+            prediction_timeout_seconds=timeout_seconds,
+            max_concurrent_predictions=max_concurrent,
         )
 
 
@@ -220,6 +332,8 @@ def create_app(
         lifespan=lifespan,
     )
     application.state.metrics = ApiMetrics()
+    application.state.concurrency_gate = ConcurrencyGate(configured.max_concurrent_predictions)
+    application.state.prediction_timeout_seconds = configured.prediction_timeout_seconds
     application.add_middleware(RequestBodyLimitMiddleware, max_bytes=configured.max_request_bytes)
     if configured.cors_origins:
         application.add_middleware(
@@ -306,6 +420,22 @@ def create_app(
             ),
         )
 
+    @application.exception_handler(PredictionTimeoutError)
+    async def prediction_timeout_error(
+        request: Request, exc: PredictionTimeoutError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=504,
+            content=_error_payload(_request_id(request), "prediction_timeout", str(exc)),
+        )
+
+    @application.exception_handler(CapacityExceededError)
+    async def capacity_exceeded_error(request: Request, exc: CapacityExceededError) -> JSONResponse:
+        return JSONResponse(
+            status_code=503,
+            content=_error_payload(_request_id(request), "capacity_exceeded", str(exc)),
+        )
+
     @application.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         return JSONResponse(
@@ -388,7 +518,13 @@ def create_app(
         tags=["inference"],
     )
     async def predict(transaction: TransactionFeatures, request: Request) -> PredictionResponse:
-        result = await run_in_threadpool(current_service().predict_one, transaction)
+        gate: ConcurrencyGate = application.state.concurrency_gate
+        result = await _run_admitted_inference(
+            current_service().predict_one,
+            transaction,
+            gate=gate,
+            timeout_seconds=application.state.prediction_timeout_seconds,
+        )
         application.state.metrics.observe_scores([result.decision_score])
         return PredictionResponse(request_id=_request_id(request), **result.model_dump())
 
@@ -401,7 +537,13 @@ def create_app(
     async def predict_batch(
         batch: BatchPredictionRequest, request: Request
     ) -> BatchPredictionResponse:
-        results = await run_in_threadpool(current_service().predict_many, batch.transactions)
+        gate: ConcurrencyGate = application.state.concurrency_gate
+        results = await _run_admitted_inference(
+            current_service().predict_many,
+            batch.transactions,
+            gate=gate,
+            timeout_seconds=application.state.prediction_timeout_seconds,
+        )
         application.state.metrics.observe_scores([result.decision_score for result in results])
         return BatchPredictionResponse(
             request_id=_request_id(request),

@@ -23,6 +23,18 @@ cardholder/customer transactions.
 - INFO request logs are parseable JSON with normalized method/route, status,
   latency, request ID, and model version. Downstream exception messages and
   complete feature vectors are never emitted.
+- Each inference request has a configurable deadline (default 5.0s,
+  `SECURESWIPE_PREDICTION_TIMEOUT_SECONDS`, bounded 0.1-30.0). Exceeding it
+  returns `504 prediction_timeout` immediately rather than holding the
+  connection open. Cancelling the client-facing wait does not force-stop the
+  underlying threadpool worker (CPython threads cannot be killed); this bounds
+  client-facing latency, not raw server-side compute.
+- In-flight inference work is admission-controlled (default 16 concurrent
+  requests, `SECURESWIPE_MAX_CONCURRENT_PREDICTIONS`, bounded 1-256). Once the
+  limit is reached, further requests fail closed immediately with
+  `503 capacity_exceeded` instead of queueing behind the serialized model
+  lock. A timed-out request retains its admission slot until the underlying
+  prediction worker actually finishes.
 
 ## Configure a bundle
 
@@ -32,6 +44,8 @@ The paths are server-side only:
 export SECURESWIPE_ARTIFACT_ROOT="$PWD/artifacts"
 export SECURESWIPE_BUNDLE_MANIFEST="$PWD/artifacts/bundles/model-1/manifest.json"
 export SECURESWIPE_CORS_ORIGINS="http://localhost:3000"
+export SECURESWIPE_PREDICTION_TIMEOUT_SECONDS="5.0"   # optional, default shown
+export SECURESWIPE_MAX_CONCURRENT_PREDICTIONS="16"     # optional, default shown
 .venv/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000
 ```
 
@@ -84,6 +98,17 @@ Errors use a stable envelope:
   }
 }
 ```
+
+| HTTP | `error.code` | Meaning |
+| --- | --- | --- |
+| 413 | `request_too_large` | Body exceeded `SECURESWIPE_MAX_REQUEST_BYTES`. |
+| 422 | `validation_error` | Schema/range validation failed. |
+| 500 | `prediction_integrity_error` | Model output failed a sanity check. |
+| 500 | `internal_error` | Unhandled server error. |
+| 503 | `model_unavailable` | No verified bundle is loaded. |
+| 503 | `capacity_exceeded` | In-flight predictions reached the configured admission limit. |
+| 504 | `prediction_timeout` | A single inference call exceeded the configured deadline. |
+| * | `http_error` | Generic HTTP-layer error (e.g. 404 on an unknown route). |
 
 The interactive OpenAPI description is available at `/docs`; the machine
 contract is `/openapi.json`. `/metrics` uses Prometheus text exposition with

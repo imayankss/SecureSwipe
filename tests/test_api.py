@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
+import threading
 import time
 from dataclasses import replace
 from io import StringIO
@@ -214,6 +215,30 @@ def test_batch_prediction_and_concurrent_determinism(
     assert len(set(scores)) == 1
 
 
+def test_single_endpoint_matches_single_item_batch_endpoint(
+    ready_client: TestClient,
+    transaction_payload: dict[str, float],
+) -> None:
+    single = ready_client.post(
+        "/v1/predict",
+        json=transaction_payload,
+        headers={"X-Request-ID": "single-vs-batch-1"},
+    ).json()
+    batch = ready_client.post(
+        "/v1/predict/batch",
+        json={"transactions": [transaction_payload]},
+        headers={"X-Request-ID": "single-vs-batch-1"},
+    ).json()
+    assert batch["count"] == 1
+    batched = batch["predictions"][0]
+    assert single["raw_score"] == batched["raw_score"]
+    assert single["decision_score"] == batched["decision_score"]
+    assert single["calibrated_probability"] == batched["calibrated_probability"]
+    assert single["decision"] == batched["decision"]
+    assert single["operating_threshold"] == batched["operating_threshold"]
+    assert single["model_version"] == batch["model_version"] == batched["model_version"]
+
+
 @pytest.mark.parametrize(
     ("field", "invalid"),
     [("Amount", -1.0), ("Time", -1.0), ("V1", "1.0"), ("V2", True)],
@@ -417,7 +442,7 @@ def test_slow_inference_is_offloaded_so_liveness_remains_responsive(
             return original.get_feature_names_out()
 
         def transform(self, frame: pd.DataFrame) -> object:
-            time.sleep(0.2)
+            time.sleep(0.3)
             return original.transform(frame)
 
     slow = replace(
@@ -440,19 +465,197 @@ def test_slow_inference_is_offloaded_so_liveness_remains_responsive(
     assert health_latency < 0.15
 
 
+def test_prediction_exceeding_deadline_returns_stable_timeout_error(
+    fitted_bundle: ModelBundle,
+    transaction_payload: dict[str, float],
+    tmp_path: Path,
+) -> None:
+    original = fitted_bundle.preprocessor
+
+    class VerySlowPreprocessor:
+        n_features_in_ = original.n_features_in_
+        feature_names_in_ = original.feature_names_in_
+
+        def get_feature_names_out(self) -> np.ndarray:
+            return original.get_feature_names_out()
+
+        def transform(self, frame: pd.DataFrame) -> object:
+            time.sleep(0.2)
+            return original.transform(frame)
+
+    slow = replace(
+        fitted_bundle,
+        preprocessor=VerySlowPreprocessor(),
+        training_data_fingerprint=_synthetic_training_provenance("e" * 64).data_roles_sha256,
+        training_provenance=_synthetic_training_provenance("e" * 64),
+    )
+    settings = ApiSettings(tmp_path, None, (), prediction_timeout_seconds=0.1)
+    with TestClient(create_app(service=ModelService(slow), settings=settings)) as client:
+        started = time.perf_counter()
+        response = client.post(
+            "/v1/predict",
+            json=transaction_payload,
+            headers={"X-Request-ID": "timeout-check-1"},
+        )
+        elapsed = time.perf_counter() - started
+    assert response.status_code == 504
+    assert response.json() == {
+        "schema_version": "1.0",
+        "request_id": "timeout-check-1",
+        "error": {
+            "code": "prediction_timeout",
+            "message": "Prediction exceeded the 0.1s deadline.",
+            "details": None,
+        },
+    }
+    assert response.headers["x-request-id"] == "timeout-check-1"
+    assert elapsed < 0.25
+
+
+def test_repeated_timeouts_hold_capacity_until_prediction_workers_finish(
+    fitted_bundle: ModelBundle,
+    transaction_payload: dict[str, float],
+    tmp_path: Path,
+) -> None:
+    class TrackingBlockingService(ModelService):
+        def __init__(self) -> None:
+            super().__init__(fitted_bundle)
+            self.release_workers = threading.Event()
+            self.worker_condition = threading.Condition()
+            self.active_workers = 0
+            self.max_active_workers = 0
+
+        def predict_one(self, transaction: TransactionFeatures):
+            with self.worker_condition:
+                self.active_workers += 1
+                self.max_active_workers = max(self.max_active_workers, self.active_workers)
+                self.worker_condition.notify_all()
+            try:
+                if not self.release_workers.wait(timeout=2.0):
+                    raise RuntimeError("Test worker release timed out.")
+                return super().predict_one(transaction)
+            finally:
+                with self.worker_condition:
+                    self.active_workers -= 1
+                    self.worker_condition.notify_all()
+
+        def wait_for_active_workers(self, expected: int) -> bool:
+            with self.worker_condition:
+                return self.worker_condition.wait_for(
+                    lambda: self.active_workers == expected,
+                    timeout=1.0,
+                )
+
+    service = TrackingBlockingService()
+    settings = ApiSettings(
+        tmp_path,
+        None,
+        (),
+        prediction_timeout_seconds=0.1,
+        max_concurrent_predictions=2,
+    )
+    with TestClient(create_app(service=service, settings=settings)) as client:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            timed_out_requests = [
+                executor.submit(
+                    client.post,
+                    "/v1/predict",
+                    json=transaction_payload,
+                    headers={"X-Request-ID": f"timeout-capacity-{index}"},
+                )
+                for index in range(2)
+            ]
+            assert service.wait_for_active_workers(2)
+            timed_out_responses = [future.result(timeout=1.0) for future in timed_out_requests]
+
+        assert [response.status_code for response in timed_out_responses] == [504, 504]
+        assert client.app.state.concurrency_gate.in_flight == 2
+
+        rejected = [
+            client.post(
+                "/v1/predict",
+                json=transaction_payload,
+                headers={"X-Request-ID": f"timeout-retry-{index}"},
+            )
+            for index in range(3)
+        ]
+        assert [response.status_code for response in rejected] == [503, 503, 503]
+        assert all(response.json()["error"]["code"] == "capacity_exceeded" for response in rejected)
+        assert service.active_workers == 2
+        assert service.max_active_workers == settings.max_concurrent_predictions
+
+        service.release_workers.set()
+        assert service.wait_for_active_workers(0)
+        deadline = time.monotonic() + 1.0
+        while client.app.state.concurrency_gate.in_flight and time.monotonic() < deadline:
+            time.sleep(0.001)
+        assert client.app.state.concurrency_gate.in_flight == 0
+
+
+def test_prediction_capacity_exceeded_fails_closed_deterministically(
+    fitted_bundle: ModelBundle,
+    transaction_payload: dict[str, float],
+    tmp_path: Path,
+) -> None:
+    original = fitted_bundle.preprocessor
+
+    class SlowPreprocessor:
+        n_features_in_ = original.n_features_in_
+        feature_names_in_ = original.feature_names_in_
+
+        def get_feature_names_out(self) -> np.ndarray:
+            return original.get_feature_names_out()
+
+        def transform(self, frame: pd.DataFrame) -> object:
+            time.sleep(0.15)
+            return original.transform(frame)
+
+    slow = replace(
+        fitted_bundle,
+        preprocessor=SlowPreprocessor(),
+        training_data_fingerprint=_synthetic_training_provenance("f" * 64).data_roles_sha256,
+        training_provenance=_synthetic_training_provenance("f" * 64),
+    )
+    settings = ApiSettings(tmp_path, None, (), max_concurrent_predictions=1)
+    with TestClient(create_app(service=ModelService(slow), settings=settings)) as client:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            first = executor.submit(
+                client.post,
+                "/v1/predict",
+                json=transaction_payload,
+                headers={"X-Request-ID": "capacity-first"},
+            )
+            time.sleep(0.05)
+            second = client.post(
+                "/v1/predict",
+                json=transaction_payload,
+                headers={"X-Request-ID": "capacity-second"},
+            )
+            first_response = first.result()
+    assert first_response.status_code == 200
+    assert second.status_code == 503
+    assert second.json()["error"]["code"] == "capacity_exceeded"
+    assert second.json()["request_id"] == "capacity-second"
+
+
 def test_logs_contain_request_metadata_but_not_transaction_vectors(
     ready_client: TestClient,
     transaction_payload: dict[str, float],
-    caplog: pytest.LogCaptureFixture,
 ) -> None:
-    caplog.set_level(logging.INFO, logger="secureswipe.api")
-    response = ready_client.post(
-        "/v1/predict",
-        json=transaction_payload,
-        headers={"X-Request-ID": "redaction-check"},
-    )
+    stream = StringIO()
+    handler = logging.StreamHandler(stream)
+    logger = logging.getLogger("secureswipe.api")
+    logger.addHandler(handler)
+    try:
+        response = ready_client.post(
+            "/v1/predict",
+            json=transaction_payload,
+            headers={"X-Request-ID": "redaction-check"},
+        )
+    finally:
+        logger.removeHandler(handler)
     assert response.status_code == 200
-    combined = "\n".join(record.getMessage() for record in caplog.records)
+    combined = stream.getvalue()
     assert "redaction-check" in combined
     assert "123.456789" not in combined
     assert '"V28"' not in combined
@@ -474,8 +677,8 @@ def test_openapi_contains_versioned_contracts(ready_client: TestClient) -> None:
     assert set(transaction_schema["required"]) == set(ALL_FEATURES)
     for path in ("/v1/predict", "/v1/predict/batch"):
         responses = schema["paths"][path]["post"]["responses"]
-        assert set(responses) == {"200", "413", "422", "500", "503"}
-        for status in ("413", "422", "500", "503"):
+        assert set(responses) == {"200", "413", "422", "500", "503", "504"}
+        for status in ("413", "422", "500", "503", "504"):
             assert responses[status]["content"]["application/json"]["schema"] == {
                 "$ref": "#/components/schemas/ErrorResponse"
             }
