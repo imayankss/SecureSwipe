@@ -62,7 +62,7 @@ test("mobile navigation exposes every dashboard section", async ({ page }) => {
   await expect(page.locator("#thresholds")).toBeVisible();
 });
 
-test("configured production live demo sends one synthetic request and validates the full response", async ({ page }) => {
+test("configured production live demo sends one genuine inference request and validates the full response", async ({ page }) => {
   const predictionRequests: { url: string; body: unknown }[] = [];
   await page.route("http://127.0.0.1:3200/v1/predict", async (route) => {
     const request = route.request();
@@ -80,7 +80,7 @@ test("configured production live demo sends one synthetic request and validates 
         score_type: "raw_score",
         operating_threshold: 0.53,
         decision: "review",
-        model_version: "synthetic-browser-1",
+        model_version: "browser-test-bundle-1",
       }),
     });
   });
@@ -89,9 +89,9 @@ test("configured production live demo sends one synthetic request and validates 
   expect(navigation?.headers()["content-security-policy"]).toContain(
     "connect-src 'self' http://127.0.0.1:3200",
   );
-  await page.getByRole("button", { name: "Try synthetic API" }).click();
-  await expect(page.getByRole("status", { name: "Synthetic API status" })).toContainText(
-    "Synthetic API result: review at score 0.731.",
+  await page.getByRole("button", { name: "Try genuine inference" }).click();
+  await expect(page.getByRole("status", { name: "Genuine demo inference status" })).toContainText(
+    "Genuine demo inference result: review at score 0.731. Model bundle: browser-test-bundle-1.",
   );
   await expect(page.getByText(/No customer or transaction data is used/)).toBeVisible();
   expect(predictionRequests).toHaveLength(1);

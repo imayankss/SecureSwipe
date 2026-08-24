@@ -6,10 +6,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { Section } from "@/components/Section";
+import { EvidenceLabel } from "@/components/EvidenceLabel";
 import { dashboardData } from "@/data/metrics";
 
 const REQUEST_TIMEOUT_MS = 3_000;
-const SYNTHETIC_FEATURES = {
+const EXAMPLE_FEATURES = {
   Time: 0,
   V1: 0,
   V2: 0,
@@ -45,7 +46,7 @@ const SYNTHETIC_FEATURES = {
 type LiveState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "success"; decision: string; score: number }
+  | { status: "success"; decision: string; score: number; modelVersion: string }
   | { status: "empty" }
   | { status: "unavailable"; message: string }
   | { status: "error"; message: string };
@@ -106,7 +107,7 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
   const [liveState, setLiveState] = useState<LiveState>({ status: "idle" });
   const requiresReview = score >= thresholdPercent;
 
-  async function runSyntheticPrediction() {
+  async function runGenuineDemoInference() {
     if (!apiBaseUrl) {
       setLiveState({
         status: "unavailable",
@@ -122,11 +123,21 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
       const response = await fetch(`${apiBaseUrl}/v1/predict`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(SYNTHETIC_FEATURES),
+        body: JSON.stringify(EXAMPLE_FEATURES),
         signal: controller.signal,
       });
       if (response.status === 503) {
-        setLiveState({ status: "unavailable", message: "The reference API is not ready." });
+        setLiveState({
+          status: "unavailable",
+          message: "The reference API is unavailable or at capacity; the static example remains active.",
+        });
+        return;
+      }
+      if (response.status === 504) {
+        setLiveState({
+          status: "unavailable",
+          message: "The reference API timed out; inference remains unavailable / fail closed.",
+        });
         return;
       }
       if (!response.ok) {
@@ -137,7 +148,12 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
         setLiveState({ status: "empty" });
         return;
       }
-      setLiveState({ status: "success", decision: payload.decision, score: payload.decision_score });
+      setLiveState({
+        status: "success",
+        decision: payload.decision,
+        score: payload.decision_score,
+        modelVersion: payload.model_version,
+      });
     } catch (error) {
       const message = error instanceof DOMException && error.name === "AbortError"
         ? "The live API timed out; the static example is still available."
@@ -230,7 +246,7 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
                 <div className="rounded-lg border border-rose-200/15 bg-rose-300/[0.04] p-4">
                   <AlertTriangle className="h-5 w-5 text-rose-200" aria-hidden="true" />
                   <p className="mt-3 text-sm font-medium text-white">Manual review signal</p>
-                  <p className="mt-1 text-xs text-slate-400">Score ≥ {thresholdPercent.toFixed(0)}</p>
+                  <p className="mt-1 text-xs text-slate-400">Score &ge; {thresholdPercent.toFixed(0)}</p>
                 </div>
               </div>
             </div>
@@ -242,33 +258,36 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
           <div className="mt-6 rounded-lg border border-white/10 bg-slate-950/30 p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <p className="text-sm font-medium text-white">Optional synthetic API check</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  <p className="text-sm font-medium text-white">Optional genuine demo inference check</p>
+                  <EvidenceLabel type="genuine-demo-inference" />
+                </div>
                 <p className="mt-1 text-xs leading-5 text-slate-400">
-                  Sends an all-zero synthetic feature vector only when you opt in. No customer or transaction data is used.
+                  Sends one fixed all-zero example feature vector to the verified model bundle, only when you opt in. No customer or transaction data is used.
                 </p>
               </div>
               <button
                 type="button"
-                onClick={runSyntheticPrediction}
+                onClick={runGenuineDemoInference}
                 disabled={liveState.status === "loading"}
                 className="rounded-lg border border-cyan-200/25 bg-cyan-300/10 px-3 py-2 text-xs font-medium text-cyan-100 transition hover:bg-cyan-300/20 disabled:cursor-wait disabled:opacity-60"
               >
-                {liveState.status === "loading" ? "Checking API…" : "Try synthetic API"}
+                {liveState.status === "loading" ? "Checking API…" : "Try genuine inference"}
               </button>
             </div>
             <div className="mt-4" aria-live="polite">
               {liveState.status === "idle" ? (
-                <p className="text-xs text-slate-400">Static fallback active until the API check is requested.</p>
+                <p className="text-xs text-slate-400">Static fallback active until the genuine inference check is requested.</p>
               ) : null}
-              {liveState.status === "loading" ? <p role="status" aria-label="Synthetic API status" className="text-sm text-cyan-100">Contacting the reference API…</p> : null}
+              {liveState.status === "loading" ? <p role="status" aria-label="Genuine demo inference status" className="text-sm text-cyan-100">Contacting the reference API…</p> : null}
               {liveState.status === "success" ? (
-                <p role="status" aria-label="Synthetic API status" className="text-sm text-emerald-100">
-                  Synthetic API result: {liveState.decision} at score {liveState.score.toFixed(3)}.
+                <p role="status" aria-label="Genuine demo inference status" className="text-sm text-emerald-100">
+                  Genuine demo inference result: {liveState.decision} at score {liveState.score.toFixed(3)}. Model bundle: {liveState.modelVersion}.
                 </p>
               ) : null}
-              {liveState.status === "empty" ? <p role="status" aria-label="Synthetic API status" className="text-sm text-amber-100">The API returned no usable prediction; static fallback remains active.</p> : null}
+              {liveState.status === "empty" ? <p role="status" aria-label="Genuine demo inference status" className="text-sm text-amber-100">The API returned no usable prediction; static fallback remains active.</p> : null}
               {liveState.status === "unavailable" || liveState.status === "error" ? (
-                <p role="status" aria-label="Synthetic API status" className="text-sm text-amber-100">{liveState.message}</p>
+                <p role="status" aria-label="Genuine demo inference status" className="text-sm text-amber-100">{liveState.message}</p>
               ) : null}
             </div>
           </div>

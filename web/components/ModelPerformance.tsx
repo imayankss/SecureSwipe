@@ -5,6 +5,7 @@ import { dashboardData, finalMetrics, formatPercent, modelComparison } from "@/d
 import { MetricCard } from "@/components/MetricCard";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Section } from "@/components/Section";
+import { EvidenceLabel } from "@/components/EvidenceLabel";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 
 export function ModelPerformance() {
@@ -16,7 +17,10 @@ export function ModelPerformance() {
       description="All four models below were compared on one validation split. Final cards preserve the separately held-out random test observation; they are not out-of-time or deployment evidence."
     >
       <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm font-medium text-slate-300">Locked test evaluation</p>
+        <div className="flex flex-wrap items-center gap-2">
+          <p className="text-sm font-medium text-slate-300">Locked test evaluation</p>
+          <EvidenceLabel type="historical-evaluation" />
+        </div>
         <span className="rounded-full border border-emerald-200/20 bg-emerald-300/10 px-3 py-1 text-xs font-semibold text-emerald-100">
           {dashboardData.finalEvaluation.displayName} · threshold {dashboardData.finalEvaluation.threshold.toFixed(2)}
         </span>

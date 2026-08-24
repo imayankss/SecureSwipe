@@ -1,3 +1,4 @@
+
 import { ConfusionMatrix } from "@/components/ConfusionMatrix";
 import { CurveAnalysis } from "@/components/CurveAnalysis";
 import { DataProvenance } from "@/components/DataProvenance";
@@ -12,6 +13,7 @@ import { PipelineTimeline } from "@/components/PipelineTimeline";
 import { ProblemSection } from "@/components/ProblemSection";
 import { RiskScoreDemo } from "@/components/RiskScoreDemo";
 import { ShapSection } from "@/components/ShapSection";
+import { SyntheticPlumbingSimulator } from "@/components/SyntheticPlumbingSimulator";
 import { ThresholdCards } from "@/components/ThresholdCards";
 
 export default function Home() {
@@ -37,6 +39,7 @@ export default function Home() {
         <CurveAnalysis />
         <ShapSection />
         <RiskScoreDemo />
+        <SyntheticPlumbingSimulator />
         <Methodology />
         <DataProvenance />
         <GithubCTA />

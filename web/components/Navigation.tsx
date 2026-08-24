@@ -1,3 +1,4 @@
+
 import { GitBranch, ShieldCheck } from "lucide-react";
 import { dashboardData } from "@/data/metrics";
 
@@ -6,6 +7,7 @@ const navItems = [
   ["Performance", "#performance"],
   ["Thresholds", "#thresholds"],
   ["Explainability", "#shap"],
+  ["Synthetic demo", "#synthetic"],
   ["Methodology", "#methodology"],
 ];
 

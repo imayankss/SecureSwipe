@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { EvidenceLabel } from "@/components/EvidenceLabel";
 import { Section } from "@/components/Section";
 import { dashboardData, formatInteger } from "@/data/metrics";
 
@@ -53,7 +54,10 @@ export function IllustrativeCostScenario() {
     >
       <Card>
         <CardHeader>
-          <CardTitle>{scenario.label}</CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <CardTitle>Observed-split cost arithmetic</CardTitle>
+            <EvidenceLabel type="illustrative-cost-scenario" />
+          </div>
           <CardDescription>
             Adjusting these visible inputs changes arithmetic only. It does not change the model,
             threshold, review policy, or any business decision.

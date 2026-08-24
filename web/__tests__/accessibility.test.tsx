@@ -21,9 +21,9 @@ describe("keyboard and accessibility contracts", () => {
     const user = userEvent.setup();
     render(<RiskScoreDemo apiBaseUrl={null} />);
 
-    expect(screen.getByText("Static fallback active until the API check is requested.")).toBeInTheDocument();
-    await user.click(screen.getByRole("button", { name: "Try synthetic API" }));
-    expect(screen.getByRole("status", { name: "Synthetic API status" })).toHaveTextContent("Live demo is not configured");
+    expect(screen.getByText("Static fallback active until the genuine inference check is requested.")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Try genuine inference" }));
+    expect(screen.getByRole("status", { name: "Genuine demo inference status" })).toHaveTextContent("Live demo is not configured");
     expect(screen.getByText(/No customer or transaction data is used/)).toBeInTheDocument();
   });
 
@@ -36,7 +36,7 @@ describe("keyboard and accessibility contracts", () => {
     vi.stubGlobal("fetch", vi.fn(() => request));
     const { rerender } = render(<RiskScoreDemo apiBaseUrl="https://synthetic.example" />);
 
-    await user.click(screen.getByRole("button", { name: "Try synthetic API" }));
+    await user.click(screen.getByRole("button", { name: "Try genuine inference" }));
     expect(screen.getByRole("button", { name: "Checking API…" })).toBeDisabled();
     resolveRequest?.(new Response(JSON.stringify({
       schema_version: "1.0",
@@ -47,19 +47,28 @@ describe("keyboard and accessibility contracts", () => {
       score_type: "raw_score",
       operating_threshold: 0.53,
       decision: "review",
-      model_version: "synthetic-unit-1",
+      model_version: "unit-test-bundle-1",
     }), { status: 200 }));
-    expect(await screen.findByText("Synthetic API result: review at score 0.910.")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Genuine demo inference result: review at score 0.910. Model bundle: unit-test-bundle-1."),
+    ).toBeInTheDocument();
 
     vi.stubGlobal("fetch", vi.fn(async () => new Response("null", { status: 200 })));
     rerender(<RiskScoreDemo apiBaseUrl="https://synthetic.example" />);
-    await user.click(screen.getByRole("button", { name: "Try synthetic API" }));
-    expect(await screen.findByRole("status", { name: "Synthetic API status" })).toHaveTextContent("no usable prediction");
+    await user.click(screen.getByRole("button", { name: "Try genuine inference" }));
+    expect(await screen.findByRole("status", { name: "Genuine demo inference status" })).toHaveTextContent("no usable prediction");
+
+    vi.stubGlobal("fetch", vi.fn(async () => new Response("null", { status: 504 })));
+    rerender(<RiskScoreDemo apiBaseUrl="https://synthetic.example" />);
+    await user.click(screen.getByRole("button", { name: "Try genuine inference" }));
+    expect(await screen.findByRole("status", { name: "Genuine demo inference status" })).toHaveTextContent(
+      "timed out; inference remains unavailable / fail closed",
+    );
 
     vi.stubGlobal("fetch", vi.fn(async () => { throw new Error("offline"); }));
     rerender(<RiskScoreDemo apiBaseUrl="https://synthetic.example" />);
-    await user.click(screen.getByRole("button", { name: "Try synthetic API" }));
-    expect(await screen.findByRole("status", { name: "Synthetic API status" })).toHaveTextContent("could not be reached");
+    await user.click(screen.getByRole("button", { name: "Try genuine inference" }));
+    expect(await screen.findByRole("status", { name: "Genuine demo inference status" })).toHaveTextContent("could not be reached");
   });
 
   it("exposes responsive navigation and safe external-link semantics", async () => {

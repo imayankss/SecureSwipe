@@ -1,6 +1,7 @@
 import { dashboardData, formatInteger } from "@/data/metrics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Section } from "@/components/Section";
+import { EvidenceLabel } from "@/components/EvidenceLabel";
 
 export function ConfusionMatrix() {
   const confusionMatrix = dashboardData.finalEvaluation;
@@ -20,7 +21,10 @@ export function ConfusionMatrix() {
     >
       <Card>
         <CardHeader>
-          <CardTitle>Historical reported confusion matrix</CardTitle>
+          <div className="flex flex-wrap items-center gap-2">
+            <CardTitle>Historical reported confusion matrix</CardTitle>
+            <EvidenceLabel type="historical-evaluation" />
+          </div>
           <CardDescription>
             {formatInteger(confusionMatrix.total_samples)} test rows · rows are actual classes · columns are decisions
           </CardDescription>
