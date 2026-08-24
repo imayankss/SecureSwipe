@@ -16,7 +16,7 @@ export function ModelPerformance() {
       title="Validation selected the model; the test split records the historical result"
       description="All four models below were compared on one validation split. Final cards preserve the separately held-out random test observation; they are not out-of-time or deployment evidence."
     >
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-teal-200/15 bg-teal-300/[0.035] px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-medium text-slate-300">Locked test evaluation</p>
           <EvidenceLabel type="historical-evaluation" />

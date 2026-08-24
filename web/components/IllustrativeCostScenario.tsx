@@ -19,6 +19,8 @@ import {
   type DisplayCurrency,
 } from "@/data/displayCurrency";
 import { Section } from "@/components/Section";
+import { useCommandDisplayCurrency } from "@/components/dashboard/DisplayCurrencyContext";
+import { CostBreakdownChart } from "@/components/dashboard/CostBreakdownChart";
 import { dashboardData, formatInteger } from "@/data/metrics";
 
 const scenario = dashboardData.illustrativeCostScenario;
@@ -30,12 +32,15 @@ function nonNegative(value: number) {
 }
 
 export function IllustrativeCostScenario() {
+  const commandCurrency = useCommandDisplayCurrency();
   const [assumptions, setAssumptions] = useState<Assumptions>(
     scenario.assumptions,
   );
-  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>(
+  const [localDisplayCurrency, setLocalDisplayCurrency] = useState<DisplayCurrency>(
     DEFAULT_DISPLAY_CURRENCY,
   );
+  const displayCurrency = commandCurrency?.displayCurrency ?? localDisplayCurrency;
+  const setDisplayCurrency = commandCurrency?.setDisplayCurrency ?? setLocalDisplayCurrency;
   const confusion = scenario.confusion;
   const recoveryRate = Math.min(1, nonNegative(assumptions.recoveryRate));
   const costs = useMemo(() => {
@@ -72,7 +77,7 @@ export function IllustrativeCostScenario() {
       title="Illustrative merchant cost & review workload"
       description={scenario.label}
     >
-      <Card>
+      <Card className="border-amber-200/20">
         <CardHeader>
           <div className="flex flex-wrap items-center gap-2">
             <CardTitle>Observed-split cost arithmetic</CardTitle>
@@ -85,7 +90,7 @@ export function IllustrativeCostScenario() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-col gap-3 rounded-lg border border-amber-200/20 bg-amber-300/[0.04] p-4 text-sm text-slate-300 sm:flex-row sm:items-end sm:justify-between">
+          {!commandCurrency ? <div className="flex flex-col gap-3 rounded-xl border border-amber-200/20 bg-amber-300/[0.04] p-4 text-sm text-slate-300 sm:flex-row sm:items-end sm:justify-between">
             <label
               className="grid gap-2 font-medium text-slate-200"
               htmlFor="illustrative-display-currency"
@@ -94,7 +99,7 @@ export function IllustrativeCostScenario() {
               <select
                 id="illustrative-display-currency"
                 aria-describedby="illustrative-currency-note"
-                className="rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-white"
+                className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2 text-white shadow-inner shadow-black/20"
                 value={displayCurrency}
                 onChange={(event) =>
                   setDisplayCurrency(
@@ -118,7 +123,7 @@ export function IllustrativeCostScenario() {
               not Razorpay economics and does not assign a currency to
               historical model or dataset amounts.
             </p>
-          </div>
+          </div> : null}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <label
               className="grid gap-2 text-sm font-medium text-slate-200"
@@ -128,7 +133,7 @@ export function IllustrativeCostScenario() {
               <input
                 id="fp-cost"
                 aria-label="Illustrative false-positive cost"
-                className="rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-white"
+                className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2 text-white shadow-inner shadow-black/20"
                 min="0"
                 onChange={(event) =>
                   updateAssumption(
@@ -152,7 +157,7 @@ export function IllustrativeCostScenario() {
               <input
                 id="fn-cost"
                 aria-label="Illustrative false-negative cost"
-                className="rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-white"
+                className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2 text-white shadow-inner shadow-black/20"
                 min="0"
                 onChange={(event) =>
                   updateAssumption(
@@ -176,7 +181,7 @@ export function IllustrativeCostScenario() {
               <input
                 id="review-cost"
                 aria-label="Illustrative review cost"
-                className="rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-white"
+                className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2 text-white shadow-inner shadow-black/20"
                 min="0"
                 onChange={(event) =>
                   updateAssumption(
@@ -200,7 +205,7 @@ export function IllustrativeCostScenario() {
               <input
                 id="recovery-rate"
                 aria-label="Illustrative fraud recovery rate"
-                className="rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-white"
+                className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2 text-white shadow-inner shadow-black/20"
                 max="100"
                 min="0"
                 onChange={(event) =>
@@ -217,9 +222,9 @@ export function IllustrativeCostScenario() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-            <div className="rounded-lg border border-white/10 bg-slate-950/70 p-4 text-sm leading-6 text-slate-300">
+            <div className="rounded-xl border border-white/10 bg-slate-950/55 p-4 text-sm leading-6 text-slate-300">
               <p className="font-semibold text-slate-100">Formula</p>
-              <p className="mt-2 font-mono text-xs text-cyan-100">
+              <p className="mt-2 font-mono text-xs text-teal-100">
                 {scenario.formula}
               </p>
               <p className="mt-3">
@@ -230,12 +235,12 @@ export function IllustrativeCostScenario() {
               </p>
               <p>Time horizon: {scenario.timeHorizon}</p>
             </div>
-            <div className="rounded-lg border border-amber-200/20 bg-amber-300/[0.06] p-4">
+            <div className="rounded-xl border border-amber-200/20 bg-amber-300/[0.06] p-4">
               <p className="text-sm font-semibold text-amber-100">
                 {scenario.label}
               </p>
               <p
-                className="mt-2 text-3xl font-semibold text-white"
+                className="ss-number mt-2 text-3xl font-semibold text-white"
                 data-testid="illustrative-total"
               >
                 {formatIllustrativeUsd(costs.total, displayCurrency)}
@@ -271,17 +276,26 @@ export function IllustrativeCostScenario() {
               ],
             ].map(([label, count, amount]) => (
               <div
-                className="rounded-lg border border-white/10 bg-white/[0.03] p-4"
+                className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
                 key={label}
               >
                 <p className="text-sm text-slate-300">{label}</p>
                 <p className="mt-2 text-xs text-slate-400">{count}</p>
-                <p className="mt-2 font-semibold text-slate-100">
+                <p className="ss-number mt-2 font-semibold text-slate-100">
                   {formatIllustrativeUsd(amount as number, displayCurrency)}
                 </p>
               </div>
             ))}
           </div>
+          <CostBreakdownChart
+            total={costs.total}
+            items={[
+              { label: "Review workload", value: costs.review, tone: "bg-teal-300" },
+              { label: "False-positive component", value: costs.falsePositive, tone: "bg-amber-200" },
+              { label: "Missed-fraud component", value: costs.missedFraud, tone: "bg-rose-300" },
+              { label: "Residual caught-fraud component", value: costs.residualCaughtFraud, tone: "bg-violet-300" },
+            ]}
+          />
           <p className="text-xs leading-5 text-slate-400">
             Reconciliation: {formatInteger(confusion.truePositives)} TP +{" "}
             {formatInteger(confusion.falsePositives)} FP +{" "}

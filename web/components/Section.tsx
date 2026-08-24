@@ -18,19 +18,19 @@ export function Section({
     <section
       id={id}
       aria-labelledby={headingId}
-      className="mx-auto w-full max-w-7xl px-4 py-12 sm:px-6 lg:px-8"
+      className="mx-auto w-full max-w-7xl px-4 py-14 sm:px-6 lg:px-8"
     >
       <div className="mb-8 max-w-3xl">
         {eyebrow ? (
-          <p className="mb-3 text-xs font-semibold uppercase text-cyan-200">
+          <p className="ss-eyebrow mb-3 text-teal-200">
             {eyebrow}
           </p>
         ) : null}
-        <h2 id={headingId} className="text-3xl font-semibold text-white sm:text-4xl">
+        <h2 id={headingId} className="max-w-4xl text-3xl font-semibold tracking-[-0.035em] text-white sm:text-4xl">
           {title}
         </h2>
         {description ? (
-          <p className="mt-4 text-base leading-7 text-slate-300">{description}</p>
+          <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300">{description}</p>
         ) : null}
       </div>
       {children}

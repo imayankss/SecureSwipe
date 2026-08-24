@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { DeferredCurveImage } from "@/components/DeferredCurveImage";
 import { dashboardData, formatMetric } from "@/data/metrics";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Section } from "@/components/Section";
@@ -11,6 +12,7 @@ const curves = [
     image: dashboardData.curves.precisionRecall.image,
     value: `Average precision ${formatMetric(dashboardData.curves.precisionRecall.averagePrecision)}`,
     alt: "Validation precision-recall curve for the selected XGBoost model",
+    defer: false,
   },
   {
     title: "ROC curve",
@@ -19,6 +21,7 @@ const curves = [
     image: dashboardData.curves.roc.image,
     value: `ROC-AUC ${formatMetric(dashboardData.curves.roc.auc)}`,
     alt: "Validation ROC curve for the selected XGBoost model",
+    defer: true,
   },
 ];
 
@@ -45,15 +48,19 @@ export function CurveAnalysis() {
               </div>
             </CardHeader>
             <CardContent>
-              <Image
-                src={curve.image}
-                alt={curve.alt}
-                width={1200}
-                height={900}
-                unoptimized
-                sizes="(max-width: 1024px) 100vw, 50vw"
-                className="w-full rounded-lg border border-white/10 bg-white"
-              />
+              {curve.defer ? (
+                <DeferredCurveImage src={curve.image} alt={curve.alt} />
+              ) : (
+                <Image
+                  src={curve.image}
+                  alt={curve.alt}
+                  width={1200}
+                  height={900}
+                  unoptimized
+                  sizes="(max-width: 1024px) 100vw, 50vw"
+                  className="w-full rounded-lg border border-white/10 bg-white"
+                />
+              )}
             </CardContent>
           </Card>
         ))}

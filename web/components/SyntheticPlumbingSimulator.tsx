@@ -17,6 +17,9 @@ import {
 } from "@/components/ui/card";
 import { Section } from "@/components/Section";
 import { EvidenceLabel } from "@/components/EvidenceLabel";
+import { useCommandDisplayCurrency } from "@/components/dashboard/DisplayCurrencyContext";
+import { SyntheticDecisionFlow } from "@/components/dashboard/SyntheticDecisionFlow";
+import { SyntheticEventTable } from "@/components/dashboard/SyntheticEventTable";
 import {
   DEFAULT_DISPLAY_CURRENCY,
   DISPLAY_CURRENCIES,
@@ -75,6 +78,7 @@ function useSimulator() {
 }
 
 export function SyntheticPlumbingSimulator() {
+  const commandCurrency = useCommandDisplayCurrency();
   const {
     generate,
     generateInvalid,
@@ -84,9 +88,11 @@ export function SyntheticPlumbingSimulator() {
     selectedRequestId,
     setSelectedRequestId,
   } = useSimulator();
-  const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>(
+  const [localDisplayCurrency, setLocalDisplayCurrency] = useState<DisplayCurrency>(
     DEFAULT_DISPLAY_CURRENCY,
   );
+  const displayCurrency = commandCurrency?.displayCurrency ?? localDisplayCurrency;
+  const setDisplayCurrency = commandCurrency?.setDisplayCurrency ?? setLocalDisplayCurrency;
 
   const selected = useMemo(
     () =>
@@ -103,7 +109,7 @@ export function SyntheticPlumbingSimulator() {
       title="Synthetic event, feature, and decision plumbing"
       description="A fully in-browser, fabricated event stream. No model, database, or network call is involved, and none of this reflects real-world fraud detection accuracy."
     >
-      <Card>
+      <Card className="border-violet-200/20">
         <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -120,7 +126,7 @@ export function SyntheticPlumbingSimulator() {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="flex flex-col gap-3 rounded-lg border border-violet-200/15 bg-violet-300/[0.04] p-4 text-sm text-slate-300 sm:flex-row sm:items-end sm:justify-between">
+          {!commandCurrency ? <div className="flex flex-col gap-3 rounded-xl border border-violet-200/15 bg-violet-300/[0.04] p-4 text-sm text-slate-300 sm:flex-row sm:items-end sm:justify-between">
             <label
               className="grid gap-2 font-medium text-slate-200"
               htmlFor="synthetic-display-currency"
@@ -129,7 +135,7 @@ export function SyntheticPlumbingSimulator() {
               <select
                 id="synthetic-display-currency"
                 aria-describedby="synthetic-currency-note"
-                className="rounded-lg border border-white/15 bg-slate-950 px-3 py-2 text-white"
+                className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2 text-white shadow-inner shadow-black/20"
                 value={displayCurrency}
                 onChange={(event) =>
                   setDisplayCurrency(
@@ -153,12 +159,12 @@ export function SyntheticPlumbingSimulator() {
               {ILLUSTRATIVE_INR_PER_USD.toFixed(2)}; no live FX is fetched, and
               this never changes genuine-model input semantics.
             </p>
-          </div>
+          </div> : null}
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
               onClick={generate}
-              className="flex items-center gap-1.5 rounded-lg border border-violet-200/25 bg-violet-300/10 px-3 py-2 text-xs font-medium text-violet-100 transition hover:bg-violet-300/20"
+              className="flex items-center gap-1.5 rounded-lg border border-violet-200/25 bg-violet-300/10 px-3 py-2 text-xs font-medium text-violet-100 transition hover:border-violet-200/40 hover:bg-violet-300/20"
             >
               <PlayCircle className="h-3.5 w-3.5" aria-hidden="true" />
               Generate next synthetic event
@@ -189,7 +195,7 @@ export function SyntheticPlumbingSimulator() {
               Reset demo session
             </button>
           </div>
-          <p className="flex items-start gap-2 rounded-lg border border-violet-200/15 bg-violet-300/[0.04] p-3 text-xs leading-5 text-slate-300">
+          <p className="flex items-start gap-2 rounded-xl border border-violet-200/15 bg-violet-300/[0.04] p-3 text-xs leading-5 text-slate-300">
             <AlertOctagon
               className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-200"
               aria-hidden="true"
@@ -199,80 +205,41 @@ export function SyntheticPlumbingSimulator() {
             touches the historical evaluation or the genuine-inference API.
           </p>
 
+          <SyntheticDecisionFlow record={selected} displayCurrency={displayCurrency} />
+
           {events.length === 0 ? (
             <p className="text-sm text-slate-400" role="status">
               No synthetic events yet. Generate one to see the pipeline run.
             </p>
           ) : (
-            <div className="grid gap-4 lg:grid-cols-[0.9fr_1.4fr]">
-              <div>
-                <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
-                  Event timeline ({events.length})
-                </p>
-                <ul
-                  className="max-h-80 space-y-1.5 overflow-y-auto pr-1"
-                  aria-label="Synthetic event timeline"
-                >
-                  {events
-                    .slice()
-                    .reverse()
-                    .map((record) => {
-                      const decisionCopy =
-                        DECISION_COPY[record.output.decision];
-                      const isSelected =
-                        record.output.request_id ===
-                        selected?.output.request_id;
-                      return (
-                        <li
-                          key={`${record.input.event_id}-${record.output.request_id}`}
-                        >
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setSelectedRequestId(record.output.request_id)
-                            }
-                            aria-pressed={isSelected}
-                            className={`w-full rounded-lg border px-3 py-2 text-left text-xs transition ${
-                              isSelected
-                                ? "border-violet-200/40 bg-violet-300/10"
-                                : "border-white/10 bg-white/[0.03] hover:border-violet-200/20"
-                            }`}
-                          >
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="font-mono text-slate-200">
-                                {record.input.event_id}
-                              </span>
-                              <span className={decisionCopy?.className}>
-                                {decisionCopy?.label}
-                              </span>
-                            </div>
-                            <div className="mt-1 flex items-center justify-between text-slate-500">
-                              <span>
-                                score{" "}
-                                {record.output.context_signal_score.toFixed(3)}
-                              </span>
-                              <span>
-                                {record.output.is_duplicate
-                                  ? "duplicate · "
-                                  : ""}
-                                {record.output.is_late_or_out_of_order
-                                  ? "late/out-of-order"
-                                  : ""}
-                              </span>
-                            </div>
-                          </button>
-                        </li>
-                      );
-                    })}
-                </ul>
+            <div className="space-y-4">
+              <div className="grid gap-4 xl:grid-cols-[0.68fr_1.32fr]">
+                <div className="rounded-md border border-white/[0.08] bg-slate-950/30 p-4">
+                  <p className="ss-eyebrow text-slate-500">Selected event</p>
+                  <p className="mt-2 text-sm font-medium text-white">Inspect the evidence emitted by the synthetic pipeline.</p>
+                  <dl className="mt-4 grid gap-3 text-xs text-slate-400">
+                    <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-2">
+                      <dt>Events retained</dt>
+                      <dd className="ss-number text-white">{events.length}</dd>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 border-b border-white/[0.06] pb-2">
+                      <dt>Session seed</dt>
+                      <dd className="ss-number text-white">42</dd>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <dt>State boundary</dt>
+                      <dd className="text-white">This browser tab</dd>
+                    </div>
+                  </dl>
+                </div>
+                {selected ? <EventDetail record={selected} displayCurrency={displayCurrency} /> : null}
               </div>
-
-              {selected ? (
-                <EventDetail
-                  record={selected}
-                  displayCurrency={displayCurrency}
-                />
-              ) : null}
+              <SyntheticEventTable
+                events={events}
+                selectedRequestId={selected?.output.request_id ?? null}
+                displayCurrency={displayCurrency}
+                onSelect={setSelectedRequestId}
+              />
             </div>
           )}
         </CardContent>
@@ -290,7 +257,7 @@ function EventDetail({
 }) {
   const decisionCopy = DECISION_COPY[record.output.decision];
   return (
-    <div className="space-y-4 rounded-lg border border-white/10 bg-slate-950/30 p-4">
+    <div className="space-y-4 rounded-xl border border-white/10 bg-slate-950/35 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="font-mono text-sm text-white">{record.input.event_id}</p>
         <p className={`text-sm font-medium ${decisionCopy?.className}`}>
@@ -330,7 +297,7 @@ function EventDetail({
       </dl>
 
       <div>
-        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-400">
+        <p className="ss-eyebrow mb-1.5 text-[0.64rem] text-slate-400">
           Triggered signals
         </p>
         {record.output.triggered_signals.length === 0 ? (
@@ -342,7 +309,7 @@ function EventDetail({
             {record.output.triggered_signals.map((signal) => (
               <li
                 key={signal.code}
-                className="rounded-md border border-white/10 bg-white/[0.02] p-2 text-xs text-slate-300"
+                className="rounded-lg border border-white/10 bg-white/[0.02] p-2.5 text-xs text-slate-300"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-mono text-violet-200">
@@ -360,14 +327,14 @@ function EventDetail({
       </div>
 
       <div>
-        <p className="mb-1.5 text-xs font-medium uppercase tracking-wide text-slate-400">
+        <p className="ss-eyebrow mb-1.5 text-[0.64rem] text-slate-400">
           Bounded window features (account)
         </p>
         <div className="grid grid-cols-3 gap-2 text-xs text-slate-300">
           {(["1m", "1h", "24h"] as const).map((windowLabel) => (
             <div
               key={windowLabel}
-              className="rounded-md border border-white/10 bg-white/[0.02] p-2"
+              className="rounded-lg border border-white/10 bg-white/[0.02] p-2"
             >
               <p className="text-slate-500">{windowLabel}</p>
               <p>

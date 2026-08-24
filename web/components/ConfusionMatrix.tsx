@@ -19,7 +19,7 @@ export function ConfusionMatrix() {
       title={`Recorded threshold: ${confusionMatrix.threshold.toFixed(2)}`}
       description="This already-observed random-holdout confusion matrix is locked historical evidence, not a current production or out-of-time estimate."
     >
-      <Card>
+      <Card className="border-teal-200/15">
         <CardHeader>
           <div className="flex flex-wrap items-center gap-2">
             <CardTitle>Historical reported confusion matrix</CardTitle>

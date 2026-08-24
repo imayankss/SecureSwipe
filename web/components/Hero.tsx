@@ -13,13 +13,13 @@ export function Hero() {
             <ShieldCheck className="h-3.5 w-3.5" />
             Locked historical artifacts · Safe demonstration mode
           </Badge>
-          <h1 className="mt-6 max-w-4xl text-5xl font-semibold tracking-tight text-white sm:text-7xl">
+          <h1 className="mt-6 max-w-4xl text-5xl font-semibold tracking-[-0.055em] text-white sm:text-7xl">
             Fraud decisions,
-            <span className="block bg-gradient-to-r from-cyan-200 to-emerald-200 bg-clip-text text-transparent">
+            <span className="block bg-gradient-to-r from-teal-200 via-cyan-100 to-emerald-200 bg-clip-text text-transparent">
               made inspectable.
             </span>
           </h1>
-          <p className="mt-4 max-w-3xl text-xl font-medium text-cyan-100">
+          <p className="mt-4 max-w-3xl text-xl font-medium text-teal-100">
             SecureSwipe fraud detection and transaction risk analytics
           </p>
           <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300">
@@ -44,14 +44,14 @@ export function Hero() {
           <div className="signal-strip mt-8 max-w-xl rounded-lg border border-white/10 bg-slate-950/45 p-4">
             <div className="flex items-center justify-between gap-4 text-xs text-slate-400">
               <span>deployment architecture</span>
-              <span className="font-medium text-cyan-100">precomputed · static</span>
+              <span className="font-medium text-teal-100">precomputed · static</span>
             </div>
             <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-white/10">
-              <div className="h-full w-full rounded-full bg-gradient-to-r from-cyan-200 via-emerald-200 to-cyan-200" />
+              <div className="h-full w-full rounded-full bg-gradient-to-r from-teal-200 via-emerald-200 to-teal-200" />
             </div>
             <div className="mt-3 flex items-center gap-2 text-xs text-slate-300">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 [animation:softPulse_1.8s_ease-in-out_infinite]" />
-              <DatabaseZap className="h-3.5 w-3.5 text-cyan-200" aria-hidden="true" />
+              <DatabaseZap className="h-3.5 w-3.5 text-teal-200" aria-hidden="true" />
               no transaction data, retraining, or model loading in web requests
             </div>
           </div>

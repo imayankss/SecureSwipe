@@ -171,7 +171,7 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
       title="See how a score crosses the review threshold"
       description="This user-controlled score explains the decision rule only. It is not a transaction, a live prediction, or a claim about a real customer."
     >
-      <Card>
+      <Card className="border-teal-200/15">
         <CardHeader>
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -200,14 +200,14 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
         <CardContent>
           <div className="grid gap-6 lg:grid-cols-[0.7fr_1fr] lg:items-center">
             <div>
-              <p className="text-6xl font-semibold text-white">{score.toFixed(0)}</p>
+              <p className="ss-number text-6xl font-semibold text-white">{score.toFixed(0)}</p>
               <p className="mt-2 text-sm text-slate-300">Hypothetical model score / 100</p>
               <p className="mt-1 text-sm text-slate-400">Review threshold: {thresholdPercent.toFixed(0)}</p>
             </div>
             <div className="space-y-5">
               <Progress value={score} />
               <label htmlFor="score-control" className="flex items-center gap-2 text-sm font-medium text-white">
-                <Gauge className="h-4 w-4 text-cyan-200" aria-hidden="true" />
+                <Gauge className="h-4 w-4 text-teal-200" aria-hidden="true" />
                 Adjust hypothetical score
               </label>
               <input
@@ -218,21 +218,21 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
                 step={1}
                 value={score}
                 onChange={(event) => setScore(Number(event.target.value))}
-                className="w-full accent-cyan-300"
+                className="w-full accent-teal-300"
                 aria-valuetext={`${score.toFixed(0)} out of 100`}
               />
               <div className="flex flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => setScore(thresholdPercent - 1)}
-                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium text-slate-200 transition hover:border-cyan-200/25 hover:bg-white/[0.08]"
+                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium text-slate-200 transition hover:border-teal-200/25 hover:bg-white/[0.08]"
                 >
                   Just below · {(thresholdPercent - 1).toFixed(0)}
                 </button>
                 <button
                   type="button"
                   onClick={() => setScore(thresholdPercent)}
-                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium text-slate-200 transition hover:border-cyan-200/25 hover:bg-white/[0.08]"
+                  className="rounded-lg border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-medium text-slate-200 transition hover:border-teal-200/25 hover:bg-white/[0.08]"
                 >
                   At threshold · {thresholdPercent.toFixed(0)}
                 </button>
@@ -251,11 +251,11 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
               </div>
             </div>
           </div>
-          <div className="mt-6 flex gap-3 rounded-lg border border-cyan-200/15 bg-cyan-300/[0.035] p-4 text-sm leading-6 text-slate-300">
-            <Info className="mt-0.5 h-4 w-4 shrink-0 text-cyan-200" aria-hidden="true" />
+          <div className="mt-6 flex gap-3 rounded-xl border border-teal-200/15 bg-teal-300/[0.035] p-4 text-sm leading-6 text-slate-300">
+            <Info className="mt-0.5 h-4 w-4 shrink-0 text-teal-200" aria-hidden="true" />
             The project has not calibrated this class-weighted XGBoost score as a real-world fraud probability. Production policy would also need cost, latency, monitoring, and human-review controls.
           </div>
-          <div className="mt-6 rounded-lg border border-white/10 bg-slate-950/30 p-4">
+          <div className="mt-6 rounded-xl border border-white/10 bg-slate-950/35 p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -270,7 +270,7 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
                 type="button"
                 onClick={runGenuineDemoInference}
                 disabled={liveState.status === "loading"}
-                className="rounded-lg border border-cyan-200/25 bg-cyan-300/10 px-3 py-2 text-xs font-medium text-cyan-100 transition hover:bg-cyan-300/20 disabled:cursor-wait disabled:opacity-60"
+                className="rounded-lg border border-teal-200/25 bg-teal-300/10 px-3 py-2 text-xs font-medium text-teal-100 transition hover:bg-teal-300/20 disabled:cursor-wait disabled:opacity-60"
               >
                 {liveState.status === "loading" ? "Checking API…" : "Try genuine inference"}
               </button>
@@ -279,7 +279,7 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
               {liveState.status === "idle" ? (
                 <p className="text-xs text-slate-400">Static fallback active until the genuine inference check is requested.</p>
               ) : null}
-              {liveState.status === "loading" ? <p role="status" aria-label="Genuine demo inference status" className="text-sm text-cyan-100">Contacting the reference API…</p> : null}
+              {liveState.status === "loading" ? <p role="status" aria-label="Genuine demo inference status" className="text-sm text-teal-100">Contacting the reference API…</p> : null}
               {liveState.status === "success" ? (
                 <p role="status" aria-label="Genuine demo inference status" className="text-sm text-emerald-100">
                   Genuine demo inference result: {liveState.decision} at score {liveState.score.toFixed(3)}. Model bundle: {liveState.modelVersion}.

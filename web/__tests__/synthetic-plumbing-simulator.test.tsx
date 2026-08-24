@@ -149,10 +149,11 @@ describe("SyntheticPlumbingSimulator UI", () => {
     await user.click(
       screen.getByRole("button", { name: "Generate next synthetic event" }),
     );
-    expect(screen.getByText("₹4,805.00")).toBeInTheDocument();
+    const syntheticAmountDetail = screen.getByText("Synthetic example amount").parentElement;
+    expect(syntheticAmountDetail).toHaveTextContent("₹4,805.00");
 
     await user.selectOptions(currencySelector, "USD");
-    expect(screen.getByText("$57.89")).toBeInTheDocument();
+    expect(syntheticAmountDetail).toHaveTextContent("$57.89");
     expect(
       screen.getByText(/never changes genuine-model input semantics/),
     ).toBeInTheDocument();

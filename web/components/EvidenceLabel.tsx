@@ -34,7 +34,7 @@ const EVIDENCE_COPY: Record<EvidenceType, { label: string; className: string }> 
 export function EvidenceLabel({ type }: { type: EvidenceType }) {
   const { label, className } = EVIDENCE_COPY[type];
   return (
-    <Badge role="note" aria-label={label} className={className}>
+    <Badge role="note" aria-label={label} title={label} className={className}>
       {label}
     </Badge>
   );
