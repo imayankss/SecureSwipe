@@ -1,19 +1,67 @@
 # SecureSwipe — Fraud Detection & Risk Analytics
 
-SecureSwipe is an end-to-end machine-learning portfolio project for detecting
-fraudulent credit-card transactions in an extremely imbalanced dataset. It
-combines data validation, leakage-safe preprocessing, baseline models, XGBoost,
-validation-only model and threshold selection, SHAP explainability, and one
-locked held-out test evaluation with a deployment-safe Next.js dashboard.
+SecureSwipe is a defense-only payment-card fraud-risk detector and human-review
+decision aid built for the **Razorpay AI Builder Internship Track 2**, whose
+loss class is payment-card fraud on an extremely imbalanced transaction
+dataset. It combines data validation, leakage-safe preprocessing, baseline
+models, XGBoost, validation-only model and threshold selection, SHAP
+explainability, and one locked held-out test evaluation with a
+deployment-safe Next.js dashboard.
+
+**What is genuinely implemented:** the historical training/evaluation
+pipeline, one locked held-out test result, a provenance-verified local
+FastAPI serving path (`api/`), and this static reviewer dashboard. Real-time
+contextual signal plumbing (device, velocity, geography, etc.) is a synthetic
+in-browser demonstration, not a trained or evaluated model.
+
+## What You're Looking At: Four Evidence Categories
+
+Every number, chart, and interaction on the dashboard is labeled with exactly
+one of four evidence categories, so you always know what you're looking at
+before treating anything as a claim:
+
+- **Historical evaluation** — a metric, chart, or confusion-matrix count taken
+  directly from the single locked held-out test run (`reports/final/`). These
+  numbers never change and are never recomputed in the browser.
+- **Genuine demo inference** — output from an actual request to the verified
+  model bundle (`api/`), sent only when you opt in. It always uses one fixed,
+  all-zero example feature vector — never real transaction data — and reports
+  the live bundle/model version alongside the result.
+- **Synthetic plumbing test** — output from a fully synthetic, in-browser event
+  simulator that exercises the *shape* of a decisioning pipeline (event →
+  context features → bounded decision → review queue) using fabricated,
+  clearly-labeled fixture data. It never calls a model, a database, or a
+  network endpoint, and its numbers carry no evidentiary weight about
+  real-world fraud detection.
+- **Illustrative cost scenario** — a what-if calculator built on the locked
+  confusion-matrix counts and user-editable cost assumptions. It is not a
+  Razorpay economics figure, a savings claim, or a forecast.
+
+Look for the labeled badge on every panel before treating a number as evidence
+of anything. Every decision surface — genuine or synthetic — resolves to one
+of exactly three bounded outcomes: `below review threshold`, `human review`,
+or `unavailable / fail closed`. There is no autonomous approve/block action
+anywhere in this project.
 
 ## Live Demo
 
-The repository does not record an independently verified live URL. The
-deployable static frontend root is `web/`; no public deployment is performed by
-the checked-in workflows.
+The repository does not record an independently verified public deployment
+URL. The deployable static frontend root is `web/`; no public deployment is
+performed by the checked-in workflows.
 
-The deployable frontend uses **static evaluation artifacts and precomputed
-demonstration interactions**. It does not perform live transaction inference.
+The deployable frontend is built on **static, precomputed historical-evaluation
+artifacts**. Two panels add controlled interactivity without turning this into
+a live fraud-detection service: an optional genuine-inference check (real
+model, one fixed example input) and a fully synthetic plumbing-test simulator
+(no model, no network, fabricated data). Neither panel is ever silently
+substituted for the other, and neither uses real transaction data.
+
+The **working local detector** is a separate thing from this dashboard: `api/`
+is a provenance-verified FastAPI service you can run locally, which loads a
+checksum-validated model bundle and fails closed if it's missing or invalid.
+The static dashboard you're looking at does not run that service; it only
+calls it, optionally, from the genuine-inference panel above, and shows an
+explicit unavailable state whenever it isn't configured or reachable.
 
 ## Architecture
 

@@ -90,3 +90,58 @@ deployment, and DNS remain external decisions requiring explicit approval.
 
 See [THREAT_MODEL.md](THREAT_MODEL.md), [CONTAINER.md](CONTAINER.md), and
 [OPERATIONS.md](OPERATIONS.md) for security and recovery boundaries.
+
+## Reference: a horizontally scalable shape (not implemented)
+
+Everything above this section describes what is actually built and checked
+in. This section is different in kind: it is a **compact reference sketch**
+of how the genuine-inference path (`api/`) could be scaled if it were ever
+operated as a real service. Nothing described here exists in this
+repository today. It is documentation only, not a roadmap commitment, not a
+claim of production readiness, and not a Razorpay-scale or Razorpay-economics
+statement.
+
+```mermaid
+flowchart LR
+    Client["Client / dashboard"] --> LB["Stateless load balancer\n(reference only)"]
+    LB --> R1["Stateless API replica"]
+    LB --> R2["Stateless API replica"]
+    LB --> R3["Stateless API replica"]
+    R1 --> FS["Feature store / cache\n(reference only)"]
+    R2 --> FS
+    R3 --> FS
+    R1 --> Q["Async review queue\n(reference only)"]
+    R2 --> Q
+    R3 --> Q
+    Q --> Mon["Monitoring / drift dashboards\n(reference only)"]
+    FS -. "would still load the same\nverified, checksum-validated bundle" .-> Bundle["Versioned ModelBundle"]
+```
+
+What would need to change, none of which exists today:
+
+- **Stateless replicas.** The current `api/` process already holds no
+  per-request mutable state, so horizontal replication would not require an
+  application rewrite — only a process supervisor, a load balancer, and a
+  shared, read-only bundle mount per replica. *Not implemented.*
+- **Feature store / cache.** A shared cache would only matter once
+  request-time features are looked up rather than supplied in the request
+  body, which is not how the current `/v1/predict` contract works. *Not
+  implemented; no cache exists.*
+- **Queue-backed review workflow.** The current review-threshold decision is
+  synchronous and stateless. A durable queue would only become relevant if
+  human review moved out of process. *Not implemented; no queue exists.*
+- **Monitoring/drift at scale.** `src/monitoring/` already performs offline,
+  batch schema/feature/score/label checks (see the table above); running the
+  same checks continuously against a live replica fleet is a reference idea
+  only. *Not implemented as a live service.*
+
+Benchmark language, if this shape were ever exercised, should always be
+reported with its environment attached (hardware, concurrency, single-node
+vs. reference cluster) rather than as a bare RPS or latency number, and
+should never be described as Razorpay-scale evidence — it would describe this
+portfolio project's own reference API only.
+
+This section intentionally does not describe the synthetic plumbing-test
+simulator (`web/components/SyntheticPlumbingSimulator.tsx`): that simulator
+is a fully in-browser, single-process demo with no server component, and it
+is out of scope for a server-scaling discussion by construction.
