@@ -85,6 +85,8 @@ class HistoricalTestQuarantine:
 
 
 def _is_exact_dtype(dtype: object, expected: str) -> bool:
+    if not isinstance(dtype, (np.dtype, str)):
+        return False
     try:
         return np.dtype(dtype) == np.dtype(expected)
     except TypeError:
@@ -191,7 +193,7 @@ def _read_aligned_historical_split(
     frame = frame[REQUIRED_COLUMNS]
     _validate_exact_dtypes(frame)
     validate_dataset_schema(frame, reject_duplicate_rows=False)
-    sources = {
+    sources: dict[str, dict[str, str | int]] = {
         "x_test": {
             "filename": _safe_basename(x_path.name),
             "sha256": before["x_test"][0],

@@ -81,5 +81,5 @@ Chromium WCAG/static-boundary scan.
 
 Close with the honest blockers: real decision evidence needs a genuinely new
 authorized dataset (the Kaggle corpus is historical reference-only); container
-smoke/scan/SBOM needs Docker Desktop; remote CI or deployment needs explicit
-push/deployment approval.
+scan/SBOM remain pending for the final candidate; remote CI or deployment needs
+explicit push/deployment approval.

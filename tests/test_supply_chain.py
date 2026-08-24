@@ -76,7 +76,14 @@ def test_container_workflow_builds_without_push_and_scans_each_architecture() ->
     assert "os.getuid() == 10001" in text
     assert "find_spec('pip') is None" in text
     assert 'PLATFORM: ${{ matrix.platform }}' in text
+    assert 'docker run --rm --platform "$PLATFORM"' in text
     assert 'docker run --detach --platform "$PLATFORM"' in text
+    assert '--volume "$PWD:/workspace:ro"' in text
+    assert 'python scripts/create_synthetic_bundle.py --output artifacts/synthetic-ci' in text
+    assert "actions/setup-python" not in text
+    assert text.index("- name: Build local image") < text.index(
+        "- name: Generate synthetic-only smoke bundle with candidate runtime"
+    )
     assert "for attempt in {1..90}" in text
 
 

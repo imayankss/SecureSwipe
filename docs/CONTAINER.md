@@ -34,12 +34,22 @@ image.
 ## Generate the synthetic smoke bundle
 
 ```bash
-.venv/bin/python scripts/create_synthetic_bundle.py \
-  --output artifacts/synthetic-smoke
+mkdir -p artifacts
+docker run --rm --platform linux/arm64 \
+  --user "$(id -u):$(id -g)" \
+  --network none --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m \
+  --volume "$PWD:/workspace:ro" \
+  --volume "$PWD/artifacts:/workspace/artifacts" \
+  --workdir /workspace \
+  --env PYTHONPATH=/workspace \
+  secureswipe-api:local \
+  python scripts/create_synthetic_bundle.py --output artifacts/synthetic-smoke
 ```
 
 The command refuses to overwrite a non-empty directory. The bundle contains
 only deterministic generated features and a small logistic-regression fixture.
+Generating it inside the candidate image binds its exact Python, platform, and
+locked dependency provenance to the runtime that will verify and serve it.
 
 ## Run with restricted privileges
 

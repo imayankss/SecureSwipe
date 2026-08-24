@@ -642,7 +642,7 @@
     "model_version": "synthetic-smoke-1",
     "operating_threshold": 0.53,
     "score_type": "raw_score",
-    "training_data_fingerprint": "bedb07ab7cff7aeed3ce09ca876ce60999f073b50010de51a4f86bec9c9c624e"
+    "training_data_fingerprint": "24b739d2d1b8b44a04510d5d575dd76912d94d18035326afffc9efe8a7e008cb"
   },
   "monitoring_report_version": "1",
   "performance": {

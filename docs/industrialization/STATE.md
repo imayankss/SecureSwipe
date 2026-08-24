@@ -326,7 +326,8 @@ executed until this branch is pushed and GitHub Actions is authorized to run.
 - Rebuilt the ARM64 image with an OCI Git revision label and committed the full
   checksummed Trivy JSON, SPDX 2.2 JSON, scanner/database metadata, and every
   exception disposition under `docs/industrialization/evidence/container/`.
-- Deployed only the static `web/` portfolio dashboard to Vercel at
+- Historical prior-candidate record, not evidence for the current release
+  candidate: deployed only the static `web/` portfolio dashboard to Vercel at
   `https://secure-swipe.vercel.app` on 2026-08-20 (Asia/Kolkata), from frontend
   source commit `943d021c4757ac4102615eb26ceca0cf476baa76`. The deployment has
   no environment variables, no configured API origin, and no public backend;
@@ -374,9 +375,10 @@ P2 findings: joint reuse of `operating_point_selection`, post-deserialization
 bundle semantic checks, and mutating side effects behind project-audit
 `--check`. Its exit-record inconsistency is reconciled by this evidence update.
 The P3 pre-resolve symlink checks remain deferred. None was changed in the
-P0/P1-only correction scope. The static frontend provider is now Vercel;
-provider selection for any backend, model storage, or monitoring remains a
-separate product decision because its inputs are time-sensitive.
+P0/P1-only correction scope. The prior static frontend record names Vercel but
+does not verify the current release candidate; provider selection for any
+backend, model storage, or monitoring remains a separate product decision
+because its inputs are time-sensitive.
 
 ## Next executable action
 
@@ -397,7 +399,9 @@ independent re-audit finds no new local P0/P1.
   official flow and place it at `data/raw/creditcard.csv`; it remains
   reference-only. Real decision evidence requires a separate authorized corpus.
   Never commit either data file or `kaggle.json`.
-- Push, PR, release, DNS, paid infrastructure, or any further public deployment
+- Push, PR, release, DNS, paid infrastructure, or any public deployment
   (especially a backend): not authorized and will require explicit confirmation
-  immediately before action. The only authorized public deployment is the
-  static Vercel frontend recorded above.
+  immediately before action. SecureSwipe has no independently verified current
+  release-candidate public deployment; any prior static URL recorded above is
+  not evidence for this candidate. The static dashboard will be deployed and
+  verified only after final CI passes.

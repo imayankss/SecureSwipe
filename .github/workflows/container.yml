@@ -28,16 +28,6 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up Python
-        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
-        with:
-          python-version: 3.12.10
-          cache: pip
-          cache-dependency-path: requirements/api-linux.lock
-      - name: Install hash-locked API environment
-        run: python -m pip install --require-hashes -r requirements/api-linux.lock
-      - name: Generate synthetic-only smoke bundle
-        run: python scripts/create_synthetic_bundle.py --output artifacts/synthetic-ci
       - name: Set up QEMU
         uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
       - name: Set up Buildx
@@ -51,6 +41,21 @@ jobs:
           push: false
           tags: secureswipe-api:ci-${{ matrix.suffix }}
           build-args: VCS_REF=${{ github.sha }}
+      - name: Generate synthetic-only smoke bundle with candidate runtime
+        env:
+          IMAGE_NAME: secureswipe-api:ci-${{ matrix.suffix }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          mkdir -p artifacts
+          docker run --rm --platform "$PLATFORM" \
+            --user "$(id -u):$(id -g)" \
+            --network none --read-only --tmpfs /tmp:rw,noexec,nosuid,size=16m \
+            --volume "$PWD:/workspace:ro" \
+            --volume "$PWD/artifacts:/workspace/artifacts" \
+            --workdir /workspace \
+            --env PYTHONPATH=/workspace \
+            "$IMAGE_NAME" \
+            python scripts/create_synthetic_bundle.py --output artifacts/synthetic-ci
       - name: Smoke liveness, readiness, and inference
         env:
           CONTAINER_NAME: secureswipe-api-ci-${{ matrix.suffix }}
@@ -79,7 +84,7 @@ jobs:
           curl --fail --silent http://127.0.0.1:8000/v1/predict \
             --header 'Content-Type: application/json' \
             --data @artifacts/synthetic-ci/smoke_request.json >/tmp/prediction.json
-          python - <<'PY'
+          python3 - <<'PY'
           import json
           import math
 

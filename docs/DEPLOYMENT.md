@@ -2,20 +2,25 @@
 
 ## Current status
 
-- Frontend: the static Next.js portfolio dashboard is deployed on Vercel at
-  `https://secure-swipe.vercel.app`. The Vercel project root is `web/`; it
-  deploys no FastAPI service, model bundle, raw data, or environment file.
+- Frontend: SecureSwipe has no independently verified current release-candidate
+  public deployment. Any prior static URL is not evidence for this candidate.
+  The static dashboard will be deployed and verified only after final CI passes.
 - Backend: no public deployment is authorized or verified.
 - Model storage: no external store is selected; bundles remain ignored local
   artifacts mounted read-only for container testing.
 - Monitoring: deterministic offline reports and local metrics/logs exist; no
   hosted telemetry provider is selected.
 
-Do not describe this state as a production deployment. Pushes, pull requests,
-releases, public deployments, DNS changes, and paid resources require explicit
-owner confirmation immediately before the action.
+Do not describe the current candidate or any prior static record as a production
+deployment. Pushes, pull requests, releases, public deployments, DNS changes,
+and paid resources require explicit owner confirmation immediately before the
+action.
 
-## Static frontend deployment record
+## Prior static frontend record — not current-candidate evidence
+
+The following is a historical record for an earlier frontend source commit. It
+does not verify the current release candidate, and the URL must not be cited as
+current-candidate evidence. Current deployment verification waits for final CI.
 
 - Provider: Vercel (local CLI deployment; no GitHub connection or push).
 - Public URL: `https://secure-swipe.vercel.app`
@@ -28,7 +33,7 @@ owner confirmation immediately before the action.
 - Environment variables: none. In particular,
   `NEXT_PUBLIC_SECURESWIPE_API_URL` is unset, so the optional synthetic API
   check has no configured origin and the static fallback remains active.
-- Verification results:
+- Historical verification results for that prior static artifact:
   - Node 22.13.1: `npm test` passed (7 tests), `npm run build` passed (two
     statically prerendered routes), and `npm audit --audit-level=high` reported
     0 vulnerabilities.

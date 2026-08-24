@@ -54,9 +54,10 @@ See the [dated benchmark report](reports/operations/2026-08-24_local_single_node
 
 ## Live Demo
 
-The repository does not record an independently verified public deployment
-URL. The deployable static frontend root is `web/`; no public deployment is
-performed by the checked-in workflows.
+SecureSwipe has no independently verified current release-candidate public
+deployment. Any prior static URL is not evidence for this candidate. The static
+dashboard will be deployed and verified only after final CI passes; no public
+deployment is performed by the checked-in workflows.
 
 The deployable frontend is built on **static, precomputed historical-evaluation
 artifacts**. Two panels add controlled interactivity without turning this into
@@ -429,12 +430,13 @@ The current static dashboard requires **no environment variables**. The root
 tokens, model paths, or secrets to frontend variables. Any future secret must
 stay server-side and must never use a `NEXT_PUBLIC_` prefix.
 
-## Vercel Deployment
+## Static Deployment
 
-The repository contains `web/vercel.json`, but no provider action is authorized
-or verified. Provider pricing/limits, preview isolation, current CLI steps, and
-rollback behavior must be checked after local container gates pass. Deployment,
-repository connection, and environment changes require explicit owner approval.
+The repository contains `web/vercel.json`, but the current release candidate has
+no independently verified public deployment. Any prior static URL is not current
+candidate evidence. The static dashboard will be deployed and verified only
+after final CI passes. Deployment, repository connection, and environment
+changes require explicit owner approval.
 See [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md).
 
 ## Publication Workflow (Not Executed)
