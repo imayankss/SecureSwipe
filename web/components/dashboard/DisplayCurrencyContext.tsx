@@ -20,4 +20,3 @@ export function DisplayCurrencyProvider({ children }: { children: ReactNode }) {
 export function useCommandDisplayCurrency() {
   return useContext(DisplayCurrencyContext);
 }
-

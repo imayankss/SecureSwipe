@@ -64,4 +64,3 @@ export function SyntheticEventTable({
     </div>
   );
 }
-
