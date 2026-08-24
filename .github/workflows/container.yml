@@ -55,7 +55,11 @@ jobs:
             --workdir /workspace \
             --env PYTHONPATH=/workspace \
             "$IMAGE_NAME" \
-            python scripts/create_synthetic_bundle.py --output artifacts/synthetic-ci
+            sh -euc '
+              python scripts/create_synthetic_bundle.py --output artifacts/synthetic-ci
+              find artifacts/synthetic-ci -type d -exec chmod 0755 {} +
+              find artifacts/synthetic-ci -type f -exec chmod 0644 {} +
+            '
       - name: Smoke liveness, readiness, and inference
         env:
           CONTAINER_NAME: secureswipe-api-ci-${{ matrix.suffix }}

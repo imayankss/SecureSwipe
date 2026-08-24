@@ -87,6 +87,36 @@ def test_container_workflow_builds_without_push_and_scans_each_architecture() ->
     assert "for attempt in {1..90}" in text
 
 
+def test_container_smoke_bundle_is_read_only_to_the_runtime_user() -> None:
+    workflow = yaml.safe_load(
+        (ROOT / ".github/workflows/container.yml").read_text(encoding="utf-8")
+    )
+    steps = workflow["jobs"]["build-smoke-scan"]["steps"]
+    generation = next(
+        step
+        for step in steps
+        if step.get("name") == "Generate synthetic-only smoke bundle with candidate runtime"
+    )["run"]
+    smoke = next(
+        step for step in steps if step.get("name") == "Smoke liveness, readiness, and inference"
+    )["run"]
+
+    assert '--user "$(id -u):$(id -g)"' in generation
+    assert '"$IMAGE_NAME"' in generation
+    assert "python scripts/create_synthetic_bundle.py --output artifacts/synthetic-ci" in generation
+    assert "find artifacts/synthetic-ci -type d -exec chmod 0755 {} +" in generation
+    assert "find artifacts/synthetic-ci -type f -exec chmod 0644 {} +" in generation
+    assert generation.index("create_synthetic_bundle.py") < generation.index("chmod 0755")
+    assert generation.index("chmod 0755") < generation.index("chmod 0644")
+    assert "chmod 777" not in generation
+    assert "chmod -R" not in generation
+    assert "--privileged" not in generation
+    assert '--volume "$PWD/artifacts/synthetic-ci:/artifacts/synthetic-ci:ro"' in smoke
+    assert "--user 0" not in smoke
+    assert "--privileged" not in smoke
+    assert "os.getuid() == 10001" in smoke
+
+
 def test_container_image_declares_source_revision_binding() -> None:
     dockerfile = (ROOT / "Dockerfile").read_text(encoding="utf-8")
     assert "ARG VCS_REF=unknown" in dockerfile
