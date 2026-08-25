@@ -5,13 +5,14 @@ must appear in this table and must map to a committed artifact, a named test, or
 a measured report. A claim that is not in this table has not been cleared to be
 made.
 
-- **Candidate content:** tree `ed5ef8e81a5ef3daae5a63064d5a178e0882540c`, reachable
-  as commit `c4cff3cd33eb0274521991461026122402ae0bfa` (code candidate
-  `e3580e4caa7dc2b5b3205246427d1ea15f2cf554` plus the release ledger entry) and,
-  byte-identically, as merge commit `38703d0d` on `main`.
-- **Status of this document:** the evidence below is committed and locally
-  verified. See "Release freeze status" at the end before treating the release
-  itself as frozen.
+- **Released content:** tree `6e112b8babac3de06a63226e86eda3658fb7e54b`, on `main`
+  as merge commit `374e167` and identically as the CI-verified PR head
+  `4c712c7`. This supersedes the earlier candidate tree `ed5ef8e8…`
+  (`e3580e4` / `c4cff3c`, merged as `38703d0d`), which differs only by the
+  container architecture scoping and its documentation.
+- **Status of this document:** the evidence below is committed, locally
+  verified, and confirmed by CI. The release is **frozen** — see "Release
+  freeze status" at the end.
 
 ## 1 — Positioning and scope
 
@@ -122,11 +123,21 @@ until a deployment is actually performed and verified.
 
 ## Release freeze status
 
-The release is **not frozen** on the strength of this document alone. Local
-evidence is complete and green; the outstanding item is a green CI result on the
-candidate content. Update this section with the workflow conclusions and run
-URLs before any pitch or form answer relies on a "CI green" claim.
+**FROZEN.** All three workflows are green on `main` at merge commit
+`374e167`, whose tree `6e112b8babac3de06a63226e86eda3658fb7e54b` is identical
+to the verified PR head `4c712c7`, so CI validated exactly this content.
 
-Note on SHA precision: CI runs on merge commit `38703d0d`, whose tree is
-byte-identical to the candidate tree `ed5ef8e8…`. State it that way — as
-content-exact — rather than claiming the workflows ran on `e3580e4` itself.
+| Workflow | Conclusion | Covers |
+| --- | --- | --- |
+| Quality | success | Python suite, ruff, both mypy targets, deterministic export/historical/monitoring verifiers, hash-locked Linux install, wheel build and inventory, pip-audit; frontend lint/typecheck/vitest/build/Playwright and npm audit |
+| Security | success | TruffleHog over full history; CodeQL for `python` and `javascript-typescript` |
+| Container | success | `linux/amd64` build, smoke, Trivy HIGH/CRITICAL scan, SPDX SBOM |
+
+No new feature may be added on top of this commit. A claim of "CI green" is
+now supported, stated as: all three workflows pass on `main` at `374e167`,
+with the container release target scoped to `linux/amd64`.
+
+**Still not claimable:** arm64 container support or a multi-architecture image
+(row 7.9 and its scope note), a public deployment or live URL (8.1), any link
+between the served bundle and the locked metrics (3.3), and any capacity, SLO,
+or savings figure beyond the measured loopback numbers (5.1, 6.2).
