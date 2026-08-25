@@ -181,3 +181,15 @@ green.
 - **Claim now supported:** "All CI is green" may be stated, phrased as: Quality, Security, and the `linux/amd64` Container workflow all pass on `main` at `374e167`.
 - **Still not claimable:** a public deployment or live URL; any link between the served bundle and the locked historical metrics; any capacity, SLO, RPS, or cost-savings figure beyond the measured single-process loopback numbers; immutable audit storage.
 - **Remaining blocker:** None for the release. Final form submission remains an owner action, per the checklist in `docs/evidence/SUBMISSION_PACKAGE.md`.
+
+## 2026-08-25 — Micro-task 12: read-only final verification
+
+- **Gate/status:** Submission evidence — read-only verification **DONE**. No file in the released tree was modified by this pass. Final form submission remains an owner action.
+- **Verified identity:** `main` at `374e167`, tree `6e112b8babac3de06a63226e86eda3658fb7e54b`, inspected in a detached worktree. The gitignored model bundle is absent there, confirming the clean-clone condition.
+- **Forbidden-claim scan — clean.** Seven banned claim classes were grepped across `README.md`, `docs/`, and the web source: uncalibrated output called a "fraud probability", 1,000/10,000 RPS, cost-savings/ROI, "production-ready", arm64 or multi-architecture container support, autonomous approve/block, and Razorpay integration. Zero genuine hits. The single raw match was `docs/MODEL_CARD.md:54`, where the disclaimer "is not labelled a real fraud probability" wraps across two lines; every other occurrence is likewise an explicit negation.
+- **Link integrity:** 23 relative Markdown links across `README.md` and `docs/` all resolve; 0 broken.
+- **Artifact integrity:** `reports/operations/2026-08-25_genuine_model_api_benchmark.json` hashes to `f4c9023e8d9b86595fbebdee4becf36f26762e5311a7142daa98d7f9ca2054ff`, matching the value recorded in the Micro-task 9 entry.
+- **Dashboard evidence carried forward, not re-derived:** `web/` is byte-identical between the released tree and candidate `e3580e4`, which was rendered and inspected earlier at desktop 1280×800 and mobile 375×812 with zero console errors, no page-level horizontal overflow, the evidence legend and exact illustrative disclaimer visible, and the static fallback confirmed with no API running. CI's Playwright/Chromium suite also passed on the released content. The released delta versus `e3580e4` is confined to `.github/workflows/container.yml` and documentation; no application, API, or frontend code changed.
+- **CI:** Quality, Security, and the `linux/amd64` Container workflow all conclude `success` on `374e167`.
+- **Claim boundary unchanged:** amd64-only container target; no arm64 support; no deployment or live URL; no bundle-to-locked-metrics linkage; no capacity, SLO, or savings figure beyond the measured loopback numbers.
+- **Remaining blocker:** None technical. Outstanding owner actions: merge the docs-only freeze/verification commits to `main`, record the pitch, capture screenshots, submit the form, and supply the submission receipt for recording.
