@@ -28,6 +28,17 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     SECURESWIPE_ARTIFACT_ROOT=/artifacts \
     SECURESWIPE_MAX_REQUEST_BYTES=65536
 
+# Pin the numeric thread pools to a single thread. This image serves one
+# Uvicorn worker scoring one small frame per request, where per-call thread
+# fan-out costs more than it returns. Leaving the pools unpinned also lets
+# OpenMP size itself from the detected CPU count and spawn threads during
+# model load, which is the point at which startup hangs under QEMU user-mode
+# emulation on the linux/arm64 CI leg.
+ENV OMP_NUM_THREADS=1 \
+    OPENBLAS_NUM_THREADS=1 \
+    MKL_NUM_THREADS=1 \
+    NUMEXPR_NUM_THREADS=1
+
 # Apply the reviewed Debian fixes published after the immutable upstream Python
 # image was assembled. Explicit versions prevent a future repository update
 # from silently changing this layer; the final image digest is the deployable
