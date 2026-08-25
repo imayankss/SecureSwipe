@@ -192,8 +192,9 @@ and explicit refusal to link an unproven bundle to locked metrics.
 
 Before submitting, confirm each line. Do not submit while any line is unchecked.
 
-- [ ] Quality, Security, and the `linux/amd64` Container workflow are green on
-      the submitted commit.
+- [x] Quality, Security, and the `linux/amd64` Container workflow are green on
+      the submitted commit. Verified on `main` at `374e167` (tree
+      `6e112b8b…`, identical to the verified PR head `4c712c7`).
 - [ ] No statement implies arm64 container support or a multi-architecture
       release.
 - [ ] No claim in the pitch or form lacks a matrix row.
