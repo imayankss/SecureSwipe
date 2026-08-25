@@ -15,13 +15,21 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, AsyncIterator, Awaitable, Callable
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, PlainTextResponse
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
+from api.audit import (
+    AuditDecision,
+    AuditIntegrityError,
+    AuditLog,
+    IdempotencyConflictError,
+    IdempotencyRegistry,
+    sha256_canonical,
+)
 from api.metrics import ApiMetrics
 from api.schemas import (
     API_SCHEMA_VERSION,
@@ -49,6 +57,7 @@ KNOWN_ROUTES = {
 }
 ERROR_RESPONSE: dict[str, Any] = {"model": ErrorResponse}
 INFERENCE_ERROR_RESPONSES: dict[int | str, dict[str, Any]] = {
+    409: ERROR_RESPONSE,
     413: ERROR_RESPONSE,
     422: ERROR_RESPONSE,
     500: ERROR_RESPONSE,
@@ -63,6 +72,10 @@ class PredictionTimeoutError(Exception):
 
 class CapacityExceededError(Exception):
     """Raised when in-flight prediction work exceeds the configured admission limit."""
+
+
+class AuditUnavailableError(Exception):
+    """Raised when required audit evidence cannot be recorded safely."""
 
 
 class ConcurrencyGate:
@@ -170,6 +183,7 @@ class ApiSettings:
     max_request_bytes: int = 65_536
     prediction_timeout_seconds: float = 5.0
     max_concurrent_predictions: int = 16
+    audit_log_path: Path | None = None
 
     def __post_init__(self) -> None:
         if "*" in self.cors_origins:
@@ -201,6 +215,7 @@ class ApiSettings:
         max_concurrent = int(os.getenv("SECURESWIPE_MAX_CONCURRENT_PREDICTIONS", "16"))
         if not 1 <= max_concurrent <= 256:
             raise ValueError("SECURESWIPE_MAX_CONCURRENT_PREDICTIONS must be between 1 and 256.")
+        audit_value = os.getenv("SECURESWIPE_AUDIT_LOG", "").strip()
         return cls(
             artifact_root=root,
             bundle_manifest=Path(manifest_value).expanduser() if manifest_value else None,
@@ -208,6 +223,7 @@ class ApiSettings:
             max_request_bytes=max_bytes,
             prediction_timeout_seconds=timeout_seconds,
             max_concurrent_predictions=max_concurrent,
+            audit_log_path=Path(audit_value).expanduser() if audit_value else None,
         )
 
 
@@ -320,6 +336,15 @@ def create_app(
             application.state.model_service = ModelService(bundle)
         else:
             application.state.model_service = ModelService()
+        if configured.audit_log_path is not None:
+            model_service: ModelService = application.state.model_service
+            if model_service.ready and model_service.model_fingerprint_sha256 is None:
+                raise RuntimeError(
+                    "Audit evidence requires a verified model-artifact SHA-256 fingerprint."
+                )
+            application.state.audit_log = AuditLog(configured.audit_log_path)
+        else:
+            application.state.audit_log = None
         yield
 
     application = FastAPI(
@@ -334,6 +359,7 @@ def create_app(
     application.state.metrics = ApiMetrics()
     application.state.concurrency_gate = ConcurrencyGate(configured.max_concurrent_predictions)
     application.state.prediction_timeout_seconds = configured.prediction_timeout_seconds
+    application.state.idempotency_registry = IdempotencyRegistry()
     application.add_middleware(RequestBodyLimitMiddleware, max_bytes=configured.max_request_bytes)
     if configured.cors_origins:
         application.add_middleware(
@@ -436,6 +462,28 @@ def create_app(
             content=_error_payload(_request_id(request), "capacity_exceeded", str(exc)),
         )
 
+    @application.exception_handler(IdempotencyConflictError)
+    async def idempotency_conflict_error(
+        request: Request, exc: IdempotencyConflictError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content=_error_payload(_request_id(request), "idempotency_conflict", str(exc)),
+        )
+
+    @application.exception_handler(AuditUnavailableError)
+    async def audit_unavailable_error(request: Request, exc: AuditUnavailableError) -> JSONResponse:
+        LOGGER.error(
+            json.dumps(
+                {"event": "audit_unavailable", "request_id": _request_id(request)},
+                separators=(",", ":"),
+            )
+        )
+        return JSONResponse(
+            status_code=503,
+            content=_error_payload(_request_id(request), "audit_unavailable", str(exc)),
+        )
+
     @application.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
         return JSONResponse(
@@ -467,6 +515,52 @@ def create_app(
 
     def current_service() -> ModelService:
         return application.state.model_service
+
+    def input_digest(*, route: str, transactions: list[TransactionFeatures]) -> str:
+        return sha256_canonical(
+            {
+                "api_schema_version": API_SCHEMA_VERSION,
+                "route": route,
+                "transactions": [transaction.canonical_values() for transaction in transactions],
+            }
+        )
+
+    def append_audit_evidence(
+        *,
+        request_id: str,
+        canonical_input_digest: str,
+        latency_ms: float,
+        results: list[Any],
+    ) -> None:
+        audit_log: AuditLog | None = application.state.audit_log
+        if audit_log is None:
+            return
+        model_fingerprint = current_service().model_fingerprint_sha256
+        if model_fingerprint is None:
+            raise AuditUnavailableError(
+                "Audit evidence is unavailable; no inference result was released."
+            )
+        try:
+            audit_log.append_inference(
+                request_id=request_id,
+                api_schema_version=API_SCHEMA_VERSION,
+                input_digest_sha256=canonical_input_digest,
+                latency_ms=latency_ms,
+                decisions=[
+                    AuditDecision(
+                        score=result.decision_score,
+                        threshold=result.operating_threshold,
+                        decision=result.decision,
+                        model_version=result.model_version,
+                        model_fingerprint_sha256=model_fingerprint,
+                    )
+                    for result in results
+                ],
+            )
+        except (AuditIntegrityError, OSError) as exc:
+            raise AuditUnavailableError(
+                "Audit evidence is unavailable; no inference result was released."
+            ) from exc
 
     @application.get("/health/live", response_model=HealthResponse, tags=["health"])
     async def health_live() -> HealthResponse:
@@ -517,16 +611,42 @@ def create_app(
         responses=INFERENCE_ERROR_RESPONSES,
         tags=["inference"],
     )
-    async def predict(transaction: TransactionFeatures, request: Request) -> PredictionResponse:
-        gate: ConcurrencyGate = application.state.concurrency_gate
-        result = await _run_admitted_inference(
-            current_service().predict_one,
-            transaction,
-            gate=gate,
-            timeout_seconds=application.state.prediction_timeout_seconds,
+    async def predict(
+        transaction: TransactionFeatures, request: Request, response: Response
+    ) -> PredictionResponse:
+        request_id = _request_id(request)
+        canonical_input_digest = input_digest(route="/v1/predict", transactions=[transaction])
+        registry: IdempotencyRegistry = application.state.idempotency_registry
+        reservation = await registry.reserve(
+            request_id=request_id,
+            input_digest_sha256=canonical_input_digest,
         )
-        application.state.metrics.observe_scores([result.decision_score])
-        return PredictionResponse(request_id=_request_id(request), **result.model_dump())
+        if not reservation.owner:
+            response.headers["X-Idempotent-Replay"] = "true"
+            return await registry.replay(reservation)
+
+        started = time.perf_counter()
+        try:
+            gate: ConcurrencyGate = application.state.concurrency_gate
+            result = await _run_admitted_inference(
+                current_service().predict_one,
+                transaction,
+                gate=gate,
+                timeout_seconds=application.state.prediction_timeout_seconds,
+            )
+            application.state.metrics.observe_scores([result.decision_score])
+            prediction = PredictionResponse(request_id=request_id, **result.model_dump())
+            append_audit_evidence(
+                request_id=request_id,
+                canonical_input_digest=canonical_input_digest,
+                latency_ms=(time.perf_counter() - started) * 1000,
+                results=[result],
+            )
+            registry.complete(reservation, prediction)
+            return prediction
+        except BaseException as exc:
+            await registry.fail(reservation, exc)
+            raise
 
     @application.post(
         "/v1/predict/batch",
@@ -535,22 +655,48 @@ def create_app(
         tags=["inference"],
     )
     async def predict_batch(
-        batch: BatchPredictionRequest, request: Request
+        batch: BatchPredictionRequest, request: Request, response: Response
     ) -> BatchPredictionResponse:
-        gate: ConcurrencyGate = application.state.concurrency_gate
-        results = await _run_admitted_inference(
-            current_service().predict_many,
-            batch.transactions,
-            gate=gate,
-            timeout_seconds=application.state.prediction_timeout_seconds,
+        request_id = _request_id(request)
+        canonical_input_digest = input_digest(
+            route="/v1/predict/batch", transactions=batch.transactions
         )
-        application.state.metrics.observe_scores([result.decision_score for result in results])
-        return BatchPredictionResponse(
-            request_id=_request_id(request),
-            model_version=results[0].model_version,
-            count=len(results),
-            predictions=results,
+        registry: IdempotencyRegistry = application.state.idempotency_registry
+        reservation = await registry.reserve(
+            request_id=request_id,
+            input_digest_sha256=canonical_input_digest,
         )
+        if not reservation.owner:
+            response.headers["X-Idempotent-Replay"] = "true"
+            return await registry.replay(reservation)
+
+        started = time.perf_counter()
+        try:
+            gate: ConcurrencyGate = application.state.concurrency_gate
+            results = await _run_admitted_inference(
+                current_service().predict_many,
+                batch.transactions,
+                gate=gate,
+                timeout_seconds=application.state.prediction_timeout_seconds,
+            )
+            application.state.metrics.observe_scores([result.decision_score for result in results])
+            prediction = BatchPredictionResponse(
+                request_id=request_id,
+                model_version=results[0].model_version,
+                count=len(results),
+                predictions=results,
+            )
+            append_audit_evidence(
+                request_id=request_id,
+                canonical_input_digest=canonical_input_digest,
+                latency_ms=(time.perf_counter() - started) * 1000,
+                results=results,
+            )
+            registry.complete(reservation, prediction)
+            return prediction
+        except BaseException as exc:
+            await registry.fail(reservation, exc)
+            raise
 
     @application.get("/metrics", response_class=PlainTextResponse, include_in_schema=False)
     async def metrics() -> PlainTextResponse:

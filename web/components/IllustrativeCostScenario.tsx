@@ -13,15 +13,16 @@ import { EvidenceLabel } from "@/components/EvidenceLabel";
 import {
   DEFAULT_DISPLAY_CURRENCY,
   DISPLAY_CURRENCIES,
-  formatIllustrativeUsd,
-  fromIllustrativeUsd,
-  toIllustrativeUsd,
+  ILLUSTRATIVE_INR_PER_USD,
+  formatIllustrativeInr,
+  fromIllustrativeInr,
+  toIllustrativeInr,
   type DisplayCurrency,
 } from "@/data/displayCurrency";
 import { Section } from "@/components/Section";
 import { useCommandDisplayCurrency } from "@/components/dashboard/DisplayCurrencyContext";
 import { CostBreakdownChart } from "@/components/dashboard/CostBreakdownChart";
-import { dashboardData, formatInteger } from "@/data/metrics";
+import { dashboardData, formatInteger, formatPercent } from "@/data/metrics";
 
 const scenario = dashboardData.illustrativeCostScenario;
 
@@ -42,31 +43,35 @@ export function IllustrativeCostScenario() {
   const displayCurrency = commandCurrency?.displayCurrency ?? localDisplayCurrency;
   const setDisplayCurrency = commandCurrency?.setDisplayCurrency ?? setLocalDisplayCurrency;
   const confusion = scenario.confusion;
-  const recoveryRate = Math.min(1, nonNegative(assumptions.recoveryRate));
+  const locked = dashboardData.finalEvaluation;
   const costs = useMemo(() => {
     const review =
       confusion.reviewWorkload * nonNegative(assumptions.reviewCost);
-    const falsePositive =
-      confusion.falsePositives * nonNegative(assumptions.falsePositiveCost);
+    const legitimateCustomerFriction =
+      confusion.falsePositives *
+      nonNegative(assumptions.legitimateCustomerFriction);
     const missedFraud =
-      confusion.falseNegatives * nonNegative(assumptions.falseNegativeCost);
-    const residualCaughtFraud =
+      confusion.falseNegatives * nonNegative(assumptions.missedFraudLoss);
+    const chargebackHandling =
       confusion.truePositives *
-      nonNegative(assumptions.falseNegativeCost) *
-      (1 - recoveryRate);
+      nonNegative(assumptions.chargebackHandling);
     return {
       review,
-      falsePositive,
+      legitimateCustomerFriction,
       missedFraud,
-      residualCaughtFraud,
-      total: review + falsePositive + missedFraud + residualCaughtFraud,
+      chargebackHandling,
+      total:
+        review +
+        legitimateCustomerFriction +
+        missedFraud +
+        chargebackHandling,
     };
-  }, [assumptions, confusion, recoveryRate]);
+  }, [assumptions, confusion]);
 
   const updateAssumption = (key: keyof Assumptions, displayValue: number) => {
     setAssumptions((current) => ({
       ...current,
-      [key]: toIllustrativeUsd(nonNegative(displayValue), displayCurrency),
+      [key]: toIllustrativeInr(nonNegative(displayValue), displayCurrency),
     }));
   };
 
@@ -118,66 +123,18 @@ export function IllustrativeCostScenario() {
               className="max-w-2xl text-xs leading-5 text-slate-400"
               id="illustrative-currency-note"
             >
-              INR is the default. Fixed illustrative display conversion: 1 USD ={" "}
-              {formatIllustrativeUsd(1, "INR")}. No live FX is fetched; this is
-              not Razorpay economics and does not assign a currency to
+              All four editable assumptions use an illustrative INR basis. Fixed
+              display-only conversion: ₹{ILLUSTRATIVE_INR_PER_USD.toFixed(2)} =
+              $1.00. No live FX is fetched, and no currency is assigned to the
               historical model or dataset amounts.
             </p>
           </div> : null}
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <label
               className="grid gap-2 text-sm font-medium text-slate-200"
-              htmlFor="fp-cost"
-            >
-              False-positive cost ({displayCurrency}; display only)
-              <input
-                id="fp-cost"
-                aria-label="Illustrative false-positive cost"
-                className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2 text-white shadow-inner shadow-black/20"
-                min="0"
-                onChange={(event) =>
-                  updateAssumption(
-                    "falsePositiveCost",
-                    nonNegative(event.currentTarget.valueAsNumber),
-                  )
-                }
-                step="0.01"
-                type="number"
-                value={fromIllustrativeUsd(
-                  assumptions.falsePositiveCost,
-                  displayCurrency,
-                )}
-              />
-            </label>
-            <label
-              className="grid gap-2 text-sm font-medium text-slate-200"
-              htmlFor="fn-cost"
-            >
-              False-negative cost ({displayCurrency}; display only)
-              <input
-                id="fn-cost"
-                aria-label="Illustrative false-negative cost"
-                className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2 text-white shadow-inner shadow-black/20"
-                min="0"
-                onChange={(event) =>
-                  updateAssumption(
-                    "falseNegativeCost",
-                    nonNegative(event.currentTarget.valueAsNumber),
-                  )
-                }
-                step="0.01"
-                type="number"
-                value={fromIllustrativeUsd(
-                  assumptions.falseNegativeCost,
-                  displayCurrency,
-                )}
-              />
-            </label>
-            <label
-              className="grid gap-2 text-sm font-medium text-slate-200"
               htmlFor="review-cost"
             >
-              Review cost per flagged row ({displayCurrency}; display only)
+              Review cost per flagged row ({displayCurrency}; illustrative INR basis)
               <input
                 id="review-cost"
                 aria-label="Illustrative review cost"
@@ -191,7 +148,7 @@ export function IllustrativeCostScenario() {
                 }
                 step="0.01"
                 type="number"
-                value={fromIllustrativeUsd(
+                value={fromIllustrativeInr(
                   assumptions.reviewCost,
                   displayCurrency,
                 )}
@@ -199,24 +156,74 @@ export function IllustrativeCostScenario() {
             </label>
             <label
               className="grid gap-2 text-sm font-medium text-slate-200"
-              htmlFor="recovery-rate"
+              htmlFor="legitimate-customer-friction"
             >
-              Fraud recovery rate (%)
+              Legitimate-customer friction per false positive ({displayCurrency}; illustrative INR basis)
               <input
-                id="recovery-rate"
-                aria-label="Illustrative fraud recovery rate"
+                id="legitimate-customer-friction"
+                aria-label="Illustrative legitimate-customer friction"
                 className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2 text-white shadow-inner shadow-black/20"
-                max="100"
                 min="0"
                 onChange={(event) =>
                   updateAssumption(
-                    "recoveryRate",
-                    nonNegative(event.currentTarget.valueAsNumber) / 100,
+                    "legitimateCustomerFriction",
+                    nonNegative(event.currentTarget.valueAsNumber),
                   )
                 }
-                step="1"
+                step="0.01"
                 type="number"
-                value={recoveryRate * 100}
+                value={fromIllustrativeInr(
+                  assumptions.legitimateCustomerFriction,
+                  displayCurrency,
+                )}
+              />
+            </label>
+            <label
+              className="grid gap-2 text-sm font-medium text-slate-200"
+              htmlFor="missed-fraud-loss"
+            >
+              Missed-fraud loss per false negative ({displayCurrency}; illustrative INR basis)
+              <input
+                id="missed-fraud-loss"
+                aria-label="Illustrative missed-fraud loss"
+                className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2 text-white shadow-inner shadow-black/20"
+                min="0"
+                onChange={(event) =>
+                  updateAssumption(
+                    "missedFraudLoss",
+                    nonNegative(event.currentTarget.valueAsNumber),
+                  )
+                }
+                step="0.01"
+                type="number"
+                value={fromIllustrativeInr(
+                  assumptions.missedFraudLoss,
+                  displayCurrency,
+                )}
+              />
+            </label>
+            <label
+              className="grid gap-2 text-sm font-medium text-slate-200"
+              htmlFor="chargeback-handling"
+            >
+              Chargeback handling per caught fraud ({displayCurrency}; illustrative INR basis)
+              <input
+                id="chargeback-handling"
+                aria-label="Illustrative chargeback handling"
+                className="rounded-lg border border-white/15 bg-slate-950/80 px-3 py-2 text-white shadow-inner shadow-black/20"
+                min="0"
+                onChange={(event) =>
+                  updateAssumption(
+                    "chargebackHandling",
+                    nonNegative(event.currentTarget.valueAsNumber),
+                  )
+                }
+                step="0.01"
+                type="number"
+                value={fromIllustrativeInr(
+                  assumptions.chargebackHandling,
+                  displayCurrency,
+                )}
               />
             </label>
           </div>
@@ -229,7 +236,7 @@ export function IllustrativeCostScenario() {
               </p>
               <p className="mt-3">
                 Display currency: {displayCurrency}. Arithmetic stays in its
-                fixed illustrative USD reference basis; the selector changes
+                canonical illustrative INR basis; the selector changes
                 display only and does not alter historical counts, thresholds,
                 or model inputs.
               </p>
@@ -243,13 +250,39 @@ export function IllustrativeCostScenario() {
                 className="ss-number mt-2 text-3xl font-semibold text-white"
                 data-testid="illustrative-total"
               >
-                {formatIllustrativeUsd(costs.total, displayCurrency)}
+                {formatIllustrativeInr(costs.total, displayCurrency)}
               </p>
               <p className="mt-2 text-xs leading-5 text-slate-300">
                 Illustrative total for this observed split; not a savings claim
                 or a threshold recommendation.
               </p>
             </div>
+          </div>
+
+          <div
+            aria-label="Locked historical cost fixture"
+            className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4"
+          >
+            {[
+              ["Threshold", locked.threshold.toFixed(2)],
+              ["Precision", formatPercent(locked.precision)],
+              ["Recall", formatPercent(locked.recall)],
+              ["Review volume", formatInteger(confusion.reviewWorkload)],
+              ["True positives", formatInteger(confusion.truePositives)],
+              ["False positives", formatInteger(confusion.falsePositives)],
+              ["False negatives", formatInteger(confusion.falseNegatives)],
+              ["True negatives", formatInteger(confusion.trueNegatives)],
+            ].map(([label, value]) => (
+              <div
+                className="rounded-xl border border-white/10 bg-white/[0.03] p-4"
+                key={label}
+              >
+                <p className="text-xs text-slate-400">{label}</p>
+                <p className="ss-number mt-2 text-lg font-semibold text-white">
+                  {value}
+                </p>
+              </div>
+            ))}
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -260,9 +293,9 @@ export function IllustrativeCostScenario() {
                 costs.review,
               ],
               [
-                "False-positive component",
+                "Legitimate-customer friction",
                 `${formatInteger(confusion.falsePositives)} FP`,
-                costs.falsePositive,
+                costs.legitimateCustomerFriction,
               ],
               [
                 "Missed-fraud component",
@@ -270,9 +303,9 @@ export function IllustrativeCostScenario() {
                 costs.missedFraud,
               ],
               [
-                "Residual caught-fraud component",
-                `${formatInteger(confusion.truePositives)} TP × (1 − recovery)`,
-                costs.residualCaughtFraud,
+                "Chargeback handling",
+                `${formatInteger(confusion.truePositives)} TP`,
+                costs.chargebackHandling,
               ],
             ].map(([label, count, amount]) => (
               <div
@@ -282,7 +315,7 @@ export function IllustrativeCostScenario() {
                 <p className="text-sm text-slate-300">{label}</p>
                 <p className="mt-2 text-xs text-slate-400">{count}</p>
                 <p className="ss-number mt-2 font-semibold text-slate-100">
-                  {formatIllustrativeUsd(amount as number, displayCurrency)}
+                  {formatIllustrativeInr(amount as number, displayCurrency)}
                 </p>
               </div>
             ))}
@@ -291,9 +324,9 @@ export function IllustrativeCostScenario() {
             total={costs.total}
             items={[
               { label: "Review workload", value: costs.review, tone: "bg-teal-300" },
-              { label: "False-positive component", value: costs.falsePositive, tone: "bg-amber-200" },
+              { label: "Legitimate-customer friction", value: costs.legitimateCustomerFriction, tone: "bg-amber-200" },
               { label: "Missed-fraud component", value: costs.missedFraud, tone: "bg-rose-300" },
-              { label: "Residual caught-fraud component", value: costs.residualCaughtFraud, tone: "bg-violet-300" },
+              { label: "Chargeback handling", value: costs.chargebackHandling, tone: "bg-violet-300" },
             ]}
           />
           <p className="text-xs leading-5 text-slate-400">

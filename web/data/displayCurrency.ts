@@ -21,18 +21,8 @@ export function formatDisplayAmount(value: number, currency: DisplayCurrency) {
   }).format(value);
 }
 
-/** Formats a canonical illustrative USD amount in the selected display currency. */
-export function formatIllustrativeUsd(
-  valueInUsd: number,
-  currency: DisplayCurrency,
-) {
-  const displayValue =
-    currency === "INR" ? valueInUsd * ILLUSTRATIVE_INR_PER_USD : valueInUsd;
-  return formatDisplayAmount(displayValue, currency);
-}
-
-/** Formats a fabricated synthetic INR amount in the selected display currency. */
-export function formatSyntheticInr(
+/** Formats a canonical illustrative INR amount in the selected display currency. */
+export function formatIllustrativeInr(
   valueInInr: number,
   currency: DisplayCurrency,
 ) {
@@ -41,20 +31,28 @@ export function formatSyntheticInr(
   return formatDisplayAmount(displayValue, currency);
 }
 
-export function toIllustrativeUsd(
+/** Formats a fabricated synthetic INR amount in the selected display currency. */
+export function formatSyntheticInr(
+  valueInInr: number,
+  currency: DisplayCurrency,
+) {
+  return formatIllustrativeInr(valueInInr, currency);
+}
+
+export function toIllustrativeInr(
   displayValue: number,
   currency: DisplayCurrency,
 ) {
-  return currency === "INR"
-    ? displayValue / ILLUSTRATIVE_INR_PER_USD
+  return currency === "USD"
+    ? displayValue * ILLUSTRATIVE_INR_PER_USD
     : displayValue;
 }
 
-export function fromIllustrativeUsd(
-  valueInUsd: number,
+export function fromIllustrativeInr(
+  valueInInr: number,
   currency: DisplayCurrency,
 ) {
   const displayValue =
-    currency === "INR" ? valueInUsd * ILLUSTRATIVE_INR_PER_USD : valueInUsd;
+    currency === "USD" ? valueInInr / ILLUSTRATIVE_INR_PER_USD : valueInInr;
   return Number(displayValue.toFixed(2));
 }

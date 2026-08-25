@@ -46,11 +46,20 @@ describe("keyboard and accessibility contracts", () => {
       decision_score: 0.91,
       score_type: "raw_score",
       operating_threshold: 0.53,
-      decision: "review",
+      decision: "human_review",
       model_version: "unit-test-bundle-1",
+      bundle_format_version: "3",
+      provenance: {
+        training_data_fingerprint: "unit-test-fingerprint",
+        evidence_category: "historical_reference_demo_inference",
+        historical_taint: true,
+        decision_eligible: false,
+        historical_metrics_claimed: false,
+        evaluation_performed: false,
+      },
     }), { status: 200 }));
     expect(
-      await screen.findByText("Genuine demo inference result: review at score 0.910. Model bundle: unit-test-bundle-1."),
+      await screen.findByText(/Genuine demo inference result: human review at score 0\.910.*historical_reference_demo_inference; decision eligible: no\./),
     ).toBeInTheDocument();
 
     vi.stubGlobal("fetch", vi.fn(async () => new Response("null", { status: 200 })));

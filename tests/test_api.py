@@ -17,6 +17,7 @@ import pytest
 from fastapi.testclient import TestClient
 from sklearn.linear_model import LogisticRegression
 
+from api.audit import AuditLog, verify_audit_log
 from api.main import ApiSettings, create_app
 from api.metrics import ApiMetrics
 from api.schemas import TransactionFeatures
@@ -130,9 +131,16 @@ def test_unavailable_model_is_live_but_not_ready(
         readiness = client.get("/health/ready")
         assert readiness.status_code == 503
         assert readiness.json()["status"] == "not_ready"
-        response = client.post("/v1/predict", json=transaction_payload)
+        response = client.post(
+            "/v1/predict",
+            json=transaction_payload,
+            headers={"X-Request-ID": "unavailable-fail-closed-1"},
+        )
         assert response.status_code == 503
-        assert response.json()["error"]["code"] == "model_unavailable"
+        body = response.json()
+        assert body["request_id"] == "unavailable-fail-closed-1"
+        assert body["error"]["code"] == "model_unavailable"
+        assert "decision" not in body
 
 
 @pytest.mark.parametrize(
@@ -175,10 +183,20 @@ def test_single_prediction_matches_direct_bundle_path(
     direct = ModelService(fitted_bundle).predict_one(TransactionFeatures(**transaction_payload))
     assert body["raw_score"] == direct.raw_score
     assert body["decision_score"] == direct.decision_score
+    assert body["decision"] == direct.decision
     assert body["calibrated_probability"] is None
     assert body["score_type"] == "raw_score"
     assert body["operating_threshold"] == 0.53
     assert body["model_version"] == "synthetic-smoke-1"
+    assert body["bundle_format_version"] == "3"
+    assert body["provenance"] == {
+        "training_data_fingerprint": fitted_bundle.training_data_fingerprint,
+        "evidence_category": "synthetic_demo_inference",
+        "historical_taint": False,
+        "decision_eligible": False,
+        "historical_metrics_claimed": False,
+        "evaluation_performed": False,
+    }
     assert body["request_id"] == "golden-parity-1"
     assert response.headers["x-request-id"] == "golden-parity-1"
 
@@ -227,7 +245,7 @@ def test_single_endpoint_matches_single_item_batch_endpoint(
     batch = ready_client.post(
         "/v1/predict/batch",
         json={"transactions": [transaction_payload]},
-        headers={"X-Request-ID": "single-vs-batch-1"},
+        headers={"X-Request-ID": "single-vs-batch-2"},
     ).json()
     assert batch["count"] == 1
     batched = batch["predictions"][0]
@@ -237,6 +255,8 @@ def test_single_endpoint_matches_single_item_batch_endpoint(
     assert single["decision"] == batched["decision"]
     assert single["operating_threshold"] == batched["operating_threshold"]
     assert single["model_version"] == batch["model_version"] == batched["model_version"]
+    assert single["bundle_format_version"] == batched["bundle_format_version"] == "3"
+    assert single["provenance"] == batched["provenance"]
 
 
 @pytest.mark.parametrize(
@@ -470,27 +490,25 @@ def test_prediction_exceeding_deadline_returns_stable_timeout_error(
     transaction_payload: dict[str, float],
     tmp_path: Path,
 ) -> None:
-    original = fitted_bundle.preprocessor
+    class BlockingService(ModelService):
+        def __init__(self) -> None:
+            super().__init__(fitted_bundle)
+            self.started = threading.Event()
+            self.release = threading.Event()
+            self.finished = threading.Event()
 
-    class VerySlowPreprocessor:
-        n_features_in_ = original.n_features_in_
-        feature_names_in_ = original.feature_names_in_
+        def predict_one(self, transaction: TransactionFeatures):
+            self.started.set()
+            try:
+                if not self.release.wait(timeout=2.0):
+                    raise RuntimeError("Test worker release timed out.")
+                return super().predict_one(transaction)
+            finally:
+                self.finished.set()
 
-        def get_feature_names_out(self) -> np.ndarray:
-            return original.get_feature_names_out()
-
-        def transform(self, frame: pd.DataFrame) -> object:
-            time.sleep(0.2)
-            return original.transform(frame)
-
-    slow = replace(
-        fitted_bundle,
-        preprocessor=VerySlowPreprocessor(),
-        training_data_fingerprint=_synthetic_training_provenance("e" * 64).data_roles_sha256,
-        training_provenance=_synthetic_training_provenance("e" * 64),
-    )
+    service = BlockingService()
     settings = ApiSettings(tmp_path, None, (), prediction_timeout_seconds=0.1)
-    with TestClient(create_app(service=ModelService(slow), settings=settings)) as client:
+    with TestClient(create_app(service=service, settings=settings)) as client:
         started = time.perf_counter()
         response = client.post(
             "/v1/predict",
@@ -498,8 +516,12 @@ def test_prediction_exceeding_deadline_returns_stable_timeout_error(
             headers={"X-Request-ID": "timeout-check-1"},
         )
         elapsed = time.perf_counter() - started
+        assert service.started.wait(timeout=1.0)
+        service.release.set()
+        assert service.finished.wait(timeout=1.0)
     assert response.status_code == 504
-    assert response.json() == {
+    body = response.json()
+    assert body == {
         "schema_version": "1.0",
         "request_id": "timeout-check-1",
         "error": {
@@ -508,8 +530,9 @@ def test_prediction_exceeding_deadline_returns_stable_timeout_error(
             "details": None,
         },
     }
+    assert "decision" not in body
     assert response.headers["x-request-id"] == "timeout-check-1"
-    assert elapsed < 0.25
+    assert elapsed < 0.5
 
 
 def test_repeated_timeouts_hold_capacity_until_prediction_workers_finish(
@@ -597,27 +620,21 @@ def test_prediction_capacity_exceeded_fails_closed_deterministically(
     transaction_payload: dict[str, float],
     tmp_path: Path,
 ) -> None:
-    original = fitted_bundle.preprocessor
+    class BlockingService(ModelService):
+        def __init__(self) -> None:
+            super().__init__(fitted_bundle)
+            self.started = threading.Event()
+            self.release = threading.Event()
 
-    class SlowPreprocessor:
-        n_features_in_ = original.n_features_in_
-        feature_names_in_ = original.feature_names_in_
+        def predict_one(self, transaction: TransactionFeatures):
+            self.started.set()
+            if not self.release.wait(timeout=2.0):
+                raise RuntimeError("Test worker release timed out.")
+            return super().predict_one(transaction)
 
-        def get_feature_names_out(self) -> np.ndarray:
-            return original.get_feature_names_out()
-
-        def transform(self, frame: pd.DataFrame) -> object:
-            time.sleep(0.15)
-            return original.transform(frame)
-
-    slow = replace(
-        fitted_bundle,
-        preprocessor=SlowPreprocessor(),
-        training_data_fingerprint=_synthetic_training_provenance("f" * 64).data_roles_sha256,
-        training_provenance=_synthetic_training_provenance("f" * 64),
-    )
+    service = BlockingService()
     settings = ApiSettings(tmp_path, None, (), max_concurrent_predictions=1)
-    with TestClient(create_app(service=ModelService(slow), settings=settings)) as client:
+    with TestClient(create_app(service=service, settings=settings)) as client:
         with ThreadPoolExecutor(max_workers=2) as executor:
             first = executor.submit(
                 client.post,
@@ -625,17 +642,28 @@ def test_prediction_capacity_exceeded_fails_closed_deterministically(
                 json=transaction_payload,
                 headers={"X-Request-ID": "capacity-first"},
             )
-            time.sleep(0.05)
+            assert service.started.wait(timeout=1.0)
             second = client.post(
                 "/v1/predict",
                 json=transaction_payload,
                 headers={"X-Request-ID": "capacity-second"},
             )
-            first_response = first.result()
+            service.release.set()
+            first_response = first.result(timeout=1.0)
+        assert client.app.state.concurrency_gate.in_flight == 0
+        recovered = client.post(
+            "/v1/predict",
+            json=transaction_payload,
+            headers={"X-Request-ID": "capacity-recovered"},
+        )
     assert first_response.status_code == 200
     assert second.status_code == 503
-    assert second.json()["error"]["code"] == "capacity_exceeded"
-    assert second.json()["request_id"] == "capacity-second"
+    second_body = second.json()
+    assert second_body["error"]["code"] == "capacity_exceeded"
+    assert second_body["request_id"] == "capacity-second"
+    assert "decision" not in second_body
+    assert recovered.status_code == 200
+    assert recovered.json()["decision"] in {"human_review", "below_review_threshold"}
 
 
 def test_logs_contain_request_metadata_but_not_transaction_vectors(
@@ -677,13 +705,174 @@ def test_openapi_contains_versioned_contracts(ready_client: TestClient) -> None:
     assert set(transaction_schema["required"]) == set(ALL_FEATURES)
     for path in ("/v1/predict", "/v1/predict/batch"):
         responses = schema["paths"][path]["post"]["responses"]
-        assert set(responses) == {"200", "413", "422", "500", "503", "504"}
-        for status in ("413", "422", "500", "503", "504"):
+        assert set(responses) == {"200", "409", "413", "422", "500", "503", "504"}
+        for status in ("409", "413", "422", "500", "503", "504"):
             assert responses[status]["content"]["application/json"]["schema"] == {
                 "$ref": "#/components/schemas/ErrorResponse"
             }
     model_info_responses = schema["paths"]["/v1/model-info"]["get"]["responses"]
     assert set(model_info_responses) == {"200", "500", "503"}
+
+
+def test_duplicate_prediction_replays_without_rescoring_or_duplicate_audit_event(
+    fitted_bundle: ModelBundle,
+    transaction_payload: dict[str, float],
+    tmp_path: Path,
+) -> None:
+    class CountingService(ModelService):
+        def __init__(self, bundle: ModelBundle) -> None:
+            super().__init__(bundle)
+            self.calls = 0
+
+        def predict_one(self, transaction: TransactionFeatures):
+            self.calls += 1
+            time.sleep(0.05)
+            return super().predict_one(transaction)
+
+    audited_bundle = replace(fitted_bundle, model_artifact_sha256="a" * 64)
+    service = CountingService(audited_bundle)
+    audit_path = tmp_path / "prediction-events.ndjson"
+    settings = ApiSettings(tmp_path, None, (), audit_log_path=audit_path)
+    headers = {
+        "X-Request-ID": "idempotent-prediction-1",
+        "Authorization": "Bearer do-not-record-this-secret",
+        "X-Api-Key": "do-not-record-this-api-key",
+        "Cookie": "session=do-not-record-this-cookie",
+    }
+    with TestClient(create_app(service=service, settings=settings)) as client:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            attempts = [
+                executor.submit(
+                    client.post,
+                    "/v1/predict",
+                    json=transaction_payload,
+                    headers=headers,
+                )
+                for _ in range(2)
+            ]
+            first, replay = [attempt.result(timeout=2.0) for attempt in attempts]
+
+        conflicting_payload = dict(transaction_payload)
+        conflicting_payload["Amount"] += 1.0
+        conflict = client.post("/v1/predict", json=conflicting_payload, headers=headers)
+
+        rejected_payload = {
+            **transaction_payload,
+            "PAN": "4111111111111111",
+            "CVV": "999",
+            "secret": "payload-secret",
+            "customer_email": "person@example.invalid",
+        }
+        rejected = client.post(
+            "/v1/predict",
+            json=rejected_payload,
+            headers={"X-Request-ID": "privacy-rejection-1"},
+        )
+
+    assert first.status_code == replay.status_code == 200
+    assert replay.json() == first.json()
+    assert sorted(
+        response.headers.get("x-idempotent-replay", "false") for response in (first, replay)
+    ) == ["false", "true"]
+    assert conflict.status_code == 409
+    assert conflict.json()["error"]["code"] == "idempotency_conflict"
+    assert rejected.status_code == 422
+    assert service.calls == 1
+
+    verified = verify_audit_log(audit_path)
+    assert verified.event_count == 1
+    event = json.loads(audit_path.read_text(encoding="ascii"))
+    assert event["request_id"] == "idempotent-prediction-1"
+    assert event["model_fingerprint_sha256"] == "a" * 64
+    assert event["model_version"] == "synthetic-smoke-1"
+    assert event["score"] == first.json()["decision_score"]
+    assert event["threshold"] == 0.53
+    assert event["decision"] in {"human_review", "below_review_threshold"}
+
+    encoded = audit_path.read_text(encoding="ascii")
+    for forbidden in (
+        "4111111111111111",
+        "999",
+        "payload-secret",
+        "person@example.invalid",
+        "do-not-record-this-secret",
+        "do-not-record-this-api-key",
+        "do-not-record-this-cookie",
+        "123.456789",
+        '"V28"',
+        '"Amount"',
+    ):
+        assert forbidden not in encoded
+
+
+def test_transient_audit_sink_failure_fails_closed_then_recovers_without_sleeping(
+    fitted_bundle: ModelBundle,
+    transaction_payload: dict[str, float],
+    tmp_path: Path,
+) -> None:
+    sentinel = "SENSITIVE-INJECTED-AUDIT-FAILURE"
+
+    class CountingService(ModelService):
+        def __init__(self, bundle: ModelBundle) -> None:
+            super().__init__(bundle)
+            self.calls = 0
+
+        def predict_one(self, transaction: TransactionFeatures):
+            self.calls += 1
+            return super().predict_one(transaction)
+
+    class FailOnceAuditSink:
+        def __init__(self, delegate: AuditLog) -> None:
+            self.delegate = delegate
+            self.attempts = 0
+
+        def append_inference(self, **kwargs: object) -> tuple[str, ...]:
+            self.attempts += 1
+            if self.attempts == 1:
+                raise OSError(sentinel)
+            return self.delegate.append_inference(**kwargs)
+
+    audited_bundle = replace(fitted_bundle, model_artifact_sha256="a" * 64)
+    service = CountingService(audited_bundle)
+    audit_path = tmp_path / "prediction-events.ndjson"
+    settings = ApiSettings(tmp_path, None, (), audit_log_path=audit_path)
+    stream = StringIO()
+    handler = logging.StreamHandler(stream)
+    logger = logging.getLogger("secureswipe.api")
+    logger.addHandler(handler)
+    started = time.perf_counter()
+    try:
+        with TestClient(create_app(service=service, settings=settings)) as client:
+            sink = FailOnceAuditSink(client.app.state.audit_log)
+            client.app.state.audit_log = sink
+            headers = {"X-Request-ID": "audit-recovery-1"}
+            failed = client.post("/v1/predict", json=transaction_payload, headers=headers)
+            recovered = client.post("/v1/predict", json=transaction_payload, headers=headers)
+            replay = client.post("/v1/predict", json=transaction_payload, headers=headers)
+    finally:
+        logger.removeHandler(handler)
+    elapsed = time.perf_counter() - started
+
+    assert failed.status_code == 503
+    assert failed.json() == {
+        "schema_version": "1.0",
+        "request_id": "audit-recovery-1",
+        "error": {
+            "code": "audit_unavailable",
+            "message": "Audit evidence is unavailable; no inference result was released.",
+            "details": None,
+        },
+    }
+    assert "decision" not in failed.json()
+    assert recovered.status_code == replay.status_code == 200
+    assert recovered.json() == replay.json()
+    assert replay.headers["x-idempotent-replay"] == "true"
+    assert recovered.json()["decision"] in {"human_review", "below_review_threshold"}
+    assert service.calls == 2
+    assert sink.attempts == 2
+    assert verify_audit_log(audit_path).event_count == 1
+    assert sentinel not in stream.getvalue()
+    assert elapsed < 20.0
 
 
 def test_configured_corrupt_bundle_refuses_startup(

@@ -13,12 +13,12 @@ const posture = [
 ];
 
 const decisionPath = [
-  "Transaction",
-  "Validation",
-  "Contextual signals",
-  "Risk score",
+  "Offline evidence",
+  "Validated export",
+  "Static dashboard",
+  "Optional local API",
+  "Bounded result",
   "Human review",
-  "Auditable evidence",
 ];
 
 export function CommandOverview() {
@@ -26,12 +26,12 @@ export function CommandOverview() {
     <section id="overview" tabIndex={-1} aria-labelledby="overview-heading" className="scroll-mt-20 focus:outline-none">
       <div className="command-overview-grid">
         <div className="min-w-0 py-2">
-          <p className="ss-eyebrow text-teal-200">AI Risk Manager · evidence command center</p>
+          <p className="ss-eyebrow text-teal-200">Razorpay AI Builder Internship · Track 2: AI Risk Manager</p>
           <h1 id="overview-heading" className="mt-2 max-w-4xl text-[2.15rem] font-semibold leading-[1.02] tracking-[-0.05em] text-white sm:text-[3.2rem]">
             Fraud decisions, <span className="text-teal-200">made inspectable.</span>
           </h1>
           <p className="mt-3 max-w-2xl text-[15px] font-medium leading-6 text-slate-200">
-            SecureSwipe fraud detection and transaction risk analytics
+            Defense-only fraud-risk evidence and human-review decision aid
           </p>
           <p className="mt-3 max-w-2xl text-[13px] leading-6 text-slate-400">
             Explore tracked validation and already-observed random-holdout summaries:
@@ -57,8 +57,8 @@ export function CommandOverview() {
           <div className="mt-5 flex max-w-2xl items-start gap-3 rounded-md border border-teal-200/15 bg-teal-300/[0.035] p-3 text-[11.5px] leading-5 text-slate-400">
             <DatabaseZap className="mt-0.5 h-4 w-4 shrink-0 text-teal-200" aria-hidden="true" />
             <p>
-              <span className="font-medium text-teal-100">precomputed · static</span> — no transaction data,
-              retraining, or model loading occurs in web requests.
+              <span className="font-medium text-teal-100">precomputed · static-first</span> — historical evidence
+              remains useful with the local API down. Genuine inference is a separate, explicit opt-in request.
             </p>
           </div>
         </div>

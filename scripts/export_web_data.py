@@ -84,17 +84,17 @@ MODEL_DISPLAY_NAMES = {
 }
 
 ILLUSTRATIVE_COST_SCENARIO_LABEL = (
-    "Illustrative cost scenario — not Razorpay economics / not business savings"
+    "Illustrative scenario — not Razorpay economics and not a production-optimal threshold."
 )
 ILLUSTRATIVE_COST_ASSUMPTIONS = {
-    "falsePositiveCost": 10.0,
-    "falseNegativeCost": 100.0,
-    "reviewCost": 1.0,
-    "recoveryRate": 0.5,
+    "reviewCost": 83.0,
+    "legitimateCustomerFriction": 830.0,
+    "missedFraudLoss": 8_300.0,
+    "chargebackHandling": 4_150.0,
 }
 ILLUSTRATIVE_COST_FORMULA = (
-    "(TP + FP) × review cost + FP × false-positive cost + FN × false-negative cost "
-    "+ TP × false-negative cost × (1 − recovery rate)"
+    "(TP + FP) × review cost + FP × legitimate-customer friction + "
+    "FN × missed-fraud loss + TP × chargeback handling"
 )
 
 
@@ -558,7 +558,7 @@ def _illustrative_cost_scenario(final: Mapping[str, Any]) -> dict[str, Any]:
     return {
         "label": ILLUSTRATIVE_COST_SCENARIO_LABEL,
         "source": "reports/final/final_model_evaluation.json",
-        "currency": "USD",
+        "currency": "INR",
         "timeHorizon": (
             f"One already-observed historical test split ({total_transactions:,} transactions); "
             "not a monthly or annual forecast."

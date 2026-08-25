@@ -2,7 +2,7 @@ import { EvidenceLabel } from "@/components/EvidenceLabel";
 
 const legend = [
   ["historical-evaluation", "Locked measurements from tracked validation or already-observed random-holdout artifacts."],
-  ["genuine-demo-inference", "An explicit opt-in request to the verified reference API when that service is configured."],
+  ["genuine-demo-inference", "Actual estimator output from an explicit opt-in request to the provenance-verified reference API; the response carries its own evidence category and decision-eligibility flags."],
   ["synthetic-plumbing-test", "Fabricated in-browser events or explicitly local synthetic serving-path measurements; neither is real-world fraud evidence."],
   ["illustrative-cost-scenario", "Visible arithmetic assumptions applied to locked aggregate counts; never a savings claim."],
 ] as const;

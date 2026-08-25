@@ -5,13 +5,34 @@ local/container reference and must be extended with provider ownership,
 authentication, TLS, rate limits, storage, paging, retention, and recovery tests
 before any public service exists.
 
-## Measured local baseline
+## Measured genuine-model local result
+
+The current [genuine-model benchmark](../reports/operations/2026-08-25_genuine_model_api_benchmark.md)
+used the selected historical-reference XGBoost bundle on one macOS/Apple M2
+loopback Uvicorn worker. At concurrency 8, 500/500 requests returned a valid
+bounded response with zero non-2xx responses, timeouts, transport errors, or
+contract failures. Successful throughput was 169.35 requests/second; p50/p95/p99
+were 44.63/80.37/308.48 ms. The high observed p99 is preserved and is not an
+SLO. Peak sampled process CPU was 109.4% and RSS was 117,488 KiB. This is local
+dirty-worktree evidence and must be rerun on a clean release SHA.
+
+Core model inference uses zero LLM tokens. The path performs deterministic
+preprocessing, XGBoost scoring, threshold comparison, and serialization without
+an LLM/provider call.
+
+## Prior synthetic plumbing baseline
 
 The tracked [M2 load result](../reports/operations/local_m2_load_baseline.json)
 was measured on macOS 26.5.2, Apple M2 arm64, CPython 3.12.10, using the
 deterministic synthetic logistic-regression bundle—not the historical XGBoost
 artifact. The loopback Uvicorn process used one worker; synchronous inference
 was offloaded from the event loop and model access remained serialized.
+
+This prior result is **synthetic serving-path plumbing evidence only**. It is not
+a genuine-model benchmark and its throughput must not be used as a model or
+capacity claim. No retained repository artifact matching the execution prompt's
+description of a prior 100-record synthetic batch was found; any such run has
+the same plumbing-only classification.
 
 Conditions: 500 measured single-prediction requests after one warmup,
 concurrency 8, five-second client timeout. Result: 500/500 successful, p50
@@ -76,17 +97,19 @@ labeled result; it does not update the locked
 | `bundle_size_bytes` | Sum of file sizes under the `--bundle-manifest` directory, or `null`. |
 | `concurrency`, `request_count`, `timeout_seconds` | Requested run parameters. |
 | `successful_count`, `error_count`, `error_rate` | Totals across all requests. |
-| `error_breakdown` | `non_2xx_count`, `timeout_count`, `transport_error_count` — a non-2xx/invalid-contract response, a client-side timeout, and any other transport failure are counted separately. |
+| `error_breakdown` | `non_2xx_count`, `invalid_contract_count`, `timeout_count`, `transport_error_count` — non-2xx responses, HTTP 200 responses that violate the bounded contract, client timeouts, and other transport failures are counted separately. |
 | `warm_up` | `latency_ms`/`status` of the single warm-up request, kept separate from the steady-state stats below. |
 | `cold_start_seconds` | Only measured if `--server-start-epoch` was supplied; otherwise `null` with `cold_start_note` explaining why. A client-only harness cannot observe true process cold start on its own. |
 | `latency_ms` | `max`/`p50`/`p95`/`p99` over all requests via `compute_latency_percentiles()` (numpy linear interpolation), plus `percentile_method`. |
 | `throughput_requests_per_second` | `request_count / wall_seconds` (all attempted requests). |
 | `successful_throughput_requests_per_second` | `successful_count / wall_seconds` (successful only). |
 | `health_probe` | Liveness probe issued concurrently with the load wave. |
-| `peak_memory_kib` | Only measured if `--server-pid` was supplied (sampled every 50ms via `ps -o rss=`); otherwise `null` with `peak_memory_note`. |
-| `environment` | `cpu_count` (`os.cpu_count()`) and `total_memory_bytes` (dependency-free: `/proc/meminfo` on Linux, `sysctl hw.memsize` on macOS; `null` elsewhere). |
-| `runtime` | `httpx`/Python/platform versions, unchanged from the original schema. |
-| `model_versions`, `wall_seconds` | Unchanged from the original schema. |
+| `peak_cpu_percent`, `peak_memory_kib` | Only measured if `--server-pid` was supplied (sampled every 50ms via `ps`); otherwise `null` with explicit notes. Multi-core CPU samples may exceed 100%. |
+| `environment` | CPU model/count and total memory (dependency-free: `/proc` on Linux, `sysctl` on macOS; `null` where unavailable). |
+| `runtime` | Python/platform plus exact serving/model package versions. |
+| `model_versions`, `wall_seconds`, `total_harness_wall_seconds` | Model versions plus the measured-request window and total harness duration. |
+| `bundle_local_identity` | Recomputed manifest/model/preprocessor SHA-256 values; a supplied manifest with mismatched artifact bytes fails the run. |
+| `core_model_inference_llm_tokens` | Always `0`: the core model-serving path makes no LLM call. |
 
 To write up a new benchmark run, capture: the command line used (including
 which optional flags were supplied), the full JSON output, the machine/OS
@@ -127,6 +150,12 @@ CI or tests.
   `SECURESWIPE_MAX_CONCURRENT_PREDICTIONS`. This is deliberate fail-closed
   backpressure, not queueing — treat a sustained run of these as an
   under-provisioned instance, not a bug.
+- `audit_unavailable` (503): scoring may have completed, but the result was not
+  released because required audit evidence could not be appended safely. For a
+  transient failure before any bytes are appended, restore the sink and retry
+  the same request ID. If the log/anchor integrity check fails or a write may be
+  partial, keep inference fail-closed, preserve both files, and repair or rotate
+  the explicitly configured sink under operator control before retrying.
 - Prediction integrity error: stop serving the bundle and preserve its manifest,
   payload hashes, image digest, code commit, and redacted event records.
 - Drift report signal: follow `MONITORING.md`; never auto-retrain or auto-deploy.
@@ -151,6 +180,25 @@ CI or tests.
    overwritten. Record cause, impact, evidence, corrective tests, and owner.
 
 Do not delete logs/history or rotate a model in place during investigation.
+
+## Failure/recovery demonstration
+
+This deterministic local demonstration uses the exact selected genuine-model
+manifest, injects one audit failure before append, verifies
+`503 audit_unavailable` with no decision, retries the same request ID after the
+sink recovers, and verifies one bounded response and one audit event:
+
+```bash
+.venv/bin/python scripts/demo_api_failure_recovery.py
+```
+
+The command enforces a 20-second ceiling and uses a temporary audit directory.
+It does not alter the selected bundle or repository evidence. Timeout and
+admission-control tests use synchronization events rather than sleeping to
+make the unsafe state deterministic. The service has no circuit breaker:
+startup bundle verification, per-request deadlines, non-queueing admission
+control, and mandatory audit append are independent fail-closed boundaries, so
+there is no closed/open/half-open state machine or recovery claim.
 
 ## Model replacement and rollback
 

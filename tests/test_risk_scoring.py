@@ -10,9 +10,9 @@ from src.inference.risk_scoring import threshold_decision
 
 
 def test_threshold_decision_includes_the_threshold_in_review() -> None:
-    assert threshold_decision(0.529999, 0.53) == "pass"
-    assert threshold_decision(0.53, 0.53) == "review"
-    assert threshold_decision(0.9, 0.53) == "review"
+    assert threshold_decision(0.529999, 0.53) == "below_review_threshold"
+    assert threshold_decision(0.53, 0.53) == "human_review"
+    assert threshold_decision(0.9, 0.53) == "human_review"
 
 
 @pytest.mark.parametrize("value", [math.nan, math.inf, -math.inf, -0.1, 1.1])

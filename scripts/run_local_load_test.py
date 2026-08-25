@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.metadata
 import json
 import math
@@ -72,51 +73,81 @@ def _read_total_memory_bytes() -> int | None:
     return None
 
 
-def _sample_rss_kib(pid: int) -> int | None:
-    """Best-effort RSS sample for an operator-supplied server PID via `ps`."""
+def _read_cpu_model() -> str | None:
+    """Best-effort CPU model without adding a platform-specific dependency."""
+    try:
+        if platform.system() == "Darwin":
+            result = subprocess.run(
+                ["sysctl", "-n", "machdep.cpu.brand_string"],
+                capture_output=True,
+                text=True,
+                timeout=2,
+                check=True,
+            )
+            return result.stdout.strip() or None
+        if platform.system() == "Linux":
+            with open("/proc/cpuinfo", encoding="utf-8") as handle:
+                for line in handle:
+                    if line.lower().startswith("model name"):
+                        return line.split(":", maxsplit=1)[1].strip() or None
+    except (OSError, IndexError, subprocess.SubprocessError):
+        return None
+    return None
+
+
+def _sample_process_resources(pid: int) -> tuple[float, int] | None:
+    """Best-effort process CPU-percent/RSS sample via `ps`."""
     try:
         result = subprocess.run(
-            ["ps", "-o", "rss=", "-p", str(pid)],
+            ["ps", "-o", "%cpu=,rss=", "-p", str(pid)],
             capture_output=True,
             text=True,
             timeout=2,
             check=True,
         )
-        return int(result.stdout.strip())
+        cpu_percent, rss_kib = result.stdout.split()
+        return float(cpu_percent), int(rss_kib)
     except (OSError, ValueError, subprocess.SubprocessError):
         return None
 
 
-class _PeakMemorySampler:
-    """Polls RSS for an operator-supplied PID in a background thread.
+class _PeakResourceSampler:
+    """Poll process CPU percent and RSS for an operator-supplied PID.
 
     Best effort only: if `ps` is unavailable or the PID is inaccessible
-    (different container/namespace, no permission), peak() returns None
-    rather than raising, so a missing sample never fails the load run.
+    (different container/namespace, no permission), missing samples are reported
+    as None rather than failing the bounded load run.
     """
 
     def __init__(self, pid: int, interval_seconds: float = 0.05) -> None:
         self._pid = pid
         self._interval = interval_seconds
+        self._peak_cpu_percent: float | None = None
         self._peak_kib: int | None = None
         self._stop = threading.Event()
         self._thread = threading.Thread(target=self._run, daemon=True)
 
-    def start(self) -> "_PeakMemorySampler":
+    def start(self) -> "_PeakResourceSampler":
         self._thread.start()
         return self
 
     def _run(self) -> None:
         while not self._stop.is_set():
-            sample = _sample_rss_kib(self._pid)
+            sample = _sample_process_resources(self._pid)
             if sample is not None:
-                self._peak_kib = sample if self._peak_kib is None else max(self._peak_kib, sample)
+                cpu_percent, rss_kib = sample
+                self._peak_cpu_percent = (
+                    cpu_percent
+                    if self._peak_cpu_percent is None
+                    else max(self._peak_cpu_percent, cpu_percent)
+                )
+                self._peak_kib = rss_kib if self._peak_kib is None else max(self._peak_kib, rss_kib)
             self._stop.wait(self._interval)
 
-    def stop(self) -> int | None:
+    def stop(self) -> tuple[float | None, int | None]:
         self._stop.set()
         self._thread.join(timeout=1.0)
-        return self._peak_kib
+        return self._peak_cpu_percent, self._peak_kib
 
 
 def _bundle_directory_size_bytes(manifest_path: Path | None) -> int | None:
@@ -128,6 +159,41 @@ def _bundle_directory_size_bytes(manifest_path: Path | None) -> int | None:
         return sum(entry.stat().st_size for entry in directory.rglob("*") if entry.is_file())
     except OSError:
         return None
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _bundle_local_identity(manifest_path: Path | None) -> dict[str, str | None]:
+    """Hash the exact local manifest/model/preprocessor bytes used by the server."""
+    if manifest_path is None:
+        return {
+            "manifest_sha256": None,
+            "model_artifact_sha256": None,
+            "preprocessor_artifact_sha256": None,
+        }
+    manifest = manifest_path.expanduser().resolve()
+    try:
+        decoded = json.loads(manifest.read_text(encoding="utf-8"))
+        artifacts = decoded["artifacts"]
+        result: dict[str, str | None] = {"manifest_sha256": _sha256_file(manifest)}
+        for role in ("model", "preprocessor"):
+            record = artifacts[role]
+            artifact_path = manifest.parent / record["filename"]
+            actual = _sha256_file(artifact_path)
+            if actual != record["sha256"]:
+                raise ValueError(f"{role} artifact SHA-256 does not match the supplied manifest.")
+            result[f"{role}_artifact_sha256"] = actual
+        return result
+    except (KeyError, OSError, TypeError, json.JSONDecodeError) as exc:
+        raise ValueError(
+            "Unable to derive local bundle identity from the supplied manifest."
+        ) from exc
 
 
 def _request(
@@ -166,7 +232,7 @@ def _request(
         isinstance(model_version, str)
         and model_version != ""
         and body.get("schema_version") == "1.0"
-        and body.get("decision") in {"review", "pass"}
+        and body.get("decision") in {"human_review", "below_review_threshold"}
         and isinstance(body.get("decision_score"), (int, float))
         and 0.0 <= float(body["decision_score"]) <= 1.0
     )
@@ -176,7 +242,9 @@ def _request(
         "model_version": model_version,
         "ok": ok,
         "status": response.status_code,
-        "error_kind": None if ok else "non_2xx",
+        "error_kind": (
+            None if ok else "non_2xx" if response.status_code != 200 else "invalid_contract"
+        ),
     }
 
 
@@ -224,8 +292,9 @@ def run_load_test(
         raise ValueError("concurrency must be from 1 to min(100, requests).")
     if not math.isfinite(timeout_seconds) or not 0.1 <= timeout_seconds <= 60.0:
         raise ValueError("timeout_seconds must be finite and from 0.1 to 60.")
-    sampler = _PeakMemorySampler(server_pid).start() if server_pid is not None else None
-    started = time.perf_counter()
+    local_bundle_identity = _bundle_local_identity(bundle_manifest)
+    sampler = _PeakResourceSampler(server_pid).start() if server_pid is not None else None
+    harness_started = time.perf_counter()
     with httpx.Client(timeout=timeout_seconds) as client:
         ready = client.get(f"{url.rstrip('/')}/health/ready")
         if ready.status_code != 200:
@@ -246,6 +315,7 @@ def run_load_test(
         warmup_completed_epoch = time.time()
         if not warmup["ok"]:
             raise RuntimeError("Synthetic warmup prediction failed.")
+        measurement_started = time.perf_counter()
         with ThreadPoolExecutor(max_workers=concurrency + 1) as executor:
             first_wave = [
                 executor.submit(_request, client, url, payload, index)
@@ -259,8 +329,9 @@ def run_load_test(
             futures = first_wave + remaining
             results = [future.result() for future in as_completed(futures)]
             health = health_future.result()
-    wall_seconds = time.perf_counter() - started
-    peak_memory_kib = sampler.stop() if sampler is not None else None
+        measurement_wall_seconds = time.perf_counter() - measurement_started
+    total_harness_wall_seconds = time.perf_counter() - harness_started
+    peak_cpu_percent, peak_memory_kib = sampler.stop() if sampler is not None else (None, None)
     latencies = [result["latency_ms"] for result in results]
     successful = sum(int(result["ok"]) for result in results)
     timeout_count = sum(1 for result in results if result.get("error_kind") == "timeout")
@@ -268,6 +339,9 @@ def run_load_test(
         1 for result in results if result.get("error_kind") == "transport_error"
     )
     non_2xx_count = sum(1 for result in results if result.get("error_kind") == "non_2xx")
+    invalid_contract_count = sum(
+        1 for result in results if result.get("error_kind") == "invalid_contract"
+    )
     versions = sorted(
         {str(result["model_version"]) for result in results if result["model_version"]}
     )
@@ -281,12 +355,14 @@ def run_load_test(
         "payload_mix": "single_fixed_payload",
         "commit_sha": commit_sha,
         "bundle_fingerprint": bundle_fingerprint,
+        "bundle_local_identity": local_bundle_identity,
         "bundle_size_bytes": _bundle_directory_size_bytes(bundle_manifest),
         "concurrency": concurrency,
         "error_count": requests - successful,
         "error_rate": (requests - successful) / requests,
         "error_breakdown": {
             "non_2xx_count": non_2xx_count,
+            "invalid_contract_count": invalid_contract_count,
             "timeout_count": timeout_count,
             "transport_error_count": transport_error_count,
         },
@@ -311,15 +387,23 @@ def run_load_test(
             if server_pid is not None
             else "not measured: requires operator-supplied --server-pid"
         ),
+        "peak_cpu_percent": peak_cpu_percent,
+        "peak_cpu_note": (
+            "maximum `ps` process CPU sample; values may exceed 100% for multi-core use"
+            if server_pid is not None
+            else "not measured: requires operator-supplied --server-pid"
+        ),
         "latency_ms": compute_latency_percentiles(latencies),
         "model_versions": versions,
         "request_count": requests,
         "successful_count": successful,
-        "throughput_requests_per_second": requests / wall_seconds,
-        "successful_throughput_requests_per_second": successful / wall_seconds,
+        "throughput_requests_per_second": requests / measurement_wall_seconds,
+        "successful_throughput_requests_per_second": successful / measurement_wall_seconds,
         "timeout_seconds": timeout_seconds,
+        "core_model_inference_llm_tokens": 0,
         "environment": {
             "cpu_count": os.cpu_count(),
+            "cpu_model": _read_cpu_model(),
             "total_memory_bytes": _read_total_memory_bytes(),
         },
         "runtime": {
@@ -328,8 +412,22 @@ def run_load_test(
             "platform": platform.platform(),
             "python": platform.python_version(),
             "python_implementation": platform.python_implementation(),
+            "packages": {
+                name: importlib.metadata.version(name)
+                for name in (
+                    "fastapi",
+                    "uvicorn",
+                    "pydantic",
+                    "numpy",
+                    "pandas",
+                    "scikit-learn",
+                    "joblib",
+                    "xgboost",
+                )
+            },
         },
-        "wall_seconds": wall_seconds,
+        "wall_seconds": measurement_wall_seconds,
+        "total_harness_wall_seconds": total_harness_wall_seconds,
     }
 
 

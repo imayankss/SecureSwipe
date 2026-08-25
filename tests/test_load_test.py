@@ -2,11 +2,17 @@
 
 from __future__ import annotations
 
+import hashlib
+import json
+import math
+from pathlib import Path
+
 import pytest
 
 from scripts.run_local_load_test import (
     RampStopCriteria,
     _bundle_directory_size_bytes,
+    _bundle_local_identity,
     compute_latency_percentiles,
     run_load_test,
     run_progressive_load_test,
@@ -121,6 +127,131 @@ def test_bundle_directory_size_bytes_sums_files_in_manifest_directory(tmp_path) 
     (nested / "notes.txt").write_bytes(b"z" * 66)
     size = _bundle_directory_size_bytes(bundle_dir / "manifest.json")
     assert size == 1000 + 234 + 66
+
+
+def test_bundle_local_identity_hashes_and_verifies_exact_artifact_bytes(tmp_path) -> None:
+    bundle_dir = tmp_path / "bundle-identity"
+    bundle_dir.mkdir()
+    model = bundle_dir / "model.joblib"
+    preprocessor = bundle_dir / "preprocessor.joblib"
+    model.write_bytes(b"model-bytes")
+    preprocessor.write_bytes(b"preprocessor-bytes")
+    model_sha = hashlib.sha256(model.read_bytes()).hexdigest()
+    preprocessor_sha = hashlib.sha256(preprocessor.read_bytes()).hexdigest()
+    manifest = bundle_dir / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "artifacts": {
+                    "model": {"filename": model.name, "sha256": model_sha},
+                    "preprocessor": {
+                        "filename": preprocessor.name,
+                        "sha256": preprocessor_sha,
+                    },
+                }
+            },
+            sort_keys=True,
+        ),
+        encoding="utf-8",
+    )
+
+    identity = _bundle_local_identity(manifest)
+
+    assert identity == {
+        "manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
+        "model_artifact_sha256": model_sha,
+        "preprocessor_artifact_sha256": preprocessor_sha,
+    }
+
+
+def test_bundle_local_identity_rejects_artifact_hash_mismatch(tmp_path) -> None:
+    bundle_dir = tmp_path / "bundle-mismatch"
+    bundle_dir.mkdir()
+    (bundle_dir / "model.joblib").write_bytes(b"model-bytes")
+    (bundle_dir / "preprocessor.joblib").write_bytes(b"preprocessor-bytes")
+    manifest = bundle_dir / "manifest.json"
+    manifest.write_text(
+        json.dumps(
+            {
+                "artifacts": {
+                    "model": {"filename": "model.joblib", "sha256": "0" * 64},
+                    "preprocessor": {
+                        "filename": "preprocessor.joblib",
+                        "sha256": "0" * 64,
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValueError, match="model artifact SHA-256"):
+        _bundle_local_identity(manifest)
+
+
+def test_genuine_model_benchmark_evidence_is_complete_and_locally_rebindable() -> None:
+    repository = Path(__file__).resolve().parents[1]
+    manifest_path = repository / "artifacts/historical-reference-demo-v1/manifest.json"
+    input_path = repository / "reports/operations/2026-08-25_genuine_model_benchmark_input.json"
+    report_path = repository / "reports/operations/2026-08-25_genuine_model_api_benchmark.json"
+    payload = json.loads(input_path.read_text(encoding="utf-8"))
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+
+    assert payload == {
+        "Time": 0.0,
+        **{f"V{index}": 0.0 for index in range(1, 29)},
+        "Amount": 1.0,
+    }
+    assert report["endpoint"] == "/v1/predict"
+    assert report["payload_mix"] == "single_fixed_payload"
+    assert report["request_count"] == 500
+    assert report["successful_count"] == 500
+    assert report["error_count"] == 0
+    assert report["error_breakdown"] == {
+        "invalid_contract_count": 0,
+        "non_2xx_count": 0,
+        "timeout_count": 0,
+        "transport_error_count": 0,
+    }
+    assert report["bundle_fingerprint"] == {
+        "model_version": "historical-reference-xgboost-20260624-demo-v1",
+        "bundle_format_version": "3",
+        "training_data_fingerprint": (
+            "76e867c9809da64a34ee45e0895cae03b1aea233af5b901384cd6d958f5dac13"
+        ),
+    }
+    assert report["bundle_local_identity"] == {
+        "manifest_sha256": "e355834d916ab3951e3069fc38ce286dd3e3abe4251c8643c4d859cd781bbbf0",
+        "model_artifact_sha256": (
+            "5ce63f1a7efa5625fbaa61177e76a548fd9ccc1c3f0a1530ccff835cf8b1dc73"
+        ),
+        "preprocessor_artifact_sha256": (
+            "07d4a9f49448b6aa09a41c5c71dbaff5172a5fb5c870154d284671f323c7862f"
+        ),
+    }
+    assert report["bundle_size_bytes"] == 490_948
+    assert report["core_model_inference_llm_tokens"] == 0
+    for field in ("p50", "p95", "p99", "max"):
+        assert math.isfinite(report["latency_ms"][field])
+        assert report["latency_ms"][field] >= 0.0
+    assert report["successful_throughput_requests_per_second"] > 0.0
+    assert report["cold_start_seconds"] > 0.0
+    assert report["peak_cpu_percent"] >= 0.0
+    assert report["peak_memory_kib"] > 0
+
+    # Model weights are intentionally ignored. When the authorized local bundle
+    # is available, recompute the recorded binding; clean clones still validate
+    # the complete committed evidence contract above without inventing bytes.
+    if manifest_path.is_file():
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        assert payload == manifest["golden_probe"]["features"]
+        assert report["bundle_fingerprint"] == {
+            "model_version": manifest["model_version"],
+            "bundle_format_version": manifest["bundle_format_version"],
+            "training_data_fingerprint": manifest["training_data_fingerprint"],
+        }
+        assert report["bundle_local_identity"] == _bundle_local_identity(manifest_path)
+        assert report["bundle_size_bytes"] == _bundle_directory_size_bytes(manifest_path)
 
 
 def _fake_stage(canned: dict[int, dict[str, object]], calls: list[int]):

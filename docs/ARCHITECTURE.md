@@ -14,6 +14,7 @@ flowchart LR
       Dev --> Bundle["Versioned ModelBundle\npreprocessor + model + optional calibrator"]
       Bundle --> Verify["Trusted-root and checksum verification\nbefore deserialization"]
       Verify --> API["FastAPI reference service"]
+      API --> Audit["Optional append-only NDJSON\nhash chain + local head anchor"]
       Batch["Authorized offline batch"] --> Monitor["Schema, feature, score,\nand optional label monitoring"]
       Bundle --> Monitor
     end
@@ -45,6 +46,7 @@ flowchart LR
 | Artifact persistence | `src/artifacts/bundle.py` | Trusted local root, complete manifest, sizes, hashes, runtime/dependency/schema/type checks before load |
 | Batch scoring | `src/inference/batch_scoring.py` | One ordered, finite scoring path shared by serving and monitoring |
 | HTTP interface | `api/` | Versioned schemas, bounded body/batch, stable errors, readiness, redacted logs, bounded metrics |
+| Audit/idempotency | `api/audit.py` | In-process duplicate replay; canonical redacted NDJSON; hash chain plus local count/head anchor; tamper-evident, not immutable |
 | Offline monitoring | `src/monitoring/` and `scripts/run_offline_monitoring.py` | Invalid batches are reported but never scored; drift triggers investigation, not automatic action |
 | Public export | `scripts/export_web_data.py` | Cross-artifact invariants and read-only `--check`; no private/model input |
 | Browser presentation | `web/` | Static-only by default; browser test fails on `/v1/predict` traffic |
@@ -78,6 +80,15 @@ Inference endpoints offload synchronous model work from the event loop, while a
 lock serializes estimator access because arbitrary fitted estimators are not
 assumed thread-safe. Request logs contain request metadata and model version, not
 feature vectors or downstream exception messages.
+
+When configured, successful inference also passes through the separate audit
+boundary. Canonical input is hashed in memory; only its digest reaches the
+append-only NDJSON event. The event binds the decision to the verified serialized
+model-artifact fingerprint, and a verifier checks canonical encoding, every
+previous/event hash, and a local count/head anchor. The anchor shares the log's
+trust domain, so this is tamper-evident evidence rather than immutable storage.
+Idempotent replay is coordinated in process and does not claim cross-replica or
+post-restart durability.
 
 ## Deployment shape
 
@@ -119,10 +130,12 @@ flowchart LR
 
 What would need to change, none of which exists today:
 
-- **Stateless replicas.** The current `api/` process already holds no
-  per-request mutable state, so horizontal replication would not require an
-  application rewrite — only a process supervisor, a load balancer, and a
-  shared, read-only bundle mount per replica. *Not implemented.*
+- **Replica coordination.** The current `api/` process holds an in-memory
+  idempotency registry and can append to one local audit sink. Horizontal
+  replication would require a durable shared idempotency/result boundary and a
+  single ordered audit stream (or independently anchored per-replica streams),
+  in addition to a process supervisor, load balancer, and shared read-only
+  bundle mount. *Not implemented.*
 - **Feature store / cache.** A shared cache would only matter once
   request-time features are looked up rather than supplied in the request
   body, which is not how the current `/v1/predict` contract works. *Not
