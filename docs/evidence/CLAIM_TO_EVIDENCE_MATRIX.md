@@ -99,9 +99,15 @@ production-optimal threshold.
 | 7.6 | The container runs hardened: non-root uid 10001, no pip, read-only rootfs, all capabilities dropped, `no-new-privileges`. | `Dockerfile` | Verified in-container this session; `tests/test_container_contract.py` |
 | 7.7 | The candidate image has no HIGH or CRITICAL vulnerabilities. | Trivy 0.70.0 with repo `.trivyignore.yaml` | **Exit 0, 0 HIGH/CRITICAL** on `linux/arm64` image `sha256:e894e688…`, whose `org.opencontainers.image.revision` label equals the candidate SHA |
 | 7.8 | No raw data, model weights, or credentials are committed. | Candidate tree inspection | No `.joblib`/`.pkl`/`.parquet` payloads committed; only aggregate report CSVs. `web/.env.local` is untracked and gitignored |
+| 7.9 | The container release target is `linux/amd64`, which CI builds, smoke-tests, scans, and produces an SBOM for. | `.github/workflows/container.yml`; `docs/CONTAINER.md` | The `Container` workflow matrix is `linux/amd64` only |
 
-**Scope note:** 7.7 covers `linux/arm64`, the architecture of the verification
-host. The `linux/amd64` leg was left to CI.
+**Scope note:** row 7.7's local Trivy run covers `linux/arm64`, the architecture
+of the verification host; CI scans `linux/amd64`. **No arm64 container support
+is claimed** — the emulated `linux/arm64` CI leg is deferred because the
+container never completes startup under QEMU on GitHub-hosted runners. That was
+reproduced three times, did not reproduce locally on native arm64 or
+Rosetta-emulated amd64, and was not root caused. Do not state or imply arm64
+container support anywhere in the pitch or the form.
 
 ## 8 — Deployment status
 

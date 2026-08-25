@@ -7,10 +7,10 @@ Every claim below traces to [`CLAIM_TO_EVIDENCE_MATRIX.md`](CLAIM_TO_EVIDENCE_MA
 the bracketed IDs are matrix rows. Nothing here may be spoken or submitted
 unless its matrix row is satisfied.
 
-**Release status at time of writing: NOT frozen.** Quality and Security are
-green on the candidate content; the Container workflow's `linux/arm64` leg
-fails at container startup under QEMU emulation. Nothing in this document
-claims a green Container run or a deployment. See "Open item" at the end.
+**Container scope:** the release target is `linux/amd64`, which CI builds,
+smoke-tests, scans, and produces an SBOM for. The emulated `linux/arm64` leg is
+deferred and **no arm64 container support is claimed**. Nothing in this document
+claims a deployment. See "Container architecture scope" at the end.
 
 ---
 
@@ -192,10 +192,10 @@ and explicit refusal to link an unproven bundle to locked metrics.
 
 Before submitting, confirm each line. Do not submit while any line is unchecked.
 
-- [ ] **Container CI resolved.** The `linux/arm64` leg must pass, or the
-      limitation must be stated rather than a green CI implied. This is the one
-      open blocker.
-- [ ] Quality and Security workflows green on the submitted commit.
+- [ ] Quality, Security, and the `linux/amd64` Container workflow are green on
+      the submitted commit.
+- [ ] No statement implies arm64 container support or a multi-architecture
+      release.
 - [ ] No claim in the pitch or form lacks a matrix row.
 - [ ] No live-URL or deployment claim is made anywhere. [8.1]
 - [ ] No claim links the served bundle to the locked metrics. [3.3]
@@ -208,19 +208,20 @@ Before submitting, confirm each line. Do not submit while any line is unchecked.
 
 ---
 
-## Open item
+## Container architecture scope
 
-The Container workflow's `linux/arm64` leg fails: the container reaches
-`Waiting for application startup.` and never completes startup, so the smoke
-step's 90-attempt readiness loop exhausts and the job exits 1 after ~92
-seconds. The `linux/amd64` leg passes in the same run, and the startup-path
-diff versus the last passing commit is trivial (a manifest SHA string field;
-the audit subsystem is inert because no audit log is configured). The leading
-hypothesis is OpenMP thread initialization hanging under QEMU emulation — the
-image pins no `OMP_NUM_THREADS` — but this is unconfirmed and does not
-reproduce locally on native arm64 or under Rosetta-emulated amd64.
+The container release target is `linux/amd64`. CI builds it, runs the
+liveness/readiness/inference smoke, scans it for HIGH/CRITICAL vulnerabilities,
+and publishes an SPDX SBOM on every push and pull request.
 
-Decisive next test: re-run the failed job. If it passes, the cause is QEMU
-flakiness; if it fails identically, a targeted fix is warranted.
+The emulated `linux/arm64` leg has been removed from the matrix and is
+deferred. Under QEMU user-mode emulation on GitHub-hosted runners the container
+reaches `Waiting for application startup.` and never completes startup, so the
+smoke step's readiness loop exhausts and the job fails. It reproduced
+deterministically three times, did not reproduce locally on native arm64 or
+Rosetta-emulated amd64, and was **not** root caused. A speculative thread-pinning
+change was written, tested, and then reverted rather than shipped on an unproven
+diagnosis.
 
-Until this is resolved, do not claim "all CI green".
+Accordingly: **do not claim arm64 container support, multi-architecture images,
+or a green arm64 CI leg.** State the release target as `linux/amd64` if asked.

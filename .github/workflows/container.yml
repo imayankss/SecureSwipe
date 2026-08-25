@@ -20,16 +20,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # linux/amd64 only. The emulated linux/arm64 leg is deferred, not
+        # merely disabled: under QEMU user-mode emulation on GitHub-hosted
+        # runners the container reaches "Waiting for application startup." and
+        # never completes startup, so the readiness loop below exhausts and the
+        # job fails. The same image and code pass natively on arm64 and on
+        # amd64, so this is an emulation-environment issue that was not root
+        # caused. Consequently this repository makes no arm64 container support
+        # claim. Restoring the leg requires either native arm64 runners or a
+        # resolved QEMU startup path -- see docs/CONTAINER.md.
         include:
           - platform: linux/amd64
             suffix: amd64
-          - platform: linux/arm64
-            suffix: arm64
     steps:
       - name: Check out source
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@96fe6ef7f33517b61c61be40b68a1882f3264fb8 # v4.2.0
       - name: Set up Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4.2.0
       - name: Build local image
