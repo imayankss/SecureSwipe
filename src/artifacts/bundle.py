@@ -401,6 +401,7 @@ class ModelBundle:
     training_provenance: TrainingProvenance
     score_type: ScoreType = "raw_score"
     historical_reference_provenance: HistoricalReferenceProvenance | None = None
+    model_artifact_sha256: str | None = None
 
     def validate(self) -> None:
         if self.preprocessor is None or not hasattr(self.preprocessor, "transform"):
@@ -425,6 +426,11 @@ class ModelBundle:
         )
         if not isinstance(self.model_version, str) or not self.model_version.strip():
             raise ValueError("ModelBundle model_version must not be empty.")
+        if self.model_artifact_sha256 is not None:
+            _require_sha256(
+                self.model_artifact_sha256,
+                label="ModelBundle model_artifact_sha256",
+            )
         if self.score_type not in {"raw_score", "calibrated_probability"}:
             raise ValueError("Unsupported ModelBundle score_type.")
         if self.calibrator is None and self.score_type != "raw_score":
@@ -2072,6 +2078,7 @@ def _load_model_bundle_from_directory_fd(directory_fd: int) -> ModelBundle:
         training_provenance=training_provenance,
         score_type=cast(ScoreType, manifest["score_type"]),
         historical_reference_provenance=historical_reference,
+        model_artifact_sha256=str(artifacts["model"]["sha256"]),
     )
     try:
         bundle.validate()

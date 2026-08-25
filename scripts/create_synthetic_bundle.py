@@ -99,7 +99,9 @@ def create_synthetic_bundle(output_dir: Path) -> Path:
     frame = pd.DataFrame([request], columns=ALL_FEATURES)
     raw_score = float(bundle.model.predict_proba(bundle.preprocessor.transform(frame))[0, 1])
     expected = {
-        "decision": "review" if raw_score >= bundle.operating_threshold else "pass",
+        "decision": (
+            "human_review" if raw_score >= bundle.operating_threshold else "below_review_threshold"
+        ),
         "decision_score": raw_score,
         "model_version": bundle.model_version,
         "operating_threshold": bundle.operating_threshold,

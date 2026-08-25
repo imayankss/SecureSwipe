@@ -39,6 +39,49 @@ def test_cost_components_follow_explicit_formula() -> None:
     assert row["cost_per_transaction"] == pytest.approx(4.38)
 
 
+def test_zero_cost_scenario_has_zero_components_and_total() -> None:
+    scenario = CostScenario("zero", 0.0, 0.0, 0.0, 0.0)
+    table = evaluate_cost_scenario(_threshold_table(), scenario)
+
+    assert (table["review_cost"] == 0.0).all()
+    assert (table["false_positive_cost"] == 0.0).all()
+    assert (table["missed_fraud_cost"] == 0.0).all()
+    assert (table["residual_caught_fraud_cost"] == 0.0).all()
+    assert (table["total_cost"] == 0.0).all()
+    assert (table["cost_per_transaction"] == 0.0).all()
+
+
+@pytest.mark.parametrize(
+    ("scenario", "expected_threshold"),
+    [
+        (CostScenario("high_fp", 1_000_000.0, 1.0, 0.0, 1.0), 0.8),
+        (CostScenario("high_fn", 1.0, 1_000_000.0, 0.0, 1.0), 0.2),
+    ],
+)
+def test_extreme_error_costs_change_the_selected_threshold(
+    scenario: CostScenario,
+    expected_threshold: float,
+) -> None:
+    table = evaluate_cost_scenario(_threshold_table(), scenario)
+    assert select_minimum_cost_threshold(table)["threshold"] == pytest.approx(expected_threshold)
+
+
+@pytest.mark.parametrize(
+    ("recovery_rate", "expected_residual", "expected_total"),
+    [(0.0, 800.0, 1_000.0), (1.0, 0.0, 200.0)],
+)
+def test_recovery_rate_boundaries_are_inclusive_and_reconcile(
+    recovery_rate: float,
+    expected_residual: float,
+    expected_total: float,
+) -> None:
+    scenario = CostScenario("boundary", 0.0, 100.0, 0.0, recovery_rate)
+    row = evaluate_cost_scenario(_threshold_table(), scenario).iloc[0]
+    assert row["missed_fraud_cost"] == pytest.approx(200.0)
+    assert row["residual_caught_fraud_cost"] == pytest.approx(expected_residual)
+    assert row["total_cost"] == pytest.approx(expected_total)
+
+
 @pytest.mark.parametrize(
     "scenario",
     [

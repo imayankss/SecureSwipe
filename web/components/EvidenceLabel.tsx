@@ -20,7 +20,8 @@ const EVIDENCE_COPY: Record<EvidenceType, { label: string; className: string }> 
     className: "border-violet-300/30 bg-violet-300/10 text-violet-100",
   },
   "illustrative-cost-scenario": {
-    label: "Illustrative cost scenario — not Razorpay economics / not business savings",
+    label:
+      "Illustrative scenario — not Razorpay economics and not a production-optimal threshold.",
     className: "border-amber-300/30 bg-amber-300/10 text-amber-100",
   },
 };

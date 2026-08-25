@@ -46,10 +46,32 @@ const EXAMPLE_FEATURES = {
 type LiveState =
   | { status: "idle" }
   | { status: "loading" }
-  | { status: "success"; decision: string; score: number; modelVersion: string }
+  | {
+      status: "success";
+      decision: LivePrediction["decision"];
+      score: number;
+      modelVersion: string;
+      bundleFormatVersion: string;
+      evidenceCategory: EvidenceCategory;
+      decisionEligible: boolean;
+    }
   | { status: "empty" }
   | { status: "unavailable"; message: string }
   | { status: "error"; message: string };
+
+type EvidenceCategory =
+  | "synthetic_demo_inference"
+  | "new_authorized_development_evidence"
+  | "historical_reference_demo_inference";
+
+type PredictionProvenance = {
+  training_data_fingerprint: string;
+  evidence_category: EvidenceCategory;
+  historical_taint: boolean;
+  decision_eligible: boolean;
+  historical_metrics_claimed: boolean;
+  evaluation_performed: boolean;
+};
 
 type LivePrediction = {
   schema_version: "1.0";
@@ -59,8 +81,21 @@ type LivePrediction = {
   decision_score: number;
   score_type: "raw_score" | "calibrated_probability";
   operating_threshold: number;
-  decision: "review" | "pass";
+  decision: "human_review" | "below_review_threshold";
   model_version: string;
+  bundle_format_version: string;
+  provenance: PredictionProvenance;
+};
+
+const evidenceCategories = new Set<EvidenceCategory>([
+  "synthetic_demo_inference",
+  "new_authorized_development_evidence",
+  "historical_reference_demo_inference",
+]);
+
+const decisionLabels: Record<LivePrediction["decision"], string> = {
+  human_review: "human review",
+  below_review_threshold: "below review threshold",
 };
 
 function apiUrlFromEnvironment() {
@@ -85,6 +120,9 @@ function apiUrlFromEnvironment() {
 function isPrediction(value: unknown): value is LivePrediction {
   if (typeof value !== "object" || value === null) return false;
   const prediction = value as Record<string, unknown>;
+  const provenance = prediction.provenance;
+  if (typeof provenance !== "object" || provenance === null) return false;
+  const provenanceRecord = provenance as Record<string, unknown>;
   return (
     prediction.schema_version === "1.0" &&
     typeof prediction.request_id === "string" && prediction.request_id.length > 0 &&
@@ -96,8 +134,17 @@ function isPrediction(value: unknown): value is LivePrediction {
     (prediction.score_type === "raw_score" || prediction.score_type === "calibrated_probability") &&
     typeof prediction.operating_threshold === "number" &&
     Number.isFinite(prediction.operating_threshold) &&
-    (prediction.decision === "review" || prediction.decision === "pass") &&
-    typeof prediction.model_version === "string" && prediction.model_version.length > 0
+    (prediction.decision === "human_review" || prediction.decision === "below_review_threshold") &&
+    typeof prediction.model_version === "string" && prediction.model_version.length > 0 &&
+    typeof prediction.bundle_format_version === "string" && prediction.bundle_format_version.length > 0 &&
+    typeof provenanceRecord.training_data_fingerprint === "string" &&
+    provenanceRecord.training_data_fingerprint.length > 0 &&
+    typeof provenanceRecord.evidence_category === "string" &&
+    evidenceCategories.has(provenanceRecord.evidence_category as EvidenceCategory) &&
+    typeof provenanceRecord.historical_taint === "boolean" &&
+    typeof provenanceRecord.decision_eligible === "boolean" &&
+    typeof provenanceRecord.historical_metrics_claimed === "boolean" &&
+    typeof provenanceRecord.evaluation_performed === "boolean"
   );
 }
 
@@ -153,6 +200,9 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
         decision: payload.decision,
         score: payload.decision_score,
         modelVersion: payload.model_version,
+        bundleFormatVersion: payload.bundle_format_version,
+        evidenceCategory: payload.provenance.evidence_category,
+        decisionEligible: payload.provenance.decision_eligible,
       });
     } catch (error) {
       const message = error instanceof DOMException && error.name === "AbortError"
@@ -282,7 +332,7 @@ export function RiskScoreDemo({ apiBaseUrl = apiUrlFromEnvironment() }: { apiBas
               {liveState.status === "loading" ? <p role="status" aria-label="Genuine demo inference status" className="text-sm text-teal-100">Contacting the reference API…</p> : null}
               {liveState.status === "success" ? (
                 <p role="status" aria-label="Genuine demo inference status" className="text-sm text-emerald-100">
-                  Genuine demo inference result: {liveState.decision} at score {liveState.score.toFixed(3)}. Model bundle: {liveState.modelVersion}.
+                  Genuine demo inference result: {decisionLabels[liveState.decision]} at score {liveState.score.toFixed(3)}. Model bundle: {liveState.modelVersion} (format {liveState.bundleFormatVersion}). API provenance: {liveState.evidenceCategory}; decision eligible: {liveState.decisionEligible ? "yes" : "no"}.
                 </p>
               ) : null}
               {liveState.status === "empty" ? <p role="status" aria-label="Genuine demo inference status" className="text-sm text-amber-100">The API returned no usable prediction; static fallback remains active.</p> : null}

@@ -6,13 +6,18 @@ loss class is payment-card fraud on an extremely imbalanced transaction
 dataset. It combines data validation, leakage-safe preprocessing, baseline
 models, XGBoost, validation-only model and threshold selection, SHAP
 explainability, and one locked held-out test evaluation with a
-deployment-safe Next.js dashboard.
+statically exportable Next.js reviewer dashboard.
 
 **What is genuinely implemented:** the historical training/evaluation
 pipeline, one locked held-out test result, a provenance-verified local
 FastAPI serving path (`api/`), and this static reviewer dashboard. Real-time
 contextual signal plumbing (device, velocity, geography, etc.) is a synthetic
 in-browser demonstration, not a trained or evaluated model.
+
+The selected local serving candidate is a byte-verified, historical-reference
+demo bundle with evidence category `historical_reference_demo_inference`. Its
+API execution is genuine, but it is historical-tainted, not decision-eligible,
+and not proven to be the model that produced the locked historical metrics.
 
 ## What You're Looking At: Four Evidence Categories
 
@@ -23,10 +28,13 @@ before treating anything as a claim:
 - **Historical evaluation** — a metric, chart, or confusion-matrix count taken
   directly from the single locked held-out test run (`reports/final/`). These
   numbers never change and are never recomputed in the browser.
-- **Genuine demo inference** — output from an actual request to the verified
-  model bundle (`api/`), sent only when you opt in. It always uses one fixed,
-  all-zero example feature vector — never real transaction data — and reports
-  the live bundle/model version alongside the result.
+- **Genuine demo inference** — output from an actual estimator request to the
+  provenance-verified reference API (`api/`), sent only when you opt in. It
+  always uses one fixed, all-zero example feature vector — never real
+  transaction data — and reports the bundle/model version plus the bundle's
+  evidence category and decision-eligibility flags. Verified bytes and runtime
+  behavior do not authenticate the absent original source inputs or link this
+  bundle to the locked historical metrics.
 - **Synthetic plumbing test** — output from a fully synthetic, in-browser event
   simulator, or an explicitly local synthetic serving-path measurement. The
   simulator exercises the *shape* of a decisioning pipeline (event → context
@@ -43,15 +51,19 @@ of exactly three bounded outcomes: `below review threshold`, `human review`,
 or `unavailable / fail closed`. There is no autonomous approve/block action
 anywhere in this project.
 
-### Preliminary local serving-path evidence
+### Measured local genuine-model API evidence
 
-The fixed synthetic loopback baseline recorded 500/500 successful requests at
-8 concurrency with 0 errors/timeouts: p50 33.28 ms, p95 42.41 ms, p99 48.73
-ms, and 252.36 TPS (transactions per second). It uses a temporary synthetic-only
-bundle on one local Apple M2 Uvicorn worker and was rerun against repaired
-serving-code commit `5a8b653e939bf77d71cea6ce3f99667449fa4ad3`; it remains preliminary pending
-final CI and is neither real-model nor public-network evidence.
-See the [dated benchmark report](reports/operations/2026-08-24_local_single_node_serving_benchmark.md).
+The fixed genuine-model loopback run recorded 500/500 valid responses at 8
+concurrency with zero errors/timeouts: p50 44.63 ms, p95 80.37 ms, p99 308.48
+ms, and 169.35 successful requests/second. It used the selected
+historical-reference XGBoost bundle on one local Apple M2 Uvicorn worker. This
+is local, dirty-worktree evidence—not a release SHA, public-network result,
+capacity commitment, or production SLO. Core model inference uses zero LLM
+tokens. See the [genuine-model benchmark report](reports/operations/2026-08-25_genuine_model_api_benchmark.md).
+
+The [prior synthetic benchmark](reports/operations/2026-08-24_local_single_node_serving_benchmark.md)
+is retained as synthetic serving-path plumbing evidence only; its throughput is
+not a genuine-model measurement and is not used as a capacity claim.
 
 ## Live Demo
 
@@ -62,10 +74,11 @@ deployment is performed by the checked-in workflows.
 
 The deployable frontend is built on **static, precomputed historical-evaluation
 artifacts**. Two panels add controlled interactivity without turning this into
-a live fraud-detection service: an optional genuine-inference check (real
-model, one fixed example input) and a fully synthetic plumbing-test simulator
-(no model, no network, fabricated data). Neither panel is ever silently
-substituted for the other, and neither uses real transaction data.
+a live fraud-detection service: an optional genuine-inference check (actual
+historical-reference estimator, one fixed example input) and a fully synthetic
+plumbing-test simulator (no model, no network, fabricated data). Neither panel
+is ever silently substituted for the other, and neither uses real transaction
+data.
 
 The **working local detector** is a separate thing from this dashboard: `api/`
 is a provenance-verified FastAPI service you can run locally, which loads a
@@ -79,11 +92,13 @@ explicit unavailable state whenever it isn't configured or reachable.
 ```mermaid
 flowchart LR
     A["Authorized local CSV — never committed"] --> B["Manifested curation + scoped ML pipeline"]
-    B --> C["Trained models — local artifacts, not deployed"]
+    B --> C["Checksum-verified model bundle — local only"]
     B --> D["Tracked aggregate reports and figures"]
     D --> E["Validated web-data export"]
     E --> F["web/public/data/dashboard.json"]
     F --> G["Deployable Next.js dashboard — provider unverified"]
+    C --> H["Optional local FastAPI — explicit opt-in inference"]
+    H --> I["Bounded result + provenance — never autonomous payment action"]
 ```
 
 Training, large-data processing, cross-validation, threshold sweeps, final

@@ -11,6 +11,7 @@ import pytest
 
 import scripts.export_web_data as exporter
 from scripts.export_web_data import build_web_payload, export_web_data, sanitize_for_json
+from src.evaluation.cost_analysis import CostScenario, evaluate_cost_scenario
 
 
 def test_web_payload_matches_locked_project_outputs() -> None:
@@ -27,14 +28,14 @@ def test_web_payload_matches_locked_project_outputs() -> None:
     assert payload["thresholdAnalysis"]["costAnalysisAvailable"] is False
     scenario = payload["illustrativeCostScenario"]
     assert scenario["label"] == (
-        "Illustrative cost scenario — not Razorpay economics / not business savings"
+        "Illustrative scenario — not Razorpay economics and not a production-optimal threshold."
     )
-    assert scenario["currency"] == "USD"
+    assert scenario["currency"] == "INR"
     assert scenario["assumptions"] == {
-        "falsePositiveCost": 10.0,
-        "falseNegativeCost": 100.0,
-        "reviewCost": 1.0,
-        "recoveryRate": 0.5,
+        "reviewCost": 83.0,
+        "legitimateCustomerFriction": 830.0,
+        "missedFraudLoss": 8_300.0,
+        "chargebackHandling": 4_150.0,
     }
     assert scenario["confusion"] == {
         "truePositives": 62,
@@ -72,6 +73,41 @@ def test_illustrative_scenario_uses_its_validated_aggregate_fixture() -> None:
         "totalTransactions": 20,
     }
     assert "20 transactions" in scenario["timeHorizon"]
+
+
+def test_locked_illustrative_fixture_reconciles_through_canonical_cost_engine() -> None:
+    payload = build_web_payload()
+    exported = payload["illustrativeCostScenario"]
+    assumptions = exported["assumptions"]
+    confusion = exported["confusion"]
+    table = pd.DataFrame(
+        [
+            {
+                "threshold": payload["finalEvaluation"]["threshold"],
+                "tp": confusion["truePositives"],
+                "fp": confusion["falsePositives"],
+                "fn": confusion["falseNegatives"],
+                "tn": confusion["trueNegatives"],
+            }
+        ]
+    )
+    scenario = CostScenario(
+        name="locked_illustrative_fixture",
+        false_positive_cost=assumptions["legitimateCustomerFriction"],
+        false_negative_cost=assumptions["missedFraudLoss"],
+        review_cost=assumptions["reviewCost"],
+        fraud_recovery_rate=(
+            1.0 - assumptions["chargebackHandling"] / assumptions["missedFraudLoss"]
+        ),
+    )
+
+    row = evaluate_cost_scenario(table, scenario).iloc[0]
+    assert row["review_volume"] == 89
+    assert row["review_cost"] == pytest.approx(7_387.0)
+    assert row["false_positive_cost"] == pytest.approx(22_410.0)
+    assert row["missed_fraud_cost"] == pytest.approx(99_600.0)
+    assert row["residual_caught_fraud_cost"] == pytest.approx(257_300.0)
+    assert row["total_cost"] == pytest.approx(386_697.0)
 
 
 def test_web_payload_verifies_historical_lock_before_export(

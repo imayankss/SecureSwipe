@@ -1,0 +1,80 @@
+{
+  "bundle_fingerprint": {
+    "bundle_format_version": "3",
+    "model_version": "historical-reference-xgboost-20260624-demo-v1",
+    "training_data_fingerprint": "76e867c9809da64a34ee45e0895cae03b1aea233af5b901384cd6d958f5dac13"
+  },
+  "bundle_local_identity": {
+    "manifest_sha256": "e355834d916ab3951e3069fc38ce286dd3e3abe4251c8643c4d859cd781bbbf0",
+    "model_artifact_sha256": "5ce63f1a7efa5625fbaa61177e76a548fd9ccc1c3f0a1530ccff835cf8b1dc73",
+    "preprocessor_artifact_sha256": "07d4a9f49448b6aa09a41c5c71dbaff5172a5fb5c870154d284671f323c7862f"
+  },
+  "bundle_size_bytes": 490948,
+  "cold_start_note": "measured server_start_epoch to warm-up completion",
+  "cold_start_seconds": 5.849447011947632,
+  "commit_sha": "bc2fc8502f8479fbbc0b9f30a68d3eb1236df7d7",
+  "concurrency": 8,
+  "core_model_inference_llm_tokens": 0,
+  "endpoint": "/v1/predict",
+  "environment": {
+    "cpu_count": 8,
+    "cpu_model": "Apple M2",
+    "total_memory_bytes": 8589934592
+  },
+  "error_breakdown": {
+    "invalid_contract_count": 0,
+    "non_2xx_count": 0,
+    "timeout_count": 0,
+    "transport_error_count": 0
+  },
+  "error_count": 0,
+  "error_rate": 0.0,
+  "health_probe": {
+    "latency_ms": 10.570624988758937,
+    "status": 200,
+    "timing": "concurrent_with_prediction_load"
+  },
+  "latency_ms": {
+    "max": 317.49312501051463,
+    "p50": 44.633312500081956,
+    "p95": 80.370303854579,
+    "p99": 308.4803652003757,
+    "percentile_method": "numpy_linear"
+  },
+  "model_versions": [
+    "historical-reference-xgboost-20260624-demo-v1"
+  ],
+  "payload_mix": "single_fixed_payload",
+  "peak_cpu_note": "maximum `ps` process CPU sample; values may exceed 100% for multi-core use",
+  "peak_cpu_percent": 109.4,
+  "peak_memory_kib": 117488,
+  "peak_memory_note": "sampled via `ps -o rss=` on the supplied --server-pid every 50ms",
+  "request_count": 500,
+  "runtime": {
+    "httpx": "0.28.1",
+    "machine": "arm64",
+    "packages": {
+      "fastapi": "0.141.1",
+      "joblib": "1.5.3",
+      "numpy": "2.5.2",
+      "pandas": "3.0.5",
+      "pydantic": "2.13.4",
+      "scikit-learn": "1.9.0",
+      "uvicorn": "0.52.2",
+      "xgboost": "3.3.0"
+    },
+    "platform": "macOS-26.5.2-arm64-arm-64bit",
+    "python": "3.12.10",
+    "python_implementation": "CPython"
+  },
+  "successful_count": 500,
+  "successful_throughput_requests_per_second": 169.34930547439117,
+  "throughput_requests_per_second": 169.34930547439117,
+  "timeout_seconds": 5.0,
+  "total_harness_wall_seconds": 3.0670650840038434,
+  "wall_seconds": 2.9524774170131423,
+  "warm_up": {
+    "latency_ms": 39.67604099307209,
+    "status": 200
+  }
+}

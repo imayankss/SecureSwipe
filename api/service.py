@@ -8,7 +8,7 @@ from typing import Iterable
 
 import pandas as pd
 
-from api.schemas import PredictionResult, ScoreType, TransactionFeatures
+from api.schemas import PredictionProvenance, PredictionResult, ScoreType, TransactionFeatures
 from src.artifacts.bundle import (
     BUNDLE_FORMAT_VERSION,
     EvidenceCategory,
@@ -61,6 +61,11 @@ class ModelService:
     def model_version(self) -> str | None:
         return self._bundle.model_version if self._bundle else None
 
+    @property
+    def model_fingerprint_sha256(self) -> str | None:
+        """Return the verified serialized model-artifact identity when available."""
+        return self._bundle.model_artifact_sha256 if self._bundle else None
+
     def require_bundle(self) -> ModelBundle:
         if self._bundle is None:
             raise ModelUnavailableError(
@@ -98,6 +103,14 @@ class ModelService:
                 raise PredictionIntegrityError(str(exc)) from exc
 
         results: list[PredictionResult] = []
+        provenance = PredictionProvenance(
+            training_data_fingerprint=bundle.training_data_fingerprint,
+            evidence_category=bundle.intended_use.evidence_category,
+            historical_taint=bundle.intended_use.historical_taint,
+            decision_eligible=bundle.intended_use.decision_eligible,
+            historical_metrics_claimed=bundle.intended_use.historical_metrics_claimed,
+            evaluation_performed=bundle.intended_use.evaluation_performed,
+        )
         for index, raw_score in enumerate(scored.raw_scores):
             calibrated_probability = (
                 float(scored.calibrated_probabilities[index])
@@ -114,6 +127,8 @@ class ModelService:
                     operating_threshold=bundle.operating_threshold,
                     decision=threshold_decision(decision_score, bundle.operating_threshold),
                     model_version=bundle.model_version,
+                    bundle_format_version=BUNDLE_FORMAT_VERSION,
+                    provenance=provenance,
                 )
             )
         return results

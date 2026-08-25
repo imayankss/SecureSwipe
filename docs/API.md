@@ -14,7 +14,8 @@ cardholder/customer transactions.
 - The class-weighted model output is `raw_score`; it is not labelled a
   probability. `calibrated_probability` is null unless a verified calibrator is
   packaged and selected.
-- `review` is a demonstration signal, not an approval/block decision.
+- `human_review` and `below_review_threshold` are bounded demonstration signals,
+  not approval/block decisions.
 - Named JSON fields are normalized to `Time`, `V1`–`V28`, `Amount`; object key
   order does not control model feature order.
 - Default limits are 65,536 request bytes and 100 transactions per batch.
@@ -23,6 +24,19 @@ cardholder/customer transactions.
 - INFO request logs are parseable JSON with normalized method/route, status,
   latency, request ID, and model version. Downstream exception messages and
   complete feature vectors are never emitted.
+- A valid `X-Request-ID` is also the in-process idempotency key. An identical
+  retry returns the original response with `X-Idempotent-Replay: true` and does
+  not score or append evidence twice; reuse with different canonical input
+  returns `409 idempotency_conflict`.
+- When `SECURESWIPE_AUDIT_LOG` is configured, each successful prediction emits
+  canonical, redacted, hash-chained NDJSON plus a local count/head anchor. This
+  is **tamper-evident append-only audit evidence**, not immutable storage.
+- If that required audit append is unavailable or fails integrity verification,
+  the computed result is not released: the request returns
+  `503 audit_unavailable`. A pre-append transient failure removes the unfinished
+  in-process idempotency reservation, so the same request ID can be retried after
+  the sink recovers. A partial write or anchor mismatch remains fail-closed and
+  requires operator repair; it is never bypassed automatically.
 - Each inference request has a configurable deadline (default 5.0s,
   `SECURESWIPE_PREDICTION_TIMEOUT_SECONDS`, bounded 0.1-30.0). Exceeding it
   returns `504 prediction_timeout` immediately rather than holding the
@@ -46,6 +60,8 @@ export SECURESWIPE_BUNDLE_MANIFEST="$PWD/artifacts/bundles/model-1/manifest.json
 export SECURESWIPE_CORS_ORIGINS="http://localhost:3000"
 export SECURESWIPE_PREDICTION_TIMEOUT_SECONDS="5.0"   # optional, default shown
 export SECURESWIPE_MAX_CONCURRENT_PREDICTIONS="16"     # optional, default shown
+mkdir -p "$PWD/artifacts/audit"
+export SECURESWIPE_AUDIT_LOG="$PWD/artifacts/audit/prediction-events.ndjson"
 .venv/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000
 ```
 
@@ -74,8 +90,41 @@ curl --fail-with-body http://127.0.0.1:8000/v1/predict \
 ```
 
 The response includes `raw_score`, nullable `calibrated_probability`, the score
-used for the decision, operating threshold, review/pass signal, model version,
-schema version, and request ID.
+used for the decision, operating threshold, bounded decision, model and bundle
+versions, schema version, request ID, and an explicit provenance object. The
+provenance reports the evidence category, training-data fingerprint, historical
+taint, and decision/evaluation claim flags from the verified bundle.
+
+## Idempotency and audit evidence
+
+Clients must use opaque, non-PII `X-Request-ID` values. Within one API process,
+the first validated request reserves the ID; concurrent or later byte-equivalent
+canonical input waits for or replays that original result. Failed attempts are
+not cached. The current registry is deliberately in-process and is lost on
+restart; it is not a distributed idempotency service.
+
+The optional NDJSON sink records only a strict allowlist: request/event IDs, UTC
+time, audit/API schema versions, SHA-256 idempotency and canonical-input digests,
+the verified serialized model-artifact SHA-256 and version, decision score,
+threshold, bounded decision, latency/status, previous hash, and event hash. It
+does not record headers, PAN/CVV, secrets, feature names or values, customer
+identity, or a raw request body. Batch responses append one chained event per
+returned prediction.
+
+The writer opens the evidence file in append mode, verifies the existing chain
+before each append, and advances an atomically replaced local `.head.json`
+count/head anchor. The verifier detects line mutation, deletion, reordering,
+non-canonical JSON, duplicate event identity, and count/head mismatch:
+
+```bash
+python3 scripts/verify_api_audit_log.py \
+  artifacts/audit/prediction-events.ndjson
+```
+
+The anchor is local to the same trust domain. An attacker able to rewrite both
+the log and anchor can manufacture a new valid history; durable remote/WORM
+anchoring, retention, access control, replication, and multi-process
+idempotency are not implemented.
 
 ## Batch and errors
 
@@ -101,12 +150,14 @@ Errors use a stable envelope:
 
 | HTTP | `error.code` | Meaning |
 | --- | --- | --- |
+| 409 | `idempotency_conflict` | One request ID was reused for different canonical input. |
 | 413 | `request_too_large` | Body exceeded `SECURESWIPE_MAX_REQUEST_BYTES`. |
 | 422 | `validation_error` | Schema/range validation failed. |
 | 500 | `prediction_integrity_error` | Model output failed a sanity check. |
 | 500 | `internal_error` | Unhandled server error. |
 | 503 | `model_unavailable` | No verified bundle is loaded. |
 | 503 | `capacity_exceeded` | In-flight predictions reached the configured admission limit. |
+| 503 | `audit_unavailable` | Required audit evidence could not be recorded; no inference result was released. |
 | 504 | `prediction_timeout` | A single inference call exceeded the configured deadline. |
 | * | `http_error` | Generic HTTP-layer error (e.g. 404 on an unknown route). |
 

@@ -180,6 +180,7 @@ def test_model_bundle_roundtrip_preserves_golden_scores(tmp_path: Path) -> None:
     assert loaded.score_type == "raw_score"
     payload = json.loads(manifest.read_text(encoding="utf-8"))
     assert payload["bundle_format_version"] == BUNDLE_FORMAT_VERSION == "3"
+    assert loaded.model_artifact_sha256 == payload["artifacts"]["model"]["sha256"]
     assert payload["intended_use"] == intended_use_metadata("synthetic_api_smoke_v1").to_dict()
     assert payload["threshold_provenance"]["value"] == 0.53
     assert payload["training_provenance"]["data_roles"]["model_fit"]["total_row_count"] == 40

@@ -13,31 +13,42 @@ describe("IllustrativeCostScenario", () => {
     ).toBeInTheDocument();
     expect(
       screen.getAllByText(
-        "Illustrative cost scenario — not Razorpay economics / not business savings",
+        "Illustrative scenario — not Razorpay economics and not a production-optimal threshold.",
       ),
     ).toHaveLength(3);
     expect(screen.getByLabelText("Illustrative display currency")).toHaveValue(
       "INR",
     );
     expect(
-      screen.getByLabelText("Illustrative false-positive cost"),
+      screen.getByLabelText("Illustrative legitimate-customer friction"),
     ).toHaveValue(830);
     expect(
-      screen.getByLabelText("Illustrative false-negative cost"),
+      screen.getByLabelText("Illustrative missed-fraud loss"),
     ).toHaveValue(8300);
     expect(screen.getByLabelText("Illustrative review cost")).toHaveValue(83);
     expect(
-      screen.getByLabelText("Illustrative fraud recovery rate"),
-    ).toHaveValue(50);
+      screen.getByLabelText("Illustrative chargeback handling"),
+    ).toHaveValue(4150);
     expect(screen.getByTestId("illustrative-total")).toHaveTextContent(
       "₹3,86,697.00",
     );
+    const lockedFixture = screen.getByLabelText(
+      "Locked historical cost fixture",
+    );
+    expect(lockedFixture).toHaveTextContent("Threshold0.53");
+    expect(lockedFixture).toHaveTextContent("Precision69.66%");
+    expect(lockedFixture).toHaveTextContent("Recall83.78%");
+    expect(lockedFixture).toHaveTextContent("Review volume89");
+    expect(lockedFixture).toHaveTextContent("True positives62");
+    expect(lockedFixture).toHaveTextContent("False positives27");
+    expect(lockedFixture).toHaveTextContent("False negatives12");
+    expect(lockedFixture).toHaveTextContent("True negatives42,621");
     expect(
-      screen.getByText(/Fixed illustrative display conversion: 1 USD = ₹83.00/),
+      screen.getByText(/Fixed display-only conversion: ₹83.00 =\s*\$1.00/),
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        /does not assign a currency to historical model or dataset amounts/,
+        /no currency is assigned to the historical model or dataset amounts/,
       ),
     ).toBeInTheDocument();
     expect(screen.getByText("62 TP + 27 FP = 89")).toBeInTheDocument();
@@ -62,14 +73,14 @@ describe("IllustrativeCostScenario", () => {
     );
 
     const falsePositiveCost = screen.getByLabelText(
-      "Illustrative false-positive cost",
+      "Illustrative legitimate-customer friction",
     );
     const falseNegativeCost = screen.getByLabelText(
-      "Illustrative false-negative cost",
+      "Illustrative missed-fraud loss",
     );
     const reviewCost = screen.getByLabelText("Illustrative review cost");
-    const recoveryRate = screen.getByLabelText(
-      "Illustrative fraud recovery rate",
+    const chargebackHandling = screen.getByLabelText(
+      "Illustrative chargeback handling",
     );
     await user.clear(falsePositiveCost);
     await user.type(falsePositiveCost, "20");
@@ -77,8 +88,8 @@ describe("IllustrativeCostScenario", () => {
     await user.type(falseNegativeCost, "200");
     await user.clear(reviewCost);
     await user.type(reviewCost, "2");
-    await user.clear(recoveryRate);
-    await user.type(recoveryRate, "25");
+    await user.clear(chargebackHandling);
+    await user.type(chargebackHandling, "150");
 
     expect(screen.getByText("$178.00")).toBeInTheDocument();
     expect(screen.getByText("$540.00")).toBeInTheDocument();

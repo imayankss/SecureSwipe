@@ -72,14 +72,25 @@ class BatchPredictionRequest(StrictContract):
     ]
 
 
+class PredictionProvenance(StrictContract):
+    training_data_fingerprint: str
+    evidence_category: EvidenceCategory
+    historical_taint: bool
+    decision_eligible: bool
+    historical_metrics_claimed: bool
+    evaluation_performed: bool
+
+
 class PredictionResult(StrictContract):
     raw_score: float
     calibrated_probability: float | None
     decision_score: float
     score_type: ScoreType
     operating_threshold: float
-    decision: Literal["review", "pass"]
+    decision: Literal["human_review", "below_review_threshold"]
     model_version: str
+    bundle_format_version: str
+    provenance: PredictionProvenance
 
 
 class PredictionResponse(PredictionResult):
