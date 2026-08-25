@@ -57,9 +57,11 @@ current-candidate evidence. Current deployment verification waits for final CI.
 
 1. Run the clean data-free quality sequence in
    [REPRODUCIBILITY.md](REPRODUCIBILITY.md).
-2. With Docker Desktop running, build `linux/arm64`, mount the deterministic
+2. With Docker Desktop running, build the image, mount the deterministic
    synthetic bundle, and pass liveness/readiness/inference using
-   [CONTAINER.md](CONTAINER.md).
+   [CONTAINER.md](CONTAINER.md). `linux/amd64` is the release target and the
+   only architecture gated in CI; a native `linux/arm64` build is a local
+   development convenience and is not a released artifact.
 3. Run the high/critical image scan and write the SPDX SBOM. Record image digest,
    scanner version/database time, and any reviewed exception.
 4. Repeat the full quality gate twice without code changes.
@@ -78,7 +80,7 @@ Only after the local gates pass should the owner compare providers for:
 | Need | Required evidence before selection |
 |---|---|
 | Static frontend | Build/runtime compatibility, preview isolation, headers, rollback, free-tier/usage limits |
-| API container | `linux/arm64`/provider architecture support, cold start, memory/CPU, health routing, TLS, authentication/rate limiting, log controls |
+| API container | `linux/amd64` provider architecture support, cold start, memory/CPU, health routing, TLS, authentication/rate limiting, log controls |
 | Model artifacts | Private immutable versioning, checksum retention, read-only delivery, access audit, rollback, size/egress cost |
 | Monitoring | Redaction, retention, bounded labels, alert ownership, free-tier limits, export/deletion behavior |
 
