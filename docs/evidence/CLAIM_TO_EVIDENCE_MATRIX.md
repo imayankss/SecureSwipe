@@ -5,11 +5,10 @@ must appear in this table and must map to a committed artifact, a named test, or
 a measured report. A claim that is not in this table has not been cleared to be
 made.
 
-- **Released content:** tree `6e112b8babac3de06a63226e86eda3658fb7e54b`, on `main`
-  as merge commit `374e167` and identically as the CI-verified PR head
-  `4c712c7`. This supersedes the earlier candidate tree `ed5ef8e8…`
-  (`e3580e4` / `c4cff3c`, merged as `38703d0d`), which differs only by the
-  container architecture scoping and its documentation.
+- **Released content:** `main` at `399a482`, tree
+  `41bdc41710234fb4edef1edccf167513a665aa55`. Application code, frontend, and
+  workflows are unchanged from the CI-green tree `6e112b8b…` (`374e167`, PR
+  head `4c712c7`); the delta is confined to these evidence documents.
 - **Status of this document:** the evidence below is committed, locally
   verified, and confirmed by CI. The release is **frozen** — see "Release
   freeze status" at the end.
