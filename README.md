@@ -17,7 +17,39 @@ in-browser demonstration, not a trained or evaluated model.
 The selected local serving candidate is a byte-verified, historical-reference
 demo bundle with evidence category `historical_reference_demo_inference`. Its
 API execution is genuine, but it is historical-tainted, not decision-eligible,
-and not proven to be the model that produced the locked historical metrics.
+and its **linkage to the locked historical metrics is unverified and must not be
+claimed**. Its recipe records that linkage as `unverified` and retains no
+evaluation partition, so nothing in this repository can establish the
+connection. That is an absence of evidence, not evidence of absence: the
+repository equally cannot show that these components did *not* participate in
+the original evaluation. Either way, the claim may not be made.
+
+### Evidence status of this working tree
+
+This README is maintained at commit `501d8a6` on branch
+`codex/recovered-demo-bundle`. **That commit is branch-local and is not on
+`main`.** It is one commit ahead of `origin/main` (merge-base `399a482`), and
+the difference is documentation-only — no code, workflow, model, or artifact
+differs between the two.
+
+Three consequences a reviewer should read before any other number here:
+
+- **Tests.** On a clean checkout of `501d8a6`, the canonical `python -m pytest`
+  reports **758 passed, 0 failed, 0 skipped, exit 0**. Run in this working
+  directory after MT3e, the same command **exits 1**: it collects the new
+  untracked Lane A tests and two pre-existing untracked packaging
+  work-in-progress files, giving 967 collected / 966 passed / 1 failed. The
+  complete MT3e/project suite with only that unrelated WIP test file excluded is
+  green at **961 passed**. The lone failure remains the older bundle-schema WIP;
+  it was preserved unchanged. These statements must be quoted together.
+- **CI.** GitHub Actions has **not run on `501d8a6`** — the workflows trigger on
+  pull requests and pushes to `main`. The green Quality/Security/Container
+  result recorded in the evidence documents belongs to `374e167` / `399a482`.
+  No CI claim may be made for this commit.
+- **Deployment.** No public deployment is linked to any SHA. See "Live Demo".
+
+Full detail, with per-row evidence status and class, is in
+[`docs/evidence/CLAIM_TO_EVIDENCE_MATRIX.md`](docs/evidence/CLAIM_TO_EVIDENCE_MATRIX.md).
 
 ## What You're Looking At: Four Evidence Categories
 
@@ -53,13 +85,18 @@ anywhere in this project.
 
 ### Measured local genuine-model API evidence
 
-The fixed genuine-model loopback run recorded 500/500 valid responses at 8
+The fixed genuine-model **loopback** run recorded 500/500 valid responses at 8
 concurrency with zero errors/timeouts: p50 44.63 ms, p95 80.37 ms, p99 308.48
 ms, and 169.35 successful requests/second. It used the selected
-historical-reference XGBoost bundle on one local Apple M2 Uvicorn worker. This
-is local, dirty-worktree evidence—not a release SHA, public-network result,
-capacity commitment, or production SLO. Core model inference uses zero LLM
-tokens. See the [genuine-model benchmark report](reports/operations/2026-08-25_genuine_model_api_benchmark.md).
+historical-reference XGBoost bundle on one local Apple M2 Uvicorn worker bound
+to `127.0.0.1`, with `--workers 1`, **one repeat and one unmeasured warm-up**.
+
+This is local, dirty-worktree evidence at **code SHA `bc2fc850…`** — which is
+neither `501d8a6` nor `399a482`. It is not a release-SHA measurement, not a
+public-network result, not a capacity commitment, and not a production SLO, and
+a single run supports no statistical claim. The p99 tail of 308.48 ms is
+disclosed rather than hidden. Core model inference uses zero LLM tokens. See the
+[genuine-model benchmark report](reports/operations/2026-08-25_genuine_model_api_benchmark.md).
 
 The [prior synthetic benchmark](reports/operations/2026-08-24_local_single_node_serving_benchmark.md)
 is retained as synthetic serving-path plumbing evidence only; its throughput is
@@ -71,6 +108,17 @@ SecureSwipe has no independently verified current release-candidate public
 deployment. Any prior static URL is not evidence for this candidate. The static
 dashboard will be deployed and verified only after final CI passes; no public
 deployment is performed by the checked-in workflows.
+
+**Deployment-to-SHA linkage is `BLOCKED`.** A read-only probe of the previously
+published static URL returned HTTP 200 with hardened security headers, but the
+response exposes **no commit SHA or build metadata**, and its cache age placed
+the served artifact earlier than both `501d8a6` and `399a482`. Three different
+commits are in play — the documented deployed frontend commit
+`943d021c4757ac4102615eb26ceca0cf476baa76` (published by local Vercel CLI with
+no GitHub connection, so no automatic linkage exists), `origin/main`
+`399a482`, and this working target `501d8a6`. Reachability is not linkage: no
+claim may be made that any deployment corresponds to this commit, and linkage
+must never be inferred from a page looking similar.
 
 The deployable frontend is built on **static, precomputed historical-evaluation
 artifacts**. Two panels add controlled interactivity without turning this into
@@ -374,6 +422,22 @@ added XGBoost and selected the champion model by validation average precision.
 | Dummy baseline | 0.0017 | 0.5000 |
 
 Champion model: `xgboost_baseline`.
+
+**Scope of this table.** These are `HISTORICAL` figures on the **42,721-row
+validation split**, not the held-out test, and they are read from the committed
+`reports/model_comparison/validation_model_comparison.csv`. They were not
+reproduced locally — the source CSV is intentionally untracked and
+`data/raw/`, `data/interim/`, `data/processed/`, and `models/` contain only
+`.gitkeep`, so no metric in this README can currently be recomputed from data.
+
+**Baseline coverage, stated exactly.** Three baselines plus the champion:
+a Dummy majority-class classifier (`DummyClassifier(strategy="most_frequent")`,
+`src/models/baseline_models.py`), Logistic Regression, and Random Forest, all
+compared under the same preprocessing. A **transparent rule-based baseline does
+not exist** anywhere in this repository; do not describe the comparison as
+including one. Class imbalance is handled solely by XGBoost's
+`scale_pos_weight`, computed from training labels only — there is no SMOTE,
+over-sampling, or under-sampling anywhere in the pipeline.
 
 ## Threshold Tuning
 
