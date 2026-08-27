@@ -21,19 +21,23 @@ from fastapi.testclient import TestClient
 from api.audit import AuditIntegrityError, AuditLog, verify_audit_log
 from api.main import ApiSettings, create_app
 from api.service import ModelService
-from src.artifacts.bundle import load_model_bundle
 from src.operations.benchmark import synthetic_corpus
+from tests.synthetic_bundle import build_synthetic_serving_bundle
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-MANIFEST = PROJECT_ROOT / "artifacts" / "historical-reference-demo-v1" / "manifest.json"
-ARTIFACT_ROOT = PROJECT_ROOT / "artifacts"
 
 APPROVAL_LIKE = ("approve", "approved", "accept", "cleared", "allow")
 
 
 @pytest.fixture(scope="module")
 def bundle():
-    return load_model_bundle(MANIFEST, trusted_root=ARTIFACT_ROOT)
+    """Synthetic in-process bundle.
+
+    `artifacts/` is generated output and is git-ignored, so loading a bundle
+    from it fails on a clean checkout and in CI. This uses the approved
+    synthetic fixture instead; trusted-path validation is untouched.
+    """
+    return build_synthetic_serving_bundle()
 
 
 @pytest.fixture
