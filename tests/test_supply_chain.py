@@ -281,7 +281,12 @@ def test_unfixed_cve_dispositions_are_bounded_documented_and_reviewable() -> Non
     }
 
     assert record["owner_review_required"] is True
-    assert record["owner_review_status"] == "pending"
+    assert record["owner_review_status"] == "accepted_demo_only"
+    decision = record["owner_review_decision"]
+    assert "demo" in decision["scope"].lower()
+    assert "not a production security acceptance" in decision["scope"].lower()
+    assert len(decision["conditions"]) >= 5
+    assert decision["revocation"]
     assert record["scanner"]["version"] == "0.70.0"
 
     dispositions = record["dispositions"]
