@@ -5,10 +5,17 @@ the frozen protocol, the runner, the frozen MT3e digests, the approved private
 artifact locations, and the environment contract into a single private manifest
 that the one-time runner verifies before it will start.
 
-This helper never reads ``final_test``, never opens or re-hashes the raw IEEE-CIS
-source files, and never computes a metric. Frozen digests are copied from the
-existing private MT3e aggregate manifest and from the published partition and
-intake records, so preparation cannot silently re-derive a frozen value.
+This helper never reads ``final_test`` and never computes a metric.
+
+**Preparation is metadata-only for raw data.** The transaction, identity and
+role-assignment paths are validated by existence, regular-file check, symlink
+rejection, canonical resolution, size and modification time. They are never
+opened, read, hashed, parsed, previewed or counted here. Their frozen digests
+are carried from the verified frozen record, never recomputed, so preparation
+cannot silently re-derive a frozen value. Byte-level verification of those files
+happens only after the private lifecycle has atomically entered ``STARTED``.
+
+See ``docs/evidence/LANE_A_FINAL_EVALUATION_PROTOCOL_BOUNDARY_AMENDMENT_1.md``.
 
 Every private location is supplied on the command line. No private path is
 hardcoded here, and the manifest itself is written outside the repository.
@@ -51,6 +58,12 @@ SOURCE_DIGESTS: Mapping[str, str] = {
 }
 ROLE_ASSIGNMENT_DIGEST = "f375cf71aedb6a9b6832678abbafa07f8a0bdc62cc8d6d8851051dd65662f1e4"
 
+#: Paths that preparation may only ever describe, never open.
+METADATA_ONLY_KEYS: tuple[str, ...] = ("transactions", "identity", "role_assignment")
+
+#: Where byte-level verification of those paths is permitted to happen.
+BYTE_VERIFICATION_STAGE = "after the lifecycle atomically enters STARTED"
+
 #: Public output keys the runner is permitted to export.
 PUBLIC_OUTPUT_SCHEMA: tuple[str, ...] = (
     "evaluation",
@@ -90,6 +103,36 @@ def sha256_file(path: Path) -> str:
         for chunk in iter(lambda: handle.read(1 << 20), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def path_metadata(path: Path, *, name: str) -> dict[str, Any]:
+    """Describe a raw-data path without ever opening it.
+
+    Only stat-level operations are used: symlink rejection, existence, a
+    regular-file check, canonical resolution, size and modification time. This
+    function must never open, read, hash or parse the file. Byte-level
+    verification of these paths is deferred until after ``STARTED``.
+    """
+    candidate = path.expanduser()
+    if candidate.is_symlink():
+        raise AuthorizationBuildError(
+            f"Authorised {name} location is a symlink; refusing to record it."
+        )
+    if not candidate.exists():
+        raise AuthorizationBuildError(f"Authorised {name} location does not exist.")
+    if not candidate.is_file():
+        raise AuthorizationBuildError(f"Authorised {name} location is not a regular file.")
+    resolved = candidate.resolve()
+    stat_result = resolved.stat()
+    return {
+        "path": str(resolved),
+        "size_bytes": stat_result.st_size,
+        "modified_utc": datetime.fromtimestamp(stat_result.st_mtime, timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        ),
+        "verified_by": "path metadata only during preparation",
+        "byte_verification_stage": BYTE_VERIFICATION_STAGE,
+    }
 
 
 def environment_contract() -> dict[str, str]:
@@ -134,18 +177,20 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         raise AuthorizationBuildError("MT3e manifest does not record final_test as untouched.")
 
     protocol = PROJECT_ROOT / "docs" / "evidence" / "LANE_A_FINAL_EVALUATION_PROTOCOL.md"
+    amendment = (
+        PROJECT_ROOT
+        / "docs"
+        / "evidence"
+        / "LANE_A_FINAL_EVALUATION_PROTOCOL_BOUNDARY_AMENDMENT_1.md"
+    )
     runner = PROJECT_ROOT / "scripts" / "lane_a_run_final_evaluation.py"
-    for path in (protocol, runner):
+    for path in (protocol, amendment, runner):
         if not path.exists():
             raise AuthorizationBuildError(f"Required committed file is missing: {path.name}")
 
-    for name, path in (
-        ("pipeline", args.pipeline),
-        ("calibrator", args.calibrator),
-        ("transactions", args.transactions),
-        ("identity", args.identity),
-        ("role_assignment", args.role_assignment),
-    ):
+    # Model artifacts may be described by existence here; the runner verifies
+    # their digests. Raw data paths go through metadata-only validation below.
+    for name, path in (("pipeline", args.pipeline), ("calibrator", args.calibrator)):
         if not path.expanduser().exists():
             raise AuthorizationBuildError(f"Authorised {name} location does not exist.")
 
@@ -159,6 +204,7 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         "final_role": FINAL_ROLE,
         "selected_variant": "E",
         "protocol_sha256": sha256_file(protocol),
+        "boundary_amendment_sha256": sha256_file(amendment),
         "runner_sha256": sha256_file(runner),
         "module_sha256": {
             name: sha256_file(PROJECT_ROOT / relative)
@@ -168,18 +214,28 @@ def build(args: argparse.Namespace) -> dict[str, Any]:
         "role_assignment_digest": ROLE_ASSIGNMENT_DIGEST,
         "sources": {
             "transactions": {
-                "path": str(args.transactions.expanduser()),
+                **path_metadata(args.transactions, name="transactions"),
                 "sha256": SOURCE_DIGESTS["transactions"],
+                "digest_origin": "committed IEEE-CIS intake record; not recomputed here",
             },
             "identity": {
-                "path": str(args.identity.expanduser()),
+                **path_metadata(args.identity, name="identity"),
                 "sha256": SOURCE_DIGESTS["identity"],
+                "digest_origin": "committed IEEE-CIS intake record; not recomputed here",
             },
             "role_assignment": {
-                "path": str(args.role_assignment.expanduser()),
-                "sha256": sha256_file(args.role_assignment.expanduser()),
+                **path_metadata(args.role_assignment, name="role_assignment"),
+                "assignment_digest": ROLE_ASSIGNMENT_DIGEST,
+                "digest_kind": "canonical TransactionID,role assignment digest",
+                "digest_origin": "committed partition freeze record; not recomputed here",
             },
         },
+        "metadata_only_keys": list(METADATA_ONLY_KEYS),
+        "raw_data_access_rule": (
+            "Preparation never opens, reads, hashes or parses the transaction, identity "
+            "or role-assignment files. Byte-level verification of those files happens "
+            f"{BYTE_VERIFICATION_STAGE}."
+        ),
         "artifacts": {
             "pipeline": {"path": str(args.pipeline.expanduser())},
             "calibrator": {"path": str(args.calibrator.expanduser())},
@@ -235,6 +291,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 "freeze_commit": manifest["freeze_commit"],
                 "runner_sha256": manifest["runner_sha256"],
                 "protocol_sha256": manifest["protocol_sha256"],
+                "boundary_amendment_sha256": manifest["boundary_amendment_sha256"],
                 "size_bytes": len(body.encode()),
                 "sha256": hashlib.sha256(body.encode()).hexdigest(),
                 "final_test_read": False,
