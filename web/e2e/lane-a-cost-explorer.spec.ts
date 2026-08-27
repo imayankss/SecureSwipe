@@ -112,3 +112,40 @@ test("cost explorer has no WCAG violations", async ({ page }) => {
   const results = await new AxeBuilder({ page }).include(PANEL).analyze();
   expect(results.violations).toEqual([]);
 });
+
+test("metric grids never overflow their track, even with wider text metrics", async ({
+  page,
+}) => {
+  // Regression: grid items default to `min-width: auto`, so an unbreakable
+  // term label or numeric token forced the track wider than its container.
+  // That reproduced only where font metrics are wider than the local ones,
+  // which is why it surfaced in CI and not on a developer machine.
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/#lane-a-cost-explorer");
+  const panel = page.locator(PANEL);
+  await expect(panel).toBeVisible();
+
+  await page.addStyleTag({
+    content: `${PANEL} * { letter-spacing: 0.27px !important; font-size: calc(1em * 1.3) !important; }`,
+  });
+  await page.waitForTimeout(150);
+
+  for (const selector of [
+    '[data-testid="sealed-final-metrics"] dl',
+    '[data-testid="selected-tier-breakdown"]',
+  ]) {
+    const box = await page.locator(selector).evaluate((el) => ({
+      scroll: el.scrollWidth,
+      client: el.clientWidth,
+    }));
+    expect(box.scroll, `${selector} must not overflow its track`).toBeLessThanOrEqual(
+      box.client,
+    );
+  }
+
+  const pageWidths = await page.evaluate(() => ({
+    client: document.documentElement.clientWidth,
+    scroll: document.documentElement.scrollWidth,
+  }));
+  expect(pageWidths.scroll).toBeLessThanOrEqual(pageWidths.client);
+});
