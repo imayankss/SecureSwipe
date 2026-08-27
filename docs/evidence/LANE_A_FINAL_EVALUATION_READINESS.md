@@ -52,10 +52,20 @@ version, bound freeze commit, authorised role, one-run-only rule, and the
 post-result-tuning prohibition are all present; the protocol digest, runner
 digest, and four module digests match; the eight frozen MT3e digests match
 constants embedded in the runner, so a tampered manifest cannot relax them; the
-frozen source and role-assignment digests match; the pipeline and calibrator
-artifacts match their frozen digests; the environment contract is satisfied; the
-selected variant, frozen tiers, and predeclared metric set validate; and no
-lifecycle record of any kind already exists.
+the declared source and role-assignment digests match the embedded constants
+**without opening those files**; the pipeline and calibrator artifacts match
+their frozen digests; the environment contract is satisfied; the selected
+variant, frozen tiers, and predeclared metric set validate; and no lifecycle
+record of any kind already exists.
+
+**Raw-data access boundary.** Before `STARTED`, the transaction, identity and
+role-assignment files are validated by **path metadata only** — existence,
+regular-file check, symlink rejection, canonical resolution. Byte-level
+verification of those files happens only *after* the atomic `STARTED`
+transition, so a failed gate always leaves a terminal lifecycle record rather
+than a silently repeatable raw read. See
+`LANE_A_FINAL_EVALUATION_PROTOCOL_BOUNDARY_AMENDMENT_1.md`, which corrected an
+implementation defect found by a read-only audit before any final-test access.
 
 **Lifecycle.** `PREPARED` is created with `O_EXCL`, so two concurrent runners
 cannot both believe they are first. `STARTED` is written atomically immediately
@@ -100,7 +110,8 @@ IEEE-CIS source file was opened, no real model artifact was loaded, and no
 | --- | --- | --- |
 | `test_lane_a_final_lifecycle.py` | 21 | pass |
 | `test_lane_a_final_evaluation.py` | 52 | pass |
-| `test_lane_a_final_runner_guards.py` | 57 | pass |
+| `test_lane_a_final_runner_guards.py` | 69 | pass |
+| `test_lane_a_final_authorization_builder.py` | 14 | pass |
 
 Coverage includes: the missing execute flag; every override flag; a short or
 mismatched freeze SHA; absent, malformed, mis-digested, wrongly bound, and
@@ -114,6 +125,13 @@ altered tiers and undeclared metrics refused; deterministic ranking and
 ascending-source-position tie handling; public exports rejecting paths, domains,
 device strings, identifiers and prohibited claims; and a private output
 directory inside the repository being refused.
+
+Boundary coverage additionally installs read sentinels over `open`,
+`Path.open`, `Path.read_bytes` and the hashing helper, and fails if any
+transaction, identity or role-assignment file is touched during manifest
+preparation, or at any point before the lifecycle state is `STARTED`. The
+sentinels are themselves tested to fire on a deliberate read, so a clean result
+is meaningful rather than vacuous.
 
 A complete end-to-end **synthetic rehearsal** drives the whole runner path and
 confirms the sealed lifecycle, the score-seal-before-labels ordering, capacity

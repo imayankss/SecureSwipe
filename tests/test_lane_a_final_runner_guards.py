@@ -8,9 +8,11 @@ synthetic data so the ordering guarantees are proven rather than asserted.
 
 from __future__ import annotations
 
+import builtins
 import csv
 import hashlib
 import json
+from pathlib import Path
 
 import joblib
 import numpy as np
@@ -24,6 +26,7 @@ from src.lane_a.final_lifecycle import (
     FinalEvaluationLifecycle,
     LifecycleError,
 )
+from src.lane_a.partition import assignment_digest
 from src.lane_a.serving_schema import IDENTITY_PRESENCE_FEATURE, NUMERIC_FIELDS
 from src.lane_a.variants import SUPERSET_FIELDS
 
@@ -94,12 +97,13 @@ def world(tmp_path, monkeypatch):
         for index in range(0, ROWS, 2):  # half the rows have an identity record
             writer.writerow([index + 1, "mobile", "generic"])
 
+    assignment_pairs = [
+        (index + 1, "final_test" if index % 2 == 0 else "training") for index in range(ROWS)
+    ]
     with assignment.open("w", newline="", encoding="utf-8") as handle:
         writer = csv.writer(handle)
         writer.writerow(["TransactionID", "role"])
-        for index in range(ROWS):
-            role = "final_test" if index % 2 == 0 else "training"
-            writer.writerow([index + 1, role])
+        writer.writerows(assignment_pairs)
 
     pipeline_path = tmp_path / "pipeline.joblib"
     calibrator_path = tmp_path / "calibrator.joblib"
@@ -119,7 +123,7 @@ def world(tmp_path, monkeypatch):
     source_digests = {
         "transactions": _sha(transactions),
         "identity": _sha(identity),
-        "role_assignment_digest": "r" * 64,
+        "role_assignment_digest": assignment_digest(assignment_pairs),
     }
 
     monkeypatch.setattr(runner, "FROZEN_DIGESTS", frozen)
@@ -137,6 +141,7 @@ def world(tmp_path, monkeypatch):
         "final_role": "final_test",
         "selected_variant": "E",
         "protocol_sha256": runner.sha256_file(runner.PROTOCOL_DOCUMENT),
+        "boundary_amendment_sha256": runner.sha256_file(runner.BOUNDARY_AMENDMENT_DOCUMENT),
         "runner_sha256": runner.sha256_file(
             runner.PROJECT_ROOT / "scripts" / "lane_a_run_final_evaluation.py"
         ),
@@ -154,7 +159,10 @@ def world(tmp_path, monkeypatch):
         "sources": {
             "transactions": {"path": str(transactions), "sha256": source_digests["transactions"]},
             "identity": {"path": str(identity), "sha256": source_digests["identity"]},
-            "role_assignment": {"path": str(assignment), "sha256": _sha(assignment)},
+            "role_assignment": {
+                "path": str(assignment),
+                "assignment_digest": source_digests["role_assignment_digest"],
+            },
         },
         "artifacts": {
             "pipeline": {"path": str(pipeline_path)},
@@ -337,10 +345,19 @@ def test_module_digest_mismatch_is_refused(world, module):
         runner.main(_argv(world, digest))
 
 
-@pytest.mark.parametrize("source", ["transactions", "identity", "role_assignment"])
-def test_source_digest_mismatch_is_refused(world, source):
+@pytest.mark.parametrize("source", ["transactions", "identity"])
+def test_declared_source_digest_mismatch_is_refused(world, source):
     digest = _write_manifest(world, lambda m: m["sources"][source].update({"sha256": "9" * 64}))
-    with pytest.raises(runner.FinalRunnerError, match="digest mismatch"):
+    with pytest.raises(runner.FinalRunnerError, match="not the frozen IEEE-CIS artifact"):
+        runner.main(_argv(world, digest))
+
+
+def test_declared_assignment_digest_mismatch_is_refused(world):
+    digest = _write_manifest(
+        world,
+        lambda m: m["sources"]["role_assignment"].update({"assignment_digest": "9" * 64}),
+    )
+    with pytest.raises(runner.FinalRunnerError, match="Role-assignment digest"):
         runner.main(_argv(world, digest))
 
 
@@ -560,3 +577,177 @@ def test_materialisers_still_fail_closed_on_the_final_role():
     for module in (materialise_role, materialise_superset):
         with pytest.raises(RoleNotPermittedError):
             module.assert_role_permitted("final_test")
+
+
+# -- access boundary: nothing raw may be touched before STARTED ----------
+
+
+@pytest.fixture
+def boundary_sentinel(world, monkeypatch):
+    """Fail if a raw-data path is opened or hashed while the state is not STARTED.
+
+    The lifecycle record on disk is the arbiter: before ``prepare`` there is no
+    record at all, after ``prepare`` the state is ``PREPARED``, and only after
+    the atomic transition is it ``STARTED``. Any read of the transaction,
+    identity or role-assignment files outside the ``STARTED`` window is a
+    boundary violation.
+    """
+    forbidden = {
+        world["transactions"].resolve(),
+        (world["tmp"] / "identity.csv").resolve(),
+        world["assignment"].resolve(),
+    }
+    lifecycle_path = world["private"] / "lane_a_final_evaluation_lifecycle.json"
+    violations: list[tuple[str, str | None]] = []
+
+    original_open = builtins.open
+    original_path_open = Path.open
+    original_read_bytes = Path.read_bytes
+    original_sha = runner.sha256_file
+
+    def current_state() -> str | None:
+        try:
+            return json.loads(original_path_open(lifecycle_path, encoding="utf-8").read())["state"]
+        except (OSError, ValueError, KeyError):
+            return None
+
+    def guard(target) -> None:
+        try:
+            resolved = Path(target).resolve()
+        except (TypeError, ValueError, OSError):
+            return
+        if resolved not in forbidden:
+            return
+        state = current_state()
+        if state != STARTED:
+            violations.append((resolved.name, state))
+            raise AssertionError(
+                f"raw data {resolved.name} accessed while lifecycle state was {state}"
+            )
+
+    def fake_open(file, *args, **kwargs):
+        guard(file)
+        return original_open(file, *args, **kwargs)
+
+    def fake_path_open(self, *args, **kwargs):
+        guard(self)
+        return original_path_open(self, *args, **kwargs)
+
+    def fake_read_bytes(self):
+        guard(self)
+        return original_read_bytes(self)
+
+    def fake_sha(path):
+        guard(path)
+        return original_sha(path)
+
+    monkeypatch.setattr(builtins, "open", fake_open)
+    monkeypatch.setattr(Path, "open", fake_path_open)
+    monkeypatch.setattr(Path, "read_bytes", fake_read_bytes)
+    monkeypatch.setattr(runner, "sha256_file", fake_sha)
+    return violations
+
+
+def test_boundary_sentinel_detects_a_pre_started_read(world, boundary_sentinel):
+    """The sentinel must actually fire, or the boundary tests prove nothing."""
+    with pytest.raises(AssertionError, match="accessed while lifecycle state was None"):
+        world["transactions"].read_bytes()
+
+
+def test_no_raw_data_is_touched_before_started(world, boundary_sentinel):
+    digest = _write_manifest(world)
+    assert runner.main(_argv(world, digest)) == 0
+    assert boundary_sentinel == []
+
+
+def test_pre_access_gate_failure_touches_no_raw_data(world, boundary_sentinel):
+    """A refused run must not have opened any raw file on its way to refusing."""
+    digest = _write_manifest(world, lambda m: m["frozen"].update({"pipeline_sha256": "9" * 64}))
+    with pytest.raises(runner.FinalRunnerError):
+        runner.main(_argv(world, digest))
+    assert boundary_sentinel == []
+    assert not (world["private"] / "lane_a_final_evaluation_lifecycle.json").exists()
+
+
+def test_metadata_gate_runs_before_prepare_and_opens_nothing(world, boundary_sentinel):
+    resolved = runner.verify_source_metadata(json.loads(json.dumps(world["manifest"])))
+    assert set(resolved) == set(runner.METADATA_ONLY_KEYS)
+    assert boundary_sentinel == []
+
+
+def test_metadata_gate_refuses_a_symlinked_source(world, tmp_path):
+    target = tmp_path / "real.csv"
+    target.write_text("x\n", encoding="utf-8")
+    link = tmp_path / "linked.csv"
+    link.symlink_to(target)
+    payload = json.loads(json.dumps(world["manifest"]))
+    payload["sources"]["identity"]["path"] = str(link)
+    with pytest.raises(runner.FinalRunnerError, match="symlink"):
+        runner.verify_source_metadata(payload)
+
+
+def test_metadata_gate_refuses_a_directory_source(world, tmp_path):
+    directory = tmp_path / "a_directory"
+    directory.mkdir()
+    payload = json.loads(json.dumps(world["manifest"]))
+    payload["sources"]["identity"]["path"] = str(directory)
+    with pytest.raises(runner.FinalRunnerError, match="not a regular file"):
+        runner.verify_source_metadata(payload)
+
+
+def test_byte_verification_is_a_separate_post_started_step(world):
+    """The byte gate exists, is distinct, and fails closed on a bad digest."""
+    resolved = runner.verify_source_metadata(json.loads(json.dumps(world["manifest"])))
+    observed = runner.verify_source_bytes(resolved)
+    assert set(observed) == {"transactions", "identity"}
+
+
+def test_byte_verification_fails_closed_on_a_tampered_source(world, monkeypatch):
+    resolved = runner.verify_source_metadata(json.loads(json.dumps(world["manifest"])))
+    monkeypatch.setattr(
+        runner, "FROZEN_SOURCE_DIGESTS", {**runner.FROZEN_SOURCE_DIGESTS, "identity": "9" * 64}
+    )
+    with pytest.raises(runner.FinalRunnerError, match="byte digest mismatch"):
+        runner.verify_source_bytes(resolved)
+
+
+def test_role_assignment_content_digest_is_verified_after_started(world, monkeypatch):
+    monkeypatch.setattr(
+        runner,
+        "FROZEN_SOURCE_DIGESTS",
+        {**runner.FROZEN_SOURCE_DIGESTS, "role_assignment_digest": "9" * 64},
+    )
+    with pytest.raises(runner.FinalRunnerError, match="content digest"):
+        runner._read_final_ids(world["assignment"])
+
+
+def test_runner_binds_the_boundary_amendment(world):
+    digest = _write_manifest(world, lambda m: m.update(boundary_amendment_sha256="9" * 64))
+    with pytest.raises(runner.FinalRunnerError, match="Boundary-amendment digest"):
+        runner.main(_argv(world, digest))
+
+
+def test_result_manifest_records_post_started_byte_verification(world):
+    digest = _write_manifest(world)
+    runner.main(_argv(world, digest))
+    manifest = json.loads((world["private"] / "final_result_manifest.json").read_text())
+    assert set(manifest["source_byte_digests_verified_after_started"]) == {
+        "transactions",
+        "identity",
+    }
+    assert manifest["boundary_amendment_sha256"] == runner.sha256_file(
+        runner.BOUNDARY_AMENDMENT_DOCUMENT
+    )
+
+
+def test_sentinel_would_have_caught_the_original_defect(world, boundary_sentinel):
+    """Regression proof for the MT3g-prep boundary defect.
+
+    The original implementation called the byte-verification step before the
+    lifecycle existed. Invoking that step outside the STARTED window is exactly
+    the old behaviour, and the sentinel must reject it.
+    """
+    resolved = runner.verify_source_metadata(json.loads(json.dumps(world["manifest"])))
+    with pytest.raises(AssertionError, match="accessed while lifecycle state was None"):
+        runner.verify_source_bytes(resolved)
+    assert [name for name, _ in boundary_sentinel] == ["transactions.csv"]

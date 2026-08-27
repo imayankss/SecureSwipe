@@ -63,6 +63,7 @@ from src.lane_a.final_lifecycle import (  # noqa: E402
     FinalEvaluationLifecycle,
     LifecycleError,
 )
+from src.lane_a.partition import assignment_digest  # noqa: E402
 from src.lane_a.serving_schema import (  # noqa: E402
     IDENTITY_PRESENCE_FEATURE,
     NUMERIC_FIELDS,
@@ -105,6 +106,15 @@ FROZEN_SOURCE_DIGESTS: Mapping[str, str] = {
 }
 
 PROTOCOL_DOCUMENT = PROJECT_ROOT / "docs" / "evidence" / "LANE_A_FINAL_EVALUATION_PROTOCOL.md"
+BOUNDARY_AMENDMENT_DOCUMENT = (
+    PROJECT_ROOT
+    / "docs"
+    / "evidence"
+    / "LANE_A_FINAL_EVALUATION_PROTOCOL_BOUNDARY_AMENDMENT_1.md"
+)
+
+#: Raw-data paths that may only be described, never opened, before ``STARTED``.
+METADATA_ONLY_KEYS: tuple[str, ...] = ("transactions", "identity", "role_assignment")
 
 #: Flags this runner must never accept, checked before argparse.
 FORBIDDEN_FLAG_MARKERS: tuple[str, ...] = (
@@ -221,6 +231,10 @@ def verify_frozen_digests(manifest: Mapping[str, Any]) -> None:
             raise FinalRunnerError(f"Frozen digest mismatch for {key}.")
     if _require(manifest, "protocol_sha256") != sha256_file(PROTOCOL_DOCUMENT):
         raise FinalRunnerError("Final-evaluation protocol digest does not match the manifest.")
+    if _require(manifest, "boundary_amendment_sha256") != sha256_file(
+        BOUNDARY_AMENDMENT_DOCUMENT
+    ):
+        raise FinalRunnerError("Boundary-amendment digest does not match the manifest.")
     if _require(manifest, "runner_sha256") != sha256_file(Path(__file__).resolve()):
         raise FinalRunnerError("Runner code digest does not match the manifest.")
     modules = _require(manifest, "module_sha256")
@@ -234,27 +248,58 @@ def verify_frozen_digests(manifest: Mapping[str, Any]) -> None:
             raise FinalRunnerError(f"Module digest mismatch for {name}.")
 
 
-def verify_sources(manifest: Mapping[str, Any]) -> dict[str, Path]:
+def verify_source_metadata(manifest: Mapping[str, Any]) -> dict[str, Path]:
+    """Pre-``STARTED`` gate: path metadata only.
+
+    This function must never open, read, hash, parse, preview or count the
+    transaction, identity or role-assignment files. It validates that each path
+    exists, is a regular file and is not a symlink, and it cross-checks the
+    digests the manifest *declares* against the digests embedded in this runner.
+    Byte-level verification is deferred until after the atomic ``STARTED``
+    transition. See the boundary amendment.
+    """
     sources = _require(manifest, "sources")
     resolved: dict[str, Path] = {}
-    for name in ("transactions", "identity", "role_assignment"):
+    for name in METADATA_ONLY_KEYS:
         entry = sources.get(name)
-        if not isinstance(entry, dict) or "path" not in entry or "sha256" not in entry:
+        if not isinstance(entry, dict) or "path" not in entry:
             raise FinalRunnerError(f"Authorization manifest source entry {name!r} is incomplete.")
         path = Path(str(entry["path"])).expanduser()
+        if path.is_symlink():
+            raise FinalRunnerError(f"Authorised source {name!r} is a symlink; refusing.")
         if not path.exists():
             raise FinalRunnerError(f"Authorised source {name!r} is not present.")
-        if sha256_file(path) != entry["sha256"]:
-            raise FinalRunnerError(f"Source digest mismatch for {name!r}.")
+        if not path.is_file():
+            raise FinalRunnerError(f"Authorised source {name!r} is not a regular file.")
         resolved[name] = path
+
+    # Declared-digest cross-check. No file is opened to do this.
     for name in ("transactions", "identity"):
-        if sources[name]["sha256"] != FROZEN_SOURCE_DIGESTS[name]:
+        if sources[name].get("sha256") != FROZEN_SOURCE_DIGESTS[name]:
             raise FinalRunnerError(f"Source {name!r} is not the frozen IEEE-CIS artifact.")
+    declared = sources["role_assignment"].get("assignment_digest")
+    if declared != FROZEN_SOURCE_DIGESTS["role_assignment_digest"]:
+        raise FinalRunnerError("Role-assignment digest does not match the frozen partition.")
     if _require(manifest, "role_assignment_digest") != FROZEN_SOURCE_DIGESTS[
         "role_assignment_digest"
     ]:
         raise FinalRunnerError("Role-assignment digest does not match the frozen partition.")
     return resolved
+
+
+def verify_source_bytes(sources: Mapping[str, Path]) -> dict[str, str]:
+    """Post-``STARTED`` gate: byte-level verification of the raw sources.
+
+    Only reached after the lifecycle has atomically entered ``STARTED``, so a
+    failure here leaves a terminal record behind and cannot be retried.
+    """
+    observed: dict[str, str] = {}
+    for name in ("transactions", "identity"):
+        digest = sha256_file(sources[name])
+        if digest != FROZEN_SOURCE_DIGESTS[name]:
+            raise FinalRunnerError(f"Source byte digest mismatch for {name!r}.")
+        observed[name] = digest
+    return observed
 
 
 def verify_artifacts(manifest: Mapping[str, Any]) -> dict[str, Path]:
@@ -304,11 +349,16 @@ def verify_environment(manifest: Mapping[str, Any]) -> dict[str, str]:
 
 
 def _read_final_ids(assignment_path: Path) -> set[int]:
+    """Post-``STARTED`` only. Verifies the frozen canonical assignment digest."""
     with assignment_path.open(newline="", encoding="utf-8") as handle:
         reader = csv.reader(handle)
         header = next(reader)
         id_index, role_index = header.index(JOIN_KEY), header.index("role")
-        return {int(row[id_index]) for row in reader if row[role_index] == FINAL_ROLE}
+        pairs = [(int(row[id_index]), row[role_index]) for row in reader]
+    observed = assignment_digest(pairs)
+    if observed != FROZEN_SOURCE_DIGESTS["role_assignment_digest"]:
+        raise FinalRunnerError("Role-assignment content digest does not match the frozen partition.")
+    return {identifier for identifier, role in pairs if role == FINAL_ROLE}
 
 
 def build_features(
@@ -438,7 +488,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         args.expected_freeze_sha,
     )
     verify_frozen_digests(manifest)
-    sources = verify_sources(manifest)
+    sources = verify_source_metadata(manifest)
     artifacts = verify_artifacts(manifest)
     environment = verify_environment(manifest)
     assert_variant_selected(SELECTED_VARIANT)
@@ -473,6 +523,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     lifecycle.start({"final_access_begun_utc": _utc_now()})
     started_at = _utc_now()
     try:
+        source_digests = verify_source_bytes(sources)
         final_ids = _read_final_ids(sources["role_assignment"])
         if not final_ids:
             raise FinalRunnerError("No final-role rows were assigned.")
@@ -581,6 +632,8 @@ def main(argv: Sequence[str] | None = None) -> int:
             "module_sha256": dict(manifest["module_sha256"]),
             "frozen": dict(manifest["frozen"]),
             "role_assignment_digest": manifest["role_assignment_digest"],
+            "source_byte_digests_verified_after_started": source_digests,
+            "boundary_amendment_sha256": manifest["boundary_amendment_sha256"],
             "environment": environment,
             "private_artifacts": private_artifacts,
             "score_seal_sha256": score_seal,

@@ -1,0 +1,18 @@
+# MT3g-prep.1 exact inclusion manifest (TSV)
+# schema_version=mt3g-prep-1-inclusion-manifest-v1
+# snapshot_branch=codex/recovered-demo-bundle
+# parent_commit=8c0d3bdd634cb427dcc05301ae1e3df5b5e26d01
+# correction=pre-final-test raw-data access boundary
+# boundary_amendment_sha256=0c07c274d1196f2df4702b649fb6523c688d273d04ccc69210895c8f96f3ef4a
+# unchanged_protocol_sha256=55ce3f192322391a39e4a14764d69aac38cf8aa2a4773bf55457d91356a17238
+# staging_method=explicit per-path git add; no git add -A, no wildcards, no directory staging
+# real_csv_opened=false
+# final_test_read=false
+scope	path	change	purpose	sha256
+included	docs/evidence/LANE_A_FINAL_EVALUATION_PROTOCOL_BOUNDARY_AMENDMENT_1.md	created	Boundary-correction amendment, authored before implementation edits	0c07c274d1196f2df4702b649fb6523c688d273d04ccc69210895c8f96f3ef4a
+included	docs/evidence/LANE_A_FINAL_EVALUATION_READINESS.md	modified	Corrects gate description and test counts to match the fixed code	4ce69793e3e419a134b2d8e98bd5c0af9de8bdf803a586cc21407733873308e2
+included	scripts/lane_a_build_final_authorization.py	modified	Metadata-only validation of raw-data paths; no hashing during preparation	b43017643d9b900f794be935f0260956e3e1c343e158d77f49d87804a5b4549c
+included	scripts/lane_a_run_final_evaluation.py	modified	Byte verification moved to after the atomic STARTED transition	f2f0436c1093ae320c6fd78ef9e576d7e3b581f74f56bfca1f4a053dcf94bc09
+included	tests/test_lane_a_final_authorization_builder.py	created	Builder boundary tests with read sentinels (14)	34729528fa14cb1766fe5ac7d016a46be127677819446338d7abbf1136df8f40
+included	tests/test_lane_a_final_runner_guards.py	modified	Runner boundary sentinels and updated manifest shape (69)	d48369519020e611e831ceeeeed0a461254e9ed3ddeb3003346b9daec91c1a4f
+control	docs/evidence/MT3G_PREP_1_INCLUSION_MANIFEST.tsv	created	Inclusion control file for this correction	self-referential
