@@ -1,4 +1,10 @@
 vulnerabilities:
+  - id: CVE-2026-11822
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fixed version and the package cannot be removed because util-linux is Essential and pre-depends on liblastlog2-2, which depends on libsqlite3-0. The affected path is SQLite FTS5 full-text search, which this repository never uses; the serving path loads no sqlite3 at all. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
+  - id: CVE-2026-11824
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fixed version and the package cannot be removed because util-linux is Essential and pre-depends on liblastlog2-2, which depends on libsqlite3-0. The affected path is SQLite FTS5 full-text search, which this repository never uses; the serving path loads no sqlite3 at all. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
   - id: CVE-2026-41992
     expired_at: 2026-09-20
     statement: Debian 13 has no fix; the runtime never accepts or creates gzip archives.
