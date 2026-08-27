@@ -416,7 +416,7 @@ export function LaneACostExplorer() {
         </p>
       )}
 
-      <footer className="mt-6 space-y-2 text-xs leading-relaxed text-slate-400">
+      <footer className="mt-6 space-y-2 break-words text-xs leading-relaxed text-slate-400">
         <p>
           <span className="font-medium text-slate-300">Formula:</span> illustrative total
           = (TP + FP) × review cost + FP × legitimate-customer friction cost + FN ×

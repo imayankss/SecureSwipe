@@ -86,24 +86,38 @@ test("capacity tiers and assumptions are keyboard operable and recompute the tot
   expect(invalidText).not.toMatch(/NaN|Infinity|₹-/);
 });
 
-test("mobile 375px cost explorer has no horizontal overflow", async ({ page }) => {
-  await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/#lane-a-cost-explorer");
-  const panel = page.locator(PANEL);
-  await expect(panel).toBeVisible();
-  await expect(panel.getByTestId("cost-explorer-disclosure")).toBeVisible();
+test("mobile 280–390px cost explorer has no horizontal overflow", async ({ page }) => {
+  for (const width of [280, 320, 375, 390]) {
+    await page.setViewportSize({ width, height: 812 });
+    await page.goto("/#lane-a-cost-explorer");
+    const panel = page.locator(PANEL);
+    await expect(panel).toBeVisible();
+    await expect(panel.getByTestId("cost-explorer-disclosure")).toBeVisible();
 
-  const widths = await panel.evaluate((element) => ({
-    client: element.clientWidth,
-    scroll: element.scrollWidth,
-  }));
-  expect(widths.scroll).toBeLessThanOrEqual(widths.client);
+    for (const widerMetrics of [false, true]) {
+      if (widerMetrics) {
+        await page.addStyleTag({
+          content: `${PANEL} * { font-family: Arial, "Liberation Sans", sans-serif !important; letter-spacing: 0.15px !important; }`,
+        });
+        await page.waitForTimeout(100);
+      }
 
-  const pageWidths = await page.evaluate(() => ({
-    client: document.documentElement.clientWidth,
-    scroll: document.documentElement.scrollWidth,
-  }));
-  expect(pageWidths.scroll).toBeLessThanOrEqual(pageWidths.client);
+      const widths = await panel.evaluate((element) => ({
+        client: element.clientWidth,
+        scroll: element.scrollWidth,
+      }));
+      expect(
+        widths.scroll,
+        `${width}px${widerMetrics ? " with wider font metrics" : ""}`,
+      ).toBeLessThanOrEqual(widths.client);
+
+      const pageWidths = await page.evaluate(() => ({
+        client: document.documentElement.clientWidth,
+        scroll: document.documentElement.scrollWidth,
+      }));
+      expect(pageWidths.scroll).toBeLessThanOrEqual(pageWidths.client);
+    }
+  }
 });
 
 test("cost explorer has no WCAG violations", async ({ page }) => {
