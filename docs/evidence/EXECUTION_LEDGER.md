@@ -348,3 +348,16 @@ green.
 - **Rationale:** no owner-supplied Razorpay test credentials; no verified mapping from Razorpay payment or order fields to the model's feature contract; a read-only context adapter would not improve the fraud model's held-out evidence; an unverified integration would create misleading scope and unnecessary security risk.
 - **Confirmation:** no Razorpay API, MCP, SDK, webhook, key, secret, credential, or external payment action was used at any point.
 - **Revisit condition:** owner-supplied safe test credentials **and** a verified field mapping. Until both exist, this stays deferred.
+
+## 2026-08-27 — MT9: local submission release candidate frozen
+
+- **Gate/status:** MT9 — **COMPLETE. Candidate frozen locally; not pushed, not deployed, not tagged.**
+- **Candidate commit:** `a8638abb849f02186a0200329ff3323831dcd349`, parent `8974f018e434825453bfc859766da0a74812c35a`; `web/` tree digest `7f4d60e90c864f2650f7640cab319a3806db8d53`. Freeze document `docs/evidence/MT9_RELEASE_FREEZE.md`.
+- **Claim hierarchy:** six evidence categories pre-registered in `MT9_CLAIM_PLAN.md` (SHA-256 `bf9dd5aa6051345f066a64b7340880c22cbc45b112cc38780b1f585ef2feba14`), written before any README or dashboard edit.
+- **Reviewer experience:** README first screen rewritten to lead with the sealed Lane A result and the honest 1,000 reviews/day trade-off. The sealed metrics were previously absent from the dashboard and are now surfaced; the panel had shown development-partition figures only.
+- **Reconciliation:** architecture and limitations extended to distinguish the six separate parts, with the sealed model explicitly distinguished from the served historical demo bundle. The Live Demo section was corrected against a fresh read-only probe.
+- **Deployment finding:** the documented public URL returns HTTP 200 but is a **stale Lane B-only build** containing none of the sealed Lane A figures, no capacity workbench, and no cost explorer. It exposes no SHA or build metadata. Linkage remains `BLOCKED`; nothing was pushed, deployed, or aliased.
+- **Verification:** canonical Python **1,269 passed, 0 failed**; frontend gate **85 passed**; Playwright **10 passed**; static build succeeded; axe zero violations; no 375 px overflow; Ruff clean on `src scripts tests` with 12 pre-existing notebook findings reported separately; mypy clean on 30 files; `git diff --check` clean; 18 relative links checked, 0 broken; secret, private-path, private-artifact and large-file scans clean.
+- **Scan classifications:** five forbidden-claim flags and one long-numeric-run flag were all inspected in context and classified as **pre-existing and non-violating** — a negated "no autonomous approve/block" sentence, "immutable historical observation" describing a hash-checked locked artifact, three "approved figures/sources" data-pipeline phrases, and a model-score float in an older ledger entry. All predate MT9 and none was introduced by it.
+- **Frozen sources:** MT3 through MT7 scientific artifacts, `api/`, `src/`, `artifacts/`, `configs/`, `reports/`, `web/data/laneACapacity.ts`, and both dependency locks are byte-identical. `final_test` was never accessed.
+- **One next action only:** owner review and authorization to push the frozen candidate and deploy that exact verified `web/` tree.
