@@ -4,7 +4,7 @@ Last updated: 2026-08-20 (Asia/Kolkata)
 
 ## Repository identity
 
-- Path: `/Users/mayanksuryavanshi/Downloads/SecureSwipe-main`
+- Path: `<local workspace path>`
 - Origin: `https://github.com/imayankss/SecureSwipe.git`
 - Branch: `codex/industrialize-secureswipe`
 - Baseline commit: `09da37b05d005ab232912d88d94e586209b5a34a`
@@ -17,7 +17,7 @@ Last updated: 2026-08-20 (Asia/Kolkata)
   `git log -1 --format=%H -- docs/industrialization/STATE.md`.
 - Baseline relation to `origin/main`: identical after `git fetch --prune origin`
 - Worktree before the audit: clean
-- Alternate clone check: no `/Users/mayanksuryavanshi/Downloads/SecureSwipe` directory and no second matching clone was found under Downloads
+- Alternate clone check: no `<local workspace parent>/SecureSwipe` directory and no second matching clone was found under Downloads
 
 ## Environment
 
