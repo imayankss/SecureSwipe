@@ -127,7 +127,7 @@ def test_container_image_declares_source_revision_binding() -> None:
 def test_container_scan_exceptions_are_narrow_documented_and_expiring() -> None:
     payload = yaml.safe_load((ROOT / ".trivyignore.yaml").read_text(encoding="utf-8"))
     exceptions = payload["vulnerabilities"]
-    assert len(exceptions) == 12
+    assert len(exceptions) == 14
     assert len({item["id"] for item in exceptions}) == len(exceptions)
     assert all(set(item) == {"id", "expired_at", "statement"} for item in exceptions)
     assert all(str(item["expired_at"]) == "2026-09-20" for item in exceptions)
@@ -170,8 +170,19 @@ def test_durable_container_scan_and_sbom_evidence_is_self_consistent() -> None:
             "vulnerabilities"
         ]
     }
+    unfixed = json.loads(
+        (evidence / "unfixed-cve-dispositions.json").read_text(encoding="utf-8")
+    )
+    current = {item["finding_id"] for item in unfixed["dispositions"]}
+
     assert len(findings) == manifest["scan"]["raw_finding_records"]
-    assert {item["VulnerabilityID"] for item in findings} == set(dispositions) == set(exceptions)
+    # The frozen scan record stays internally exact: its findings are precisely
+    # its dispositions. It cannot contain CVEs published after it was taken.
+    assert {item["VulnerabilityID"] for item in findings} == set(dispositions)
+    # Every scanner exception must still be backed by exactly one disposition,
+    # in the frozen record or in the current unfixed record, and never both.
+    assert set(dispositions).isdisjoint(current)
+    assert set(exceptions) == set(dispositions) | current
     assert manifest["scan"]["policy_active_findings"] == 0
     for finding_id, disposition in dispositions.items():
         matching = [item for item in findings if item["VulnerabilityID"] == finding_id]
@@ -248,3 +259,69 @@ def test_lock_generator_is_isolated_and_fixed_versions_are_pinned() -> None:
     assert "\nxgboost==" not in quality_linux_lock
     assert "nvidia-" not in api_linux_lock
     assert "nvidia-" not in quality_linux_lock
+
+
+def test_unfixed_cve_dispositions_are_bounded_documented_and_reviewable() -> None:
+    """A scanner exception may only exist with a full, expiring justification.
+
+    This guards the narrow-exception contract: exactly the CVEs that have no
+    published fix, each carrying package/version, no-fix status, reachability
+    analysis, compensating controls, attempted remediations, an owner-review
+    requirement, and a short expiry that matches repository convention.
+    """
+    evidence = ROOT / "docs/industrialization/evidence/container"
+    record = json.loads(
+        (evidence / "unfixed-cve-dispositions.json").read_text(encoding="utf-8")
+    )
+    exceptions = {
+        item["id"]: item
+        for item in yaml.safe_load((ROOT / ".trivyignore.yaml").read_text(encoding="utf-8"))[
+            "vulnerabilities"
+        ]
+    }
+
+    assert record["owner_review_required"] is True
+    assert record["owner_review_status"] == "accepted_demo_only"
+    decision = record["owner_review_decision"]
+    assert "demo" in decision["scope"].lower()
+    assert "not a production security acceptance" in decision["scope"].lower()
+    assert len(decision["conditions"]) >= 5
+    assert decision["revocation"]
+    assert record["scanner"]["version"] == "0.70.0"
+
+    dispositions = record["dispositions"]
+    assert dispositions, "an empty record must not be used to justify exceptions"
+    assert len({item["finding_id"] for item in dispositions}) == len(dispositions)
+
+    for item in dispositions:
+        # Narrowly scoped: no blanket ignore-unfixed policy.
+        assert item["status"] == "temporary_no_fix_exception"
+        assert item["severity"] in {"HIGH", "CRITICAL"}
+        assert item["package"] and item["installed_version"]
+        # Only genuinely unfixable findings qualify.
+        assert item["fixed_version"] is None
+        assert item["fixed_version_status"] == "none_published"
+        assert "trixie-security" in item["suites_checked"]
+        # Justification must be substantive, not a one-liner.
+        assert item["reachability"] == "not_reachable"
+        assert len(item["reachability_evidence"]) >= 3
+        assert len(item["compensating_controls"]) >= 3
+        assert len(item["remediation_attempts"]) >= 2
+        # Short, convention-matching expiry, mirrored into the scanner policy.
+        assert item["expires"] == "2026-09-20"
+        assert item["finding_id"] in exceptions
+        assert str(exceptions[item["finding_id"]]["expired_at"]) == item["expires"]
+
+
+def test_scanner_policy_has_no_blanket_bypass() -> None:
+    """The gate must stay strict: no ignore-unfixed, no relaxed exit code."""
+    workflow = (ROOT / ".github/workflows/container.yml").read_text(encoding="utf-8")
+    assert 'exit-code: "1"' in workflow
+    assert "severity: HIGH,CRITICAL" in workflow
+    assert "ignore-unfixed" not in workflow
+    assert "--skip-dirs" not in workflow
+
+    policy = (ROOT / ".trivyignore.yaml").read_text(encoding="utf-8")
+    assert "ignore-unfixed" not in policy
+    payload = yaml.safe_load(policy)
+    assert set(payload) == {"vulnerabilities"}

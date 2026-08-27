@@ -2,6 +2,7 @@
 import { Footer } from "@/components/Footer";
 import { Navigation } from "@/components/Navigation";
 import { CommandCenterDashboard } from "@/components/dashboard/CommandCenterDashboard";
+import { LaneACapacityWorkbench } from "@/components/dashboard/LaneACapacityWorkbench";
 
 export default function Home() {
   return (
@@ -14,6 +15,9 @@ export default function Home() {
       >
         <div className="dashboard-grid fixed inset-0 -z-10 bg-[linear-gradient(135deg,#020617_0%,#07111f_48%,#061d1f_100%)]" />
         <CommandCenterDashboard />
+        <div className="mx-auto w-full max-w-6xl px-4 pb-12 sm:px-6">
+          <LaneACapacityWorkbench />
+        </div>
         <Footer />
       </main>
     </>
