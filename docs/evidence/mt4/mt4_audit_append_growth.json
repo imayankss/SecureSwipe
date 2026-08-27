@@ -1,0 +1,18 @@
+{
+  "append_ms_at_event": {
+    "1": 0.981,
+    "100": 2.351,
+    "200": 5.626,
+    "25": 0.829,
+    "400": 8.695,
+    "50": 1.327,
+    "600": 12.746
+  },
+  "events_appended": 600,
+  "growth_factor": 13.99,
+  "interpretation": "Append cost grows with log length because the writer re-verifies the entire hash chain before each append. This is a tamper-evidence property, not a defect, but it makes sustained append throughput degrade as the log grows.",
+  "mean_first_window_ms": 0.895,
+  "mean_last_window_ms": 12.518,
+  "total_seconds": 4.011,
+  "window_size": 50
+}

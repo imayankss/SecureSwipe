@@ -123,6 +123,9 @@ state is in-process and lost on restart.
 | 5.2 | Core model inference consumes **zero LLM tokens**. | `core_model_inference_llm_tokens: 0` in the benchmark JSON | Deterministic tabular XGBoost path; no LLM in the inference path |
 | 5.3 | Cold start measured 5.85 s as an end-to-end **upper bound** including readiness polling and client startup. | Same report | Explicitly labeled an upper bound, not server-internal telemetry |
 | 5.4 | The earlier logistic-regression run is synthetic serving-path plumbing evidence only. | `reports/operations/2026-08-24_local_single_node_serving_benchmark.md` | Labeled as such in README and ledger; never combined with 5.1 |
+| 5.5 | On local loopback the serving path **does not scale with concurrency**: successful RPS stays in a flat ~73–81 band from 1 to 16 concurrent clients while p50 latency rises roughly linearly (12.4 → 24.3 → 49.4 → 96.9 → 189.7 ms baseline). 6,000 measured requests produced 0 non-2xx, 0 timeouts and 0 transport errors. | `docs/evidence/MT4_CONCURRENCY_EVIDENCE.md`; `docs/evidence/mt4/mt4_concurrency_benchmark.json`; protocol SHA-256 `5b2f13b42012efb5a8949a6a284e8d8e5b5dc6a3a8860cb8d7a047df0a63328d` | `VERIFIED` / `CURRENT/MEASURED`. **HISTORICAL-SERVING / NOT COMPARABLE TO MT3 HELD-OUT METRICS.** Pre-registered protocol, 5 concurrency levels × 3 repeats, fresh server and audit log per level, medians plus every per-repeat value published. Loopback only; not a production SLO and unrelated to fraud-detection quality |
+| 5.6 | Removing the global inference lock **does not help** and was rejected: median RPS fell at four of five concurrency levels and p99 worsened at concurrency 2 (+52.1 %), 8 (+8.9 %) and 16 (+26.9 %). The shipped lock is retained. | `docs/evidence/MT4_CONCURRENCY_EVIDENCE.md` §5 | `VERIFIED` / `CURRENT/MEASURED`. A measured negative result against a pre-registered decision rule (≥20 % RPS gain or ≥20 % p99 cut, with no p99 worsening). Concurrent semantic parity was bit-exact first, so the rejection is on performance grounds, not correctness |
+| 5.7 | The binding serving constraint is **audit append cost, not inference**: the writer re-verifies the whole hash chain before every append, so append latency grew from 0.895 ms (first 50 appends) to 12.518 ms (last 50) across 600 events — a 14× increase, linear per append and O(N²) overall. | `docs/evidence/MT4_CONCURRENCY_EVIDENCE.md` §6; `docs/evidence/mt4/mt4_audit_append_growth.json` | `VERIFIED` / `CURRENT/MEASURED`. This is a deliberate tamper-evidence property, not a defect; it trades sustained append throughput for detectability of out-of-band mutation. Reported as found, unfixed in MT4 |
 
 **Must not be claimed:** 1,000 or 10,000 RPS, production capacity, an SLO,
 public-network or multi-node results, or representative traffic. The p99 of
@@ -133,6 +136,12 @@ repeat supports no statistical claim. `reports/operations/local_m2_load_baseline
 records **no code SHA at all** and uses the `synthetic-smoke-1` model; it is
 `SYNTHETIC` and unattributable to any commit. There is **no public-network
 benchmark artifact in this repository**; every measured artifact is loopback.
+Rows 5.5–5.7 supersede 5.1's single-run limitation with a pre-registered,
+three-repeat matrix at a known commit, but remain loopback-only and carry the
+`HISTORICAL-SERVING / NOT COMPARABLE TO MT3 HELD-OUT METRICS` label: they serve a
+historical demo bundle, not the sealed Lane A model, and say nothing about
+fraud-detection quality. Multi-worker serving remains **incompatible with current
+state ownership** because idempotency, admission and audit state are process-local.
 
 ## 6 — Illustrative cost scenario
 
