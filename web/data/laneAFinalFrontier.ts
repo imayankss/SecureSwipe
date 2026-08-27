@@ -27,6 +27,30 @@ export const LANE_A_FINAL_EVIDENCE = {
     "65fd02bb26f7e2cec909840f41855fc4af7589028e7a59fda7b5d41cd401d20c",
 } as const;
 
+/**
+ * Headline metrics from the sealed one-time final evaluation.
+ *
+ * Category: SEALED FINAL EVALUATION — LANE A / IEEE-CIS. Evaluated exactly once
+ * on a programmatically held-out role. Not Razorpay or live-merchant
+ * performance, and never comparable with Lane B historical metrics.
+ */
+export const LANE_A_FINAL_METRICS = {
+  averagePrecision: 0.20866,
+  averagePrecisionCiLow: 0.1957,
+  averagePrecisionCiHigh: 0.222711,
+  rocAuc: 0.814975,
+  rocAucCiLow: 0.806402,
+  rocAucCiHigh: 0.822899,
+  brierScore: 0.030468,
+  logLoss: 0.124252,
+  expectedCalibrationError: 0.003556,
+  bootstrapResamples: 2000,
+  bootstrapSeed: 42,
+  confidenceLevel: 0.95,
+} as const;
+
+export const LANE_A_FINAL_CATEGORY = "SEALED FINAL EVALUATION — LANE A / IEEE-CIS";
+
 export const LANE_A_FINAL_ILLUSTRATIVE_LABEL =
   "Illustrative scenario only — not Razorpay economics, merchant pricing, savings, ROI, or a production recommendation.";
 
