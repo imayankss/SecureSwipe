@@ -186,10 +186,12 @@ export function LaneACostExplorer() {
               detail: `${formatCount(LANE_A_FINAL_EVIDENCE.positives)} of ${formatCount(LANE_A_FINAL_EVIDENCE.rows)} rows`,
             },
           ].map((item) => (
-            <div key={item.term}>
-              <dt className="text-xs uppercase tracking-wide text-slate-400">{item.term}</dt>
-              <dd className="mt-1 text-base font-semibold text-slate-50">{item.value}</dd>
-              <dd className="mt-0.5 text-xs text-slate-400">{item.detail}</dd>
+            <div key={item.term} className="min-w-0">
+              <dt className="break-words text-xs uppercase tracking-wide text-slate-400">{item.term}</dt>
+              <dd className="mt-1 break-words text-base font-semibold text-slate-50">
+                {item.value}
+              </dd>
+              <dd className="mt-0.5 break-words text-xs text-slate-400">{item.detail}</dd>
             </div>
           ))}
         </dl>
@@ -308,10 +310,15 @@ export function LaneACostExplorer() {
               { term: "Missed-fraud & chargeback", value: formatInr(breakdown.missedFraudAndChargebackCost), detail: "FN × (loss + chargeback)" },
               { term: "Illustrative total", value: formatInr(breakdown.illustrativeTotalCost), detail: "sum of the three components" },
             ].map((item) => (
-              <div key={item.term} className="rounded-lg border border-slate-700/60 bg-slate-900/50 p-3">
-                <dt className="text-xs uppercase tracking-wide text-slate-400">{item.term}</dt>
-                <dd className="mt-1 text-base font-semibold text-slate-50">{item.value}</dd>
-                <dd className="mt-0.5 text-xs text-slate-400">{item.detail}</dd>
+              <div
+                key={item.term}
+                className="min-w-0 rounded-lg border border-slate-700/60 bg-slate-900/50 p-3"
+              >
+                <dt className="break-words text-xs uppercase tracking-wide text-slate-400">{item.term}</dt>
+                <dd className="mt-1 break-words text-base font-semibold text-slate-50">
+                  {item.value}
+                </dd>
+                <dd className="mt-0.5 break-words text-xs text-slate-400">{item.detail}</dd>
               </div>
             ))}
           </dl>
