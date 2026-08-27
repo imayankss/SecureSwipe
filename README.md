@@ -1,57 +1,119 @@
-# SecureSwipe — Fraud Detection & Risk Analytics
+# SecureSwipe — Track 2 AI Risk Manager
 
-SecureSwipe is a defense-only payment-card fraud-risk detector and human-review
-decision aid built for the **Razorpay AI Builder Internship Track 2**, whose
-loss class is payment-card fraud on an extremely imbalanced transaction
-dataset. It combines data validation, leakage-safe preprocessing, baseline
-models, XGBoost, validation-only model and threshold selection, SHAP
-explainability, and one locked held-out test evaluation with a
-statically exportable Next.js reviewer dashboard.
+A defense-only fraud-risk detector and human-review decision aid that makes
+held-out performance, review workload, false positives, and failure boundaries
+explicit.
 
-**What is genuinely implemented:** the historical training/evaluation
-pipeline, one locked held-out test result, a provenance-verified local
-FastAPI serving path (`api/`), and this static reviewer dashboard. Real-time
-contextual signal plumbing (device, velocity, geography, etc.) is a synthetic
-in-browser demonstration, not a trained or evaluated model.
+## What you are looking at
 
-The selected local serving candidate is a byte-verified, historical-reference
-demo bundle with evidence category `historical_reference_demo_inference`. Its
-API execution is genuine, but it is historical-tainted, not decision-eligible,
-and its **linkage to the locked historical metrics is unverified and must not be
-claimed**. Its recipe records that linkage as `unverified` and retains no
-evaluation partition, so nothing in this repository can establish the
-connection. That is an absence of evidence, not evidence of absence: the
-repository equally cannot show that these components did *not* participate in
-the original evaluation. Either way, the claim may not be made.
+Two different things carry the SecureSwipe name, and they are not the same:
 
-### Evidence status of this working tree
+- **Static public dashboard** — a Next.js evidence site. It ships aggregate
+  numbers and disclosures only. It runs no model and calls no API.
+- **Local model-backed demo** — a provenance-verified FastAPI path (`api/`) you
+  run yourself. It scores real requests using a byte-verified *historical
+  reference demo bundle*, which is **not** the sealed Lane A model.
 
-This README is maintained at commit `501d8a6` on branch
-`codex/recovered-demo-bundle`. **That commit is branch-local and is not on
-`main`.** It is one commit ahead of `origin/main` (merge-base `399a482`), and
-the difference is documentation-only — no code, workflow, model, or artifact
-differs between the two.
+Every figure below is tagged with one of six evidence categories, so you never
+have to infer which model or source produced it:
 
-Three consequences a reviewer should read before any other number here:
+`SEALED FINAL EVALUATION — LANE A / IEEE-CIS` ·
+`HISTORICAL SERVING — LOOPBACK / NOT COMPARABLE TO MT3` ·
+`ILLUSTRATIVE COST SCENARIO — NOT RAZORPAY ECONOMICS` ·
+`LOCAL SQLITE DURABILITY PROTOTYPE — OPTIONAL / NON-DEFAULT` ·
+`SYNTHETIC ORDER-INTEGRITY REFERENCE — SEPARATE FROM FRAUD MODEL` ·
+`FUTURE OR DEFERRED — NOT IMPLEMENTED`
 
-- **Tests.** On a clean checkout of `501d8a6`, the canonical `python -m pytest`
-  reports **758 passed, 0 failed, 0 skipped, exit 0**. Run in this working
-  directory after MT3e, the same command **exits 1**: it collects the new
-  untracked Lane A tests and two pre-existing untracked packaging
-  work-in-progress files, giving 967 collected / 966 passed / 1 failed. The
-  complete MT3e/project suite with only that unrelated WIP test file excluded is
-  green at **961 passed**. The lone failure remains the older bundle-schema WIP;
-  it was preserved unchanged. These statements must be quoted together.
-- **CI.** GitHub Actions has **not run on `501d8a6`** — the workflows trigger on
-  pull requests and pushes to `main`. The green Quality/Security/Container
-  result recorded in the evidence documents belongs to `374e167` / `399a482`.
-  No CI claim may be made for this commit.
-- **Deployment.** No public deployment is linked to any SHA. See "Live Demo".
+## The headline result
 
-Full detail, with per-row evidence status and class, is in
-[`docs/evidence/CLAIM_TO_EVIDENCE_MATRIX.md`](docs/evidence/CLAIM_TO_EVIDENCE_MATRIX.md).
+`SEALED FINAL EVALUATION — LANE A / IEEE-CIS`
 
-## What You're Looking At: Four Evidence Categories
+| Metric | Value |
+| --- | --- |
+| Average precision | **0.208660** (95 % CI `0.195700`–`0.222711`) |
+| ROC-AUC | **0.814975** (95 % CI `0.806402`–`0.822899`) |
+| Brier score / log loss | `0.030468` / `0.124252` |
+| Expected calibration error (15 bins) | `0.003556` |
+| Evaluated on | 88,581 transactions · 3,083 fraudulent · prevalence `0.034804` |
+
+This is **one sealed, programmatically held-out IEEE-CIS evaluation, run exactly
+once**, under a protocol hashed before the runner existed. It is **not** Razorpay
+performance, **not** live-merchant performance, and it was **not** used for any
+post-result retuning. It is **not comparable** with the older Lane B historical
+evidence elsewhere in this repository, which uses a different corpus, base rate,
+label definition, and feature space.
+
+## The trade-off, stated honestly
+
+At **1,000 reviews/day** the model reaches **80.18 % recall** at **8.03 % alert
+precision**: `2,472` fraudulent transactions caught, `611` missed, and `28,306`
+legitimate transactions sent to a human reviewer.
+
+**A false positive here is a legitimate transaction sent to human review — it is
+never automatically declined.** More review capacity catches more fraud *and*
+sends more legitimate customers to review. The dashboard's cost explorer lets you
+change every monetary assumption and watch that trade-off move. No capacity tier
+is recommended, optimal, or a default.
+
+## Where to look
+
+| What | Where |
+| --- | --- |
+| Sealed final evaluation | [`LANE_A_FINAL_EVALUATION.md`](docs/evidence/LANE_A_FINAL_EVALUATION.md) |
+| Cost / review-workload explorer evidence | [`MT5_COST_EXPLORER_EVIDENCE.md`](docs/evidence/MT5_COST_EXPLORER_EVIDENCE.md) |
+| Architecture | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) |
+| Every claim, with evidence status | [`CLAIM_TO_EVIDENCE_MATRIX.md`](docs/evidence/CLAIM_TO_EVIDENCE_MATRIX.md) |
+| Limitations | [`docs/LIMITATIONS.md`](docs/LIMITATIONS.md) |
+| Reproduce / verify | [Local toolchain setup](#local-toolchain-setup) |
+| Deployment status | [`docs/DEPLOYMENT.md`](docs/DEPLOYMENT.md) |
+
+## Architecture at a glance
+
+```
+ IEEE-CIS dataset ──► chronological partition ──► Lane A offline science
+                                                   │  variant E, 24 inputs
+                                                   │  Platt calibration
+                                                   ▼
+                                          SEALED final evaluation  ──┐
+                                          (run exactly once)         │
+                                                                     ▼
+ synthetic request ──► FastAPI (api/) ──► historical demo bundle ──► decision
+        │                  │  admission gate                         + audit
+        │                  │  idempotency (in-memory; optional SQLite)  chain
+        │                  ▼
+        │            tamper-evident NDJSON audit log
+        ▼
+ static Next.js dashboard ──► aggregate evidence only, no model, no API
+```
+
+Two things deliberately sit *outside* that path: the optional local SQLite
+durability prototype (non-default) and the synthetic order-integrity reference
+(separate from the fraud model, never wired into `/v1/predict`).
+
+## Quick start
+
+```bash
+python -m pytest -q                 # canonical suite
+cd web && npm ci && npm test        # data check, lint, types, unit tests
+cd web && npm run build             # static dashboard build
+```
+
+## Limitations
+
+- **Defense-only.** Nothing here approves, blocks, declines, or steps up a
+  payment. It prioritises transactions for human review and stops there.
+- The sealed result is one evaluation of one public research dataset. It is not
+  live performance and not a forecast.
+- The local serving path uses a **historical reference demo bundle**, not the
+  sealed Lane A model; its linkage to any historical metric is **unverified**.
+- Serving benchmarks are **local loopback only** — not production capacity, not
+  an SLO, and unrelated to fraud-detection quality.
+- Every monetary figure is an **illustrative assumption**, never a saving, ROI,
+  or observed merchant cost.
+- No Razorpay API, SDK, webhook, credential, or live integration is used
+  anywhere in this repository.
+
+## Evidence categories in detail
 
 Every number, chart, and interaction on the dashboard is labeled with exactly
 one of four evidence categories, so you always know what you're looking at
@@ -109,16 +171,21 @@ deployment. Any prior static URL is not evidence for this candidate. The static
 dashboard will be deployed and verified only after final CI passes; no public
 deployment is performed by the checked-in workflows.
 
-**Deployment-to-SHA linkage is `BLOCKED`.** A read-only probe of the previously
-published static URL returned HTTP 200 with hardened security headers, but the
-response exposes **no commit SHA or build metadata**, and its cache age placed
-the served artifact earlier than both `501d8a6` and `399a482`. Three different
-commits are in play — the documented deployed frontend commit
-`943d021c4757ac4102615eb26ceca0cf476baa76` (published by local Vercel CLI with
-no GitHub connection, so no automatic linkage exists), `origin/main`
-`399a482`, and this working target `501d8a6`. Reachability is not linkage: no
-claim may be made that any deployment corresponds to this commit, and linkage
-must never be inferred from a page looking similar.
+**Deployment-to-SHA linkage is `BLOCKED`, and the published site is stale.** A
+read-only probe of the previously published static URL at MT9 returned HTTP 200,
+but the response exposes **no commit SHA or build metadata**, and its content
+**predates all Lane A work**: it contains none of the sealed final numbers
+(`0.208660`, `80.18 %`, `88,581` rows), no Lane A capacity workbench, and no
+cost explorer. It is an older Lane B-only build. Reachability is not linkage: no
+claim may be made that any deployment corresponds to any commit here, and
+linkage must never be inferred from a page looking similar.
+
+The deployed frontend commit documented previously is
+`943d021c4757ac4102615eb26ceca0cf476baa76`, published by local Vercel CLI with
+no GitHub connection, so no automatic linkage exists. **The MT9 release
+candidate in this repository has not been pushed or deployed.** Until an owner
+authorises a deployment of that exact verified `web/` tree, the public URL does
+not represent this candidate.
 
 The deployable frontend is built on **static, precomputed historical-evaluation
 artifacts**. Two panels add controlled interactivity without turning this into

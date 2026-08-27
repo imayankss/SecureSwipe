@@ -5,8 +5,10 @@ import { useMemo, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import {
   FALSE_POSITIVE_MEANING,
+  LANE_A_FINAL_CATEGORY,
   LANE_A_FINAL_EVIDENCE,
   LANE_A_FINAL_ILLUSTRATIVE_LABEL,
+  LANE_A_FINAL_METRICS,
   LANE_A_FINAL_TIERS,
 } from "@/data/laneAFinalFrontier";
 import {
@@ -145,6 +147,61 @@ export function LaneACostExplorer() {
           transactions to human review. {FALSE_POSITIVE_MEANING}
         </p>
       </header>
+
+      <section
+        aria-labelledby="lane-a-sealed-heading"
+        data-testid="sealed-final-metrics"
+        className="mt-5 rounded-lg border border-emerald-300/30 bg-emerald-300/5 p-3 sm:p-4"
+      >
+        <h4
+          id="lane-a-sealed-heading"
+          className="text-xs font-semibold uppercase tracking-wide text-emerald-100"
+        >
+          {LANE_A_FINAL_CATEGORY}
+        </h4>
+        <p className="mt-1 text-xs text-slate-400">
+          Evaluated exactly once on a programmatically held-out role. Not Razorpay or
+          live-merchant performance, and not comparable with Lane B.
+        </p>
+        <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            {
+              term: "Average precision",
+              value: LANE_A_FINAL_METRICS.averagePrecision.toFixed(6),
+              detail: `95% CI ${LANE_A_FINAL_METRICS.averagePrecisionCiLow.toFixed(6)}–${LANE_A_FINAL_METRICS.averagePrecisionCiHigh.toFixed(6)}`,
+            },
+            {
+              term: "ROC-AUC",
+              value: LANE_A_FINAL_METRICS.rocAuc.toFixed(6),
+              detail: `95% CI ${LANE_A_FINAL_METRICS.rocAucCiLow.toFixed(6)}–${LANE_A_FINAL_METRICS.rocAucCiHigh.toFixed(6)}`,
+            },
+            {
+              term: "Brier score",
+              value: LANE_A_FINAL_METRICS.brierScore.toFixed(6),
+              detail: `log loss ${LANE_A_FINAL_METRICS.logLoss.toFixed(6)}`,
+            },
+            {
+              term: "Prevalence",
+              value: formatRate(LANE_A_FINAL_EVIDENCE.prevalence, 3),
+              detail: `${formatCount(LANE_A_FINAL_EVIDENCE.positives)} of ${formatCount(LANE_A_FINAL_EVIDENCE.rows)} rows`,
+            },
+          ].map((item) => (
+            <div key={item.term}>
+              <dt className="text-xs uppercase tracking-wide text-slate-400">{item.term}</dt>
+              <dd className="mt-1 text-base font-semibold text-slate-50">{item.value}</dd>
+              <dd className="mt-0.5 text-xs text-slate-400">{item.detail}</dd>
+            </div>
+          ))}
+        </dl>
+        <p className="mt-3 text-xs text-slate-400">
+          At 1,000 reviews/day this model reaches{" "}
+          <span className="font-medium text-slate-200">80.18% recall</span> at{" "}
+          <span className="font-medium text-slate-200">8.03% alert precision</span> —
+          catching about four fraudulent transactions in five, while sending 28,306
+          legitimate transactions to human review. That trade-off is the point of the
+          explorer below.
+        </p>
+      </section>
 
       <fieldset className="mt-5 rounded-lg border border-slate-700/60 p-3 sm:p-4">
         <legend className="px-1 text-sm font-medium text-slate-200">

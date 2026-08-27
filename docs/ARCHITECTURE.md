@@ -158,3 +158,29 @@ This section intentionally does not describe the synthetic plumbing-test
 simulator (`web/components/SyntheticPlumbingSimulator.tsx`): that simulator
 is a fully in-browser, single-process demo with no server component, and it
 is out of scope for a server-scaling discussion by construction.
+
+## Current system shape (MT3–MT7)
+
+Six parts, deliberately separate. A reviewer should never have to infer which one
+produced a number.
+
+| # | Part | What it is | Evidence category |
+| --- | --- | --- | --- |
+| 1 | **Public static dashboard** (`web/`) | Next.js evidence site. Ships aggregate numbers and disclosures only — runs no model, calls no API. | mixed; every panel is labelled |
+| 2 | **Local FastAPI serving path** (`api/`) | Provenance-verified service you run yourself. Loads a byte-verified **historical reference demo bundle**, admission-gated, audit-chained, fails closed. | `HISTORICAL SERVING — LOOPBACK / NOT COMPARABLE TO MT3` |
+| 3 | **Sealed offline Lane A evaluation** | The scientific result. Run **exactly once** on a programmatically held-out IEEE-CIS role under a pre-hashed protocol. Entirely offline; never served. | `SEALED FINAL EVALUATION — LANE A / IEEE-CIS` |
+| 4 | **Human-review capacity & cost decision aid** (`web/lib/laneACostModel.ts`) | Client-side arithmetic over the sealed aggregate counts. Selects no capacity and no threshold. | `ILLUSTRATIVE COST SCENARIO — NOT RAZORPAY ECONOMICS` |
+| 5 | **Local SQLite durability prototype** (`src/operations/durable_idempotency.py`) | Optional, **non-default** idempotency backend. The in-memory registry remains the default and `api/` is unchanged. | `LOCAL SQLITE DURABILITY PROTOTYPE — OPTIONAL / NON-DEFAULT` |
+| 6 | **Synthetic order-integrity reference** (`src/order_integrity/`) | Pre-model input-contract guardrail. Never wired into `/v1/predict`, never part of ML metrics. | `SYNTHETIC ORDER-INTEGRITY REFERENCE — SEPARATE FROM FRAUD MODEL` |
+
+**The sealed model (3) is not the served model (2).** The serving path
+deliberately runs a historical demo bundle, so no serving measurement says
+anything about the sealed evaluation's quality, and no sealed metric says
+anything about serving behaviour.
+
+Parts 5 and 6 sit outside the request path entirely. Neither is enabled by
+default, and neither contributes to any fraud metric.
+
+The horizontally scalable shape described above remains **reference only, not
+implemented**. Multi-worker serving is incompatible with current state ownership
+because idempotency, admission, and audit state are process-local.
