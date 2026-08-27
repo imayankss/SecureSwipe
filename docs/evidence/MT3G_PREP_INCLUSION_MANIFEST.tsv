@@ -1,0 +1,21 @@
+# MT3g-prep exact freeze inclusion manifest (TSV)
+# schema_version=mt3g-prep-inclusion-manifest-v1
+# snapshot_branch=codex/recovered-demo-bundle
+# parent_commit=8f8e36955c1d7b0ca4ee233ac4864d5fcc6428b9
+# mt3e_amendment_sha256=f53bcb7df3a3187b840687e03b0b4d071c21a2936bd72cf46d991a5107591021
+# final_evaluation_protocol_sha256=55ce3f192322391a39e4a14764d69aac38cf8aa2a4773bf55457d91356a17238
+# staging_method=explicit per-path git add; no git add -A, no wildcards, no directory staging
+# control_file=docs/evidence/MT3G_PREP_INCLUSION_MANIFEST.tsv
+# control_file_digest=reported externally because a file cannot embed its own SHA-256
+# final_test_read=false
+scope	path	purpose	classification	decision	sha256
+included	docs/evidence/LANE_A_FINAL_EVALUATION_PROTOCOL.md	Predeclared one-time final-evaluation protocol	public_safe_evidence	INCLUDE	55ce3f192322391a39e4a14764d69aac38cf8aa2a4773bf55457d91356a17238
+included	docs/evidence/LANE_A_FINAL_EVALUATION_READINESS.md	Public-safe readiness record for MT3g-prep	public_safe_evidence	INCLUDE	b25157bb5595714be1b9c37f9a0b3326913300f6e5725a525ca5e55cb7e413ea
+included	src/lane_a/final_lifecycle.py	Atomic one-time lifecycle record	lane_a_source	INCLUDE	043696cc4e6d64ec130f8263902947c0ef30c807eacb58678899512c1e0d9a8d
+included	src/lane_a/final_evaluation.py	Protocol-bound aggregate metrics	lane_a_source	INCLUDE	04e2f0c0a83595f83cbe8d1ad8ce72665813601ed5cf6146d83f0eb42246b763
+included	scripts/lane_a_run_final_evaluation.py	Guarded one-time final-evaluation runner	lane_a_script	INCLUDE	5ffc12db27dbc654a967ebd94363124f74ddb99ba4e70c5e0e6a5a29ed4fcf1f
+included	scripts/lane_a_build_final_authorization.py	Private authorization-manifest builder	lane_a_script	INCLUDE	d645b30cc51162adc979a4634f86fd4888aa41cc3f70868ce0bbe85d4515d03d
+included	tests/test_lane_a_final_lifecycle.py	Synthetic lifecycle tests (21)	synthetic_tests	INCLUDE	05edf706df3c69e51ea4bd2c84deb9df9737925a6d67a6b277dd7fd679d77c7e
+included	tests/test_lane_a_final_evaluation.py	Synthetic metric and protocol tests (52)	synthetic_tests	INCLUDE	2c5fb9dc5c2b7f0d946a1af332b813433cdbb69321431a023f5319c4c6ed0fbd
+included	tests/test_lane_a_final_runner_guards.py	Synthetic runner guard and rehearsal tests (57)	synthetic_tests	INCLUDE	4ae0a87514360487867748f52576aa728ca0a6af2849f9e29608e87a6bd2ad4e
+control	docs/evidence/MT3G_PREP_INCLUSION_MANIFEST.tsv	Inclusion control file for this task	public_safe_evidence	INCLUDE	self-referential
