@@ -98,3 +98,63 @@ for forward/paired/calibration analysis; a complete reviewed ModelBundle; Docker
 startup/readiness/inference plus image scan/SBOM; remote CI execution; and, for a
 public service, an owner-approved threat/risk review with authentication, TLS,
 rate limits, retention, provider measurement, rollback rehearsal, and cost.
+
+## Lane A sealed evaluation (MT3)
+
+- One evaluation, of one public research dataset, run **exactly once**. It is
+  not live performance and not a forecast.
+- **Not** Razorpay, Indian-payment, live-merchant, or production performance.
+- **Not** human-blind and **not** externally blind: the role was held out
+  programmatically by a frozen partition, not withheld by an independent party.
+- **Not comparable** with Lane B historical evidence — different corpus, base
+  rate, label definition, and feature space. The two are never charted together.
+- The calibrator never emits a value at or above 0.40 on this population, so the
+  upper nine calibration bins are empty. Reported as found.
+
+## Serving benchmarks (MT4)
+
+- **Local loopback only.** No external network, TLS, proxy, or client distance.
+  These are a floor, not a forecast, and never a production SLO or capacity.
+- Single machine, single process, single worker. No multi-replica evidence.
+- Throughput does not scale with concurrency; the binding constraint is audit
+  append cost, not inference. Removing the inference lock was measured and
+  **rejected**.
+- Results serve a **historical demo bundle** and say nothing about the sealed
+  Lane A model's quality.
+
+## Cost explorer (MT5)
+
+- Scenario calculations on published aggregate counts, **not observed merchant
+  costs**. Every monetary input is an illustrative assumption.
+- Costs are linear in the counts by construction; real operations have fixed
+  costs, queueing, staffing steps, and time-varying volume that this does not
+  model.
+- No tier is recommended, optimal, or a merchant default, and no figure is a
+  saving, ROI, or real loss.
+
+## Local state and durability (MT6)
+
+- **Local single-node durability only.** Not immutable or WORM storage, not ACID
+  across services, not multi-writer, not high availability, not multi-region,
+  not cross-host failover.
+- The SQLite prototype is **optional and non-default**; the in-memory registry
+  ships as the default.
+- Concurrent multi-process writing is explicitly unsupported and untested.
+
+## Order-integrity reference (MT7)
+
+- **Synthetic and separate from the fraud model.** It contributes nothing to
+  average precision, ROC-AUC, precision, recall, Brier score, calibration,
+  capacity tiers, or the cost explorer.
+- Not a live Razorpay integration, not evidence about any real incident, not
+  production-ready, not PCI-relevant, and not compatible with any real webhook.
+- No real payment gateway, fulfilment system, merchant catalogue, credential, or
+  incident data was used.
+
+## Razorpay context adapter (MT8)
+
+- **Deferred / not implemented.** No owner-supplied test credentials, and no
+  verified mapping from Razorpay payment or order fields to the model's feature
+  contract exists.
+- No Razorpay API, MCP, SDK, webhook, key, secret, credential, or external
+  payment action is used anywhere in this repository.

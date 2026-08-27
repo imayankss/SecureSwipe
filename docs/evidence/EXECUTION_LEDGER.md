@@ -341,3 +341,10 @@ green.
 - **Non-claims:** does not prevent real fraud or loss, does not describe Razorpay or any gateway behaviour, is not production-ready, is not PCI-relevant, is not compatible with any real webhook, and is not a second claimed loss class. No real payment gateway, fulfilment system, merchant catalogue, credential or incident data was used. No anecdote is asserted as fact.
 - **Frozen sources:** MT3, MT4, MT5 and MT6 sources are byte-identical; the fraud-scoring API path is unchanged; `final_test` was never accessed.
 - **One next action only:** **MT8 — feasibility decision for an optional read-only Razorpay context adapter, only if safe test credentials are supplied; otherwise proceed to MT9 release/pitch freeze.**
+
+## 2026-08-27 — MT8: Razorpay context adapter — DEFERRED / NOT IMPLEMENTED
+
+- **Decision:** `MT8 — DEFERRED / NOT IMPLEMENTED`. No adapter code was written and no integration exists.
+- **Rationale:** no owner-supplied Razorpay test credentials; no verified mapping from Razorpay payment or order fields to the model's feature contract; a read-only context adapter would not improve the fraud model's held-out evidence; an unverified integration would create misleading scope and unnecessary security risk.
+- **Confirmation:** no Razorpay API, MCP, SDK, webhook, key, secret, credential, or external payment action was used at any point.
+- **Revisit condition:** owner-supplied safe test credentials **and** a verified field mapping. Until both exist, this stays deferred.
