@@ -3,6 +3,7 @@
 import { useState } from "react";
 
 import { Badge } from "@/components/ui/badge";
+import { LaneACostExplorer } from "@/components/dashboard/LaneACostExplorer";
 import {
   LANE_A_CAPACITY_TIERS,
   LANE_A_EVALUATION,
@@ -42,8 +43,8 @@ export function LaneACapacityWorkbench() {
           <Badge className="border-amber-300/30 bg-amber-300/10 text-amber-100">
             Development evidence
           </Badge>
-          <Badge className="border-rose-300/30 bg-rose-300/10 text-rose-100">
-            Final evaluation pending
+          <Badge className="border-emerald-300/30 bg-emerald-300/10 text-emerald-100">
+            Final evaluation sealed
           </Badge>
           <Badge className="border-violet-300/30 bg-violet-300/10 text-violet-100">
             Illustrative capacity
@@ -185,11 +186,14 @@ export function LaneACapacityWorkbench() {
           approves, blocks, declines, or steps up a payment.
         </p>
         <p>
-          Development evidence from a chronologically held-back validation partition. The
-          final evaluation has not been run. These figures are development-optimistic and
-          are not comparable with Lane B historical metrics.
+          Development evidence from a chronologically held-back validation partition.
+          These figures are development-optimistic and are not comparable with Lane B
+          historical metrics. The separate sealed final evaluation, run exactly once, is
+          reported in the illustrative cost panel below.
         </p>
       </footer>
+
+      <LaneACostExplorer />
     </section>
   );
 }

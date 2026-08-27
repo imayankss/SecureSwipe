@@ -11,7 +11,7 @@ describe("Lane A capacity workbench", () => {
     for (const label of [
       "IEEE-CIS Lane A",
       "Development evidence",
-      "Final evaluation pending",
+      "Final evaluation sealed",
       "Illustrative capacity",
       "No Razorpay or live-merchant economics",
       "Not comparable with Lane B historical metrics",
@@ -39,8 +39,11 @@ describe("Lane A capacity workbench", () => {
   it("activates a capacity tier from the keyboard and announces updated metrics", async () => {
     const user = userEvent.setup();
     render(<LaneACapacityWorkbench />);
-    const lowest = screen.getByRole("button", { name: "100/day" });
-    const highest = screen.getByRole("button", { name: "2,000/day" });
+    const capacityGroup = screen.getByRole("group", {
+      name: /select an illustrative daily review capacity/i,
+    });
+    const lowest = within(capacityGroup).getByRole("button", { name: "100/day" });
+    const highest = within(capacityGroup).getByRole("button", { name: "2,000/day" });
     expect(lowest).toHaveAttribute("aria-pressed", "true");
 
     highest.focus();
@@ -53,16 +56,27 @@ describe("Lane A capacity workbench", () => {
     expect(
       screen.getAllByText(`${(top.recall * 100).toFixed(2)}%`).length,
     ).toBeGreaterThan(0);
-    expect(screen.getByRole("status")).toHaveTextContent(
-      /selected capacity 2,000 reviews per day: precision 5\.64%, recall 93\.82%, and 44,397 reviews/i,
-    );
+    // The nested cost panel has its own live region; target the workbench's.
+    const announcements = screen
+      .getAllByRole("status")
+      .map((node) => node.textContent ?? "");
+    expect(
+      announcements.some((text) =>
+        /selected capacity 2,000 reviews per day: precision 5\.64%, recall 93\.82%, and 44,397 reviews/i.test(
+          text,
+        ),
+      ),
+    ).toBe(true);
   });
 
   it("keeps the low-capacity reference visible rather than hiding poor recall", () => {
     render(<LaneACapacityWorkbench />);
     const lowest = LANE_A_CAPACITY_TIERS[0];
     expect(lowest.reachesRecall80).toBe(false);
-    expect(screen.getByRole("button", { name: "100/day" })).toBeInTheDocument();
+    const capacityGroup = screen.getByRole("group", {
+      name: /select an illustrative daily review capacity/i,
+    });
+    expect(within(capacityGroup).getByRole("button", { name: "100/day" })).toBeInTheDocument();
     expect(
       screen.getAllByText(`${(lowest.recall * 100).toFixed(2)}%`).length,
     ).toBeGreaterThan(0);
@@ -78,9 +92,10 @@ describe("Lane A capacity workbench", () => {
 
   it("states human review only, never approve or block", () => {
     render(<LaneACapacityWorkbench />);
+    // Both the capacity workbench and its nested cost panel state this.
     expect(
-      screen.getByText(/approves, blocks, declines, or steps up a payment/i),
-    ).toBeInTheDocument();
+      screen.getAllByText(/approves, blocks, declines, or steps up a payment/i).length,
+    ).toBeGreaterThan(0);
   });
 
   it("carries the illustrative-scenario disclaimer", () => {
