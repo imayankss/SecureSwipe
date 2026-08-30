@@ -218,3 +218,52 @@ Required pre-switch evidence:
 
 Exact restricted container commands are in `CONTAINER.md`. Provider routing,
 deployment, DNS, or public rollback actions require explicit owner approval.
+
+## Audit critical-section timing diagnostic (opt-in, local only)
+
+The P1-S4 benchmark showed that adding uvicorn workers does not raise
+throughput. Aggregate throughput cannot say whether completions are *waiting*
+for the single `primary` audit-chain-head row lock or doing work *while holding*
+it, so the `postgres-scale` completion path carries an opt-in timing
+instrument. It is inert by default: with the flag absent no aggregator is
+constructed, no timing call does work, and responses, headers, and status codes
+are unchanged.
+
+Enable it only on a local, task-owned instance:
+
+```bash
+export SECURESWIPE_SCALE_TIMING_DIAGNOSTIC=1
+export SECURESWIPE_SCALE_TIMING_OUTPUT_DIR=/path/to/task-owned/timing
+```
+
+The flag is honoured only for the exact value `1`. Each worker process writes
+`scale-timing-<pid>.json` into the output directory, replaced atomically every
+25 completions and again at process exit. Nine durations are recorded per
+successful completion:
+
+| Metric | Span |
+| --- | --- |
+| `idempotency_lock_wait_ms` | transaction open → idempotency row locked |
+| `head_lock_wait_ms` | chain-head `FOR UPDATE` issued → row locked |
+| `head_lock_hold_ms` | chain-head locked → commit returned |
+| `event_build_ms` | chain-head locked → canonical event built |
+| `event_insert_ms` | event built → audit event inserted |
+| `idempotency_update_ms` | event inserted → completion row updated |
+| `head_update_ms` | completion updated → chain head updated |
+| `commit_ms` | chain head updated → commit returned |
+| `total_completion_ms` | transaction open → commit returned |
+
+Only counts, medians, p95, and p99 are published. Individual samples never
+leave the process, and the recorder accepts nothing but declared duration
+names carrying real numbers, so request identifiers, payloads, features,
+decisions, scores, model output, headers, DSNs, credentials, SQL text, and
+exception text cannot reach the output.
+
+Reading the result: `head_lock_wait_ms` dominating means completions are queued
+behind the global chain-head lock and the critical section itself is cheap;
+`head_lock_hold_ms` (and its `commit_ms` component) dominating means the work
+done under the lock is the cost. Only the second case makes group commit the
+indicated remedy. The diagnostic measures; it authorizes no throughput claim.
+
+Never enable this against a shared or production database, and never leave the
+flag set outside a diagnostic run.

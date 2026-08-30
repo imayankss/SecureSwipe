@@ -26,6 +26,12 @@ from api.postgres_audit import (
 )
 from api.postgres_migrations import MigrationError, run_migrations
 from api.scale_config import PostgresScaleSettings
+from api.scale_timing import (
+    NULL_TIMER,
+    CompletionTimer,
+    TimingAggregator,
+    aggregator_from_environment,
+)
 from api.scale_response import (
     BoundedPredictionRepresentation,
     canonical_response_bytes,
@@ -125,6 +131,7 @@ class PostgresIdempotencyStore:
         retention_seconds: float = 86_400.0,
         wait_timeout_seconds: float = 5.0,
         poll_interval_seconds: float = 0.025,
+        timing_aggregator: TimingAggregator | None = None,
     ) -> None:
         if reservation_ttl_seconds <= 0 or retention_seconds <= reservation_ttl_seconds:
             raise ValueError("Retention must be greater than the positive reservation TTL.")
@@ -136,6 +143,14 @@ class PostgresIdempotencyStore:
         self.wait_timeout_seconds = wait_timeout_seconds
         self.poll_interval_seconds = poll_interval_seconds
         self._pool: AsyncConnectionPool[psycopg.AsyncConnection[dict[str, Any]]] | None = None
+        # Opt-in duration-only diagnostic; None keeps the completion path unchanged.
+        self._timing = (
+            aggregator_from_environment() if timing_aggregator is None else timing_aggregator
+        )
+
+    @property
+    def timing_aggregator(self) -> TimingAggregator | None:
+        return self._timing
 
     @property
     def table(self) -> sql.Composed:
@@ -420,9 +435,11 @@ class PostgresIdempotencyStore:
         _validate_response_keys(document)
         digest = response_sha256(response)
         pool = self._require_pool()
+        timer = CompletionTimer(self._timing) if self._timing is not None else NULL_TIMER
         try:
             async with pool.connection() as connection:
                 async with connection.transaction():
+                    timer.at("transaction_open")
                     reservation_cursor = await connection.execute(
                         sql.SQL(
                             """
@@ -437,6 +454,7 @@ class PostgresIdempotencyStore:
                         (reservation.key_digest,),
                     )
                     locked_reservation = await reservation_cursor.fetchone()
+                    timer.at("idempotency_locked")
                     if locked_reservation is None:
                         raise StateStoreUnavailableError(
                             "The durable reservation disappeared before completion."
@@ -455,6 +473,7 @@ class PostgresIdempotencyStore:
                             "The reservation cannot complete after expiry or state change."
                         )
 
+                    timer.at("head_lock_requested")
                     head_cursor = await connection.execute(
                         sql.SQL(
                             """
@@ -467,6 +486,7 @@ class PostgresIdempotencyStore:
                         (AUDIT_CHAIN_ID,),
                     )
                     head = await head_cursor.fetchone()
+                    timer.at("head_locked")
                     if head is None:
                         raise PostgresAuditIntegrityError(
                             "The seeded audit chain head is missing."
@@ -480,6 +500,7 @@ class PostgresIdempotencyStore:
                         response=response,
                         occurred_at=datetime.now(timezone.utc),
                     )
+                    timer.at("event_built")
                     await connection.execute(
                         sql.SQL(
                             """
@@ -505,6 +526,7 @@ class PostgresIdempotencyStore:
                             event.occurred_at,
                         ),
                     )
+                    timer.at("event_inserted")
                     cursor = await connection.execute(
                         sql.SQL(
                             """
@@ -525,6 +547,7 @@ class PostgresIdempotencyStore:
                             reservation.request_digest,
                         ),
                     )
+                    timer.at("idempotency_updated")
                     if cursor.rowcount != 1:
                         raise StaleReservationError(
                             "The reservation cannot complete after expiry or state change."
@@ -548,12 +571,17 @@ class PostgresIdempotencyStore:
                             event.previous_hash,
                         ),
                     )
+                    timer.at("head_updated")
                     if head_update.rowcount != 1:
                         raise PostgresAuditIntegrityError(
                             "The audit chain head changed unexpectedly."
                         )
                     if fault_hook is not None:
                         fault_hook("before_commit")
+                # The transaction context manager commits on exit, so the commit
+                # cost is only observable once this block has closed.
+                timer.at("committed")
+                timer.submit()
             completed = DurableReservation(
                 "completed",
                 reservation.key_digest,
