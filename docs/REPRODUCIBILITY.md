@@ -89,6 +89,42 @@ Expected evidence boundaries:
   without being part of the committed suite.
 - A local pass is not remote CI evidence for an unpushed commit.
 
+## Optional P1-S2/P1-S3 PostgreSQL checks
+
+These checks are separate from the default data-free suite. They require a
+dedicated PostgreSQL 16.10 instance bound only to `127.0.0.1:55432`, a dedicated
+non-superuser role, and a database whose name ends in `_test`. Do not point the
+harness at another local or external database.
+
+Set a secret-bearing test DSN only in the invoking environment, then run:
+
+```bash
+export SECURESWIPE_TEST_POSTGRES_DSN="postgresql://<test-role>:<secret>@127.0.0.1:55432/secureswipe_p1_scale_test"
+.venv/bin/python -m pytest \
+  tests/test_p1_s2_postgres_integration.py \
+  tests/test_p1_s3_postgres_audit.py
+```
+
+The harness validates the loopback/test-database boundary, creates a unique
+`secureswipe_s2_test_*` or `secureswipe_s3_test_*` schema for each case, and
+drops only that schema. It covers concurrent migrations, 64 distinct appends,
+64 identical requests across four spawned processes, one callback/event,
+restart and post-commit replay, pre-commit process death, conflicts, terminal
+states, tamper detection, application-role permissions, API profile isolation,
+and database allowlist/privacy inspection.
+
+For operator-controlled migrations, configure the scale DSN, schema, and HMAC
+secret and invoke `scripts/manage_postgres_migrations.py --apply` explicitly.
+Use `--check` for a non-applying compatibility check. `--apply` requires the
+separate `SECURESWIPE_POSTGRES_MIGRATION_DSN` and non-superuser
+`SECURESWIPE_POSTGRES_APPLICATION_ROLE`; keep
+`SECURESWIPE_POSTGRES_DSN` pointed at the runtime role. API startup never
+applies migrations. Verify the current chain explicitly with:
+
+```bash
+.venv/bin/python scripts/verify_postgres_audit_chain.py
+```
+
 ## Static dashboard
 
 The reviewer interface can run without an API:

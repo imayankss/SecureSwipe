@@ -130,6 +130,18 @@ The formula and sensitivity boundary are canonical in
 - The optional SQLite durability implementation is a local, non-default
   prototype outside the API request path. It is not multi-writer, distributed,
   highly available, or cross-host state.
+- The optional PostgreSQL profile exposes only single-item, score-free
+  `/v2/predict`. Score-bearing V1 and V2 batch serving remain unavailable under
+  that profile. It does not silently use the in-process registry, SQLite
+  prototype, or local NDJSON audit.
+- Its transaction and multi-process tests establish idempotency/audit
+  correctness on one dedicated local PostgreSQL 16.10 instance. P1-S4 has not
+  established throughput, capacity, availability, cross-host operation, or a
+  production-scale claim.
+- The PostgreSQL chain is tamper-evident, not immutable or WORM storage. A
+  privileged database administrator can alter rows; the explicit startup or
+  on-demand verifier is designed to reject mutation, deletion, reordering,
+  head mismatch, or response/event inconsistency.
 - Audit NDJSON and its local head anchor are tamper-evident, not immutable,
   remotely anchored, replicated, or WORM storage.
 - An actor able to rewrite both the log and its anchor can manufacture a new
