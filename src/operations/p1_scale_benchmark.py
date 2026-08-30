@@ -10,9 +10,10 @@ import hashlib
 import json
 import math
 import random
+import re
 from collections import Counter
 from dataclasses import dataclass
-from typing import Any, Literal, Sequence
+from typing import Any, Literal, Mapping, Sequence
 
 from src.operations.benchmark import synthetic_corpus
 
@@ -31,6 +32,53 @@ POSTGRES_IMAGE_DIGEST = (
 WORKER_COUNTS = (1, 2, 4)
 CONCURRENCY_LEVELS = (1, 8, 32, 64)
 REPEAT_NUMBERS = (1, 2, 3)
+
+# Structured API error codes the V2 surface can return, mapped to the fail-closed
+# category each one proves. Diagnostics keep the code and the category only; the
+# human-readable message is never retained because it is unbounded server text.
+API_ERROR_CODE_CATEGORIES: dict[str, str] = {
+    "validation_error": "request_validation",
+    "request_too_large": "request_limits",
+    "model_unavailable": "model_readiness",
+    "not_ready": "model_readiness",
+    "prediction_integrity_error": "prediction_integrity",
+    "prediction_timeout": "prediction_timeout",
+    "capacity_exceeded": "api_admission_capacity",
+    "idempotency_conflict": "idempotency_conflict",
+    "idempotency_in_progress": "idempotency_reservation",
+    "idempotency_stale": "idempotency_reservation",
+    "idempotency_failed": "idempotency_reservation",
+    "state_integrity_failure": "state_integrity",
+    "state_store_unavailable": "database_state_store",
+    "state_store_failure": "database_state_store",
+    "audit_unavailable": "audit_chain",
+    "scale_profile_unavailable": "response_profile",
+    "scale_profile_requires_v2": "response_profile",
+    "http_error": "http_protocol",
+    "internal_error": "unhandled_server_error",
+}
+ABSENT_API_ERROR_CODE = "absent_api_error_code"
+UNRECOGNIZED_API_ERROR_CODE = "unrecognized_api_error_code"
+UNPARSEABLE_API_ERROR_BODY = "unparseable_api_error_body"
+
+# A structured code is server-controlled text, so only a bounded slug shape is
+# ever retained; anything else is recorded as unrecognized without its value.
+_API_ERROR_CODE_PATTERN = re.compile(r"^[a-z][a-z0-9_]{0,62}$")
+
+# Header evidence is reduced to presence flags. Values are never retained because
+# X-Request-ID echoes the plaintext request identifier.
+_CLASSIFIED_HEADERS: tuple[tuple[str, str], ...] = (
+    ("retry-after", "retry_after_present"),
+    ("x-audit-event-hash", "audit_receipt_header_present"),
+    ("x-idempotent-replay", "replay_header_present"),
+    ("x-request-id", "correlation_header_present"),
+)
+_CLASSIFIED_CONTENT_TYPES = (
+    "application/json",
+    "application/problem+json",
+    "text/plain",
+    "text/html",
+)
 
 RequestKind = Literal["valid", "replay", "malformed"]
 Phase = Literal["warmup", "measured", "smoke-warmup", "smoke-measured"]
@@ -118,6 +166,9 @@ class RequestOutcome:
     response_profile: str | None = None
     model_artifact_sha256: str | None = None
     failure_reason: str | None = None
+    api_error_code: str | None = None
+    api_error_category: str | None = None
+    header_classification: dict[str, Any] | None = None
 
 
 def _validate_dimensions(workers: int, concurrency: int, repeat: int) -> None:
@@ -189,6 +240,67 @@ def request_group_sha256(request_id: str) -> str:
     return hashlib.sha256(request_id.encode("utf-8")).hexdigest()
 
 
+def normalize_api_error_code(code: Any) -> str:
+    """Reduce an untrusted structured error code to a bounded, safe slug."""
+    if code is None:
+        return ABSENT_API_ERROR_CODE
+    if not isinstance(code, str) or not _API_ERROR_CODE_PATTERN.match(code):
+        return UNRECOGNIZED_API_ERROR_CODE
+    if code not in API_ERROR_CODE_CATEGORIES:
+        return UNRECOGNIZED_API_ERROR_CODE
+    return code
+
+
+def classify_api_error_code(code: Any) -> str:
+    """Map a structured error code to the fail-closed condition it proves."""
+    normalized = normalize_api_error_code(code)
+    if normalized == ABSENT_API_ERROR_CODE:
+        return ABSENT_API_ERROR_CODE
+    if normalized == UNRECOGNIZED_API_ERROR_CODE:
+        return UNRECOGNIZED_API_ERROR_CODE
+    return API_ERROR_CODE_CATEGORIES[normalized]
+
+
+def safe_header_classification(headers: Mapping[str, str]) -> dict[str, Any]:
+    """Classify response headers by presence only; never retain their values."""
+    lowered = {str(name).lower() for name in headers}
+    raw_content_type = str(headers.get("content-type", headers.get("Content-Type", "")))
+    media_type = raw_content_type.split(";", 1)[0].strip().lower()
+    if not media_type:
+        content_type = "absent"
+    elif media_type in _CLASSIFIED_CONTENT_TYPES:
+        content_type = media_type
+    else:
+        content_type = "other"
+    classification: dict[str, Any] = {
+        "content_type": content_type,
+        "header_count": len(lowered),
+    }
+    for header_name, flag in _CLASSIFIED_HEADERS:
+        classification[flag] = header_name in lowered
+    return classification
+
+
+def safe_api_error_evidence(
+    headers: Mapping[str, str], body: Any, *, parsed: bool
+) -> dict[str, Any]:
+    """Extract the structured code, category, and header shape of a failure."""
+    if not parsed:
+        code: Any = None
+        normalized = UNPARSEABLE_API_ERROR_BODY
+        category = UNPARSEABLE_API_ERROR_BODY
+    else:
+        error = body.get("error") if isinstance(body, dict) else None
+        code = error.get("code") if isinstance(error, dict) else None
+        normalized = normalize_api_error_code(code)
+        category = classify_api_error_code(code)
+    return {
+        "api_error_code": normalized,
+        "api_error_category": category,
+        "header_classification": safe_header_classification(headers),
+    }
+
+
 def safe_outcome_diagnostics(
     workload: Workload, outcomes: Sequence[RequestOutcome], *, failure: str
 ) -> dict[str, Any]:
@@ -250,7 +362,15 @@ def safe_outcome_diagnostics(
                 if outcome.request_kind == "malformed"
                 else "valid_or_replay_group"
             ),
+            "phase": workload.phase,
+            "workers": workload.workers,
+            "concurrency": workload.concurrency,
+            "repeat": workload.repeat,
             "status_code": outcome.status_code,
+            "api_error_code": outcome.api_error_code,
+            "api_error_category": outcome.api_error_category,
+            "header_classification": outcome.header_classification,
+            "latency_ms": round(outcome.latency_ms, 3),
             "server_replay_header": outcome.server_replay,
             "response_schema_version": outcome.response_schema_version,
             "response_profile": outcome.response_profile,
@@ -259,6 +379,15 @@ def safe_outcome_diagnostics(
         for outcome in outcomes
         if not outcome.contract_valid
     ]
+    unexpected = [
+        outcome
+        for outcome in outcomes
+        if outcome.status_code is not None
+        and outcome.status_code != (422 if outcome.request_kind == "malformed" else 200)
+    ]
+    unexpected_statuses = sorted(
+        {outcome.status_code for outcome in unexpected if outcome.status_code is not None}
+    )
     fingerprints = sorted(
         {
             outcome.model_artifact_sha256
@@ -268,6 +397,9 @@ def safe_outcome_diagnostics(
     )
     return {
         "phase": workload.phase,
+        "workers": workload.workers,
+        "concurrency": workload.concurrency,
+        "repeat": workload.repeat,
         "failure": failure,
         "attempted": len(outcomes),
         "status_counts": {
@@ -276,6 +408,37 @@ def safe_outcome_diagnostics(
                 {outcome.status_code for outcome in outcomes if outcome.status_code is not None}
             )
         },
+        "unexpected_status_counts": {
+            str(status): sum(outcome.status_code == status for outcome in unexpected)
+            for status in unexpected_statuses
+        },
+        "api_error_code_counts": dict(
+            sorted(
+                Counter(
+                    outcome.api_error_code
+                    for outcome in unexpected
+                    if outcome.api_error_code is not None
+                ).items()
+            )
+        ),
+        "api_error_category_counts": dict(
+            sorted(
+                Counter(
+                    outcome.api_error_category
+                    for outcome in unexpected
+                    if outcome.api_error_category is not None
+                ).items()
+            )
+        ),
+        "unexpected_latency_ms": (
+            {
+                "min": round(min(outcome.latency_ms for outcome in unexpected), 3),
+                "p50": round(nearest_rank([o.latency_ms for o in unexpected], 0.50), 3),
+                "max": round(max(outcome.latency_ms for outcome in unexpected), 3),
+            }
+            if unexpected
+            else None
+        ),
         "timeouts": sum(outcome.timeout for outcome in outcomes),
         "transport_errors": sum(outcome.transport_error for outcome in outcomes),
         "model_fingerprints": fingerprints,

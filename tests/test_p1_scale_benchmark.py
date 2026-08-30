@@ -1,11 +1,18 @@
 from __future__ import annotations
 
+import csv
+import json
 from pathlib import Path
 
 import httpx
 import pytest
 
-from scripts.run_p1_scale_benchmark import _bounded_contract, _write_partial_diagnostic
+from scripts.run_p1_scale_benchmark import (
+    IncrementalEvidenceLog,
+    _api_error_evidence,
+    _bounded_contract,
+    _write_partial_diagnostic,
+)
 
 from src.operations.p1_scale_benchmark import (
     CONCURRENCY_LEVELS,
@@ -20,6 +27,8 @@ from src.operations.p1_scale_benchmark import (
     ScaleBenchmarkError,
     assert_safe_target,
     build_workload,
+    classify_api_error_code,
+    normalize_api_error_code,
     safe_outcome_diagnostics,
     summarize_outcomes,
     validate_safe_result,
@@ -276,7 +285,15 @@ def test_failure_diagnostic_is_anonymous_and_privacy_safe() -> None:
         {
             "anonymous_group": "group_0001",
             "request_group_classification": "valid_or_replay_group",
+            "phase": "smoke-measured",
+            "workers": 1,
+            "concurrency": 8,
+            "repeat": 1,
             "status_code": 200,
+            "api_error_code": None,
+            "api_error_category": None,
+            "header_classification": None,
+            "latency_ms": 1.0,
             "server_replay_header": True,
             "response_schema_version": "2.0",
             "response_profile": "postgres-scale-bounded-v1",
@@ -406,3 +423,249 @@ def test_partial_diagnostic_writer_preserves_only_safe_summary(tmp_path: Path) -
     assert "request_id" not in persisted
     assert "payload" not in persisted
     assert "raw_score" not in persisted
+
+
+def _error_body(code: object) -> dict[str, object]:
+    return {
+        "schema_version": "2.0",
+        "request_id": "p1sf-v1-w4-c64-r2-valid-0123",
+        "error": {"code": code, "message": "Pool timeout waiting for a connection."},
+    }
+
+
+def test_unexpected_response_keeps_structured_code_category_and_header_shape() -> None:
+    response = httpx.Response(
+        503,
+        json=_error_body("state_store_unavailable"),
+        headers={
+            "Content-Type": "application/json",
+            "Retry-After": "1",
+            "X-Request-ID": "p1sf-v1-w4-c64-r2-valid-0123",
+        },
+    )
+
+    evidence = _api_error_evidence(response)
+
+    assert evidence["api_error_code"] == "state_store_unavailable"
+    assert evidence["api_error_category"] == "database_state_store"
+    assert evidence["header_classification"] == {
+        "content_type": "application/json",
+        "header_count": 4,
+        "retry_after_present": True,
+        "audit_receipt_header_present": False,
+        "replay_header_present": False,
+        "correlation_header_present": True,
+    }
+    encoded = json.dumps(evidence)
+    assert "p1sf-v1" not in encoded
+    assert "Pool timeout" not in encoded
+    validate_safe_result(evidence)
+
+
+@pytest.mark.parametrize(
+    ("code", "category"),
+    [
+        ("capacity_exceeded", "api_admission_capacity"),
+        ("audit_unavailable", "audit_chain"),
+        ("idempotency_in_progress", "idempotency_reservation"),
+        ("state_store_failure", "database_state_store"),
+        ("model_unavailable", "model_readiness"),
+        ("scale_profile_unavailable", "response_profile"),
+    ],
+)
+def test_every_fail_closed_503_code_maps_to_an_explicit_category(
+    code: str, category: str
+) -> None:
+    assert classify_api_error_code(code) == category
+    assert normalize_api_error_code(code) == code
+
+
+@pytest.mark.parametrize(
+    "code",
+    ["State_Store_Unavailable", "not a code", "x" * 80, "", 17, None, {"code": "x"}],
+)
+def test_untrusted_error_code_shapes_are_never_retained_verbatim(code: object) -> None:
+    normalized = normalize_api_error_code(code)
+
+    assert normalized in {"unrecognized_api_error_code", "absent_api_error_code"}
+    assert normalized != code
+
+
+def test_unparseable_error_body_is_recorded_without_the_raw_body() -> None:
+    response = httpx.Response(503, content=b"<html>upstream failure</html>")
+
+    evidence = _api_error_evidence(response)
+
+    assert evidence["api_error_code"] == "unparseable_api_error_body"
+    assert evidence["api_error_category"] == "unparseable_api_error_body"
+    assert "upstream failure" not in json.dumps(evidence)
+
+
+def test_diagnostics_aggregate_unexpected_status_codes_and_dimensions() -> None:
+    workload = build_workload(workers=4, concurrency=64, repeat=2, phase="measured")
+    outcomes = [
+        RequestOutcome(item.kind, 422 if item.kind == "malformed" else 200, 1.0)
+        for item in workload.requests
+    ]
+    outcomes[0] = RequestOutcome(
+        "valid",
+        503,
+        41.5,
+        contract_valid=False,
+        request_group_sha256="a" * 64,
+        failure_reason="unexpected_http_status",
+        api_error_code="state_store_unavailable",
+        api_error_category="database_state_store",
+        header_classification={"content_type": "application/json"},
+    )
+
+    diagnostic = safe_outcome_diagnostics(workload, outcomes, failure="probe")
+
+    assert diagnostic["workers"] == 4
+    assert diagnostic["concurrency"] == 64
+    assert diagnostic["repeat"] == 2
+    assert diagnostic["unexpected_status_counts"] == {"503": 1}
+    assert diagnostic["api_error_code_counts"] == {"state_store_unavailable": 1}
+    assert diagnostic["api_error_category_counts"] == {"database_state_store": 1}
+    assert diagnostic["unexpected_latency_ms"] == {"min": 41.5, "p50": 41.5, "max": 41.5}
+    assert diagnostic["response_failures"][0]["api_error_code"] == "state_store_unavailable"
+    assert diagnostic["response_failures"][0]["latency_ms"] == 41.5
+    validate_safe_result(diagnostic)
+
+
+def _repeat_record(*, workers: int, concurrency: int, repeat: int) -> dict[str, object]:
+    phase = {
+        "manifest": {"phase": "measured", "attempts": 1000},
+        "result": {
+            "attempted": 1000,
+            "successful_2xx": 900,
+            "expected_non_2xx": 100,
+            "unexpected_non_2xx": 0,
+            "timeouts": 0,
+            "transport_errors": 0,
+            "wall_seconds": 9.5,
+            "successful_rps": 94.7,
+            "all_completed_latency": {"p50_ms": 12.0, "p95_ms": 40.0, "p99_ms": 80.0},
+            "successful_latency": {"p50_ms": 12.0, "p95_ms": 40.0, "p99_ms": 80.0},
+        },
+    }
+    return {
+        "workers": workers,
+        "concurrency": concurrency,
+        "repeat": repeat,
+        "warmup": phase,
+        "measured": phase,
+        "model": {"model_artifact_sha256": "c" * 64, "model_version": "synthetic-1"},
+        "audit": {
+            "warmup_growth": 70,
+            "measured_growth": 700,
+            "full_verifier_status": "verified",
+        },
+        "resources": {
+            "api_process_group_cpu_percent": {"mean": 210.0, "peak": 380.0, "samples": 90},
+            "api_process_group_rss": {"median_mib": 460.0, "peak_mib": 520.0, "samples": 90},
+        },
+    }
+
+
+def _evidence_header() -> dict[str, object]:
+    return {
+        "mode": "full",
+        "source_commit_sha": "5137ef69c6218a6a12c90dc3313f623843c41629",
+        "bundle_manifest_sha256": "b" * 64,
+        "runtime": {"python": "3.12.10", "logical_cpu_count": 8},
+    }
+
+
+def test_every_completed_repeat_is_persisted_before_the_next_one_starts(
+    tmp_path: Path,
+) -> None:
+    log = IncrementalEvidenceLog(
+        run_id="p1-scale-incremental", output_dir=tmp_path, header=_evidence_header()
+    )
+
+    assert log.json_path.exists()
+    assert json.loads(log.json_path.read_text())["completed_repeat_count"] == 0
+
+    log.record_repeat(_repeat_record(workers=4, concurrency=32, repeat=3))
+    after_first = json.loads(log.json_path.read_text())
+    log.record_repeat(_repeat_record(workers=4, concurrency=64, repeat=1))
+    after_second = json.loads(log.json_path.read_text())
+
+    assert after_first["completed_repeat_count"] == 1
+    assert after_second["completed_repeat_count"] == 2
+    assert after_first["source_commit_sha"] == "5137ef69c6218a6a12c90dc3313f623843c41629"
+    assert after_first["runtime"]["python"] == "3.12.10"
+    assert after_first["publishable"] is False
+
+    persisted = after_second["completed_runs"][0]["measured"]["result"]
+    assert persisted["successful_rps"] == 94.7
+    assert persisted["all_completed_latency"] == {
+        "p50_ms": 12.0,
+        "p95_ms": 40.0,
+        "p99_ms": 80.0,
+    }
+    assert after_second["completed_runs"][0]["resources"]["api_process_group_rss"][
+        "median_mib"
+    ] == 460.0
+    assert after_second["completed_runs"][0]["audit"]["measured_growth"] == 700
+    assert after_second["completed_runs"][0]["model"]["model_artifact_sha256"] == "c" * 64
+
+    rows = list(csv.DictReader(log.csv_path.read_text().splitlines()))
+    assert len(rows) == 4
+    assert rows[0]["p99_ms"] == "80.0"
+    assert rows[0]["api_rss_median_mib"] == "460.0"
+
+
+def test_completed_cells_survive_a_later_cell_failing_closed(tmp_path: Path) -> None:
+    log = IncrementalEvidenceLog(
+        run_id="p1-scale-failure", output_dir=tmp_path, header=_evidence_header()
+    )
+    log.record_repeat(_repeat_record(workers=4, concurrency=32, repeat=3))
+    log.record_repeat(_repeat_record(workers=4, concurrency=64, repeat=1))
+
+    log.record_failure(
+        {
+            "workers": 4,
+            "concurrency": 64,
+            "repeat": 2,
+            "status_counts": {"200": 891, "422": 100, "503": 9},
+            "api_error_code_counts": {"state_store_unavailable": 9},
+        }
+    )
+
+    persisted = json.loads(log.json_path.read_text())
+    assert persisted["evidence_status"] == "failed_after_completed_repeats"
+    assert persisted["completed_repeat_count"] == 2
+    assert [run["concurrency"] for run in persisted["completed_runs"]] == [32, 64]
+    assert persisted["completed_runs"][1]["measured"]["result"]["successful_rps"] == 94.7
+    assert persisted["failure"]["api_error_code_counts"] == {"state_store_unavailable": 9}
+    assert len(list(csv.DictReader(log.csv_path.read_text().splitlines()))) == 4
+
+
+def test_incremental_evidence_refuses_unsafe_repeat_records(tmp_path: Path) -> None:
+    log = IncrementalEvidenceLog(
+        run_id="p1-scale-privacy", output_dir=tmp_path, header=_evidence_header()
+    )
+    log.record_repeat(_repeat_record(workers=1, concurrency=1, repeat=1))
+
+    for forbidden in ("request_id", "payload", "features", "raw_score", "secret", "dsn"):
+        record = _repeat_record(workers=1, concurrency=8, repeat=1)
+        record[forbidden] = "sentinel"
+        with pytest.raises(ScaleBenchmarkError, match="Forbidden saved-result field"):
+            log.record_repeat(record)
+
+    persisted = json.loads(log.json_path.read_text())
+    assert persisted["completed_repeat_count"] == 1
+    assert "sentinel" not in log.json_path.read_text()
+
+
+def test_incremental_evidence_is_replaced_atomically(tmp_path: Path) -> None:
+    log = IncrementalEvidenceLog(
+        run_id="p1-scale-atomic", output_dir=tmp_path, header=_evidence_header()
+    )
+    log.record_repeat(_repeat_record(workers=2, concurrency=8, repeat=1))
+    log.record_completion()
+
+    assert json.loads(log.json_path.read_text())["evidence_status"] == "completed"
+    assert not list(tmp_path.glob("*.tmp"))
