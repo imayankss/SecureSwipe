@@ -56,6 +56,7 @@ from src.operations.p1_scale_benchmark import (  # noqa: E402
     REPEAT_NUMBERS,
     STATE_BACKEND,
     WORKER_COUNTS,
+    BenchmarkValidationError,
     RequestOutcome,
     RequestSpec,
     ScaleBenchmarkError,
@@ -63,8 +64,11 @@ from src.operations.p1_scale_benchmark import (  # noqa: E402
     assert_safe_target,
     build_workload,
     nearest_rank,
+    request_group_sha256,
+    safe_outcome_diagnostics,
     summarize_outcomes,
     validate_safe_result,
+    validate_response_groups,
 )
 
 OWNERSHIP_PREFIX = "secureswipe-p1-s4-"
@@ -685,39 +689,76 @@ class ApiCluster:
         self._log.close()
 
 
-def _bounded_contract(response: httpx.Response, *, replay: bool) -> tuple[bool, dict[str, str]]:
+def _bounded_contract(
+    response: httpx.Response,
+) -> tuple[bool, dict[str, str], dict[str, Any]]:
+    evidence: dict[str, Any] = {
+        "server_replay": None,
+        "response_sha256": None,
+        "audit_receipt_sha256": None,
+        "response_schema_version": None,
+        "response_profile": None,
+        "model_artifact_sha256": None,
+        "failure_reason": None,
+    }
     try:
         body = response.json()
+    except (TypeError, ValueError):
+        evidence["failure_reason"] = "invalid_json_response"
+        return False, {}, evidence
+    try:
+        canonical_body = json.dumps(
+            body, sort_keys=True, separators=(",", ":"), allow_nan=False
+        ).encode("utf-8")
+    except (TypeError, ValueError):
+        evidence["failure_reason"] = "noncanonical_json_response"
+        return False, {}, evidence
+    evidence["response_sha256"] = hashlib.sha256(canonical_body).hexdigest()
+    try:
         parsed = BoundedPredictionRepresentation.model_validate(body)
-        encoded = json.dumps(body, sort_keys=True).lower()
-        if "score" in encoded or "request_id" in encoded:
-            return False, {}
-        receipt = response.headers["X-Audit-Event-Hash"]
-        if len(receipt) != 64 or any(character not in "0123456789abcdef" for character in receipt):
-            return False, {}
-        if replay != (response.headers.get("X-Idempotent-Replay") == "true"):
-            return False, {}
-        return True, {
+    except (TypeError, ValueError):
+        evidence["failure_reason"] = "invalid_bounded_schema_or_profile"
+        return False, {}, evidence
+    metadata = {
             "model_version": parsed.model.model_version,
             "model_artifact_sha256": parsed.model.model_artifact_sha256,
             "bundle_format_version": parsed.model.bundle_format_version,
             "api_schema_version": parsed.schema_version,
             "response_profile": parsed.response_profile,
+    }
+    evidence.update(
+        {
+            "response_schema_version": parsed.schema_version,
+            "response_profile": parsed.response_profile,
+            "model_artifact_sha256": parsed.model.model_artifact_sha256,
         }
-    except (KeyError, ValueError, TypeError):
-        return False, {}
+    )
+    encoded = json.dumps(body, sort_keys=True).lower()
+    if "score" in encoded or "request_id" in encoded:
+        evidence["failure_reason"] = "score_or_request_identifier_leakage"
+        return False, metadata, evidence
+    receipt = response.headers.get("X-Audit-Event-Hash")
+    if receipt is None:
+        evidence["failure_reason"] = "missing_audit_receipt"
+        return False, metadata, evidence
+    if len(receipt) != 64 or any(character not in "0123456789abcdef" for character in receipt):
+        evidence["failure_reason"] = "malformed_audit_receipt"
+        return False, metadata, evidence
+    evidence["audit_receipt_sha256"] = receipt
+    replay_header = response.headers.get("X-Idempotent-Replay")
+    if replay_header not in {None, "true"}:
+        evidence["failure_reason"] = "invalid_replay_header"
+        return False, metadata, evidence
+    evidence["server_replay"] = replay_header == "true"
+    return True, metadata, evidence
 
 
 def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], dict[str, str]]:
-    first_seen: set[str] = set()
-    seen_lock = threading.Lock()
     metadata: dict[str, str] = {}
     metadata_lock = threading.Lock()
 
     def issue(spec: RequestSpec) -> RequestOutcome:
-        with seen_lock:
-            replay = spec.request_id in first_seen
-            first_seen.add(spec.request_id)
+        group_token = request_group_sha256(spec.request_id)
         started = time.perf_counter()
         try:
             with httpx.Client(timeout=TIMEOUT_SECONDS) as client:
@@ -728,12 +769,16 @@ def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], di
                 )
             latency = (time.perf_counter() - started) * 1000
             contract_valid = True
+            failure_reason: str | None = None
+            evidence: dict[str, Any] = {}
             if spec.kind != "malformed" and response.status_code == 200:
-                contract_valid, observed = _bounded_contract(response, replay=replay)
+                contract_valid, observed, evidence = _bounded_contract(response)
+                failure_reason = evidence.get("failure_reason")
                 if observed:
                     with metadata_lock:
                         if metadata and metadata != observed:
                             contract_valid = False
+                            failure_reason = "model_metadata_mismatch"
                         else:
                             metadata.update(observed)
             elif spec.kind == "malformed" and response.status_code == 422:
@@ -741,20 +786,61 @@ def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], di
                     contract_valid = response.json()["error"]["code"] == "validation_error"
                 except (KeyError, TypeError, ValueError):
                     contract_valid = False
-            return RequestOutcome(spec.kind, response.status_code, latency, contract_valid=contract_valid)
+                if not contract_valid:
+                    failure_reason = "invalid_validation_error_contract"
+            else:
+                contract_valid = False
+                failure_reason = "unexpected_http_status"
+            return RequestOutcome(
+                spec.kind,
+                response.status_code,
+                latency,
+                contract_valid=contract_valid,
+                request_group_sha256=group_token,
+                server_replay=evidence.get("server_replay"),
+                response_sha256=evidence.get("response_sha256"),
+                audit_receipt_sha256=evidence.get("audit_receipt_sha256"),
+                response_schema_version=evidence.get("response_schema_version"),
+                response_profile=evidence.get("response_profile"),
+                model_artifact_sha256=evidence.get("model_artifact_sha256"),
+                failure_reason=failure_reason,
+            )
         except httpx.TimeoutException:
-            return RequestOutcome(spec.kind, None, (time.perf_counter() - started) * 1000, timeout=True)
+            return RequestOutcome(
+                spec.kind,
+                None,
+                (time.perf_counter() - started) * 1000,
+                timeout=True,
+                request_group_sha256=group_token,
+                failure_reason="client_timeout",
+            )
         except httpx.HTTPError:
             return RequestOutcome(
-                spec.kind, None, (time.perf_counter() - started) * 1000, transport_error=True
+                spec.kind,
+                None,
+                (time.perf_counter() - started) * 1000,
+                transport_error=True,
+                request_group_sha256=group_token,
+                failure_reason="transport_error",
             )
 
     wall_started = time.perf_counter()
     with ThreadPoolExecutor(max_workers=workload.concurrency) as pool:
         outcomes = list(pool.map(issue, workload.requests))
-    summary = summarize_outcomes(workload, outcomes, time.perf_counter() - wall_started)
+    try:
+        summary = summarize_outcomes(workload, outcomes, time.perf_counter() - wall_started)
+        summary["response_groups"] = validate_response_groups(outcomes)
+    except ScaleBenchmarkError as exc:
+        raise BenchmarkValidationError(
+            str(exc),
+            diagnostics=safe_outcome_diagnostics(workload, outcomes, failure=str(exc)),
+        ) from exc
     if not metadata:
-        raise ScaleBenchmarkError("No verified V2 response metadata was captured.")
+        message = "No verified V2 response metadata was captured."
+        raise BenchmarkValidationError(
+            message,
+            diagnostics=safe_outcome_diagnostics(workload, outcomes, failure=message),
+        )
     return summary, metadata
 
 
@@ -797,26 +883,53 @@ def _run_repeat(
     schema = postgres.schema_name(f"w{workers}_c{concurrency}_r{repeat}")
     migrations = postgres.migrate(schema)
     try:
-        with ApiCluster(
-            workers=workers,
-            postgres=postgres,
-            schema=schema,
-            manifest=manifest,
-            artifact_root=artifact_root,
-            log_path=temp_root / f"api-w{workers}-c{concurrency}-r{repeat}.log",
-        ) as cluster:
-            sampler = ResourceSampler(cluster.process.pid, postgres.container, workers)
-            sampler.start()
+        try:
+            with ApiCluster(
+                workers=workers,
+                postgres=postgres,
+                schema=schema,
+                manifest=manifest,
+                artifact_root=artifact_root,
+                log_path=temp_root / f"api-w{workers}-c{concurrency}-r{repeat}.log",
+            ) as cluster:
+                sampler = ResourceSampler(cluster.process.pid, postgres.container, workers)
+                sampler.start()
+                try:
+                    before, _ = asyncio.run(_audit_state(postgres.app_dsn, schema))
+                    warmup_result, warmup_metadata = _run_workload(cluster.base_url, warmup)
+                    after_warmup, _ = asyncio.run(_audit_state(postgres.app_dsn, schema))
+                    measured_result, measured_metadata = _run_workload(cluster.base_url, measured)
+                    after_measured, verifier_seconds = asyncio.run(
+                        _audit_state(postgres.app_dsn, schema)
+                    )
+                finally:
+                    resources = sampler.stop()
+        except BenchmarkValidationError as exc:
             try:
-                before, _ = asyncio.run(_audit_state(postgres.app_dsn, schema))
-                warmup_result, warmup_metadata = _run_workload(cluster.base_url, warmup)
-                after_warmup, _ = asyncio.run(_audit_state(postgres.app_dsn, schema))
-                measured_result, measured_metadata = _run_workload(cluster.base_url, measured)
-                after_measured, verifier_seconds = asyncio.run(
+                event_count, verifier_seconds = asyncio.run(
                     _audit_state(postgres.app_dsn, schema)
                 )
-            finally:
-                resources = sampler.stop()
+                audit_diagnostic: dict[str, Any] = {
+                    "event_count": event_count,
+                    "full_chain_verifier": "verified",
+                    "full_chain_verifier_seconds": round(verifier_seconds, 6),
+                }
+            except Exception as audit_exc:
+                audit_diagnostic = {
+                    "event_count": None,
+                    "full_chain_verifier": "failed",
+                    "failure_type": type(audit_exc).__name__,
+                }
+            exc.diagnostics.update(
+                {
+                    "workers": workers,
+                    "concurrency": concurrency,
+                    "repeat": repeat,
+                    "audit": audit_diagnostic,
+                    "temporary_api_log_policy": "removed_after_safe_diagnostic_capture",
+                }
+            )
+            raise
         expected_warmup_growth = warmup.counts["valid"]
         expected_measured_growth = measured.counts["valid"]
         if after_warmup - before != expected_warmup_growth:
@@ -877,8 +990,12 @@ def _run_audit_growth(
                         headers={"X-Request-ID": f"p1sf-v1-audit-growth-{index:05d}"},
                     )
                     latencies.append((time.perf_counter() - started) * 1000)
-                    valid, _ = _bounded_contract(response, replay=False)
-                    if response.status_code != 200 or not valid:
+                    valid, _, evidence = _bounded_contract(response)
+                    if (
+                        response.status_code != 200
+                        or not valid
+                        or evidence["server_replay"] is not False
+                    ):
                         raise ScaleBenchmarkError(f"Audit-growth request {index} failed closed.")
                     if index in {100, 1_000, 10_000}:
                         count, verifier_seconds = asyncio.run(
@@ -953,6 +1070,14 @@ def _write_results(report: dict[str, Any], output_dir: Path) -> tuple[Path, Path
     return json_path, csv_path
 
 
+def _write_partial_diagnostic(report: dict[str, Any], output_dir: Path) -> Path:
+    validate_safe_result(report)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    path = output_dir / f"{report['run_id']}-partial.json"
+    path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return path
+
+
 def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> dict[str, Any]:
     if mode == "full" and not confirm_full_matrix:
         raise ScaleBenchmarkError("Full mode requires --confirm-full-matrix.")
@@ -983,19 +1108,45 @@ def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> di
                     for repeat in REPEAT_NUMBERS
                 ]
             )
-            for workers, concurrency, repeat in dimensions:
-                runs.append(
-                    _run_repeat(
-                        postgres=postgres,
-                        workers=workers,
-                        concurrency=concurrency,
-                        repeat=repeat,
-                        smoke=mode == "smoke",
-                        manifest=manifest,
-                        artifact_root=artifact_root,
-                        temp_root=temp_root,
+            try:
+                for workers, concurrency, repeat in dimensions:
+                    runs.append(
+                        _run_repeat(
+                            postgres=postgres,
+                            workers=workers,
+                            concurrency=concurrency,
+                            repeat=repeat,
+                            smoke=mode == "smoke",
+                            manifest=manifest,
+                            artifact_root=artifact_root,
+                            temp_root=temp_root,
+                        )
                     )
-                )
+            except BenchmarkValidationError as exc:
+                diagnostic = {
+                    "run_id": run_id,
+                    "diagnostic_kind": "p1_scale_partial_failure",
+                    "mode": mode,
+                    "publishable": False,
+                    "protocol_version": PROTOCOL_VERSION,
+                    "fixture_version": FIXTURE_VERSION,
+                    "source_commit_sha": commit_sha,
+                    "bundle_manifest_sha256": bundle_manifest_sha256,
+                    "artifact_classification": "synthetic_reference_only_no_lane_a_claim",
+                    "runtime": _machine_record(),
+                    "postgresql": {
+                        "version": postgres.server_version(),
+                        "image": POSTGRES_IMAGE,
+                        "image_digest": postgres.image_digest(),
+                    },
+                    "completed_repeat_count": len(runs),
+                    "failure": exc.diagnostics,
+                }
+                path = _write_partial_diagnostic(diagnostic, output_dir)
+                relative = path.relative_to(PROJECT_ROOT)
+                raise ScaleBenchmarkError(
+                    f"{exc} Privacy-safe partial diagnostic: {relative}."
+                ) from exc
             audit_growth = (
                 {"status": "not_run_in_non_publishable_smoke"}
                 if mode == "smoke"
