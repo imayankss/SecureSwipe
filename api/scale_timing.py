@@ -18,6 +18,7 @@ import json
 import math
 import os
 import threading
+from collections.abc import Callable
 from pathlib import Path
 from time import perf_counter
 from typing import Any, Mapping, Sequence
@@ -141,10 +142,16 @@ class TimingAggregator:
 class CompletionTimer:
     """Checkpoint recorder for one completion transaction."""
 
-    __slots__ = ("_aggregator", "_checkpoints")
+    __slots__ = ("_aggregator", "_checkpoints", "_completion_observer")
 
-    def __init__(self, aggregator: TimingAggregator) -> None:
+    def __init__(
+        self,
+        aggregator: TimingAggregator | None,
+        *,
+        completion_observer: Callable[[float], None] | None = None,
+    ) -> None:
         self._aggregator = aggregator
+        self._completion_observer = completion_observer
         self._checkpoints: dict[str, float] = {}
 
     def at(self, checkpoint: str) -> None:
@@ -165,7 +172,10 @@ class CompletionTimer:
         durations = self.durations()
         if len(durations) != len(METRIC_SPANS):
             return
-        self._aggregator.record(durations)
+        if self._aggregator is not None:
+            self._aggregator.record(durations)
+        if self._completion_observer is not None:
+            self._completion_observer(durations["total_completion_ms"])
 
 
 class _NullTimer:
