@@ -29,7 +29,7 @@ export function DashboardSection({
     >
       <header className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="max-w-3xl">
-          <p className="ss-eyebrow text-teal-200">{eyebrow}</p>
+          <p className="ss-eyebrow">{eyebrow}</p>
           <h2 id={headingId} className="mt-1.5 text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">
             {title}
           </h2>

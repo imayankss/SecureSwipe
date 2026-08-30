@@ -120,6 +120,7 @@ class ModelInfoResponse(StrictContract):
     calibrated: bool
     operating_threshold: float
     feature_schema: list[str]
+    model_artifact_sha256: str | None
     training_data_fingerprint: str
     evidence_category: EvidenceCategory
     historical_taint: bool

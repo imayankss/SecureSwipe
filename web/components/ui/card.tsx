@@ -14,7 +14,7 @@ export function Card({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 export function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("relative z-10 space-y-2 p-5", className)} {...props} />;
+  return <div className={cn("relative z-10 space-y-2 p-5 sm:p-6", className)} {...props} />;
 }
 
 export function CardTitle({ className, ...props }: React.ComponentProps<"h3">) {
@@ -26,5 +26,5 @@ export function CardDescription({ className, ...props }: React.ComponentProps<"p
 }
 
 export function CardContent({ className, ...props }: React.ComponentProps<"div">) {
-  return <div className={cn("relative z-10 p-5 pt-0", className)} {...props} />;
+  return <div className={cn("relative z-10 p-5 pt-0 sm:p-6 sm:pt-0", className)} {...props} />;
 }

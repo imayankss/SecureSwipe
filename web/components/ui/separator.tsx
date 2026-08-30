@@ -1,3 +1,3 @@
 export function Separator() {
-  return <div className="h-px w-full bg-white/10" />;
+  return <div className="h-px w-full bg-[var(--ss-border)]" />;
 }

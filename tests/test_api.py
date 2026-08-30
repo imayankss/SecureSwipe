@@ -115,6 +115,7 @@ def test_liveness_readiness_and_model_info(
     assert info.json()["score_type"] == "raw_score"
     assert info.json()["calibrated"] is False
     assert info.json()["feature_schema"] == list(ALL_FEATURES)
+    assert info.json()["model_artifact_sha256"] is None
     assert info.json()["evidence_category"] == "synthetic_demo_inference"
     assert info.json()["historical_taint"] is False
     assert info.json()["decision_eligible"] is False
@@ -774,6 +775,9 @@ def test_duplicate_prediction_replays_without_rescoring_or_duplicate_audit_event
     assert sorted(
         response.headers.get("x-idempotent-replay", "false") for response in (first, replay)
     ) == ["false", "true"]
+    audit_confirmations = [
+        response.headers["x-audit-event-hash"] for response in (first, replay)
+    ]
     assert conflict.status_code == 409
     assert conflict.json()["error"]["code"] == "idempotency_conflict"
     assert rejected.status_code == 422
@@ -788,6 +792,7 @@ def test_duplicate_prediction_replays_without_rescoring_or_duplicate_audit_event
     assert event["score"] == first.json()["decision_score"]
     assert event["threshold"] == 0.53
     assert event["decision"] in {"human_review", "below_review_threshold"}
+    assert audit_confirmations == [event["event_hash"], event["event_hash"]]
 
     encoded = audit_path.read_text(encoding="ascii")
     for forbidden in (
@@ -803,6 +808,38 @@ def test_duplicate_prediction_replays_without_rescoring_or_duplicate_audit_event
         '"Amount"',
     ):
         assert forbidden not in encoded
+
+
+def test_sequential_replay_preserves_original_audit_receipt(
+    fitted_bundle: ModelBundle,
+    transaction_payload: dict[str, float],
+    tmp_path: Path,
+) -> None:
+    audited_bundle = replace(fitted_bundle, model_artifact_sha256="a" * 64)
+    audit_path = tmp_path / "prediction-events.ndjson"
+    settings = ApiSettings(tmp_path, None, (), audit_log_path=audit_path)
+    headers = {"X-Request-ID": "receipt-replay-1"}
+
+    with TestClient(
+        create_app(service=ModelService(audited_bundle), settings=settings)
+    ) as client:
+        first = client.post("/v1/predict", json=transaction_payload, headers=headers)
+        replay = client.post("/v1/predict", json=transaction_payload, headers=headers)
+        repeated_replay = client.post(
+            "/v1/predict", json=transaction_payload, headers=headers
+        )
+
+    event = json.loads(audit_path.read_text(encoding="ascii"))
+    assert first.status_code == replay.status_code == repeated_replay.status_code == 200
+    assert "x-idempotent-replay" not in first.headers
+    assert replay.headers["x-idempotent-replay"] == "true"
+    assert repeated_replay.headers["x-idempotent-replay"] == "true"
+    assert {
+        first.headers["x-audit-event-hash"],
+        replay.headers["x-audit-event-hash"],
+        repeated_replay.headers["x-audit-event-hash"],
+    } == {event["event_hash"]}
+    assert verify_audit_log(audit_path).event_count == 1
 
 
 def test_transient_audit_sink_failure_fails_closed_then_recovers_without_sleeping(
@@ -910,5 +947,12 @@ def test_cors_uses_explicit_allowlist(fitted_bundle: ModelBundle, tmp_path: Path
                 "Access-Control-Request-Method": "POST",
             },
         )
+        allowed_actual = client.get(
+            "/v1/model-info",
+            headers={"Origin": "https://demo.example"},
+        )
     assert allowed.headers["access-control-allow-origin"] == "https://demo.example"
     assert "access-control-allow-origin" not in denied.headers
+    assert allowed_actual.headers["access-control-expose-headers"] == (
+        "X-Request-ID, X-Idempotent-Replay, X-Audit-Event-Hash"
+    )

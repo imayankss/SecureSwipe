@@ -48,7 +48,7 @@ export function ShapSection() {
                     <span className="font-mono text-xs font-semibold text-slate-200">{feature.feature}</span>
                     <span className="relative h-2 overflow-hidden rounded-full bg-slate-800/80">
                       <span
-                        className="absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-teal-300/55 to-teal-200"
+                        className="absolute inset-y-0 left-0 rounded-full bg-blue-500"
                         style={{ width: relativeWidth }}
                       />
                     </span>
