@@ -49,6 +49,7 @@ reports/figures/*.png
 reports/metrics/*.json
 !reports/figures/.gitkeep
 !reports/metrics/.gitkeep
+reports/benchmarks/p1-scale-results/
 
 # OS
 .DS_Store
