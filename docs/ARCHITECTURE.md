@@ -49,6 +49,7 @@ flowchart LR
 | Canonical scoring | `src/inference/batch_scoring.py` | Ordered feature normalization shared by direct and API paths |
 | HTTP service | `api/main.py`, `api/schemas.py`, `api/service.py` | Versioned requests, bounded errors, readiness, admission, timeout, redaction |
 | Audit and idempotency | `api/audit.py` | In-process replay and optional local tamper-evident NDJSON |
+| Optional scale substrate | `api/postgres_idempotency.py`, `api/postgres_audit.py`, `api/postgres_migrations.py`, `api/scale_response.py` | PostgreSQL reservations, atomic append/head/completion, explicit chain verification, and exact score-free V2 replay |
 | Static export | `scripts/export_web_data.py` | Cross-artifact invariants; aggregate evidence only |
 | Reviewer UI | `web/app/`, `web/components/` | Static `/` and `/evidence`, optional local API interaction on `/demo` |
 | Offline monitoring | `src/monitoring/`, `scripts/run_offline_monitoring.py` | Diagnostics only; no automatic model or policy change |
@@ -126,6 +127,21 @@ process-local and the default registry does not survive restart. Complete
 failure and recovery boundaries belong in [LIMITATIONS.md](LIMITATIONS.md) and
 [MT6_STATE_AND_CRASH_DECISION.md](evidence/MT6_STATE_AND_CRASH_DECISION.md).
 
+An explicit, non-default `postgres-scale` profile provides HMAC-digested
+idempotency keys, canonical request digests, short reservation transactions,
+bounded polling, terminal stale/failed states, and exact score-free response
+replay. Its migration history is forward-only, checksum-verified, and protected
+by an advisory lock; startup checks migrations but never applies them.
+
+After scoring completes outside PostgreSQL, one transaction locks the reserved
+idempotency row and the single chain head, appends one canonical event, stores
+the bounded response and original event receipt, advances the head, and commits.
+Only `POST /v2/predict` exposes this bounded contract. Startup and the explicit
+operator command run the O(n) verifier; ordinary append reads no historical
+event set. The application role can select/insert audit events but has no normal
+update, delete, or truncate privilege. No in-memory or local-NDJSON fallback is
+constructed for this profile.
+
 ## Model and evidence boundary
 
 The sealed Lane A model chain and the local reference bundle are different
@@ -154,10 +170,12 @@ reviewer wording is maintained in [EVIDENCE_GUIDE.md](EVIDENCE_GUIDE.md#p04-mode
 
 ## Concurrency and process shape
 
-The checked-in API is a single-process reference. Estimator access, in-memory
-idempotency, admission state, and the local audit writer are owned by that
-process. Multiple workers or replicas would not share those invariants and are
-therefore not an implied scaling mode.
+The supported `local-default` API remains a single-process reference. Estimator
+access, in-memory idempotency, admission state, and the local audit writer are
+owned by that process. The optional PostgreSQL path has multi-process
+correctness tests for shared idempotency and audit state. P1-S4 has not measured
+or approved throughput, capacity, or worker-scaling claims, so correctness does
+not imply production-scale performance.
 
 Measured loopback behavior and the audit-growth bottleneck are documented in
 [MT4_CONCURRENCY_EVIDENCE.md](evidence/MT4_CONCURRENCY_EVIDENCE.md). They are
