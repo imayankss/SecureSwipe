@@ -112,6 +112,28 @@ harness SHA:
 The full command performs 36 measured configurations plus the separate 10,000
 event audit-growth procedure. It must not be used merely as a smoke test.
 
+## Concurrency-safe replay validation
+
+Client task scheduling does not determine which concurrent same-ID request
+commits first. The validator therefore treats `X-Idempotent-Replay: true` as
+server evidence and never predicts the winner from submission order. For every
+successful anonymous request group it requires exactly one response without
+the replay header, all remaining responses with the replay header, one shared
+bounded-response SHA-256, and one shared committed audit receipt. Aggregate
+audit growth must still equal the number of unique valid groups. Schema/profile
+errors, score or request-ID leakage, missing or malformed receipts, invalid
+replay headers, changed responses, changed receipts, duplicate events, and the
+frozen status-mix violations continue to fail closed.
+
+If response validation fails, the harness writes an ignored `*-partial.json`
+before task resource cleanup. It contains the source SHA, runtime, model
+fingerprint when available, worker/concurrency/repeat, anonymous group class,
+status and server-header interpretation, schema/profile, failure reasons, and
+safe response/audit counts. It excludes DSNs, secrets, plaintext request IDs,
+bodies, features, and scores. Temporary API and PostgreSQL logs remain under
+the task-owned temporary directory only until this safe summary is captured;
+normal cleanup then removes them.
+
 ## Interpreting the output
 
 A zero exit status means only that the requested harness mode reconciled its

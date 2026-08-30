@@ -40,6 +40,14 @@ class ScaleBenchmarkError(RuntimeError):
     """Raised when a frozen workload or result invariant is violated."""
 
 
+class BenchmarkValidationError(ScaleBenchmarkError):
+    """A fail-closed validation error with privacy-safe diagnostic context."""
+
+    def __init__(self, message: str, *, diagnostics: dict[str, Any]) -> None:
+        super().__init__(message)
+        self.diagnostics = diagnostics
+
+
 @dataclass(frozen=True)
 class RequestSpec:
     """One in-memory synthetic request; never serialize this object to results."""
@@ -102,6 +110,14 @@ class RequestOutcome:
     timeout: bool = False
     transport_error: bool = False
     contract_valid: bool = True
+    request_group_sha256: str | None = None
+    server_replay: bool | None = None
+    response_sha256: str | None = None
+    audit_receipt_sha256: str | None = None
+    response_schema_version: str | None = None
+    response_profile: str | None = None
+    model_artifact_sha256: str | None = None
+    failure_reason: str | None = None
 
 
 def _validate_dimensions(workers: int, concurrency: int, repeat: int) -> None:
@@ -166,6 +182,157 @@ def nearest_rank(values: Sequence[float], fraction: float) -> float:
         raise ScaleBenchmarkError("Percentile fraction must be in (0, 1].")
     ordered = sorted(values)
     return ordered[max(1, math.ceil(len(ordered) * fraction)) - 1]
+
+
+def request_group_sha256(request_id: str) -> str:
+    """Return an in-memory grouping token without retaining the plaintext ID."""
+    return hashlib.sha256(request_id.encode("utf-8")).hexdigest()
+
+
+def safe_outcome_diagnostics(
+    workload: Workload, outcomes: Sequence[RequestOutcome], *, failure: str
+) -> dict[str, Any]:
+    """Summarize response evidence without IDs, inputs, features, or scores."""
+    grouped: dict[str, list[RequestOutcome]] = {}
+    for outcome in outcomes:
+        token = outcome.request_group_sha256
+        if token is not None:
+            grouped.setdefault(token, []).append(outcome)
+    labels = {token: f"group_{index + 1:04d}" for index, token in enumerate(sorted(grouped))}
+    group_summaries: list[dict[str, Any]] = []
+    for token, items in grouped.items():
+        successful = [item for item in items if item.status_code == 200]
+        repeated = len(successful) > 1
+        problematic = any(not item.contract_valid for item in items)
+        if not repeated and not problematic:
+            continue
+        receipts = {
+            item.audit_receipt_sha256
+            for item in successful
+            if item.audit_receipt_sha256 is not None
+        }
+        bodies = {
+            item.response_sha256 for item in successful if item.response_sha256 is not None
+        }
+        group_summaries.append(
+            {
+                "anonymous_group": labels[token],
+                "request_group_classification": (
+                    "same_id_replay_group" if repeated else "single_request_group"
+                ),
+                "responses": len(items),
+                "status_counts": {
+                    str(status): sum(item.status_code == status for item in items)
+                    for status in sorted(
+                        {item.status_code for item in items if item.status_code is not None}
+                    )
+                },
+                "server_original_count": sum(
+                    item.server_replay is False for item in successful
+                ),
+                "server_replay_count": sum(item.server_replay is True for item in successful),
+                "distinct_response_hashes": len(bodies),
+                "distinct_audit_receipts": len(receipts),
+                "failure_reasons": sorted(
+                    {
+                        item.failure_reason
+                        for item in items
+                        if item.failure_reason is not None
+                    }
+                ),
+            }
+        )
+    response_failures = [
+        {
+            "anonymous_group": labels.get(outcome.request_group_sha256 or "", "unclassified"),
+            "request_group_classification": (
+                "malformed_unique_group"
+                if outcome.request_kind == "malformed"
+                else "valid_or_replay_group"
+            ),
+            "status_code": outcome.status_code,
+            "server_replay_header": outcome.server_replay,
+            "response_schema_version": outcome.response_schema_version,
+            "response_profile": outcome.response_profile,
+            "failure_reason": outcome.failure_reason,
+        }
+        for outcome in outcomes
+        if not outcome.contract_valid
+    ]
+    fingerprints = sorted(
+        {
+            outcome.model_artifact_sha256
+            for outcome in outcomes
+            if outcome.model_artifact_sha256 is not None
+        }
+    )
+    return {
+        "phase": workload.phase,
+        "failure": failure,
+        "attempted": len(outcomes),
+        "status_counts": {
+            str(status): sum(outcome.status_code == status for outcome in outcomes)
+            for status in sorted(
+                {outcome.status_code for outcome in outcomes if outcome.status_code is not None}
+            )
+        },
+        "timeouts": sum(outcome.timeout for outcome in outcomes),
+        "transport_errors": sum(outcome.transport_error for outcome in outcomes),
+        "model_fingerprints": fingerprints,
+        "response_failures": response_failures,
+        "replay_groups": sorted(group_summaries, key=lambda item: item["anonymous_group"]),
+    }
+
+
+def validate_response_groups(outcomes: Sequence[RequestOutcome]) -> dict[str, int]:
+    """Validate same-ID responses using only server-provided replay evidence."""
+    grouped: dict[str, list[RequestOutcome]] = {}
+    for outcome in outcomes:
+        if outcome.status_code != 200:
+            continue
+        if outcome.request_group_sha256 is None:
+            raise ScaleBenchmarkError("Successful response is missing an anonymous group token.")
+        grouped.setdefault(outcome.request_group_sha256, []).append(outcome)
+
+    failures: list[str] = []
+    same_id_groups = server_originals = server_replays = 0
+    group_receipts: list[str] = []
+    for items in grouped.values():
+        if len(items) > 1:
+            same_id_groups += 1
+        invalid = [item.failure_reason or "invalid_response_contract" for item in items if not item.contract_valid]
+        failures.extend(invalid)
+        original_count = sum(item.server_replay is False for item in items)
+        replay_count = sum(item.server_replay is True for item in items)
+        server_originals += original_count
+        server_replays += replay_count
+        if original_count != 1 or replay_count != len(items) - 1:
+            failures.append("server_replay_cardinality_mismatch")
+        receipts = {item.audit_receipt_sha256 for item in items}
+        if None in receipts or len(receipts) != 1:
+            failures.append("audit_receipt_mismatch")
+        else:
+            group_receipts.append(next(receipt for receipt in receipts if receipt is not None))
+        responses = {item.response_sha256 for item in items}
+        if None in responses or len(responses) != 1:
+            failures.append("bounded_response_mismatch")
+
+    if len(set(group_receipts)) != len(group_receipts):
+        failures.append("audit_receipt_reused_across_groups")
+
+    if failures:
+        counts = Counter(failures)
+        raise ScaleBenchmarkError(
+            "Server-evidence response-group validation failed: "
+            + ", ".join(f"{reason}={count}" for reason, count in sorted(counts.items()))
+            + "."
+        )
+    return {
+        "successful_request_groups": len(grouped),
+        "same_id_replay_groups": same_id_groups,
+        "server_original_responses": server_originals,
+        "server_replay_responses": server_replays,
+    }
 
 
 def summarize_outcomes(
