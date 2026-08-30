@@ -26,6 +26,13 @@ from api.postgres_audit import (
 )
 from api.postgres_migrations import MigrationError, run_migrations
 from api.scale_config import PostgresScaleSettings
+from api.scale_lifecycle_timing import (
+    NULL_LIFECYCLE_TIMER,
+    EventLoopLagMonitor,
+    LifecycleTimer,
+    LifecycleTimingAggregator,
+    lifecycle_aggregator_from_environment,
+)
 from api.scale_timing import (
     NULL_TIMER,
     CompletionTimer,
@@ -132,6 +139,7 @@ class PostgresIdempotencyStore:
         wait_timeout_seconds: float = 5.0,
         poll_interval_seconds: float = 0.025,
         timing_aggregator: TimingAggregator | None = None,
+        lifecycle_timing_aggregator: LifecycleTimingAggregator | None = None,
     ) -> None:
         if reservation_ttl_seconds <= 0 or retention_seconds <= reservation_ttl_seconds:
             raise ValueError("Retention must be greater than the positive reservation TTL.")
@@ -147,16 +155,28 @@ class PostgresIdempotencyStore:
         self._timing = (
             aggregator_from_environment() if timing_aggregator is None else timing_aggregator
         )
+        self._lifecycle_timing = (
+            lifecycle_aggregator_from_environment()
+            if lifecycle_timing_aggregator is None
+            else lifecycle_timing_aggregator
+        )
+        self._event_loop_monitor = (
+            EventLoopLagMonitor(self._lifecycle_timing)
+            if self._lifecycle_timing is not None
+            else None
+        )
 
     @property
     def timing_aggregator(self) -> TimingAggregator | None:
         return self._timing
 
     @property
+    def lifecycle_timing_aggregator(self) -> LifecycleTimingAggregator | None:
+        return self._lifecycle_timing
+
+    @property
     def table(self) -> sql.Composed:
-        return sql.SQL("{}.secureswipe_idempotency").format(
-            sql.Identifier(self.settings.schema)
-        )
+        return sql.SQL("{}.secureswipe_idempotency").format(sql.Identifier(self.settings.schema))
 
     async def open(self) -> None:
         if self._pool is not None:
@@ -177,9 +197,7 @@ class PostgresIdempotencyStore:
                     timeout=self.settings.connect_timeout_seconds,
                     kwargs={
                         "autocommit": False,
-                        "connect_timeout": max(
-                            1, math.ceil(self.settings.connect_timeout_seconds)
-                        ),
+                        "connect_timeout": max(1, math.ceil(self.settings.connect_timeout_seconds)),
                         "row_factory": dict_row,
                     },
                     open=False,
@@ -189,6 +207,8 @@ class PostgresIdempotencyStore:
             self._pool = pool
             async with pool.connection() as connection:
                 await verify_audit_chain(connection, schema=self.settings.schema)
+            if self._event_loop_monitor is not None:
+                self._event_loop_monitor.start()
         except (
             MigrationError,
             PostgresAuditIntegrityError,
@@ -203,6 +223,8 @@ class PostgresIdempotencyStore:
             ) from None
 
     async def close(self) -> None:
+        if self._event_loop_monitor is not None:
+            await self._event_loop_monitor.stop()
         pool, self._pool = self._pool, None
         if pool is not None:
             await pool.close()
@@ -285,12 +307,21 @@ class PostgresIdempotencyStore:
             audit_receipt_sha256=receipt,
         )
 
-    async def reserve(self, *, request_id: str, request_digest: str) -> DurableReservation:
+    async def reserve(
+        self,
+        *,
+        request_id: str,
+        request_digest: str,
+        lifecycle_timer: LifecycleTimer = NULL_LIFECYCLE_TIMER,
+    ) -> DurableReservation:
         _validate_request_digest(request_digest)
         key_digest = idempotency_key_digest(self.settings.hmac_secret, request_id)
         pool = self._require_pool()
         try:
+            checkout_started = lifecycle_timer.started_at()
             async with pool.connection() as connection:
+                lifecycle_timer.observe_elapsed("reservation_pool_checkout_ms", checkout_started)
+                transaction_started = lifecycle_timer.started_at()
                 async with connection.transaction():
                     cursor = await connection.execute(
                         sql.SQL(
@@ -311,37 +342,37 @@ class PostgresIdempotencyStore:
                     )
                     inserted = await cursor.fetchone()
                     if inserted is not None:
-                        return DurableReservation("owner", key_digest, request_digest)
-                    cursor = await connection.execute(
-                        sql.SQL(
-                            """
-                            SELECT key_digest, request_digest, state,
-                                   reservation_expires_at <= clock_timestamp() AS is_stale,
-                                   response_document, response_sha256, audit_receipt_sha256
-                            FROM {}
-                            WHERE key_digest = %s
-                            FOR SHARE
-                            """
-                        ).format(self.table),
-                        (key_digest,),
-                    )
-                    row = await cursor.fetchone()
-                    if row is None:
-                        raise StateStoreUnavailableError(
-                            "The durable reservation could not be observed safely."
+                        result = DurableReservation("owner", key_digest, request_digest)
+                    else:
+                        cursor = await connection.execute(
+                            sql.SQL(
+                                """
+                                SELECT key_digest, request_digest, state,
+                                       reservation_expires_at <= clock_timestamp() AS is_stale,
+                                       response_document, response_sha256, audit_receipt_sha256
+                                FROM {}
+                                WHERE key_digest = %s
+                                FOR SHARE
+                                """
+                            ).format(self.table),
+                            (key_digest,),
                         )
-                    return self._from_row(row, request_digest=request_digest)
+                        row = await cursor.fetchone()
+                        if row is None:
+                            raise StateStoreUnavailableError(
+                                "The durable reservation could not be observed safely."
+                            )
+                        result = self._from_row(row, request_digest=request_digest)
+                lifecycle_timer.observe_elapsed("reservation_transaction_ms", transaction_started)
+                return result
         except DurableIdempotencyError:
             raise
         except (psycopg.Error, PoolTimeout, OSError) as exc:
             raise StateStoreUnavailableError(
-                "The postgres-scale state store is unavailable "
-                f"({type(exc).__name__})."
+                f"The postgres-scale state store is unavailable ({type(exc).__name__})."
             ) from None
 
-    async def _read(
-        self, *, key_digest: str, request_digest: str
-    ) -> DurableReservation:
+    async def _read(self, *, key_digest: str, request_digest: str) -> DurableReservation:
         pool = self._require_pool()
         try:
             async with pool.connection() as connection:
@@ -365,8 +396,7 @@ class PostgresIdempotencyStore:
             raise
         except (psycopg.Error, PoolTimeout, OSError) as exc:
             raise StateStoreUnavailableError(
-                "The postgres-scale state store is unavailable "
-                f"({type(exc).__name__})."
+                f"The postgres-scale state store is unavailable ({type(exc).__name__})."
             ) from None
 
     async def wait_for_resolution(
@@ -377,9 +407,7 @@ class PostgresIdempotencyStore:
             raise StoredResponseIntegrityError("Stored bounded response is missing.")
         return completed.response
 
-    async def wait_for_reservation(
-        self, reservation: DurableReservation
-    ) -> DurableReservation:
+    async def wait_for_reservation(self, reservation: DurableReservation) -> DurableReservation:
         if reservation.kind == "completed" and reservation.response is not None:
             return reservation
         if reservation.kind == "stale":
@@ -415,9 +443,7 @@ class PostgresIdempotencyStore:
         *,
         fault_hook: Callable[[str], None] | None = None,
     ) -> BoundedPredictionRepresentation:
-        completed = await self.complete_reservation(
-            reservation, response, fault_hook=fault_hook
-        )
+        completed = await self.complete_reservation(reservation, response, fault_hook=fault_hook)
         if completed.response is None:
             raise StoredResponseIntegrityError("Committed bounded response is missing.")
         return completed.response
@@ -428,16 +454,29 @@ class PostgresIdempotencyStore:
         response: BoundedPredictionRepresentation,
         *,
         fault_hook: Callable[[str], None] | None = None,
+        lifecycle_timer: LifecycleTimer = NULL_LIFECYCLE_TIMER,
     ) -> DurableReservation:
         if reservation.kind != "owner":
             raise RuntimeError("Only the reservation owner can complete work.")
+        serialization_started = lifecycle_timer.started_at()
         document = response.model_dump(mode="json", by_alias=True)
         _validate_response_keys(document)
         digest = response_sha256(response)
+        lifecycle_timer.observe_elapsed("bounded_response_serialize_ms", serialization_started)
         pool = self._require_pool()
-        timer = CompletionTimer(self._timing) if self._timing is not None else NULL_TIMER
+
+        def lifecycle_observer(duration: float) -> None:
+            lifecycle_timer.observe_duration("completion_transaction_ms", duration)
+
+        timer = (
+            CompletionTimer(self._timing, completion_observer=lifecycle_observer)
+            if self._timing is not None or lifecycle_timer is not NULL_LIFECYCLE_TIMER
+            else NULL_TIMER
+        )
         try:
+            checkout_started = lifecycle_timer.started_at()
             async with pool.connection() as connection:
+                lifecycle_timer.observe_elapsed("completion_pool_checkout_ms", checkout_started)
                 async with connection.transaction():
                     timer.at("transaction_open")
                     reservation_cursor = await connection.execute(
@@ -488,9 +527,7 @@ class PostgresIdempotencyStore:
                     head = await head_cursor.fetchone()
                     timer.at("head_locked")
                     if head is None:
-                        raise PostgresAuditIntegrityError(
-                            "The seeded audit chain head is missing."
-                        )
+                        raise PostgresAuditIntegrityError("The seeded audit chain head is missing.")
                     event = build_audit_event(
                         chain_id=str(head["chain_id"]),
                         sequence=int(head["last_sequence"]) + 1,
@@ -599,8 +636,7 @@ class PostgresIdempotencyStore:
             raise StoredResponseIntegrityError(str(exc)) from exc
         except (psycopg.Error, PoolTimeout, OSError) as exc:
             raise StateStoreUnavailableError(
-                "The postgres-scale state store is unavailable "
-                f"({type(exc).__name__})."
+                f"The postgres-scale state store is unavailable ({type(exc).__name__})."
             ) from None
 
     async def fail(self, reservation: DurableReservation) -> None:
@@ -624,8 +660,7 @@ class PostgresIdempotencyStore:
                     )
         except (psycopg.Error, PoolTimeout, OSError) as exc:
             raise StateStoreUnavailableError(
-                "The postgres-scale state store is unavailable "
-                f"({type(exc).__name__})."
+                f"The postgres-scale state store is unavailable ({type(exc).__name__})."
             ) from None
 
     async def execute(
@@ -634,11 +669,13 @@ class PostgresIdempotencyStore:
         request_id: str,
         request_digest: str,
         operation: Callable[[], Awaitable[BoundedPredictionRepresentation]],
+        lifecycle_timer: LifecycleTimer = NULL_LIFECYCLE_TIMER,
     ) -> BoundedPredictionRepresentation:
         result = await self.execute_detailed(
             request_id=request_id,
             request_digest=request_digest,
             operation=operation,
+            lifecycle_timer=lifecycle_timer,
         )
         return result.response
 
@@ -649,36 +686,61 @@ class PostgresIdempotencyStore:
         request_digest: str,
         operation: Callable[[], Awaitable[BoundedPredictionRepresentation]],
         fault_hook: Callable[[str], None] | None = None,
+        lifecycle_timer: LifecycleTimer = NULL_LIFECYCLE_TIMER,
     ) -> DurableExecutionResult:
-        reservation = await self.reserve(request_id=request_id, request_digest=request_digest)
+        try:
+            reservation = await self.reserve(
+                request_id=request_id,
+                request_digest=request_digest,
+                lifecycle_timer=lifecycle_timer,
+            )
+        except DurableIdempotencyError:
+            lifecycle_timer.classify("pending_fail_closed")
+            raise
+        outcome_started = lifecycle_timer.started_at()
         if reservation.kind == "completed" and reservation.response is not None:
             if reservation.audit_receipt_sha256 is None:
                 raise StoredResponseIntegrityError("Stored audit receipt is missing.")
+            lifecycle_timer.classify("completed_replay")
+            lifecycle_timer.observe_elapsed("reservation_outcome_handling_ms", outcome_started)
             return DurableExecutionResult(
                 reservation.response, reservation.audit_receipt_sha256, True
             )
         if reservation.kind == "reserved":
-            completed = await self.wait_for_reservation(reservation)
+            try:
+                completed = await self.wait_for_reservation(reservation)
+            except DurableIdempotencyError:
+                lifecycle_timer.classify("pending_fail_closed")
+                lifecycle_timer.observe_elapsed("reservation_outcome_handling_ms", outcome_started)
+                raise
             if completed.response is None or completed.audit_receipt_sha256 is None:
                 raise StoredResponseIntegrityError("Completed replay is incomplete.")
-            return DurableExecutionResult(
-                completed.response, completed.audit_receipt_sha256, True
-            )
+            lifecycle_timer.classify("completed_replay")
+            lifecycle_timer.observe_elapsed("reservation_outcome_handling_ms", outcome_started)
+            return DurableExecutionResult(completed.response, completed.audit_receipt_sha256, True)
         if reservation.kind == "stale":
+            lifecycle_timer.classify("pending_fail_closed")
+            lifecycle_timer.observe_elapsed("reservation_outcome_handling_ms", outcome_started)
             raise StaleReservationError("The durable reservation is stale; retry is refused.")
         if reservation.kind == "failed":
+            lifecycle_timer.classify("pending_fail_closed")
+            lifecycle_timer.observe_elapsed("reservation_outcome_handling_ms", outcome_started)
             raise FailedReservationError("The durable reservation previously failed.")
+        lifecycle_timer.classify("owner")
+        lifecycle_timer.observe_elapsed("reservation_outcome_handling_ms", outcome_started)
         try:
             response = await operation()
             completed = await self.complete_reservation(
-                reservation, response, fault_hook=fault_hook
+                reservation,
+                response,
+                fault_hook=fault_hook,
+                lifecycle_timer=lifecycle_timer,
             )
             if completed.response is None or completed.audit_receipt_sha256 is None:
                 raise StoredResponseIntegrityError("Committed response is incomplete.")
-            return DurableExecutionResult(
-                completed.response, completed.audit_receipt_sha256, False
-            )
+            return DurableExecutionResult(completed.response, completed.audit_receipt_sha256, False)
         except BaseException:
+            lifecycle_timer.discard()
             try:
                 await self.fail(reservation)
             except DurableIdempotencyError:

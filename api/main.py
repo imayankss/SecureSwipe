@@ -46,6 +46,11 @@ from api.scale_config import (
     StateBackend,
     state_backend_from_environment,
 )
+from api.scale_lifecycle_timing import (
+    NULL_LIFECYCLE_TIMER,
+    LifecycleTimer,
+    RequestLifecycleTimer,
+)
 from api.scale_response import (
     BoundedPredictionRepresentation,
     BoundedResponseIntegrityError,
@@ -240,9 +245,7 @@ class ApiSettings:
             if self.postgres_scale is None:
                 raise ValueError("postgres-scale requires validated PostgreSQL settings.")
             if self.audit_log_path is not None:
-                raise ValueError(
-                    "postgres-scale cannot use the local NDJSON audit configuration."
-                )
+                raise ValueError("postgres-scale cannot use the local NDJSON audit configuration.")
 
     @classmethod
     def from_environment(cls) -> "ApiSettings":
@@ -267,9 +270,7 @@ class ApiSettings:
         audit_value = os.getenv("SECURESWIPE_AUDIT_LOG", "").strip()
         state_backend = state_backend_from_environment()
         postgres_scale = (
-            PostgresScaleSettings.from_environment()
-            if state_backend == "postgres-scale"
-            else None
+            PostgresScaleSettings.from_environment() if state_backend == "postgres-scale" else None
         )
         return cls(
             artifact_root=root,
@@ -451,6 +452,19 @@ def create_app(
     async def request_context(request: Request, call_next: Callable[..., Any]) -> Any:
         request_id = _request_id(request)
         started = time.perf_counter()
+        lifecycle_timer: LifecycleTimer = NULL_LIFECYCLE_TIMER
+        if (
+            configured.state_backend == "postgres-scale"
+            and request.method == "POST"
+            and request.url.path == "/v2/predict"
+        ):
+            store: PostgresIdempotencyStore | None = getattr(
+                application.state, "postgres_idempotency_store", None
+            )
+            lifecycle_aggregator = store.lifecycle_timing_aggregator if store is not None else None
+            if lifecycle_aggregator is not None:
+                lifecycle_timer = RequestLifecycleTimer(lifecycle_aggregator)
+        request.state.scale_lifecycle_timer = lifecycle_timer
         status = 500
         response = None
         try:
@@ -458,6 +472,7 @@ def create_app(
             status = response.status_code
         finally:
             latency = time.perf_counter() - started
+            lifecycle_timer.submit()
             application.state.metrics.observe_request(
                 request.method, request.url.path, status, latency
             )
@@ -558,9 +573,7 @@ def create_app(
         )
 
     @application.exception_handler(DurableIdempotencyError)
-    async def durable_state_error(
-        request: Request, exc: DurableIdempotencyError
-    ) -> JSONResponse:
+    async def durable_state_error(request: Request, exc: DurableIdempotencyError) -> JSONResponse:
         if isinstance(exc, ReservationInProgressError):
             code = "idempotency_in_progress"
         elif isinstance(exc, StaleReservationError):
@@ -611,9 +624,7 @@ def create_app(
     ) -> JSONResponse:
         return JSONResponse(
             status_code=503,
-            content=_error_payload(
-                _request_id(request), "scale_profile_unavailable", str(exc)
-            ),
+            content=_error_payload(_request_id(request), "scale_profile_unavailable", str(exc)),
         )
 
     @application.exception_handler(ScaleProfileRequiresV2Error)
@@ -622,9 +633,7 @@ def create_app(
     ) -> JSONResponse:
         return JSONResponse(
             status_code=503,
-            content=_error_payload(
-                _request_id(request), "scale_profile_requires_v2", str(exc)
-            ),
+            content=_error_payload(_request_id(request), "scale_profile_requires_v2", str(exc)),
         )
 
     @application.exception_handler(StarletteHTTPException)
@@ -725,9 +734,8 @@ def create_app(
         store: PostgresIdempotencyStore | None = getattr(
             application.state, "postgres_idempotency_store", None
         )
-        store_ready = (
-            configured.state_backend != "postgres-scale"
-            or (store is not None and await store.is_available())
+        store_ready = configured.state_backend != "postgres-scale" or (
+            store is not None and await store.is_available()
         )
         health = HealthResponse(
             status="ready" if model_service.ready and store_ready else "not_ready",
@@ -774,37 +782,39 @@ def create_app(
             raise ScaleProfileUnavailableError(
                 "The bounded V2 route requires the explicit postgres-scale profile."
             )
-        store: PostgresIdempotencyStore | None = (
-            application.state.postgres_idempotency_store
-        )
+        store: PostgresIdempotencyStore | None = application.state.postgres_idempotency_store
         if store is None:
-            raise StateStoreUnavailableError(
-                "The postgres-scale state store is unavailable."
-            )
+            raise StateStoreUnavailableError("The postgres-scale state store is unavailable.")
         request_id = _request_id(request)
         canonical_input_digest = input_digest(
             route="/v2/predict",
             transactions=[transaction],
             schema_version=V2_SCHEMA_VERSION,
         )
+        lifecycle_timer: LifecycleTimer = request.state.scale_lifecycle_timer
+        lifecycle_timer.mark_pre_reservation_complete()
 
         async def score_once() -> BoundedPredictionRepresentation:
             gate: ConcurrencyGate = application.state.concurrency_gate
+            scoring_started = lifecycle_timer.started_at()
             result = await _run_admitted_inference(
                 current_service().predict_one,
                 transaction,
                 gate=gate,
                 timeout_seconds=application.state.prediction_timeout_seconds,
             )
+            lifecycle_timer.observe_elapsed("model_scoring_ms", scoring_started)
             application.state.metrics.observe_scores([result.decision_score])
-            return build_bounded_prediction_response(
-                service=current_service(), result=result
-            )
+            build_started = lifecycle_timer.started_at()
+            bounded = build_bounded_prediction_response(service=current_service(), result=result)
+            lifecycle_timer.observe_elapsed("bounded_response_build_ms", build_started)
+            return bounded
 
         completed = await store.execute_detailed(
             request_id=request_id,
             request_digest=canonical_input_digest,
             operation=score_once,
+            lifecycle_timer=lifecycle_timer,
         )
         response.headers["X-Audit-Event-Hash"] = completed.audit_receipt_sha256
         if completed.replayed:
