@@ -267,3 +267,61 @@ indicated remedy. The diagnostic measures; it authorizes no throughput claim.
 
 Never enable this against a shared or production database, and never leave the
 flag set outside a diagnostic run.
+
+## Full request-lifecycle timing diagnostic (opt-in, local only)
+
+The lifecycle diagnostic measures the remaining server-side path for the
+single-item `postgres-scale` `POST /v2/predict` route. It is a separate,
+strict opt-in from the completion critical-section recorder above and is inert
+for `local-default`. Enable it only with the exact value `1`:
+
+```bash
+export SECURESWIPE_SCALE_LIFECYCLE_TIMING=1
+export SECURESWIPE_SCALE_LIFECYCLE_TIMING_OUTPUT_DIR=/path/to/task-owned/lifecycle-timing
+```
+
+Any other flag value, including an unset value or whitespace around `1`, is
+disabled. If the output directory is omitted, the local default is
+`reports/benchmarks/p1-scale-results/lifecycle-timing/`; the parent results
+directory is Git-ignored. Each API worker atomically replaces one
+`scale-lifecycle-timing-<pid>.json` file every 25 classified requests and at
+shutdown.
+
+The artifact contains only count, minimum, median, p95, p99, and maximum
+durations for validation/handler work before reservation, reservation pool
+checkout and transaction, reservation outcome handling, model scoring,
+bounded-response construction and durable serialization, completion pool
+checkout, the existing completion-transaction duration, and total handler
+time. Reservation outcomes are counts only: owner, completed replay, or
+pending/fail-closed. The completion span is supplied by the existing
+transaction checkpoint recorder rather than measured by a second overlapping
+clock.
+
+Every worker also runs one low-overhead process-level event-loop observation.
+It sleeps on a monotonic clock at a fixed 100 ms interval and aggregates the
+non-negative drift between the scheduled and actual wake-up. This is a
+process-level observation only: it cannot be assigned to an individual
+request, and unexplained request time must not be labelled event-loop
+scheduling without corroborating measurements.
+
+No per-request samples are written. The recorder cannot accept plaintext
+request or idempotency identifiers, payloads, features, response bodies,
+scores, decisions, model values, DSNs, SQL, exception text, secrets, or stack
+traces. Metrics with unknown names, non-numeric values, booleans, negative
+values, NaN, or infinity are discarded. A metric's count can be lower than the
+classified-request count when that path was not executed (for example, a
+completed replay does not score or complete again). Unexpected owner-path
+failures discard that request's partial timing so incomplete spans are not
+presented as a completed lifecycle.
+
+These timings are diagnostic observations, not an SLO, causality proof, or
+scalability claim. Pool checkout includes only the wait until a connection is
+acquired; model scoring includes admission and threadpool scheduling around
+the synchronous estimator call; total handler time also includes framework
+work not represented by the named spans. The named spans are non-overlapping
+where the implementation exposes safe boundaries, so their sum may explain
+only part of total handler time.
+
+After a local diagnostic, stop the API workers before removing the task-owned
+output directory, and unset both lifecycle variables. Never enable this
+recorder against shared or production infrastructure.

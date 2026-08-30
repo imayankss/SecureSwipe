@@ -151,6 +151,28 @@ def test_incomplete_transactions_are_never_recorded() -> None:
     assert aggregator.snapshot()["metrics"]["head_lock_hold_ms"]["count"] == 0
 
 
+def test_completion_duration_can_be_linked_without_a_second_timer() -> None:
+    observed: list[float] = []
+    timer = CompletionTimer(None, completion_observer=observed.append)
+    timer._checkpoints.update(  # noqa: SLF001 - deterministic clock for the assertion
+        {
+            "transaction_open": 0.000,
+            "idempotency_locked": 0.002,
+            "head_lock_requested": 0.003,
+            "head_locked": 0.010,
+            "event_built": 0.011,
+            "event_inserted": 0.014,
+            "idempotency_updated": 0.016,
+            "head_updated": 0.017,
+            "committed": 0.025,
+        }
+    )
+
+    timer.submit()
+
+    assert observed == [pytest.approx(25.0)]
+
+
 def test_unknown_checkpoint_names_are_rejected() -> None:
     timer = CompletionTimer(TimingAggregator())
     with pytest.raises(ValueError, match="Unknown completion checkpoint"):
