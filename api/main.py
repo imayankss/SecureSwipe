@@ -78,6 +78,14 @@ class AuditUnavailableError(Exception):
     """Raised when required audit evidence cannot be recorded safely."""
 
 
+@dataclass(frozen=True)
+class _IdempotentPrediction:
+    """Cached response plus the receipt for its original committed audit event."""
+
+    prediction: PredictionResponse
+    audit_event_hash: str | None
+
+
 class ConcurrencyGate:
     """Bounded, non-blocking admission control for synchronous inference work.
 
@@ -368,6 +376,7 @@ def create_app(
             allow_credentials=False,
             allow_methods=["GET", "POST", "OPTIONS"],
             allow_headers=["Content-Type", "X-Request-ID"],
+            expose_headers=["X-Request-ID", "X-Idempotent-Replay", "X-Audit-Event-Hash"],
         )
 
     @application.middleware("http")
@@ -531,17 +540,17 @@ def create_app(
         canonical_input_digest: str,
         latency_ms: float,
         results: list[Any],
-    ) -> None:
+    ) -> tuple[str, ...]:
         audit_log: AuditLog | None = application.state.audit_log
         if audit_log is None:
-            return
+            return ()
         model_fingerprint = current_service().model_fingerprint_sha256
         if model_fingerprint is None:
             raise AuditUnavailableError(
                 "Audit evidence is unavailable; no inference result was released."
             )
         try:
-            audit_log.append_inference(
+            return audit_log.append_inference(
                 request_id=request_id,
                 api_schema_version=API_SCHEMA_VERSION,
                 input_digest_sha256=canonical_input_digest,
@@ -597,6 +606,7 @@ def create_app(
             calibrated=info.calibrated,
             operating_threshold=info.operating_threshold,
             feature_schema=list(info.feature_schema),
+            model_artifact_sha256=info.model_artifact_sha256,
             training_data_fingerprint=info.training_data_fingerprint,
             evidence_category=info.evidence_category,
             historical_taint=info.historical_taint,
@@ -623,7 +633,12 @@ def create_app(
         )
         if not reservation.owner:
             response.headers["X-Idempotent-Replay"] = "true"
-            return await registry.replay(reservation)
+            cached = await registry.replay(reservation)
+            if not isinstance(cached, _IdempotentPrediction):
+                raise RuntimeError("Cached prediction result has an unexpected type.")
+            if cached.audit_event_hash is not None:
+                response.headers["X-Audit-Event-Hash"] = cached.audit_event_hash
+            return cached.prediction
 
         started = time.perf_counter()
         try:
@@ -636,13 +651,22 @@ def create_app(
             )
             application.state.metrics.observe_scores([result.decision_score])
             prediction = PredictionResponse(request_id=request_id, **result.model_dump())
-            append_audit_evidence(
+            audit_event_hashes = append_audit_evidence(
                 request_id=request_id,
                 canonical_input_digest=canonical_input_digest,
                 latency_ms=(time.perf_counter() - started) * 1000,
                 results=[result],
             )
-            registry.complete(reservation, prediction)
+            audit_event_hash = audit_event_hashes[0] if audit_event_hashes else None
+            if audit_event_hash is not None:
+                response.headers["X-Audit-Event-Hash"] = audit_event_hash
+            registry.complete(
+                reservation,
+                _IdempotentPrediction(
+                    prediction=prediction,
+                    audit_event_hash=audit_event_hash,
+                ),
+            )
             return prediction
         except BaseException as exc:
             await registry.fail(reservation, exc)

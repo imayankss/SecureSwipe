@@ -27,9 +27,9 @@ export function CommandOverview() {
       <div className="command-overview-grid">
         <div className="min-w-0 py-2">
           <p className="ss-eyebrow text-teal-200">Razorpay AI Builder Internship · Track 2: AI Risk Manager</p>
-          <h1 id="overview-heading" className="mt-2 max-w-4xl text-[2.15rem] font-semibold leading-[1.02] tracking-[-0.05em] text-white sm:text-[3.2rem]">
+          <h2 id="overview-heading" className="mt-2 max-w-4xl text-[2.15rem] font-semibold leading-[1.02] tracking-[-0.05em] text-white sm:text-[3.2rem]">
             Fraud decisions, <span className="text-teal-200">made inspectable.</span>
-          </h1>
+          </h2>
           <p className="mt-3 max-w-2xl text-[15px] font-medium leading-6 text-slate-200">
             Defense-only fraud-risk evidence and human-review decision aid
           </p>

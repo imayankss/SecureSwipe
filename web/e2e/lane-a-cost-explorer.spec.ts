@@ -13,7 +13,7 @@ test("desktop cost explorer shows the disclosure and sealed-evidence provenance"
     if (request.url().includes("/v1/predict")) apiRequests.push(request.url());
   });
 
-  await page.goto("/#lane-a-cost-explorer");
+  await page.goto("/evidence#lane-a-cost-explorer");
   const panel = page.locator(PANEL);
   await expect(panel).toBeVisible();
 
@@ -29,7 +29,7 @@ test("desktop cost explorer shows the disclosure and sealed-evidence provenance"
 });
 
 test("disclosure is visible without scrolling inside the panel", async ({ page }) => {
-  await page.goto("/#lane-a-cost-explorer");
+  await page.goto("/evidence#lane-a-cost-explorer");
   const panel = page.locator(PANEL);
   await expect(panel).toBeVisible();
 
@@ -56,7 +56,7 @@ test("disclosure is visible without scrolling inside the panel", async ({ page }
 test("capacity tiers and assumptions are keyboard operable and recompute the total", async ({
   page,
 }) => {
-  await page.goto("/#lane-a-cost-explorer");
+  await page.goto("/evidence#lane-a-cost-explorer");
   const panel = page.locator(PANEL);
   const group = panel.getByRole("group", {
     name: /Select a capacity tier for the illustrative cost scenario/i,
@@ -89,7 +89,7 @@ test("capacity tiers and assumptions are keyboard operable and recompute the tot
 test("mobile 280–390px cost explorer has no horizontal overflow", async ({ page }) => {
   for (const width of [280, 320, 375, 390]) {
     await page.setViewportSize({ width, height: 812 });
-    await page.goto("/#lane-a-cost-explorer");
+    await page.goto("/evidence#lane-a-cost-explorer");
     const panel = page.locator(PANEL);
     await expect(panel).toBeVisible();
     await expect(panel.getByTestId("cost-explorer-disclosure")).toBeVisible();
@@ -121,7 +121,7 @@ test("mobile 280–390px cost explorer has no horizontal overflow", async ({ pag
 });
 
 test("cost explorer has no WCAG violations", async ({ page }) => {
-  await page.goto("/#lane-a-cost-explorer");
+  await page.goto("/evidence#lane-a-cost-explorer");
   await expect(page.locator(PANEL)).toBeVisible();
   const results = await new AxeBuilder({ page }).include(PANEL).analyze();
   expect(results.violations).toEqual([]);
@@ -135,7 +135,7 @@ test("metric grids never overflow their track, even with wider text metrics", as
   // That reproduced only where font metrics are wider than the local ones,
   // which is why it surfaced in CI and not on a developer machine.
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/#lane-a-cost-explorer");
+  await page.goto("/evidence#lane-a-cost-explorer");
   const panel = page.locator(PANEL);
   await expect(panel).toBeVisible();
 

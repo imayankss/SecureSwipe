@@ -1,111 +1,208 @@
-# Deployment runbook and current status
+# Deployment and source-integrity runbook
 
-## Current status
+This is the canonical deployment document. It defines how a future candidate is
+qualified, tied to an exact source revision, released, verified, and rolled
+back. It does not assert that any public URL currently serves this checkout.
 
-- Frontend: SecureSwipe has no independently verified current release-candidate
-  public deployment. Any prior static URL is not evidence for this candidate.
-  The static dashboard will be deployed and verified only after final CI passes.
-- Backend: no public deployment is authorized or verified.
-- Model storage: no external store is selected; bundles remain ignored local
-  artifacts mounted read-only for container testing.
-- Monitoring: deterministic offline reports and local metrics/logs exist; no
-  hosted telemetry provider is selected.
+Architecture belongs in [ARCHITECTURE.md](ARCHITECTURE.md), operational limits in
+[LIMITATIONS.md](LIMITATIONS.md), and historical checkpoint identities in the
+[execution ledger](evidence/EXECUTION_LEDGER.md).
 
-Do not describe the current candidate or any prior static record as a production
-deployment. Pushes, pull requests, releases, public deployments, DNS changes,
-and paid resources require explicit owner confirmation immediately before the
-action.
+## Evidence boundary
 
-## Prior static frontend record — not current-candidate evidence
+The repository contains a deployable Next.js frontend and a separately
+containerized FastAPI reference service. Deployment is an owner-authorized
+external action; checked-in workflows verify candidates but do not publish them.
 
-The following is a historical record for an earlier frontend source commit. It
-does not verify the current release candidate, and the URL must not be cited as
-current-candidate evidence. Current deployment verification waits for final CI.
+Available evidence does not independently bind a public dashboard response to
+the current repository source. Therefore:
 
-- Provider: Vercel (local CLI deployment; no GitHub connection or push).
-- Public URL: `https://secure-swipe.vercel.app`
-- Deployed: 2026-08-20 (Asia/Kolkata).
-- Exact deployed frontend source commit:
-  `943d021c4757ac4102615eb26ceca0cf476baa76` (`Configure standalone Vercel
-  frontend build`). This commit configures Vercel to run `next build` because
-  the deployable `web/` directory intentionally does not include the parent
-  Python exporter; the local release gate still runs `npm run data:check`.
-- Environment variables: none. In particular,
-  `NEXT_PUBLIC_SECURESWIPE_API_URL` is unset, so the optional synthetic API
-  check has no configured origin and the static fallback remains active.
-- Historical verification results for that prior static artifact:
-  - Node 22.13.1: `npm test` passed (7 tests), `npm run build` passed (two
-    statically prerendered routes), and `npm audit --audit-level=high` reported
-    0 vulnerabilities.
-  - `curl -sS -D - -o /dev/null https://secure-swipe.vercel.app/` returned
-    HTTP 200 with `connect-src 'self'`, `X-Frame-Options: DENY`,
-    `X-Content-Type-Options: nosniff`, and the stated referrer and permissions
-    policies.
-  - Browser verification found the visible locked-historical,
-    already-observed-random-holdout, portfolio/educational, and non-production
-    limitations. No backend request occurs by default; the static fallback is
-    visible until an API check is explicitly requested.
-  - The deployed HTML and JavaScript were checked for the local Vercel OIDC
-    credential marker, Kaggle credential filename, private-key marker, and
-    common live-key prefixes; none was present. The bundled client code retains
-    the optional API feature name and `/v1/predict` implementation, but no API
-    origin or credential is configured.
-- No backend, API, model artifact, raw transaction data, Kaggle data, or
-  credential is publicly deployed.
+> Deployed source SHA not independently verifiable from available evidence.
+
+A reachable page, matching appearance, provider alias, or previously documented
+deployment command is not source linkage. Historical public-URL observations
+remain preserved in
+[MT9_RELEASE_FREEZE.md](evidence/MT9_RELEASE_FREEZE.md#4--deployment-relationship)
+and the
+[claim-to-evidence matrix](evidence/CLAIM_TO_EVIDENCE_MATRIX.md#8--deployment-status).
+They are not repeated here as current status.
+
+No public backend is established by the repository record. Model bundles remain
+local ignored artifacts unless a separately reviewed private artifact-delivery
+design is approved.
+
+## Release units
+
+| Unit | Repository source | Required release identity | Data boundary |
+| --- | --- | --- | --- |
+| Reviewer frontend | `web/` plus committed exported aggregate data | Git commit, `web/` tree, dependency lock, build configuration, immutable provider deployment ID | No rows or model bytes |
+| Reference API image | `Dockerfile`, `api/`, packaged runtime | Git commit, image digest, platform, SBOM, scan evidence | No embedded model or dataset |
+| Model bundle | Reviewed local bundle manifest and payloads | Manifest hash plus every payload hash | Private, read-only delivery only |
+
+These units must be versioned independently. A frontend deployment never proves
+that a backend or model was deployed.
 
 ## Local release-candidate gates
 
-1. Run the clean data-free quality sequence in
-   [REPRODUCIBILITY.md](REPRODUCIBILITY.md).
-2. With Docker Desktop running, build the image, mount the deterministic
-   synthetic bundle, and pass liveness/readiness/inference using
-   [CONTAINER.md](CONTAINER.md). `linux/amd64` is the release target and the
-   only architecture gated in CI; a native `linux/arm64` build is a local
-   development convenience and is not a released artifact.
-3. Run the high/critical image scan and write the SPDX SBOM. Record image digest,
-   scanner version/database time, and any reviewed exception.
-4. Repeat the full quality gate twice without code changes.
-5. For any real candidate model, require development/forward evidence, exact
-   evaluation/service parity, bundle verification, monitoring reference data,
-   and a named rollback bundle. The historical test is not a decision input.
+Run from a clean checkout of the exact proposed commit with no untracked test or
+build input:
 
-The optional frontend live-demo mode is gated on steps 1–3. When implemented, it
-must use synthetic examples, timeouts and explicit loading/error/unavailable
-states, preserve static content, and expose no browser secret.
+1. Record `git rev-parse HEAD`, `git status --short`, `git rev-parse HEAD^{tree}`,
+   and `git rev-parse HEAD:web`.
+2. Install only from the committed hash-locked Python requirements and npm
+   lockfile in isolated environments.
+3. Run the data-free quality sequence in
+   [REPRODUCIBILITY.md](REPRODUCIBILITY.md#data-free-deterministic-checks).
+4. Build the frontend with the exact intended public environment. Record names
+   and non-secret values that are compiled into browser code.
+5. For an API candidate, build the pinned `linux/amd64` image and run the
+   liveness, readiness, model-info, synthetic inference, restricted-runtime,
+   vulnerability-scan, and SBOM gates in [CONTAINER.md](CONTAINER.md).
+6. For a real candidate bundle, require exact artifact provenance,
+   direct/single/batch parity, monitoring reference data, and a named rollback
+   bundle. Historical evaluation alone is not authorization to serve a model.
+7. Repeat the release gate without source changes and investigate any material
+   output or test drift.
 
-## Provider evaluation gate
+Any failed or skipped required gate leaves the candidate unreleased.
 
-Only after the local gates pass should the owner compare providers for:
+## P0.5 deployment-to-source-SHA integrity
 
-| Need | Required evidence before selection |
-|---|---|
-| Static frontend | Build/runtime compatibility, preview isolation, headers, rollback, free-tier/usage limits |
-| API container | `linux/amd64` provider architecture support, cold start, memory/CPU, health routing, TLS, authentication/rate limiting, log controls |
-| Model artifacts | Private immutable versioning, checksum retention, read-only delivery, access audit, rollback, size/egress cost |
-| Monitoring | Redaction, retention, bounded labels, alert ownership, free-tier limits, export/deletion behavior |
+P0.5 must establish a two-sided cryptographic and provider-recorded link. The
+procedure is deliberately stricter than observing an HTTP 200 response.
 
-Record current pricing, sleep/cold-start behavior, limits, region, secret names,
-and estimated use at decision time. Those facts are time-sensitive and must be
-verified from provider documentation; they are intentionally not guessed here.
+### 1. Freeze the candidate
 
-## Candidate rollout
+Record, before deployment:
 
-1. Build an immutable image and identify it by digest.
-2. Select a reviewed immutable bundle manifest; never mutate a mounted bundle.
-3. Start a candidate instance outside traffic with read-only filesystem,
-   capability drop, no-new-privileges, bounded resources, and server-only config.
-4. Verify bundle/model-info, liveness, readiness, one golden synthetic request,
-   OpenAPI, metrics/log redaction, and bounded smoke load.
-5. Move traffic through provider routing only after the prior instance remains
-   available for rollback.
-6. Observe errors/latency/readiness and score-distribution diagnostics. A drift
-   signal opens investigation; it does not automatically change the model.
+```bash
+git status --short
+git rev-parse HEAD
+git rev-parse HEAD^{tree}
+git rev-parse HEAD:web
+shasum -a 256 web/package-lock.json web/public/data/dashboard.json
+```
+
+The worktree must be clean or the deployment must stop. Do not infer the content
+of a dirty build from `HEAD`.
+
+Create a small public release manifest during the authorized P0.5 change. It
+must contain only non-secret identifiers:
+
+- schema version;
+- exact Git commit SHA;
+- exact `web/` tree SHA;
+- dashboard-export SHA-256;
+- dependency-lock SHA-256; and
+- build mode and public API-origin state.
+
+The manifest must be part of the source commit being deployed. It must not be
+generated after the commit or injected only through an editable provider field.
+
+### 2. Build and verify locally
+
+Run the frontend test, lint, type, build, and browser gates from that commit.
+Verify that the built application exposes the release manifest and that its
+values match the recorded Git and file digests.
+
+Keep the build log, command exit codes, runtime versions, and a digest of the
+deployable output or provider upload bundle. Build timestamps alone are not
+identity evidence.
+
+### 3. Create an immutable preview deployment
+
+Deploy to a new immutable provider deployment, not directly to the public alias.
+Record:
+
+- provider project ID;
+- immutable deployment ID and URL;
+- provider-reported Git source SHA, if available;
+- uploaded artifact/output digest, if available;
+- build environment and public environment names; and
+- creation time as supporting context, not primary identity.
+
+If the provider cannot report a source SHA or immutable artifact identity, the
+served release manifest becomes mandatory and the limitation must remain
+explicit. Do not guess from an alias or visual match.
+
+### 4. Verify from outside the build environment
+
+Using read-only requests against the immutable preview URL:
+
+1. require successful responses for `/`, `/evidence`, and the release manifest;
+2. compare the served commit, `web/` tree, dashboard digest, and lock digest with
+   the frozen candidate;
+3. inspect security headers and confirm that browser-visible configuration
+   contains no credential;
+4. verify that `/demo` is unavailable unless the intended, reviewed local/public
+   API boundary is explicitly configured;
+5. run the reviewer-critical mobile, keyboard, disclosure, and evidence checks;
+6. compare provider-reported source metadata with the served manifest; and
+7. retain the immutable deployment URL and response digests in the release
+   evidence record.
+
+Any mismatch is a `NO-GO`. A matching page title or metric is not an acceptable
+substitute.
+
+### 5. Promote only after linkage passes
+
+Alias promotion is a separate owner-authorized action. Promote only the exact
+immutable deployment verified above. Immediately repeat the served-manifest and
+critical-route checks through the alias and confirm they resolve to the same
+immutable deployment ID.
+
+Update the claim-to-evidence matrix and execution ledger with the verified
+commit, tree, deployment ID, immutable URL, alias, command results, and evidence
+digests. Only then may documentation call that URL the candidate dashboard.
+
+## API rollout boundary
+
+A future public API requires a separate provider and security decision. Before
+traffic, it needs at minimum:
+
+- provider-supported `linux/amd64` image execution by immutable digest;
+- private read-only delivery of one reviewed bundle manifest;
+- TLS termination, authentication, authorization, rate limiting, and body
+  limits with named ownership;
+- redacted logging and audit retention controls;
+- capacity, cold-start, timeout, and failure measurements in that provider;
+- durable idempotency/audit design appropriate to worker count;
+- monitoring, incident response, and rollback ownership; and
+- explicit approval for cost and retention.
+
+Local loopback benchmarks cannot satisfy these gates.
 
 ## Rollback
 
-Route away from the candidate, then restart the last reviewed image digest with
-the last reviewed bundle manifest. Re-run bundle verification, liveness,
-readiness, model-info, golden synthetic inference, and bounded load before
-restoring traffic. Preserve redacted incident evidence; never delete history or
-edit a bundle in place. Provider-specific traffic and DNS steps must be added
-after a provider is selected and rehearsed.
+Keep the last verified immutable frontend deployment, API image digest, and
+bundle manifest available. Rollback means routing to those exact identities—not
+rebuilding an old branch.
+
+After rollback:
+
+1. verify the frontend release manifest through the public route;
+2. verify API liveness, readiness, model-info, and one golden synthetic request;
+3. confirm the audit sink is healthy before releasing an inference result;
+4. check that the restored bundle and image match their recorded digests; and
+5. preserve redacted incident evidence without rewriting historical records.
+
+Provider-specific routing and DNS commands must be added only after a provider
+is selected and rehearsed.
+
+## Evidence to retain
+
+For each authorized release, retain a concise record containing:
+
+- candidate commit and source-tree identities;
+- working-tree cleanliness;
+- dependency and exported-data digests;
+- exact verification commands and exit codes;
+- provider project and immutable deployment identities;
+- served release-manifest response and digest;
+- security-header and route results;
+- image digest, platform, scan, and SBOM when an API is involved;
+- rollback identities and rehearsal result; and
+- approval for promotion.
+
+Do not place credentials, raw provider environment values, model bytes, private
+artifact URLs, or customer data in that record.

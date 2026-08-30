@@ -1,65 +1,96 @@
 # Model card
 
-## Current status
+This card distinguishes the sealed Lane A evaluation object from models that can
+be loaded by the local reference API. They are not interchangeable.
 
-No verified trained fraud model is present in this checkout or deployed by this
-work. The API starts live but remains unready until a locally trusted, complete
-bundle is configured. The optional `synthetic-smoke-1` logistic model exists only
-to test packaging and must never be described as a fraud model.
+## Model and evidence objects
 
-## Historical observation
+| Object | Current evidence | Serving status |
+| --- | --- | --- |
+| Lane A variant E | Frozen 24-input XGBoost pipeline with Platt calibration; one sealed aggregate IEEE-CIS evaluation | Exact serving chain is unavailable or cryptographically unproven; not served by `/demo` |
+| Historical/reference bundle | Locally ignored bundle when available; 30-field API schema, raw-score semantics, historical taint, no historical-metric claim | Eligible only for bounded local reference inference after complete bundle verification |
+| `synthetic-smoke-1` | Deterministically generated logistic-regression fixture | Packaging, readiness, audit, replay, and validation checks only; not a fraud model |
 
-The repository records an XGBoost evaluation at threshold 0.53 on a random
-held-out partition: 62 true positives, 27 false positives, 12 false negatives,
-and 42,621 true negatives; average precision was recorded as 0.8287849. Derived
-precision, recall, and F1 are internally consistent with those counts. The
-threshold and model were selected before the recorded test observation according
-to Git history.
+Lane A is the sole headline evaluation. Its metrics and protocol are canonical in
+[LANE_A_FINAL_EVALUATION.md](evidence/LANE_A_FINAL_EVALUATION.md). P0.4 found no
+complete cryptographic binding from all required serving artifacts to that
+sealed result, so SecureSwipe does not reconstruct or substitute a bundle.
 
-This result is quarantined as `historical_reported_test`. It is not an unbiased,
-out-of-time, real-world, or production estimate. The data/model/score artifacts
-and original runtime are absent, and possible duplicate cross-split leakage
-cannot be measured. It must not be used for new tuning.
+## Intended use
 
-## Inputs and output
+SecureSwipe is a defense-only research and portfolio reference for ranking
+transactions into a human-review workflow and inspecting review-capacity
+trade-offs.
 
-A deployable bundle accepts ordered raw fields `Time`, `V1`–`V28`, and `Amount`.
-It contains the fitted training-only preprocessor, model, optional calibrator,
-operating threshold, schema, training-data fingerprint, versions, payload types,
-sizes, and checksums. The API returns:
+Appropriate uses are:
 
-- `raw_score`: the model's bounded class score;
-- `calibrated_probability`: present only if development evidence selected and
-  packaged a calibrator;
-- `decision_score`, threshold, and a `review`/`pass` demonstration signal.
+- reviewing the sealed aggregate Lane A evidence;
+- exploring illustrative review workload and cost assumptions;
+- testing verified local bundle loading and bounded API semantics with synthetic
+  or separately authorized local inputs; and
+- studying fail-closed, provenance, audit, and monitoring controls.
 
-The signal is not an approval, decline, or payment authorization.
+It is not intended for payment authorization, autonomous blocking, real customer
+transactions, or an unreviewed public service.
+
+## Inputs and outputs
+
+The Lane A evaluated pipeline uses its frozen 24-input schema recorded in the
+sealed provenance. That schema and model are not exposed through the local API.
+
+The current API contract accepts ordered semantic fields `Time`, `V1`–`V28`, and
+`Amount`. The bundle owns the canonical order; JSON object order does not control
+feature order.
+
+The API returns:
+
+- `raw_score`, a bounded model score;
+- nullable `calibrated_probability`, populated only for a bundle with verified
+  calibration provenance;
+- `decision_score` and the bundle's operating threshold;
+- `human_review` or `below_review_threshold`;
+- model, bundle, schema, request, and evidence provenance; and
+- an audit receipt when a configured audit append commits successfully.
+
+The historical/reference bundle's raw score is not labelled a real-world fraud
+probability. Neither bounded decision is an approval or decline.
 
 ## Evaluation and selection policy
 
-New evidence must use a genuinely new authorized corpus. The executable workflow
-uses chronological model-training, calibration-fit, operating-point-selection,
-and reusable-forward-backtest roles with content-hash isolation. Model comparisons
-use unrounded AP, a paired stratified bootstrap, a predeclared simplicity margin,
-calibration diagnostics, and a threshold selected before a reusable forward
-development backtest. That backtest is not locked release evidence.
-Cost scenarios remain a separate explicit analysis; no example scenario is a
-business policy.
+New model decisions require a genuinely new authorized corpus. The executable
+development workflow separates model training, calibration fitting,
+operating-point selection, and reusable forward analysis with content-hash
+isolation.
 
-## Limitations and risks
+Lane A's final role was programmatically held out through development and
+evaluated exactly once. Its result is closed and cannot be used for further
+selection. Lane B's older random holdout is historical reference only.
 
-- There is no current OOT result, calibration result, business cost model,
-  throughput result, drift baseline, or real artifact in this checkout.
-- Class weighting changes score semantics; uncalibrated output is not labelled a
-  real fraud probability.
-- Fraud patterns and base rates drift. Drift is a diagnostic signal, not by
-  itself proof of model failure.
-- SHAP attribution is noncausal and PCA features reduce human interpretability.
-  The tracked historical ranking lacks retained output-unit/additivity/cohort
-  evidence and is explicitly unit-unverified. New runs must explain XGBoost raw
-  margin/log-odds, pass native-output additivity, and report purposeful cohort
-  label/score composition; that protocol does not retroactively validate history.
-- Protected-group fairness cannot be evaluated because protected attributes are
-  absent. This system must not be used to infer them.
-- Human review capacity, appeal/override, recovery, and customer-harm processes
-  are unspecified; no operational decision should depend on this reference.
+Review-capacity tiers rank sealed scores deterministically under a fixed budget.
+They are illustrative analyses, not universal thresholds, staffing defaults, or
+merchant recommendations.
+
+## Bundle provenance and loading
+
+A loadable bundle binds its preprocessor, estimator, optional calibrator,
+ordered schema, score semantics, operating point, intended use, training-data
+fingerprint, runtime metadata, payload types, sizes, and checksums.
+
+The service accepts neither model uploads nor request-supplied artifact paths.
+An operator selects a local manifest under a configured trusted root; verification
+occurs before joblib deserialization. Missing artifacts leave the API
+live-but-unready, while a configured invalid bundle prevents startup.
+
+Checksum verification does not make arbitrary pickle/joblib safe. Only locally
+produced and reviewed bundles are eligible.
+
+## Evidence boundary
+
+The local `/demo` route may demonstrate genuine execution for its configured
+reference bundle, including audit receipt and idempotent replay. It is explicitly
+separate from Lane A and may not inherit Lane A metrics.
+
+Use [EVIDENCE_GUIDE.md](EVIDENCE_GUIDE.md) for category navigation,
+[API.md](API.md) for the response contract, and
+[LIMITATIONS.md](LIMITATIONS.md) for scientific, fairness, serving, security,
+and deployment constraints.

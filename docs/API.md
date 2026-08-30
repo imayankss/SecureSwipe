@@ -31,6 +31,9 @@ cardholder/customer transactions.
 - When `SECURESWIPE_AUDIT_LOG` is configured, each successful prediction emits
   canonical, redacted, hash-chained NDJSON plus a local count/head anchor. This
   is **tamper-evident append-only audit evidence**, not immutable storage.
+- A successful audited single prediction returns the committed event hash in
+  `X-Audit-Event-Hash`. Same-process replays return `X-Idempotent-Replay: true`;
+  both headers are exposed to explicitly allowed browser origins.
 - If that required audit append is unavailable or fails integrity verification,
   the computed result is not released: the request returns
   `503 audit_unavailable`. A pre-append transient failure removes the unfinished

@@ -5,6 +5,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { Navigation } from "@/components/Navigation";
 import { ConfusionMatrix } from "@/components/ConfusionMatrix";
+import { EvidenceDisclosure } from "@/components/evidence/EvidenceDisclosure";
 import { Hero } from "@/components/Hero";
 import { RiskScoreDemo } from "@/components/RiskScoreDemo";
 import { Progress } from "@/components/ui/progress";
@@ -82,17 +83,51 @@ describe("keyboard and accessibility contracts", () => {
 
   it("exposes responsive navigation and safe external-link semantics", async () => {
     const user = userEvent.setup();
-    const { container } = render(<Navigation />);
+    const { container } = render(<Navigation activePage="product" />);
 
     expect(screen.getByRole("navigation", { name: "Primary navigation" })).toBeInTheDocument();
-    const menu = screen.getByText("Sections");
+    const menu = screen.getByText("Pages");
     await user.click(menu);
     expect(menu.closest("details")).toHaveAttribute("open");
-    expect(screen.getAllByRole("link", { name: "Thresholds" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "Evidence" })).toHaveLength(2);
+    expect(screen.getAllByRole("link", { name: "Overview" })[0]).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
     expect(screen.getByRole("link", { name: "Open SecureSwipe GitHub repository" })).toHaveAttribute(
       "rel",
       expect.stringContaining("noopener"),
     );
+    await expectNoAxeViolations(container);
+  });
+
+  it("exposes secondary evidence through an explicit keyboard disclosure", async () => {
+    const user = userEvent.setup();
+    const { container } = render(
+      <EvidenceDisclosure
+        id="test-evidence"
+        eyebrow="Secondary evidence"
+        title="Inspect supporting analysis"
+        description="Supporting detail remains one clear interaction away."
+      >
+        <p>Preserved supporting evidence</p>
+      </EvidenceDisclosure>,
+    );
+
+    const control = screen.getByRole("button", {
+      name: "Show details: Inspect supporting analysis",
+    });
+    const region = container.querySelector<HTMLElement>("#test-evidence-content");
+    expect(control).toHaveAttribute("aria-expanded", "false");
+    expect(control).toHaveAttribute("aria-controls", "test-evidence-content");
+    expect(region).toHaveAttribute("hidden");
+
+    control.focus();
+    await user.keyboard("{Enter}");
+    expect(control).toHaveAttribute("aria-expanded", "true");
+    expect(control).toHaveAccessibleName("Hide details: Inspect supporting analysis");
+    expect(region).not.toHaveAttribute("hidden");
+    expect(screen.getByText("Preserved supporting evidence")).toBeVisible();
     await expectNoAxeViolations(container);
   });
 
