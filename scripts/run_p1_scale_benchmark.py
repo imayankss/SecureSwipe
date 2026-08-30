@@ -65,6 +65,7 @@ from src.operations.p1_scale_benchmark import (  # noqa: E402
     build_workload,
     nearest_rank,
     request_group_sha256,
+    safe_api_error_evidence,
     safe_outcome_diagnostics,
     summarize_outcomes,
     validate_safe_result,
@@ -753,6 +754,21 @@ def _bounded_contract(
     return True, metadata, evidence
 
 
+def _api_error_evidence(response: httpx.Response) -> dict[str, Any]:
+    """Keep only the structured code, category, and header shape of a failure.
+
+    The unbounded ``message`` field, the echoed request identifier, and the raw
+    body are deliberately discarded; they are server text, not safe evidence.
+    """
+    try:
+        body = response.json()
+        parsed = True
+    except (TypeError, ValueError):
+        body = None
+        parsed = False
+    return safe_api_error_evidence(response.headers, body, parsed=parsed)
+
+
 def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], dict[str, str]]:
     metadata: dict[str, str] = {}
     metadata_lock = threading.Lock()
@@ -771,6 +787,7 @@ def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], di
             contract_valid = True
             failure_reason: str | None = None
             evidence: dict[str, Any] = {}
+            error_evidence: dict[str, Any] = {}
             if spec.kind != "malformed" and response.status_code == 200:
                 contract_valid, observed, evidence = _bounded_contract(response)
                 failure_reason = evidence.get("failure_reason")
@@ -782,13 +799,14 @@ def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], di
                         else:
                             metadata.update(observed)
             elif spec.kind == "malformed" and response.status_code == 422:
-                try:
-                    contract_valid = response.json()["error"]["code"] == "validation_error"
-                except (KeyError, TypeError, ValueError):
-                    contract_valid = False
+                error_evidence = _api_error_evidence(response)
+                contract_valid = error_evidence["api_error_code"] == "validation_error"
                 if not contract_valid:
                     failure_reason = "invalid_validation_error_contract"
             else:
+                # Fail-closed statuses carry the structured code that names the
+                # exact server condition; keep it instead of the status alone.
+                error_evidence = _api_error_evidence(response)
                 contract_valid = False
                 failure_reason = "unexpected_http_status"
             return RequestOutcome(
@@ -804,6 +822,9 @@ def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], di
                 response_profile=evidence.get("response_profile"),
                 model_artifact_sha256=evidence.get("model_artifact_sha256"),
                 failure_reason=failure_reason,
+                api_error_code=error_evidence.get("api_error_code"),
+                api_error_category=error_evidence.get("api_error_category"),
+                header_classification=error_evidence.get("header_classification"),
             )
         except httpx.TimeoutException:
             return RequestOutcome(
@@ -1016,66 +1037,158 @@ def _run_audit_growth(
         postgres.drop_schema(schema)
 
 
+CSV_FIELDNAMES = (
+    "workers",
+    "concurrency",
+    "repeat",
+    "phase",
+    "attempted",
+    "successful_2xx",
+    "expected_422",
+    "unexpected_non_2xx",
+    "timeouts",
+    "transport_errors",
+    "wall_seconds",
+    "successful_rps",
+    "p50_ms",
+    "p95_ms",
+    "p99_ms",
+    "api_cpu_percent_mean",
+    "api_rss_median_mib",
+    "audit_growth",
+)
+
+
+def _repeat_csv_rows(runs: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for repeat in runs:
+        resources = repeat.get("resources", {})
+        for phase in ("warmup", "measured"):
+            summary = repeat[phase]["result"]
+            rows.append(
+                {
+                    "workers": repeat["workers"],
+                    "concurrency": repeat["concurrency"],
+                    "repeat": repeat["repeat"],
+                    "phase": phase,
+                    "attempted": summary["attempted"],
+                    "successful_2xx": summary["successful_2xx"],
+                    "expected_422": summary["expected_non_2xx"],
+                    "unexpected_non_2xx": summary["unexpected_non_2xx"],
+                    "timeouts": summary["timeouts"],
+                    "transport_errors": summary["transport_errors"],
+                    "wall_seconds": summary["wall_seconds"],
+                    "successful_rps": summary["successful_rps"],
+                    "p50_ms": summary["all_completed_latency"]["p50_ms"],
+                    "p95_ms": summary["all_completed_latency"]["p95_ms"],
+                    "p99_ms": summary["all_completed_latency"]["p99_ms"],
+                    "api_cpu_percent_mean": resources.get(
+                        "api_process_group_cpu_percent", {}
+                    ).get("mean"),
+                    "api_rss_median_mib": resources.get("api_process_group_rss", {}).get(
+                        "median_mib"
+                    ),
+                    "audit_growth": repeat["audit"][f"{phase}_growth"],
+                }
+            )
+    return rows
+
+
+def _write_repeat_csv(runs: Sequence[dict[str, Any]], path: Path) -> Path:
+    temporary = path.with_name(f"{path.name}.tmp")
+    with temporary.open("w", newline="", encoding="utf-8") as handle:
+        writer = csv.DictWriter(handle, fieldnames=list(CSV_FIELDNAMES))
+        writer.writeheader()
+        writer.writerows(_repeat_csv_rows(runs))
+    os.replace(temporary, path)
+    return path
+
+
+def _write_safe_json(document: dict[str, Any], path: Path) -> Path:
+    """Validate, then replace atomically so a later crash cannot truncate it."""
+    validate_safe_result(document)
+    temporary = path.with_name(f"{path.name}.tmp")
+    temporary.write_text(
+        json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    os.replace(temporary, path)
+    return path
+
+
+class IncrementalEvidenceLog:
+    """Persist privacy-safe evidence after every completed repeat.
+
+    A benchmark cell that fails closed must not discard the cells that already
+    finished, so the log is rewritten atomically as each repeat completes and is
+    finalized on both the success and the failure path.
+    """
+
+    def __init__(self, *, run_id: str, output_dir: Path, header: dict[str, Any]) -> None:
+        self.run_id = run_id
+        self.output_dir = output_dir
+        self.header = dict(header)
+        self.runs: list[dict[str, Any]] = []
+        self.json_path = output_dir / f"{run_id}-progress.json"
+        self.csv_path = output_dir / f"{run_id}-progress.csv"
+        output_dir.mkdir(parents=True, exist_ok=True)
+        self._flush(status="started")
+
+    def snapshot(
+        self, *, status: str, failure: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        document: dict[str, Any] = {
+            **self.header,
+            "run_id": self.run_id,
+            "diagnostic_kind": "p1_scale_incremental_evidence",
+            "evidence_status": status,
+            "publishable": False,
+            "completed_repeat_count": len(self.runs),
+            "completed_runs": self.runs,
+        }
+        if failure is not None:
+            document["failure"] = failure
+        return document
+
+    def _flush(
+        self, *, status: str, failure: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
+        document = self.snapshot(status=status, failure=failure)
+        _write_safe_json(document, self.json_path)
+        _write_repeat_csv(self.runs, self.csv_path)
+        return document
+
+    def record_repeat(self, record: dict[str, Any]) -> dict[str, Any]:
+        validate_safe_result(record)
+        self.runs.append(record)
+        return self._flush(status="in_progress")
+
+    def record_failure(self, failure: dict[str, Any]) -> dict[str, Any]:
+        return self._flush(status="failed_after_completed_repeats", failure=failure)
+
+    def record_completion(self) -> dict[str, Any]:
+        return self._flush(status="completed")
+
+    def relative_paths(self) -> list[str]:
+        paths = []
+        for path in (self.json_path, self.csv_path):
+            try:
+                paths.append(str(path.relative_to(PROJECT_ROOT)))
+            except ValueError:
+                paths.append(str(path))
+        return paths
+
+
 def _write_results(report: dict[str, Any], output_dir: Path) -> tuple[Path, Path]:
-    validate_safe_result(report)
     output_dir.mkdir(parents=True, exist_ok=True)
     token = report["run_id"]
-    json_path = output_dir / f"{token}.json"
-    csv_path = output_dir / f"{token}.csv"
-    json_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    with csv_path.open("w", newline="", encoding="utf-8") as handle:
-        fieldnames = [
-            "workers",
-            "concurrency",
-            "repeat",
-            "phase",
-            "attempted",
-            "successful_2xx",
-            "expected_422",
-            "unexpected_non_2xx",
-            "timeouts",
-            "transport_errors",
-            "wall_seconds",
-            "successful_rps",
-            "p50_ms",
-            "p95_ms",
-            "p99_ms",
-            "audit_growth",
-        ]
-        writer = csv.DictWriter(handle, fieldnames=fieldnames)
-        writer.writeheader()
-        for repeat in report["runs"]:
-            for phase in ("warmup", "measured"):
-                summary = repeat[phase]["result"]
-                writer.writerow(
-                    {
-                        "workers": repeat["workers"],
-                        "concurrency": repeat["concurrency"],
-                        "repeat": repeat["repeat"],
-                        "phase": phase,
-                        "attempted": summary["attempted"],
-                        "successful_2xx": summary["successful_2xx"],
-                        "expected_422": summary["expected_non_2xx"],
-                        "unexpected_non_2xx": summary["unexpected_non_2xx"],
-                        "timeouts": summary["timeouts"],
-                        "transport_errors": summary["transport_errors"],
-                        "wall_seconds": summary["wall_seconds"],
-                        "successful_rps": summary["successful_rps"],
-                        "p50_ms": summary["all_completed_latency"]["p50_ms"],
-                        "p95_ms": summary["all_completed_latency"]["p95_ms"],
-                        "p99_ms": summary["all_completed_latency"]["p99_ms"],
-                        "audit_growth": repeat["audit"][f"{phase}_growth"],
-                    }
-                )
+    json_path = _write_safe_json(report, output_dir / f"{token}.json")
+    csv_path = _write_repeat_csv(report["runs"], output_dir / f"{token}.csv")
     return json_path, csv_path
 
 
 def _write_partial_diagnostic(report: dict[str, Any], output_dir: Path) -> Path:
-    validate_safe_result(report)
     output_dir.mkdir(parents=True, exist_ok=True)
-    path = output_dir / f"{report['run_id']}-partial.json"
-    path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    return path
+    return _write_safe_json(report, output_dir / f"{report['run_id']}-partial.json")
 
 
 def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> dict[str, Any]:
@@ -1097,7 +1210,25 @@ def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> di
         manifest = create_synthetic_bundle(artifact_root)
         bundle_manifest_sha256 = _sha256_file(manifest)
         with OwnedPostgres() as postgres:
-            runs: list[dict[str, Any]] = []
+            evidence_header = {
+                "diagnostic_kind": "p1_scale_incremental_evidence",
+                "mode": mode,
+                "protocol_version": PROTOCOL_VERSION,
+                "fixture_version": FIXTURE_VERSION,
+                "source_commit_sha": commit_sha,
+                "bundle_manifest_sha256": bundle_manifest_sha256,
+                "artifact_classification": "synthetic_reference_only_no_lane_a_claim",
+                "runtime": _machine_record(),
+                "postgresql": {
+                    "version": postgres.server_version(),
+                    "image": POSTGRES_IMAGE,
+                    "image_digest": postgres.image_digest(),
+                },
+            }
+            evidence = IncrementalEvidenceLog(
+                run_id=run_id, output_dir=output_dir, header=evidence_header
+            )
+            runs = evidence.runs
             dimensions = (
                 [(1, 1, 1)]
                 if mode == "smoke"
@@ -1110,7 +1241,7 @@ def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> di
             )
             try:
                 for workers, concurrency, repeat in dimensions:
-                    runs.append(
+                    evidence.record_repeat(
                         _run_repeat(
                             postgres=postgres,
                             workers=workers,
@@ -1123,23 +1254,15 @@ def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> di
                         )
                     )
             except BenchmarkValidationError as exc:
+                evidence.record_failure(exc.diagnostics)
                 diagnostic = {
+                    **evidence_header,
                     "run_id": run_id,
                     "diagnostic_kind": "p1_scale_partial_failure",
-                    "mode": mode,
                     "publishable": False,
-                    "protocol_version": PROTOCOL_VERSION,
-                    "fixture_version": FIXTURE_VERSION,
-                    "source_commit_sha": commit_sha,
-                    "bundle_manifest_sha256": bundle_manifest_sha256,
-                    "artifact_classification": "synthetic_reference_only_no_lane_a_claim",
-                    "runtime": _machine_record(),
-                    "postgresql": {
-                        "version": postgres.server_version(),
-                        "image": POSTGRES_IMAGE,
-                        "image_digest": postgres.image_digest(),
-                    },
                     "completed_repeat_count": len(runs),
+                    "completed_runs": runs,
+                    "incremental_evidence_files": evidence.relative_paths(),
                     "failure": exc.diagnostics,
                 }
                 path = _write_partial_diagnostic(diagnostic, output_dir)
@@ -1193,8 +1316,10 @@ def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> di
                 "runs": runs,
                 "audit_growth": audit_growth,
             }
+            evidence.record_completion()
             paths = _write_results(report, output_dir)
             report["result_files"] = [str(path.relative_to(PROJECT_ROOT)) for path in paths]
+            report["incremental_evidence_files"] = evidence.relative_paths()
             return report
 
 
@@ -1225,6 +1350,7 @@ def main() -> int:
                 "publishable": report["publishable"],
                 "run_id": report["run_id"],
                 "result_files": report["result_files"],
+                "incremental_evidence_files": report["incremental_evidence_files"],
                 "smoke_warmup": smoke["warmup"]["result"] if smoke else None,
                 "smoke_measured": smoke["measured"]["result"] if smoke else None,
                 "audit": smoke["audit"] if smoke else None,
