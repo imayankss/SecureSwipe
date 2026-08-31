@@ -147,7 +147,20 @@ def _disable_state_store_diagnostic() -> None:
     os.environ.pop(DIAGNOSTIC_OUTPUT_DIR, None)
 
 
-def run(*, proofs: int, output_dir: Path) -> tuple[dict[str, Any], Path]:
+def run(
+    *,
+    proofs: int,
+    output_dir: Path,
+    workers: int = WORKERS,
+    concurrency: int = CONCURRENCY,
+    classify: bool = False,
+) -> tuple[dict[str, Any], Path]:
+    """Run postfix proofs, or one rule-A classification reproduction.
+
+    ``classify`` enables the opt-in S4f state-store diagnostic for a single
+    controlled reproduction of a service correctness failure. A classification
+    run is a diagnostic, never a proof, and is labelled as such in its artifact.
+    """
     if not 1 <= proofs <= PROOF_COUNT:
         raise ScaleBenchmarkError("P1-S4 closeout permits one to three postfix proofs.")
     if not PROTOCOL_PATH.exists():
@@ -160,9 +173,12 @@ def run(*, proofs: int, output_dir: Path) -> tuple[dict[str, Any], Path]:
         raise ScaleBenchmarkError("M3: port 55432 is occupied before setup.")
 
     source_sha = _git_value("rev-parse", "HEAD")
-    run_id = f"p1-s4-postfix-{int(time.time())}"
+    kind = "p1_s4_rule_a_classification" if classify else "p1_s4_postfix_proof"
+    prefix = "p1-s4-classify" if classify else "p1-s4-postfix"
+    run_id = f"{prefix}-{int(time.time())}"
     report: dict[str, Any] = {
-        "diagnostic_kind": "p1_s4_postfix_proof",
+        "diagnostic_kind": kind,
+        "publishable_as_proof": not classify,
         "benchmark_version": BENCHMARK_VERSION,
         "publishable": False,
         "run_id": run_id,
@@ -172,10 +188,10 @@ def run(*, proofs: int, output_dir: Path) -> tuple[dict[str, Any], Path]:
             "path": str(PROTOCOL_PATH),
             "sha256": _sha256_file(PROTOCOL_PATH),
         },
-        "frozen_cell": {"workers": WORKERS, "concurrency": CONCURRENCY, "repeat": REPEAT},
+        "frozen_cell": {"workers": workers, "concurrency": concurrency, "repeat": REPEAT},
         "model_artifact_sha256": EXPECTED_MODEL_FINGERPRINT,
         "instrumentation": {
-            "state_store_diagnostic": "disabled",
+            "state_store_diagnostic": "enabled_for_classification" if classify else "disabled",
             "s4f_postgres_sampler": "not_started",
             "client_timing": "enabled",
             "s4e_resource_sampler": "unchanged_enabled",
@@ -201,15 +217,20 @@ def run(*, proofs: int, output_dir: Path) -> tuple[dict[str, Any], Path]:
                 record: dict[str, Any] | None = None
                 failure: dict[str, Any] | None = None
                 infrastructure_failures = 0
-                _disable_state_store_diagnostic()
+                if classify:
+                    diagnostic_dir = temp_root / "state-store-aggregate"
+                    os.environ[DIAGNOSTIC_FLAG] = "1"
+                    os.environ[DIAGNOSTIC_OUTPUT_DIR] = str(diagnostic_dir)
+                else:
+                    _disable_state_store_diagnostic()
                 os.environ[CLIENT_TIMING_FLAG] = "1"
                 try:
                     with OwnedPostgres() as postgres:
                         try:
                             record = _run_repeat(
                                 postgres=postgres,
-                                workers=WORKERS,
-                                concurrency=CONCURRENCY,
+                                workers=workers,
+                                concurrency=concurrency,
                                 repeat=REPEAT,
                                 smoke=False,
                                 manifest=manifest,
@@ -292,13 +313,26 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--proofs", type=int, default=PROOF_COUNT)
     parser.add_argument("--output-dir", type=Path, default=RESULT_DIRECTORY)
+    parser.add_argument("--workers", type=int, default=WORKERS)
+    parser.add_argument("--concurrency", type=int, default=CONCURRENCY)
+    parser.add_argument(
+        "--classify",
+        action="store_true",
+        help="Rule-A reproduction with the state-store diagnostic enabled.",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
     try:
-        report, path = run(proofs=args.proofs, output_dir=args.output_dir.resolve())
+        report, path = run(
+            proofs=args.proofs,
+            output_dir=args.output_dir.resolve(),
+            workers=args.workers,
+            concurrency=args.concurrency,
+            classify=args.classify,
+        )
     except (ScaleBenchmarkError, OSError) as exc:
         print(f"P1-S4 postfix proof failed closed: {exc}", file=sys.stderr)
         return 1
