@@ -66,6 +66,7 @@ from src.operations.p1_scale_benchmark import (  # noqa: E402
     nearest_rank,
     request_group_sha256,
     safe_api_error_evidence,
+    safe_gate_failure_diagnostics,
     safe_outcome_diagnostics,
     summarize_outcomes,
     validate_safe_result,
@@ -1226,12 +1227,15 @@ def _run_repeat(
             raise
         expected_warmup_growth = warmup.counts["valid"]
         expected_measured_growth = measured.counts["valid"]
-        if after_warmup - before != expected_warmup_growth:
-            raise ScaleBenchmarkError("Warm-up audit-event growth did not reconcile.")
-        if after_measured - after_warmup != expected_measured_growth:
-            raise ScaleBenchmarkError("Measured audit-event growth did not reconcile.")
-        if warmup_metadata != measured_metadata:
-            raise ScaleBenchmarkError("V2 model metadata changed within one repeat.")
+        audit_record = {
+            "before": before,
+            "after_warmup": after_warmup,
+            "after_measured": after_measured,
+            "warmup_growth": after_warmup - before,
+            "measured_growth": after_measured - after_warmup,
+            "full_verifier_seconds": round(verifier_seconds, 6),
+            "full_verifier_status": "verified",
+        }
         record = {
             "workers": workers,
             "concurrency": concurrency,
@@ -1263,18 +1267,33 @@ def _run_repeat(
             "warmup": {"manifest": warmup.safe_manifest(), "result": warmup_result},
             "measured": {"manifest": measured.safe_manifest(), "result": measured_result},
             "model": measured_metadata,
-            "audit": {
-                "before": before,
-                "after_warmup": after_warmup,
-                "after_measured": after_measured,
-                "warmup_growth": after_warmup - before,
-                "measured_growth": after_measured - after_warmup,
-                "full_verifier_seconds": round(verifier_seconds, 6),
-                "full_verifier_status": "verified",
-            },
+            "audit": audit_record,
             "resources": resources,
         }
-        record["harness_validation"] = _validate_harness_gates(record)
+        try:
+            if after_warmup - before != expected_warmup_growth:
+                raise ScaleBenchmarkError("Warm-up audit-event growth did not reconcile.")
+            if after_measured - after_warmup != expected_measured_growth:
+                raise ScaleBenchmarkError("Measured audit-event growth did not reconcile.")
+            if warmup_metadata != measured_metadata:
+                raise ScaleBenchmarkError("V2 model metadata changed within one repeat.")
+            record["harness_validation"] = _validate_harness_gates(record)
+        except ScaleBenchmarkError as exc:
+            # Measurement has already stopped here, so the completed aggregates
+            # are safe to keep. Retaining them is what lets a failed proof be
+            # reported instead of discarded with no evidence at all.
+            raise BenchmarkValidationError(
+                str(exc),
+                diagnostics=safe_gate_failure_diagnostics(
+                    workers=workers,
+                    concurrency=concurrency,
+                    repeat=repeat,
+                    warmup_result=warmup_result,
+                    measured_result=measured_result,
+                    audit=audit_record,
+                    failure=str(exc),
+                ),
+            ) from exc
         return record
     finally:
         postgres.drop_schema(schema)

@@ -574,6 +574,39 @@ def summarize_outcomes(
     }
 
 
+HARNESS_GATE_FAILURE_SCHEMA = "p1_scale_harness_gate_failure_v1"
+
+
+def safe_gate_failure_diagnostics(
+    *,
+    workers: int,
+    concurrency: int,
+    repeat: int,
+    warmup_result: dict[str, Any],
+    measured_result: dict[str, Any],
+    audit: dict[str, Any],
+    failure: str,
+) -> dict[str, Any]:
+    """Keep aggregate-only evidence for a gate that rejects a finished repeat.
+
+    Correctness gates already carry diagnostics, but the post-measurement audit
+    and harness gates used to raise bare errors, so a failed proof was discarded
+    with no artifact at all. Measurement has stopped by the time these gates
+    run, so the completed aggregates are safe and cost nothing to retain.
+    """
+    return {
+        "diagnostic_schema": HARNESS_GATE_FAILURE_SCHEMA,
+        "failure": failure,
+        "failure_stage": "post_measurement_gate",
+        "workers": workers,
+        "concurrency": concurrency,
+        "repeat": repeat,
+        "warmup": warmup_result,
+        "measured": measured_result,
+        "audit": audit,
+    }
+
+
 _FORBIDDEN_RESULT_KEYS = {
     "dsn",
     "secret",
