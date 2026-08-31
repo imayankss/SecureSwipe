@@ -70,6 +70,18 @@ def test_aggregate_contains_only_allowlisted_failure_evidence(tmp_path: Path) ->
     validate_safe_result(snapshot)
 
 
+def test_success_path_does_not_write_until_explicit_flush(tmp_path: Path) -> None:
+    aggregator = StateStoreDiagnosticAggregator(tmp_path)
+    for _ in range(30):
+        observation = aggregator.start("reserve", _PoolStats())
+        observation.success()
+
+    assert list(tmp_path.glob("*.json")) == []
+    path = aggregator.flush()
+    assert path is not None
+    assert json.loads(path.read_text())["stages"]["reserve"]["success_count"] == 30
+
+
 def test_failure_sanitizer_never_retains_exception_text() -> None:
     assert sanitize_failure(PoolTimeout("private")) == ("checkout_timeout", None)
     assert sanitize_failure(PoolClosed("private")) == ("pool_closed", None)
