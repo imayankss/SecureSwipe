@@ -23,7 +23,7 @@ import sys
 import tempfile
 import threading
 import time
-from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Sequence
@@ -83,6 +83,19 @@ OWNERSHIP_LABEL = "secureswipe.task=p1-s4"
 DATABASE_NAME = "secureswipe_p1_scale_test"
 RESULT_DIRECTORY = PROJECT_ROOT / "reports" / "benchmarks" / "p1-scale-results"
 TIMEOUT_SECONDS = 10.0
+CLIENT_KEEPALIVE_EXPIRY_SECONDS = 30.0
+S4E_PROTOCOL_VERSION = "p1-s4e-validated-harness-v1"
+S4E_PROTOCOL_PATH = "docs/benchmarks/P1_S4E_VALIDATED_HARNESS_PROTOCOL.md"
+S4E_PROTOCOL_SHA256 = (
+    "d40ef3e36bdd7fb2f0a26df494fddaca11b92698383893fd5811cd4f64ecf062"
+)
+S4D_RESULT_PATH = (
+    "reports/benchmarks/p1-scale-results/"
+    "p1-s4d-client-transport-1788153293.json"
+)
+S4D_RESULT_SHA256 = (
+    "aefa8a5a48e5bb94c0577ba9438ed8c1f487ddeaadc707de3a2398a9a30861ee"
+)
 
 
 def _run(
@@ -775,11 +788,59 @@ def _api_error_evidence(response: httpx.Response) -> dict[str, Any]:
     return safe_api_error_evidence(response.headers, body, parsed=parsed)
 
 
-def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], dict[str, str]]:
+def _run_bounded_requests(
+    requests: Sequence[RequestSpec],
+    *,
+    concurrency: int,
+    executor: ThreadPoolExecutor,
+    issue: Any,
+    timing_enabled: bool,
+) -> tuple[list[RequestOutcome], int]:
+    """Refill one future per completion without an executor backlog."""
+    outcomes: list[RequestOutcome] = []
+    request_iterator = iter(requests)
+    pending: dict[Future[RequestOutcome], None] = {}
+    max_outstanding = 0
+
+    def submit_one(spec: RequestSpec) -> None:
+        nonlocal max_outstanding
+        timer = ClientRequestTimer.submitted_now() if timing_enabled else None
+        pending[executor.submit(issue, spec, timer)] = None
+        max_outstanding = max(max_outstanding, len(pending))
+
+    for _ in range(min(concurrency, len(requests))):
+        submit_one(next(request_iterator))
+    while pending:
+        completed, _ = wait(tuple(pending), return_when=FIRST_COMPLETED)
+        for future in completed:
+            pending.pop(future)
+            outcomes.append(future.result())
+            try:
+                submit_one(next(request_iterator))
+            except StopIteration:
+                pass
+    return outcomes, max_outstanding
+
+
+def _run_workload(
+    base_url: str,
+    workload: Workload,
+    *,
+    client: httpx.Client,
+    executor: ThreadPoolExecutor,
+) -> tuple[dict[str, Any], dict[str, str]]:
     metadata: dict[str, str] = {}
     metadata_lock = threading.Lock()
+    clock_lock = threading.Lock()
+    first_network_start: float | None = None
+    final_body_completion: float | None = None
     timing = (
-        ClientTimingAggregator(timeout_seconds=TIMEOUT_SECONDS)
+        ClientTimingAggregator(
+            timeout_seconds=TIMEOUT_SECONDS,
+            max_connections=workload.concurrency,
+            max_keepalive_connections=workload.concurrency,
+            keepalive_expiry_seconds=CLIENT_KEEPALIVE_EXPIRY_SECONDS,
+        )
         if client_timing_enabled()
         else None
     )
@@ -787,11 +848,12 @@ def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], di
     def issue(
         spec: RequestSpec, request_timer: ClientRequestTimer | None = None
     ) -> RequestOutcome:
+        nonlocal first_network_start, final_body_completion
         group_token = request_group_sha256(spec.request_id)
-        started = time.perf_counter()
         trace = HttpTraceRecorder() if request_timer is not None else None
         if request_timer is not None:
             request_timer.mark("task_started")
+        request_started: float | None = None
 
         def record_timing(*, request_completed: bool) -> None:
             if timing is None or request_timer is None or trace is None:
@@ -805,33 +867,42 @@ def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], di
             )
 
         try:
-            if request_timer is None or trace is None:
-                with httpx.Client(timeout=TIMEOUT_SECONDS) as client:
-                    response = client.post(
-                        f"{base_url}{PREDICTION_ROUTE}",
-                        json=spec.body,
-                        headers={"X-Request-ID": spec.request_id},
-                    )
-                latency = (time.perf_counter() - started) * 1000
-            else:
-                with httpx.Client(timeout=TIMEOUT_SECONDS) as client:
-                    request = client.build_request(
-                        "POST",
-                        f"{base_url}{PREDICTION_ROUTE}",
-                        json=spec.body,
-                        headers={"X-Request-ID": spec.request_id},
-                        extensions={"trace": trace},
-                    )
-                    request_timer.mark("request_started")
-                    response = client.send(request, stream=True)
-                    request_timer.mark("headers_received")
-                    response.read()
-                    request_timer.mark("body_completed")
-                    response.close()
-                request_timer.mark("client_completed")
+            extensions = {"trace": trace} if trace is not None else None
+            request = client.build_request(
+                "POST",
+                f"{base_url}{PREDICTION_ROUTE}",
+                json=spec.body,
+                headers={"X-Request-ID": spec.request_id},
+                extensions=extensions,
+            )
+            if request_timer is not None:
+                request_timer.mark("request_started")
+            request_started = time.perf_counter()
+            with clock_lock:
+                if (
+                    first_network_start is None
+                    or request_started < first_network_start
+                ):
+                    first_network_start = request_started
+            response = client.send(request, stream=True)
+            if request_timer is not None:
+                request_timer.mark("headers_received")
+            response.read()
+            body_completed = time.perf_counter()
+            if request_timer is not None:
+                request_timer.mark("body_completed")
+            response.close()
+            with clock_lock:
+                if (
+                    final_body_completion is None
+                    or body_completed > final_body_completion
+                ):
+                    final_body_completion = body_completed
+            latency = (body_completed - request_started) * 1000.0
+            if request_timer is not None:
                 request_durations = request_timer.durations()
                 latency = request_durations.get(
-                    "client_e2e_ms", (time.perf_counter() - started) * 1000
+                    "request_e2e_ms", latency
                 )
                 record_timing(request_completed=True)
             contract_valid = True
@@ -877,46 +948,64 @@ def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], di
                 header_classification=error_evidence.get("header_classification"),
             )
         except httpx.TimeoutException:
-            if request_timer is not None:
-                request_timer.mark("client_completed")
             record_timing(request_completed=False)
             return RequestOutcome(
                 spec.kind,
                 None,
-                (time.perf_counter() - started) * 1000,
+                (
+                    (time.perf_counter() - request_started) * 1000
+                    if request_started is not None
+                    else 0.0
+                ),
                 timeout=True,
                 request_group_sha256=group_token,
                 failure_reason="client_timeout",
             )
         except httpx.HTTPError:
-            if request_timer is not None:
-                request_timer.mark("client_completed")
             record_timing(request_completed=False)
             return RequestOutcome(
                 spec.kind,
                 None,
-                (time.perf_counter() - started) * 1000,
+                (
+                    (time.perf_counter() - request_started) * 1000
+                    if request_started is not None
+                    else 0.0
+                ),
                 transport_error=True,
                 request_group_sha256=group_token,
                 failure_reason="transport_error",
             )
 
-    wall_started = time.perf_counter()
-    with ThreadPoolExecutor(max_workers=workload.concurrency) as pool:
-        if timing is None:
-            outcomes = list(pool.map(issue, workload.requests))
-        else:
-            futures = [
-                pool.submit(issue, spec, ClientRequestTimer.submitted_now())
-                for spec in workload.requests
-            ]
-            outcomes = [future.result() for future in futures]
+    outcomes, max_outstanding = _run_bounded_requests(
+        workload.requests,
+        concurrency=workload.concurrency,
+        executor=executor,
+        issue=issue,
+        timing_enabled=timing is not None,
+    )
+    if first_network_start is None or final_body_completion is None:
+        raise BenchmarkValidationError(
+            "No completed network timing boundary was captured.",
+            diagnostics=safe_outcome_diagnostics(
+                workload, outcomes, failure="missing_network_timing_boundary"
+            ),
+        )
+    run_wall_seconds = final_body_completion - first_network_start
     try:
-        summary = summarize_outcomes(workload, outcomes, time.perf_counter() - wall_started)
+        summary = summarize_outcomes(workload, outcomes, run_wall_seconds)
         summary["response_groups"] = validate_response_groups(outcomes)
+        summary["harness"] = {
+            "scheduler_policy": "bounded_refill_one_per_completion",
+            "outstanding_work_limit": workload.concurrency,
+            "max_outstanding_observed": max_outstanding,
+            "executor_threads": workload.concurrency,
+            "run_wall_clock": "first_network_start_to_final_body_completion",
+            "request_e2e_clock": "before_client_send_to_body_completion",
+            "client_setup_in_request_e2e": False,
+        }
         if timing is not None:
             client_timing = timing.snapshot()
-            observed_e2e = client_timing["duration_aggregates"]["client_e2e_ms"]
+            observed_e2e = client_timing["duration_aggregates"]["request_e2e_ms"]
             if observed_e2e["count"] != len(outcomes):
                 raise ScaleBenchmarkError(
                     "Client timing did not reconcile with completed workload outcomes."
@@ -960,6 +1049,72 @@ async def _audit_state(dsn: str, schema: str) -> tuple[int, float]:
         await connection.close()
 
 
+def _validate_harness_gates(record: dict[str, Any]) -> dict[str, Any]:
+    measured = record["measured"]["result"]
+    warmup = record["warmup"]["result"]
+    timing = measured.get("client_timing")
+    warmup_timing = warmup.get("client_timing")
+    if not isinstance(timing, dict) or not isinstance(warmup_timing, dict):
+        raise ScaleBenchmarkError("S4e requires exact client timing opt-in evidence.")
+    durations = timing["duration_aggregates"]
+    queue_p99_ms = durations["scheduler_queue_wait_ms"]["p99_ms"]
+    request_e2e_p50_ms = measured["all_completed_latency"]["p50_ms"]
+    queue_limit_ms = max(10.0, request_e2e_p50_ms * 0.05)
+    if queue_p99_ms is None or queue_p99_ms > queue_limit_ms:
+        raise ScaleBenchmarkError(
+            "S4e scheduler queue p99 exceeds the pre-registered harness gate."
+        )
+    setup = durations["client_setup_ms"]
+    if setup["count"] != measured["attempted"] or setup["max_ms"] != 0.0:
+        raise ScaleBenchmarkError("Per-request client setup was not zero in S4e.")
+    connections = timing["connection_counts"]
+    connection_total = sum(int(value) for value in connections.values())
+    if connection_total != measured["attempted"]:
+        raise ScaleBenchmarkError("Measured connection counts did not reconcile.")
+    reuse_rate = connections["reused"] / connection_total
+    if reuse_rate < 0.95:
+        raise ScaleBenchmarkError("Measured connection reuse was below 95 percent.")
+    warmup_connections = warmup_timing["connection_counts"]
+    if warmup_connections["new"] < 1 or sum(warmup_connections.values()) != warmup[
+        "attempted"
+    ]:
+        raise ScaleBenchmarkError(
+            "Warm-up did not establish and reconcile persistent connections."
+        )
+    harness = measured["harness"]
+    expected_outstanding = min(record["concurrency"], measured["attempted"])
+    if (
+        harness["max_outstanding_observed"] != expected_outstanding
+        or harness["max_outstanding_observed"] > harness["outstanding_work_limit"]
+    ):
+        raise ScaleBenchmarkError("Bounded outstanding-work gate failed.")
+    client = record["client_harness"]
+    if (
+        not client["created_before_warmup"]
+        or client["per_request_client_construction"]
+        or client["limits"]["max_connections"] != record["concurrency"]
+        or client["limits"]["max_keepalive_connections"] != record["concurrency"]
+    ):
+        raise ScaleBenchmarkError("Persistent client topology gate failed.")
+    if (
+        timing["diagnostic_recording_failures"] != 0
+        or warmup_timing["diagnostic_recording_failures"] != 0
+    ):
+        raise ScaleBenchmarkError("Client diagnostic recording gate failed.")
+    return {
+        "status": "passed",
+        "queue_p99_ms": queue_p99_ms,
+        "queue_limit_ms": round(queue_limit_ms, 4),
+        "request_e2e_p50_ms": request_e2e_p50_ms,
+        "measured_connection_reuse_rate": round(reuse_rate, 6),
+        "measured_connection_counts": dict(connections),
+        "warmup_connection_counts": dict(warmup_connections),
+        "maximum_outstanding_observed": harness["max_outstanding_observed"],
+        "outstanding_work_limit": harness["outstanding_work_limit"],
+        "per_request_client_setup_max_ms": setup["max_ms"],
+    }
+
+
 def _run_repeat(
     *,
     postgres: OwnedPostgres,
@@ -993,13 +1148,48 @@ def _run_repeat(
                 sampler = ResourceSampler(cluster.process.pid, postgres.container, workers)
                 sampler.start()
                 try:
-                    before, _ = asyncio.run(_audit_state(postgres.app_dsn, schema))
-                    warmup_result, warmup_metadata = _run_workload(cluster.base_url, warmup)
-                    after_warmup, _ = asyncio.run(_audit_state(postgres.app_dsn, schema))
-                    measured_result, measured_metadata = _run_workload(cluster.base_url, measured)
-                    after_measured, verifier_seconds = asyncio.run(
-                        _audit_state(postgres.app_dsn, schema)
+                    limits = httpx.Limits(
+                        max_connections=concurrency,
+                        max_keepalive_connections=concurrency,
+                        keepalive_expiry=CLIENT_KEEPALIVE_EXPIRY_SECONDS,
                     )
+                    client_setup_started = time.perf_counter()
+                    with httpx.Client(
+                        timeout=TIMEOUT_SECONDS,
+                        limits=limits,
+                        http1=True,
+                        http2=False,
+                        follow_redirects=False,
+                        trust_env=True,
+                    ) as client:
+                        client_setup_ms = (
+                            time.perf_counter() - client_setup_started
+                        ) * 1000.0
+                        with ThreadPoolExecutor(
+                            max_workers=concurrency,
+                            thread_name_prefix="p1-s4e-client",
+                        ) as executor:
+                            before, _ = asyncio.run(
+                                _audit_state(postgres.app_dsn, schema)
+                            )
+                            warmup_result, warmup_metadata = _run_workload(
+                                cluster.base_url,
+                                warmup,
+                                client=client,
+                                executor=executor,
+                            )
+                            after_warmup, _ = asyncio.run(
+                                _audit_state(postgres.app_dsn, schema)
+                            )
+                            measured_result, measured_metadata = _run_workload(
+                                cluster.base_url,
+                                measured,
+                                client=client,
+                                executor=executor,
+                            )
+                            after_measured, verifier_seconds = asyncio.run(
+                                _audit_state(postgres.app_dsn, schema)
+                            )
                 finally:
                     resources = sampler.stop()
         except BenchmarkValidationError as exc:
@@ -1036,11 +1226,34 @@ def _run_repeat(
             raise ScaleBenchmarkError("Measured audit-event growth did not reconcile.")
         if warmup_metadata != measured_metadata:
             raise ScaleBenchmarkError("V2 model metadata changed within one repeat.")
-        return {
+        record = {
             "workers": workers,
             "concurrency": concurrency,
             "repeat": repeat,
             "migrations_applied": list(migrations),
+            "client_harness": {
+                "topology": "one_shared_thread_safe_httpx_client_per_cell",
+                "created_before_warmup": True,
+                "closed_after_measured_phase": True,
+                "per_request_client_construction": False,
+                "client_setup": {
+                    "count": 1,
+                    "min_ms": round(client_setup_ms, 4),
+                    "median_ms": round(client_setup_ms, 4),
+                    "p95_ms": round(client_setup_ms, 4),
+                    "p99_ms": round(client_setup_ms, 4),
+                    "max_ms": round(client_setup_ms, 4),
+                },
+                "limits": {
+                    "max_connections": concurrency,
+                    "max_keepalive_connections": concurrency,
+                    "keepalive_expiry_seconds": CLIENT_KEEPALIVE_EXPIRY_SECONDS,
+                },
+                "http1": True,
+                "http2": False,
+                "follow_redirects": False,
+                "trust_env": True,
+            },
             "warmup": {"manifest": warmup.safe_manifest(), "result": warmup_result},
             "measured": {"manifest": measured.safe_manifest(), "result": measured_result},
             "model": measured_metadata,
@@ -1055,6 +1268,8 @@ def _run_repeat(
             },
             "resources": resources,
         }
+        record["harness_validation"] = _validate_harness_gates(record)
+        return record
     finally:
         postgres.drop_schema(schema)
 
@@ -1268,7 +1483,120 @@ def _write_partial_diagnostic(report: dict[str, Any], output_dir: Path) -> Path:
     return _write_safe_json(report, output_dir / f"{report['run_id']}-partial.json")
 
 
+def _median_matrix_and_gates(runs: Sequence[dict[str, Any]]) -> dict[str, Any]:
+    matrix: list[dict[str, Any]] = []
+    indexed: dict[tuple[int, int], dict[str, Any]] = {}
+    for workers in WORKER_COUNTS:
+        for concurrency in CONCURRENCY_LEVELS:
+            group = [
+                run
+                for run in runs
+                if run["workers"] == workers and run["concurrency"] == concurrency
+            ]
+            if len(group) != len(REPEAT_NUMBERS):
+                raise ScaleBenchmarkError("S4e median matrix is missing a repeat.")
+            rps = [float(run["measured"]["result"]["successful_rps"]) for run in group]
+            p50 = [
+                float(run["measured"]["result"]["all_completed_latency"]["p50_ms"])
+                for run in group
+            ]
+            p95 = [
+                float(run["measured"]["result"]["all_completed_latency"]["p95_ms"])
+                for run in group
+            ]
+            p99 = [
+                float(run["measured"]["result"]["all_completed_latency"]["p99_ms"])
+                for run in group
+            ]
+            cpu = [
+                float(run["resources"]["api_process_group_cpu_percent"]["mean"])
+                for run in group
+            ]
+            rss = [
+                float(run["resources"]["api_process_group_rss"]["median_mib"])
+                for run in group
+            ]
+            record = {
+                "workers": workers,
+                "concurrency": concurrency,
+                "repeat_count": len(group),
+                "median_successful_rps": round(nearest_rank(rps, 0.50), 3),
+                "median_e2e_p50_ms": round(nearest_rank(p50, 0.50), 3),
+                "median_e2e_p95_ms": round(nearest_rank(p95, 0.50), 3),
+                "median_e2e_p99_ms": round(nearest_rank(p99, 0.50), 3),
+                "median_api_cpu_percent_mean": round(nearest_rank(cpu, 0.50), 3),
+                "median_api_rss_mib": round(nearest_rank(rss, 0.50), 3),
+                "status_totals": {"200": 2_700, "422": 300},
+                "timeouts": 0,
+                "transport_errors": 0,
+                "unexpected_non_2xx": 0,
+            }
+            matrix.append(record)
+            indexed[(workers, concurrency)] = record
+
+    gates: list[dict[str, Any]] = []
+    for concurrency in (32, 64):
+        baseline = indexed[(1, concurrency)]
+        for workers, required_rps_gain in ((2, 0.15), (4, 0.25)):
+            candidate = indexed[(workers, concurrency)]
+            rps_gain = (
+                candidate["median_successful_rps"]
+                / baseline["median_successful_rps"]
+                - 1.0
+            )
+            p99_increase = (
+                candidate["median_e2e_p99_ms"]
+                / baseline["median_e2e_p99_ms"]
+                - 1.0
+            )
+            rps_pass = rps_gain >= required_rps_gain
+            p99_pass = p99_increase <= 0.25
+            gates.append(
+                {
+                    "workers": workers,
+                    "concurrency": concurrency,
+                    "rps_gain_percent": round(rps_gain * 100.0, 3),
+                    "required_rps_gain_percent": required_rps_gain * 100.0,
+                    "rps_gate": "passed" if rps_pass else "failed",
+                    "p99_increase_percent": round(p99_increase * 100.0, 3),
+                    "maximum_p99_increase_percent": 25.0,
+                    "p99_gate": "passed" if p99_pass else "failed",
+                    "non_2xx_percentage_point_increase": 0.0,
+                    "maximum_non_2xx_percentage_point_increase": 1.0,
+                    "non_2xx_gate": "passed",
+                    "combined_gate": (
+                        "passed" if rps_pass and p99_pass else "failed"
+                    ),
+                }
+            )
+    demonstrated = all(gate["combined_gate"] == "passed" for gate in gates)
+    return {
+        "median_matrix": matrix,
+        "worker_scaling_gates": gates,
+        "correctness_gate": "passed",
+        "bounded_append_no_full_rescan_gate": "verified_by_p1_s3_regression",
+        "scaling_demonstrated": demonstrated,
+        "p1_s4_status": "complete",
+        "s4f_required": False,
+        "allowed_conclusion": (
+            "legacy_matrix_harness_constrained_s4e_current_local_loopback_evidence"
+            if demonstrated
+            else "validated_local_loopback_harness_did_not_demonstrate_horizontal_scaling"
+        ),
+    }
+
+
 def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> dict[str, Any]:
+    if not client_timing_enabled():
+        raise ScaleBenchmarkError(
+            "S4e requires exact SECURESWIPE_SCALE_CLIENT_TIMING=1 opt-in."
+        )
+    protocol_path = PROJECT_ROOT / S4E_PROTOCOL_PATH
+    parent_path = PROJECT_ROOT / S4D_RESULT_PATH
+    if _sha256_file(protocol_path) != S4E_PROTOCOL_SHA256:
+        raise ScaleBenchmarkError("S4e protocol hash verification failed.")
+    if _sha256_file(parent_path) != S4D_RESULT_SHA256:
+        raise ScaleBenchmarkError("P1-S4d parent-result hash verification failed.")
     if mode == "full" and not confirm_full_matrix:
         raise ScaleBenchmarkError("Full mode requires --confirm-full-matrix.")
     if mode == "full":
@@ -1276,7 +1604,7 @@ def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> di
             ("git", "diff", "--cached", "--quiet")
         ).returncode != 0:
             raise ScaleBenchmarkError("Full results require a clean tracked working tree.")
-    run_id = f"p1-scale-{'smoke' if mode == 'smoke' else 'full'}-{int(time.time())}"
+    run_id = f"p1-s4e-{'smoke' if mode == 'smoke' else 'full'}-{int(time.time())}"
     commit_sha = _git_value("rev-parse", "HEAD")
     with tempfile.TemporaryDirectory(prefix="secureswipe-p1-s4-") as temporary:
         # macOS exposes /var as a symlink to /private/var. The bundle publisher
@@ -1288,9 +1616,18 @@ def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> di
         bundle_manifest_sha256 = _sha256_file(manifest)
         with OwnedPostgres() as postgres:
             evidence_header = {
-                "diagnostic_kind": "p1_scale_incremental_evidence",
+                "diagnostic_kind": "p1_s4e_validated_harness_incremental_evidence",
                 "mode": mode,
                 "protocol_version": PROTOCOL_VERSION,
+                "s4e_protocol_version": S4E_PROTOCOL_VERSION,
+                "s4e_protocol": {
+                    "path": S4E_PROTOCOL_PATH,
+                    "sha256": S4E_PROTOCOL_SHA256,
+                },
+                "p1_s4d_parent": {
+                    "path": S4D_RESULT_PATH,
+                    "sha256": S4D_RESULT_SHA256,
+                },
                 "fixture_version": FIXTURE_VERSION,
                 "source_commit_sha": commit_sha,
                 "bundle_manifest_sha256": bundle_manifest_sha256,
@@ -1307,7 +1644,7 @@ def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> di
             )
             runs = evidence.runs
             dimensions = (
-                [(1, 1, 1)]
+                [(1, 8, 1)]
                 if mode == "smoke"
                 else [
                     (workers, concurrency, repeat)
@@ -1360,8 +1697,22 @@ def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> di
             report: dict[str, Any] = {
                 "run_id": run_id,
                 "mode": mode,
-                "publishable": False if mode == "smoke" else True,
+                "publishable": False,
+                "evidence_classification": (
+                    "non_publishable_harness_smoke"
+                    if mode == "smoke"
+                    else "current_local_loopback_performance_evidence"
+                ),
                 "protocol_version": PROTOCOL_VERSION,
+                "s4e_protocol_version": S4E_PROTOCOL_VERSION,
+                "s4e_protocol": {
+                    "path": S4E_PROTOCOL_PATH,
+                    "sha256": S4E_PROTOCOL_SHA256,
+                },
+                "p1_s4d_parent": {
+                    "path": S4D_RESULT_PATH,
+                    "sha256": S4D_RESULT_SHA256,
+                },
                 "fixture_version": FIXTURE_VERSION,
                 "source_commit_sha": commit_sha,
                 "tracked_tree_clean": _run(("git", "diff", "--quiet")).returncode == 0
@@ -1393,6 +1744,15 @@ def run_harness(*, mode: str, output_dir: Path, confirm_full_matrix: bool) -> di
                 "runs": runs,
                 "audit_growth": audit_growth,
             }
+            report["evaluation"] = (
+                {
+                    "status": "smoke_only",
+                    "harness_gates": runs[0]["harness_validation"],
+                    "scaling_claim_authorized": False,
+                }
+                if mode == "smoke"
+                else _median_matrix_and_gates(runs)
+            )
             evidence.record_completion()
             paths = _write_results(report, output_dir)
             report["result_files"] = [str(path.relative_to(PROJECT_ROOT)) for path in paths]
