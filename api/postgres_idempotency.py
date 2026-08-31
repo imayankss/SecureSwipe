@@ -172,6 +172,10 @@ class PostgresIdempotencyStore:
             else None
         )
         self._state_store_diagnostic = state_store_diagnostic_from_environment()
+        # The audit-chain head already serializes completion transactions
+        # globally. Queue locally before checkout so those waiters do not occupy
+        # every connection and starve reservations in this worker's small pool.
+        self._completion_connection_gate = asyncio.Lock()
 
     @property
     def timing_aggregator(self) -> TimingAggregator | None:
@@ -238,6 +242,21 @@ class PostgresIdempotencyStore:
                 raise
         else:
             await context.__aexit__(None, None, None)
+
+    @asynccontextmanager
+    async def _completion_connection(
+        self,
+        pool: AsyncConnectionPool[psycopg.AsyncConnection[dict[str, Any]]],
+        lifecycle_timer: LifecycleTimer = NULL_LIFECYCLE_TIMER,
+    ) -> AsyncIterator[psycopg.AsyncConnection[dict[str, Any]]]:
+        """Queue the globally serialized completion before pool checkout."""
+        async with self._completion_connection_gate:
+            checkout_started = lifecycle_timer.started_at()
+            async with self._connection(pool) as connection:
+                lifecycle_timer.observe_elapsed(
+                    "completion_pool_checkout_ms", checkout_started
+                )
+                yield connection
 
     @asynccontextmanager
     async def _transaction(
@@ -595,9 +614,9 @@ class PostgresIdempotencyStore:
         )
         try:
             observation = self._observe("complete_outcome", pool)
-            checkout_started = lifecycle_timer.started_at()
-            async with self._connection(pool) as connection:
-                lifecycle_timer.observe_elapsed("completion_pool_checkout_ms", checkout_started)
+            async with self._completion_connection(
+                pool, lifecycle_timer=lifecycle_timer
+            ) as connection:
                 async with self._transaction(connection, pool):
                     timer.at("transaction_open")
                     reservation_cursor = await connection.execute(
