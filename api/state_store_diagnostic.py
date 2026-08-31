@@ -60,9 +60,6 @@ POOL_COUNTERS: tuple[str, ...] = (
 )
 
 _SQLSTATE = re.compile(r"^[0-9A-Z]{5}$")
-_FLUSH_EVERY = 25
-
-
 class PoolStatsProvider(Protocol):
     def get_stats(self) -> Mapping[str, int | float]: ...
 
@@ -250,7 +247,9 @@ class StateStoreDiagnosticAggregator:
                 if name in POOL_COUNTERS:
                     record["pool"][name].append(value)
             self._attempts += 1
-            due = self._attempts % _FLUSH_EVERY == 0 or not succeeded
+            # Success-path fsyncs would perturb the request being diagnosed.
+            # Failures persist immediately; successful aggregates flush at close/exit.
+            due = not succeeded
         if due:
             self.flush()
 
