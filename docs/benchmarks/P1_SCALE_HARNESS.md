@@ -1,12 +1,19 @@
 # P1 scalability benchmark harness
 
-Status: **harness frozen for P1-S4b; no performance result or claim is recorded here**
+Status: **P1-S4e bounded, connection-reusing harness; final matrix pending**
 
 The runner implements the workload and measurement contract in
 [P1 scale protocol](P1_SCALE_PROTOCOL.md). It benchmarks only the explicit
 `postgres-scale` profile through single-item `POST /v2/predict`. It never sends
 prediction traffic to V1, batch routes, `local-default`, an external service,
 or PostgreSQL on host port 5432.
+
+P1-S4d proved that the earlier P1-S4b client submitted every attempt at once
+and created a new HTTPX client for every request. That legacy matrix is
+`HARNESS-CONSTRAINED / NOT SERVER-SCALING EVIDENCE`. Its artifacts remain
+historical diagnostics and are not overwritten. The corrected topology and
+final interpretation rules are frozen in the
+[P1-S4e protocol](P1_S4E_VALIDATED_HARNESS_PROTOCOL.md).
 
 ## Safety boundary
 
@@ -78,6 +85,29 @@ Every result records:
 - aggregate API and PostgreSQL CPU/RSS samples; and
 - warm-up/measured audit growth plus full-chain verification status and time.
 
+## Validated client lifecycle and scheduler
+
+Each cell creates one synchronous, thread-safe `httpx.Client` and one fixed
+executor before warm-up. The same client and executor continue through the
+measured phase and close only after the cell finishes. Client limits are
+explicitly equal to the cell concurrency for both maximum connections and
+maximum keep-alive connections, with a 30-second keep-alive expiry. No
+per-request function constructs or closes a client.
+
+The scheduler initially submits at most `concurrency` attempts. It waits for
+completed futures and submits one replacement per completion, so outstanding
+work never exceeds concurrency and no 1,000-future executor backlog exists.
+Request E2E begins immediately before `client.send` and ends after the complete
+response body is read. Run wall time begins at the first actual network send
+and ends at the final body completion. Client/executor construction, readiness,
+warm-up, validation after body completion, and teardown are excluded.
+
+Exact `SECURESWIPE_SCALE_CLIENT_TIMING=1` opt-in adds aggregate scheduler,
+request, public HTTP trace, and connection evidence. Missing or non-exact flag
+values remain inert. Full S4e mode requires this evidence and fails closed
+unless scheduler queue, zero per-request setup, bounded outstanding work,
+connection reconciliation, and at least 95% measured reuse pass.
+
 Smoke results are always marked `publishable: false`. Full mode refuses a
 tracked dirty tree and requires an explicit flag. Publication remains subject
 to every correctness and claim gate in the protocol.
@@ -97,14 +127,15 @@ Run focused unit checks:
 Run the small non-publishable smoke:
 
 ```bash
-.venv/bin/python scripts/run_p1_scale_benchmark.py --mode smoke
+SECURESWIPE_SCALE_CLIENT_TIMING=1 \
+  .venv/bin/python scripts/run_p1_scale_benchmark.py --mode smoke
 ```
 
-P1-S4b, and only P1-S4b, may run the full matrix from the clean committed
-harness SHA:
+The final P1-S4e matrix must run from the clean committed harness SHA:
 
 ```bash
-.venv/bin/python scripts/run_p1_scale_benchmark.py \
+SECURESWIPE_SCALE_CLIENT_TIMING=1 \
+  .venv/bin/python scripts/run_p1_scale_benchmark.py \
   --mode full \
   --confirm-full-matrix
 ```
@@ -137,7 +168,9 @@ normal cleanup then removes them.
 ## Interpreting the output
 
 A zero exit status means only that the requested harness mode reconciled its
-frozen request mix and audit chain. It does not establish production scale,
-universal throughput, a 1,000-RPS or 10,000-RPS claim, availability, or WORM
-immutability. Only a reviewed P1-S4b result tied to its approved clean commit
-may be considered for publication under the protocol's pass/fail rules.
+frozen request mix, harness gates, and audit chain. It does not establish
+production scale, universal throughput, a 1,000-RPS or 10,000-RPS claim,
+availability, or WORM immutability. If the valid S4e matrix remains flat, P1-S4
+still completes with a bounded negative local result; no S4f or server tuning
+follows. All results are single-machine loopback synthetic traffic, unrelated
+to held-out fraud-detection quality. Core XGBoost scoring uses zero LLM tokens.
