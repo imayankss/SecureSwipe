@@ -1,6 +1,6 @@
 # P1 scalability benchmark harness
 
-Status: **P1-S4e bounded, connection-reusing harness; final matrix pending**
+Status: **P1-S4e harness validated; final matrix stopped on a service correctness failure**
 
 The runner implements the workload and measurement contract in
 [P1 scale protocol](P1_SCALE_PROTOCOL.md). It benchmarks only the explicit
@@ -107,6 +107,14 @@ request, public HTTP trace, and connection evidence. Missing or non-exact flag
 values remain inert. Full S4e mode requires this evidence and fails closed
 unless scheduler queue, zero per-request setup, bounded outstanding work,
 connection reconciliation, and at least 95% measured reuse pass.
+
+The committed S4e harness and smoke passed these gates. The final run completed
+34 cells, then stopped without retry at four workers / concurrency 64 / repeat
+2 when 52 requests received the fail-closed `state_store_unavailable` response.
+The valid chain contained only the committed events. Because the frozen exact
+status/audit counts did not reconcile, the run is a correctness failure and no
+S4e performance matrix or worker-scaling conclusion is authorized. See the
+[S4e evidence report](P1_S4E_VALIDATED_HARNESS_EVIDENCE.md).
 
 Smoke results are always marked `publishable: false`. Full mode refuses a
 tracked dirty tree and requires an explicit flag. Publication remains subject
