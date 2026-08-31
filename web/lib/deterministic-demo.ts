@@ -38,4 +38,3 @@ export const DEMO_FIXTURE = Object.freeze({
 export const INVALID_DEMO_FIXTURE = Object.freeze({
   Time: "invalid-synthetic-value",
 } as const);
-
