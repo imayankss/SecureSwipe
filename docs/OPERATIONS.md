@@ -325,3 +325,35 @@ only part of total handler time.
 After a local diagnostic, stop the API workers before removing the task-owned
 output directory, and unset both lifecycle variables. Never enable this
 recorder against shared or production infrastructure.
+
+## Client transport and response-header timing diagnostic (opt-in, local only)
+
+P1-S4d adds a benchmark-client recorder that is inert unless the exact value
+below is present:
+
+```bash
+export SECURESWIPE_SCALE_CLIENT_TIMING=1
+```
+
+Unset, blank, `0`, `true`, and whitespace-padded values remain disabled. The
+recorder does not change an API route, request, response, header, database
+record, audit event, model decision, timeout, or workload. It uses monotonic
+timestamps around executor submission/task start, client construction,
+request execution, response headers, body consumption, and client teardown.
+Supported HTTPX/HTTPcore request trace events add aggregate TCP-connect and
+HTTP/1.1 header/body-send spans. The installed public trace interface does not
+expose connection-pool acquisition, so that phase is reported as
+`not_observable`; it is not inferred from time to first byte.
+
+Only count, minimum, median, p95, p99, and maximum are retained for allowlisted
+durations. Phase shares are calculated for each request before their ratios
+are aggregated. Connection observations are counts of new, reused, or unknown
+connections. Per-request durations, request IDs, bodies, features, response
+bodies, scores, labels, decisions, credentials, DSNs, and trace payloads are
+never persisted. The combined response-header span can include socket,
+ingress, dispatch, handler, and response-header transport time; it is not
+labelled as precise ingress queue time.
+
+The frozen four-cell procedure and interpretation gates are defined in the
+[P1-S4d client transport protocol](benchmarks/P1_S4D_CLIENT_TRANSPORT_PROTOCOL.md).
+This diagnostic authorizes no tuning, SLO, capacity, or scalability claim.

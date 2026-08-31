@@ -71,6 +71,12 @@ from src.operations.p1_scale_benchmark import (  # noqa: E402
     validate_safe_result,
     validate_response_groups,
 )
+from src.operations.p1_scale_client_timing import (  # noqa: E402
+    ClientRequestTimer,
+    ClientTimingAggregator,
+    HttpTraceRecorder,
+    client_timing_enabled,
+)
 
 OWNERSHIP_PREFIX = "secureswipe-p1-s4-"
 OWNERSHIP_LABEL = "secureswipe.task=p1-s4"
@@ -772,18 +778,62 @@ def _api_error_evidence(response: httpx.Response) -> dict[str, Any]:
 def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], dict[str, str]]:
     metadata: dict[str, str] = {}
     metadata_lock = threading.Lock()
+    timing = (
+        ClientTimingAggregator(timeout_seconds=TIMEOUT_SECONDS)
+        if client_timing_enabled()
+        else None
+    )
 
-    def issue(spec: RequestSpec) -> RequestOutcome:
+    def issue(
+        spec: RequestSpec, request_timer: ClientRequestTimer | None = None
+    ) -> RequestOutcome:
         group_token = request_group_sha256(spec.request_id)
         started = time.perf_counter()
+        trace = HttpTraceRecorder() if request_timer is not None else None
+        if request_timer is not None:
+            request_timer.mark("task_started")
+
+        def record_timing(*, request_completed: bool) -> None:
+            if timing is None or request_timer is None or trace is None:
+                return
+            timing.record(
+                request_timer.durations(),
+                trace.durations(),
+                connection_kind=trace.connection_kind(
+                    request_completed=request_completed
+                ),
+            )
+
         try:
-            with httpx.Client(timeout=TIMEOUT_SECONDS) as client:
-                response = client.post(
-                    f"{base_url}{PREDICTION_ROUTE}",
-                    json=spec.body,
-                    headers={"X-Request-ID": spec.request_id},
+            if request_timer is None or trace is None:
+                with httpx.Client(timeout=TIMEOUT_SECONDS) as client:
+                    response = client.post(
+                        f"{base_url}{PREDICTION_ROUTE}",
+                        json=spec.body,
+                        headers={"X-Request-ID": spec.request_id},
+                    )
+                latency = (time.perf_counter() - started) * 1000
+            else:
+                with httpx.Client(timeout=TIMEOUT_SECONDS) as client:
+                    request = client.build_request(
+                        "POST",
+                        f"{base_url}{PREDICTION_ROUTE}",
+                        json=spec.body,
+                        headers={"X-Request-ID": spec.request_id},
+                        extensions={"trace": trace},
+                    )
+                    request_timer.mark("request_started")
+                    response = client.send(request, stream=True)
+                    request_timer.mark("headers_received")
+                    response.read()
+                    request_timer.mark("body_completed")
+                    response.close()
+                request_timer.mark("client_completed")
+                request_durations = request_timer.durations()
+                latency = request_durations.get(
+                    "client_e2e_ms", (time.perf_counter() - started) * 1000
                 )
-            latency = (time.perf_counter() - started) * 1000
+                record_timing(request_completed=True)
             contract_valid = True
             failure_reason: str | None = None
             evidence: dict[str, Any] = {}
@@ -827,6 +877,9 @@ def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], di
                 header_classification=error_evidence.get("header_classification"),
             )
         except httpx.TimeoutException:
+            if request_timer is not None:
+                request_timer.mark("client_completed")
+            record_timing(request_completed=False)
             return RequestOutcome(
                 spec.kind,
                 None,
@@ -836,6 +889,9 @@ def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], di
                 failure_reason="client_timeout",
             )
         except httpx.HTTPError:
+            if request_timer is not None:
+                request_timer.mark("client_completed")
+            record_timing(request_completed=False)
             return RequestOutcome(
                 spec.kind,
                 None,
@@ -847,10 +903,31 @@ def _run_workload(base_url: str, workload: Workload) -> tuple[dict[str, Any], di
 
     wall_started = time.perf_counter()
     with ThreadPoolExecutor(max_workers=workload.concurrency) as pool:
-        outcomes = list(pool.map(issue, workload.requests))
+        if timing is None:
+            outcomes = list(pool.map(issue, workload.requests))
+        else:
+            futures = [
+                pool.submit(issue, spec, ClientRequestTimer.submitted_now())
+                for spec in workload.requests
+            ]
+            outcomes = [future.result() for future in futures]
     try:
         summary = summarize_outcomes(workload, outcomes, time.perf_counter() - wall_started)
         summary["response_groups"] = validate_response_groups(outcomes)
+        if timing is not None:
+            client_timing = timing.snapshot()
+            observed_e2e = client_timing["duration_aggregates"]["client_e2e_ms"]
+            if observed_e2e["count"] != len(outcomes):
+                raise ScaleBenchmarkError(
+                    "Client timing did not reconcile with completed workload outcomes."
+                )
+            if round(observed_e2e["median_ms"], 3) != summary[
+                "all_completed_latency"
+            ]["p50_ms"]:
+                raise ScaleBenchmarkError(
+                    "Client timing E2E does not match the benchmark latency distribution."
+                )
+            summary["client_timing"] = client_timing
     except ScaleBenchmarkError as exc:
         raise BenchmarkValidationError(
             str(exc),
