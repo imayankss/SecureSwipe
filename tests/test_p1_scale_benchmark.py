@@ -16,6 +16,7 @@ from scripts.run_p1_scale_benchmark import (
     _api_error_evidence,
     _bounded_contract,
     _median_matrix_and_gates,
+    _published_timing_reconciles,
     _run_bounded_requests,
     _run_repeat,
     _run_workload,
@@ -297,6 +298,12 @@ def test_s4e_harness_gates_enforce_queue_setup_reuse_and_warmup() -> None:
         _validate_harness_gates(_harness_gate_record(reuse=9))
     with pytest.raises(ScaleBenchmarkError, match="queue p99"):
         _validate_harness_gates(_harness_gate_record(queue_p99_ms=10.1))
+
+
+def test_e2e_reconciliation_allows_only_publication_rounding_delta() -> None:
+    assert _published_timing_reconciles(4.2345, 4.234)
+    assert _published_timing_reconciles(4.2345, 4.235)
+    assert not _published_timing_reconciles(4.2345, 4.236)
 
 
 def test_generated_result_directory_is_ignored() -> None:

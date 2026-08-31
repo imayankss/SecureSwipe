@@ -788,6 +788,11 @@ def _api_error_evidence(response: httpx.Response) -> dict[str, Any]:
     return safe_api_error_evidence(response.headers, body, parsed=parsed)
 
 
+def _published_timing_reconciles(observed_ms: float, published_ms: float) -> bool:
+    """Allow only the maximum delta introduced by 4dp then 3dp publication."""
+    return abs(observed_ms - published_ms) <= 0.0011
+
+
 def _run_bounded_requests(
     requests: Sequence[RequestSpec],
     *,
@@ -1010,9 +1015,10 @@ def _run_workload(
                 raise ScaleBenchmarkError(
                     "Client timing did not reconcile with completed workload outcomes."
                 )
-            if round(observed_e2e["median_ms"], 3) != summary[
-                "all_completed_latency"
-            ]["p50_ms"]:
+            if not _published_timing_reconciles(
+                observed_e2e["median_ms"],
+                summary["all_completed_latency"]["p50_ms"],
+            ):
                 raise ScaleBenchmarkError(
                     "Client timing E2E does not match the benchmark latency distribution."
                 )
