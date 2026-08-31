@@ -7,7 +7,8 @@ import hashlib
 import hmac
 import math
 import re
-from collections.abc import Awaitable, Callable
+from collections.abc import AsyncIterator, Awaitable, Callable
+from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any, Literal, cast
@@ -38,6 +39,11 @@ from api.scale_timing import (
     CompletionTimer,
     TimingAggregator,
     aggregator_from_environment,
+)
+from api.state_store_diagnostic import (
+    StageObservation,
+    StateStoreDiagnosticAggregator,
+    aggregator_from_environment as state_store_diagnostic_from_environment,
 )
 from api.scale_response import (
     BoundedPredictionRepresentation,
@@ -165,6 +171,7 @@ class PostgresIdempotencyStore:
             if self._lifecycle_timing is not None
             else None
         )
+        self._state_store_diagnostic = state_store_diagnostic_from_environment()
 
     @property
     def timing_aggregator(self) -> TimingAggregator | None:
@@ -175,12 +182,104 @@ class PostgresIdempotencyStore:
         return self._lifecycle_timing
 
     @property
+    def state_store_diagnostic(self) -> StateStoreDiagnosticAggregator | None:
+        return self._state_store_diagnostic
+
+    @property
     def table(self) -> sql.Composed:
         return sql.SQL("{}.secureswipe_idempotency").format(sql.Identifier(self.settings.schema))
+
+    def _observe(
+        self,
+        stage: str,
+        pool: AsyncConnectionPool[psycopg.AsyncConnection[dict[str, Any]]] | None = None,
+    ) -> StageObservation | None:
+        if self._state_store_diagnostic is None:
+            return None
+        return self._state_store_diagnostic.start(stage, pool)
+
+    @staticmethod
+    def _observation_success(observation: StageObservation | None) -> None:
+        if observation is not None:
+            observation.success()
+
+    @staticmethod
+    def _observation_failure(
+        observation: StageObservation | None, exc: BaseException
+    ) -> None:
+        if observation is not None:
+            observation.failure(exc)
+
+    @asynccontextmanager
+    async def _connection(
+        self,
+        pool: AsyncConnectionPool[psycopg.AsyncConnection[dict[str, Any]]],
+    ) -> AsyncIterator[psycopg.AsyncConnection[dict[str, Any]]]:
+        """Observe only acquisition; preserve the pool context manager semantics."""
+        if self._state_store_diagnostic is None:
+            async with pool.connection() as connection:
+                yield connection
+            return
+
+        context = pool.connection()
+        observation = self._observe("connection_checkout", pool)
+        try:
+            connection = await context.__aenter__()
+        except BaseException as exc:
+            self._observation_failure(observation, exc)
+            raise
+        else:
+            self._observation_success(observation)
+        try:
+            yield connection
+        except BaseException as exc:
+            suppressed = await context.__aexit__(type(exc), exc, exc.__traceback__)
+            if not suppressed:
+                raise
+        else:
+            await context.__aexit__(None, None, None)
+
+    @asynccontextmanager
+    async def _transaction(
+        self,
+        connection: psycopg.AsyncConnection[dict[str, Any]],
+        pool: AsyncConnectionPool[psycopg.AsyncConnection[dict[str, Any]]],
+    ) -> AsyncIterator[None]:
+        """Separate commit/rollback observations only in exact diagnostic mode."""
+        if self._state_store_diagnostic is None:
+            async with connection.transaction():
+                yield
+            return
+
+        context = connection.transaction()
+        await context.__aenter__()
+        try:
+            yield
+        except BaseException as exc:
+            observation = self._observe("rollback", pool)
+            try:
+                suppressed = await context.__aexit__(type(exc), exc, exc.__traceback__)
+            except BaseException as rollback_exc:
+                self._observation_failure(observation, rollback_exc)
+                raise
+            else:
+                self._observation_success(observation)
+            if not suppressed:
+                raise
+        else:
+            observation = self._observe("commit", pool)
+            try:
+                await context.__aexit__(None, None, None)
+            except BaseException as commit_exc:
+                self._observation_failure(observation, commit_exc)
+                raise
+            else:
+                self._observation_success(observation)
 
     async def open(self) -> None:
         if self._pool is not None:
             return
+        observation = self._observe("initialize_open")
         try:
             await run_migrations(
                 dsn=self.settings.dsn,
@@ -205,17 +304,19 @@ class PostgresIdempotencyStore:
             )
             await pool.open(wait=True)
             self._pool = pool
-            async with pool.connection() as connection:
+            async with self._connection(pool) as connection:
                 await verify_audit_chain(connection, schema=self.settings.schema)
             if self._event_loop_monitor is not None:
                 self._event_loop_monitor.start()
+            self._observation_success(observation)
         except (
             MigrationError,
             PostgresAuditIntegrityError,
             psycopg.Error,
             PoolTimeout,
             OSError,
-        ):
+        ) as exc:
+            self._observation_failure(observation, exc)
             if self._pool is not None:
                 await self.close()
             raise StateStoreUnavailableError(
@@ -223,11 +324,21 @@ class PostgresIdempotencyStore:
             ) from None
 
     async def close(self) -> None:
+        observation = self._observe("close", self._pool)
         if self._event_loop_monitor is not None:
             await self._event_loop_monitor.stop()
         pool, self._pool = self._pool, None
-        if pool is not None:
-            await pool.close()
+        try:
+            if pool is not None:
+                await pool.close()
+        except BaseException as exc:
+            self._observation_failure(observation, exc)
+            raise
+        else:
+            self._observation_success(observation)
+        finally:
+            if self._state_store_diagnostic is not None:
+                self._state_store_diagnostic.flush()
 
     def _require_pool(
         self,
@@ -240,7 +351,7 @@ class PostgresIdempotencyStore:
         """Check current connectivity and the bounded head row without a chain scan."""
         try:
             pool = self._require_pool()
-            async with pool.connection() as connection:
+            async with self._connection(pool) as connection:
                 cursor = await connection.execute(
                     sql.SQL(
                         """
@@ -317,12 +428,13 @@ class PostgresIdempotencyStore:
         _validate_request_digest(request_digest)
         key_digest = idempotency_key_digest(self.settings.hmac_secret, request_id)
         pool = self._require_pool()
+        observation = self._observe("reserve", pool)
         try:
             checkout_started = lifecycle_timer.started_at()
-            async with pool.connection() as connection:
+            async with self._connection(pool) as connection:
                 lifecycle_timer.observe_elapsed("reservation_pool_checkout_ms", checkout_started)
                 transaction_started = lifecycle_timer.started_at()
-                async with connection.transaction():
+                async with self._transaction(connection, pool):
                     cursor = await connection.execute(
                         sql.SQL(
                             """
@@ -364,18 +476,22 @@ class PostgresIdempotencyStore:
                             )
                         result = self._from_row(row, request_digest=request_digest)
                 lifecycle_timer.observe_elapsed("reservation_transaction_ms", transaction_started)
+                self._observation_success(observation)
                 return result
-        except DurableIdempotencyError:
+        except DurableIdempotencyError as exc:
+            self._observation_failure(observation, exc)
             raise
         except (psycopg.Error, PoolTimeout, OSError) as exc:
+            self._observation_failure(observation, exc)
             raise StateStoreUnavailableError(
                 f"The postgres-scale state store is unavailable ({type(exc).__name__})."
             ) from None
 
     async def _read(self, *, key_digest: str, request_digest: str) -> DurableReservation:
         pool = self._require_pool()
+        observation = self._observe("complete_outcome", pool)
         try:
-            async with pool.connection() as connection:
+            async with self._connection(pool) as connection:
                 cursor = await connection.execute(
                     sql.SQL(
                         """
@@ -391,10 +507,14 @@ class PostgresIdempotencyStore:
                 row = await cursor.fetchone()
             if row is None:
                 raise StateStoreUnavailableError("The durable reservation disappeared.")
-            return self._from_row(row, request_digest=request_digest)
-        except DurableIdempotencyError:
+            result = self._from_row(row, request_digest=request_digest)
+            self._observation_success(observation)
+            return result
+        except DurableIdempotencyError as exc:
+            self._observation_failure(observation, exc)
             raise
         except (psycopg.Error, PoolTimeout, OSError) as exc:
+            self._observation_failure(observation, exc)
             raise StateStoreUnavailableError(
                 f"The postgres-scale state store is unavailable ({type(exc).__name__})."
             ) from None
@@ -474,10 +594,11 @@ class PostgresIdempotencyStore:
             else NULL_TIMER
         )
         try:
+            observation = self._observe("complete_outcome", pool)
             checkout_started = lifecycle_timer.started_at()
-            async with pool.connection() as connection:
+            async with self._connection(pool) as connection:
                 lifecycle_timer.observe_elapsed("completion_pool_checkout_ms", checkout_started)
-                async with connection.transaction():
+                async with self._transaction(connection, pool):
                     timer.at("transaction_open")
                     reservation_cursor = await connection.execute(
                         sql.SQL(
@@ -629,12 +750,16 @@ class PostgresIdempotencyStore:
             )
             if fault_hook is not None:
                 fault_hook("after_commit")
+            self._observation_success(observation)
             return completed
-        except DurableIdempotencyError:
+        except DurableIdempotencyError as exc:
+            self._observation_failure(observation, exc)
             raise
         except PostgresAuditIntegrityError as exc:
+            self._observation_failure(observation, exc)
             raise StoredResponseIntegrityError(str(exc)) from exc
         except (psycopg.Error, PoolTimeout, OSError) as exc:
+            self._observation_failure(observation, exc)
             raise StateStoreUnavailableError(
                 f"The postgres-scale state store is unavailable ({type(exc).__name__})."
             ) from None
@@ -643,9 +768,10 @@ class PostgresIdempotencyStore:
         if reservation.kind != "owner":
             raise RuntimeError("Only the reservation owner can record failure.")
         pool = self._require_pool()
+        observation = self._observe("complete_outcome", pool)
         try:
-            async with pool.connection() as connection:
-                async with connection.transaction():
+            async with self._connection(pool) as connection:
+                async with self._transaction(connection, pool):
                     await connection.execute(
                         sql.SQL(
                             """
@@ -658,7 +784,9 @@ class PostgresIdempotencyStore:
                         ).format(self.table),
                         (reservation.key_digest, reservation.request_digest),
                     )
+            self._observation_success(observation)
         except (psycopg.Error, PoolTimeout, OSError) as exc:
+            self._observation_failure(observation, exc)
             raise StateStoreUnavailableError(
                 f"The postgres-scale state store is unavailable ({type(exc).__name__})."
             ) from None
