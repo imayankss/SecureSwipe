@@ -40,6 +40,7 @@ from scripts.run_p1_scale_benchmark import (
     create_synthetic_bundle,
 )
 from src.operations.p1_scale_benchmark import ScaleBenchmarkError, validate_safe_result
+from src.operations.p1_scale_client_timing import CLIENT_TIMING_FLAG
 
 PROTOCOL_PATH = Path("docs/benchmarks/P1_S4F_STATE_STORE_DIAGNOSIS_PROTOCOL.md")
 PROTOCOL_SHA256 = "a214287636ffd05b5ad685eaa8cf84b930a2c829f7bbaccf34d94aa558d28d5f"
@@ -349,12 +350,14 @@ def run(*, attempts: int, output_dir: Path) -> tuple[dict[str, Any], Path]:
             record: dict[str, Any] | None = None
             previous_flag = os.environ.get(DIAGNOSTIC_FLAG)
             previous_output = os.environ.get(DIAGNOSTIC_OUTPUT_DIR)
+            previous_client_timing = os.environ.get(CLIENT_TIMING_FLAG)
             try:
                 with OwnedPostgres() as postgres:
                     sampler = PostgresAggregateSampler(postgres.owner_dsn)
                     sampler.start()
                     os.environ[DIAGNOSTIC_FLAG] = "1"
                     os.environ[DIAGNOSTIC_OUTPUT_DIR] = str(diagnostic_dir)
+                    os.environ[CLIENT_TIMING_FLAG] = "1"
                     try:
                         record = _run_repeat(
                             postgres=postgres,
@@ -382,6 +385,10 @@ def run(*, attempts: int, output_dir: Path) -> tuple[dict[str, Any], Path]:
                     os.environ.pop(DIAGNOSTIC_OUTPUT_DIR, None)
                 else:
                     os.environ[DIAGNOSTIC_OUTPUT_DIR] = previous_output
+                if previous_client_timing is None:
+                    os.environ.pop(CLIENT_TIMING_FLAG, None)
+                else:
+                    os.environ[CLIENT_TIMING_FLAG] = previous_client_timing
             processes = _load_process_aggregates(diagnostic_dir)
             root_cause = _root_cause(failure, processes)
             attempt_record: dict[str, Any] = {
