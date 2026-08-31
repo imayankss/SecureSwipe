@@ -12,7 +12,7 @@ export function Progress({ value, className }: { value: number; className?: stri
       aria-valuenow={boundedValue}
     >
       <div
-        className="h-full rounded-full bg-gradient-to-r from-emerald-300 via-cyan-300 to-rose-300"
+        className="h-full rounded-full bg-blue-500"
         style={{ width: `${boundedValue}%` }}
       />
     </div>

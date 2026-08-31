@@ -1,160 +1,247 @@
 # Limitations and non-goals
 
-This document states what the current evidence does not support. These limits
-are release controls, not a roadmap that can be waived by changing wording.
+This is the canonical statement of what SecureSwipe's current evidence and
+implementation do not support. Architecture is described in
+[ARCHITECTURE.md](ARCHITECTURE.md); release procedure and source-integrity checks
+are described in [DEPLOYMENT.md](DEPLOYMENT.md).
 
-## Scientific limitations
+These limits are claim controls. Changing wording does not remove them; changing
+a limit requires new, reviewed evidence.
 
-- The tracked test result is a single already-observed random holdout, not an
-  out-of-time or real-world performance estimate. The raw CSV, fitted artifact,
-  score vector, and original runtime manifest are absent.
-- Historical EDA recorded 1,081 exact duplicate rows. The original split did not
-  group or reject them, and holdout row identities were not retained, so its
-  cross-split overlap cannot be reconstructed even after restoring the CSV. The
-  exact corpus is reference-only; new data uses manifested curation.
-- XGBoost's recorded validation average-precision advantage over Random Forest
-  is about 0.0004 on one split. That does not establish material superiority;
-  it remains historical only. The executable rule is proved with synthetic
-  new-data fixtures but has not run on a real new authorized corpus.
-- The historical `0.53` threshold met a point recall constraint on one validation
-  sample. It is not a business policy, guarantee, or cost optimum. Cost examples
-  in code use explicit synthetic unitless assumptions.
-- The class-weighted XGBoost output is an uncalibrated raw score. A calibrated
-  probability may only be exposed when a disjointly fit/evaluated calibrator is
-  packaged and identified in the bundle.
+## Headline scientific evidence
 
-## Data, fairness, and explainability limitations
+- Lane A is one offline evaluation on the public IEEE-CIS research dataset. It
+  does not establish performance for a merchant, geography, issuer, season,
+  attack pattern, or future fraud distribution.
+- The final role was programmatically held out by a frozen partition, not
+  withheld by an independent party. The evaluation is not human-blind or
+  externally blind.
+- The final result was observed exactly once and is closed. It cannot be used to
+  tune, refit, recalibrate, reselect features, choose a capacity, or rerun the
+  evaluation.
+- `TransactionDT` is a relative time offset. It does not support calendar,
+  seasonal, holiday, or deployment-time claims.
+- Confidence intervals quantify sampling variation under the recorded bootstrap
+  procedure. They do not cover dataset shift, label error, adversarial response,
+  or operating-process uncertainty.
+- The calibrator emits no value at or above `0.40` on the observed Lane A
+  population, so the upper nine calibration bins are empty. That is reported as
+  found and is not evidence that high-risk cases cannot exist elsewhere.
 
-- `V1`–`V28` are anonymized PCA components. They do not support merchant,
-  customer, location, device, or causal narratives.
-- No protected-group attributes are present. Demographic parity, equalized odds,
-  subgroup recall, and other protected-group fairness evaluations cannot be
-  performed from these fields. Absence of an observed disparity is not claimed.
-- SHAP is a model-attribution method, not a causal explanation. The tracked
-  historical ranking lacks retained row identities, score/label composition,
-  declared output unit, and additivity residual, so it remains explicitly
-  unverified. New XGBoost runs verify raw-margin additivity and disclose cohorts.
-- The dataset is old, anonymized, and not a representative sample of every
-  geography, issuer, merchant, attack pattern, or operational review process.
+The complete result and its prohibited claims are in
+[LANE_A_FINAL_EVALUATION.md](evidence/LANE_A_FINAL_EVALUATION.md).
 
-## Service and security limitations
+## Lane A, Lane B, and the local demo
 
-- The API is a local/container reference. It has no implemented customer
-  authentication, public rate limiter, TLS termination, enterprise identity,
-  multi-tenancy, transaction store, or real-data privacy program.
-- API idempotency is in-process only and is lost on restart; it is not shared
-  across workers or replicas. The optional hash-chained audit log and local head
-  anchor are tamper-evident, not immutable, remotely anchored, or WORM storage.
-- A transient audit-sink failure before append can be retried after recovery.
-  Partial writes or log/anchor integrity failures remain unavailable until an
-  operator preserves and repairs or rotates the sink; there is no automatic
-  bypass, distributed failover, or circuit breaker.
+- Lane A and Lane B use different corpora, features, base rates, label
+  definitions, partitions, and evidence lifecycles. Their metrics are not
+  directly comparable.
+- Lane A is the sole headline evaluation. Lane B remains an already-observed
+  historical record and cannot drive new model or threshold choices.
+- The original Lane B data/model/score artifacts and retained holdout identities
+  are absent, so its ranking metrics cannot be independently reconstructed from
+  a clean checkout.
+- Historical duplicate contamination cannot be measured retrospectively because
+  the original split identities were not retained.
+- The exact sealed Lane A serving chain is unavailable or cryptographically
+  unproven. P0.4 therefore prohibited reconstruction, approximation, or
+  substitution.
+- The `/demo` route is a local reference-model demonstration. It does not serve
+  or claim to serve the Lane A headline model.
+- A verified local reference bundle proves only its own bytes, schema,
+  provenance metadata, and runtime behavior. It does not inherit Lane A or Lane
+  B evaluation metrics.
+
+See [EVIDENCE_GUIDE.md](EVIDENCE_GUIDE.md) for category ownership.
+
+## Inputs, output, and model interpretation
+
+- Anonymized PCA components do not support narratives about merchant, customer,
+  device, geography, identity, or causality.
+- The local historical/reference bundle emits `raw_score`. It is not established
+  as a real-world fraud probability.
+- A calibrated probability label is permitted only when a disjointly fitted and
+  evaluated calibrator is packaged and identified for that exact bundle.
+- An operating threshold or capacity frontier is a recorded review policy for a
+  named evidence context. It is not a universal business rule.
+- `human_review` and `below_review_threshold` are queueing signals. Neither is an
+  approval, decline, block, capture, refund, investigation, or report to an
+  external party.
+- No real merchant feedback loop, appeal process, reviewer outcome store, label
+  maturation workflow, or automatic retraining path is implemented.
+
+## Review capacity
+
+- Capacity tiers are illustrative workload analyses, not staffing
+  recommendations, service commitments, or merchant defaults.
+- Increasing capacity raises recall and also raises the number of legitimate
+  transactions sent to human review.
+- A false positive means a legitimate transaction selected for review. It does
+  not mean an automatically rejected payment.
+- The retrospective workload required to cross a recall target is a diagnostic
+  on the evaluated population, not a forward guarantee.
+- Queue arrival patterns, reviewer skill, prioritization changes, duplicate case
+  handling, service hours, escalations, and delayed outcomes are outside the
+  capacity calculation.
+
+## Illustrative cost analysis
+
+- Cost outputs are deterministic arithmetic over published aggregate counts and
+  editable assumptions. They are not observed merchant economics.
+- The model omits fixed staffing steps, queueing, time-varying volume, delayed
+  labels, appeals, customer remediation, and uncertainty in recovery value.
+- No tier is identified as optimal, recommended, cheaper in reality, or a
+  production threshold.
+- No output is a saving, ROI, avoided loss, payback, net benefit, or forecast.
+- Currency-labelled inputs are illustrative starting assumptions, not prices or
+  defaults supplied by Razorpay or a merchant.
+
+The formula and sensitivity boundary are canonical in
+[MT5_COST_EXPLORER_EVIDENCE.md](evidence/MT5_COST_EXPLORER_EVIDENCE.md).
+
+## Explainability and fairness
+
+- SHAP describes model attribution under a declared output unit; it is not a
+  causal explanation.
+- PCA features reduce semantic interpretability, and historical attribution
+  artifacts lack the complete row/output-unit evidence required for a stronger
+  claim.
+- Protected attributes are absent. Demographic parity, equalized odds, subgroup
+  recall, and related protected-group analyses cannot be computed from this
+  dataset.
+- PCA axes must not be treated as proxies for protected characteristics.
+- Not observing a disparity is not evidence of fairness.
+
+## Serving and state
+
+- The FastAPI service is a local/container reference, not a public transaction
+  service.
+- Estimator access is serialized. Threadpool offload prevents event-loop
+  blocking but does not make arbitrary estimators concurrently safe.
+- Timeouts bound the client wait, not the underlying Python thread. A timed-out
+  worker retains its admission slot until it actually finishes.
+- Admission control fails closed at the configured in-flight limit. It does not
+  provide a durable queue or backpressure across processes.
+- Default idempotency is in-process only. It is lost on restart and is not shared
+  across workers or replicas.
+- Same-process replays can return the original response and committed audit
+  receipt without a duplicate append. That does not establish cross-restart
+  exactly-once behavior.
+- The optional SQLite durability implementation is a local, non-default
+  prototype outside the API request path. It is not multi-writer, distributed,
+  highly available, or cross-host state. Concurrent multi-process SQLite writes
+  are unsupported and untested.
+- The optional PostgreSQL profile exposes only single-item, score-free
+  `/v2/predict`. Score-bearing V1 and V2 batch serving remain unavailable under
+  that profile. It does not silently use the in-process registry, SQLite
+  prototype, or local NDJSON audit.
+- Its transaction and multi-process tests establish idempotency/audit
+  correctness on one dedicated local PostgreSQL 16.10 instance. P1-S4 has not
+  established throughput, capacity, availability, cross-host operation, or a
+  production-scale claim.
+- The PostgreSQL chain is tamper-evident, not immutable or WORM storage. A
+  privileged database administrator can alter rows; the explicit startup or
+  on-demand verifier is designed to reject mutation, deletion, reordering,
+  head mismatch, or response/event inconsistency.
+- Audit NDJSON and its local head anchor are tamper-evident, not immutable,
+  remotely anchored, replicated, or WORM storage.
+- An actor able to rewrite both the log and its anchor can manufacture a new
+  internally valid history.
+- Partial audit writes and anchor mismatches require operator preservation and
+  recovery; the service does not silently bypass them.
+
+Detailed fault evidence is in
+[MT6_STATE_AND_CRASH_DECISION.md](evidence/MT6_STATE_AND_CRASH_DECISION.md).
+
+## Performance and capacity evidence
+
+- All recorded serving measurements are local loopback tests. They exclude an
+  external network, TLS, proxy, browser distance, cloud cold start, and competing
+  tenants.
+- The measured service used one machine, one process, and one worker. It does
+  not establish multi-replica scaling.
+- The benchmark serves a historical/reference bundle, not the Lane A model, and
+  says nothing about fraud-detection quality.
+- Throughput, latency percentiles, and audit-growth measurements are descriptive
+  for their recorded environment. They are not a production SLO or capacity
+  commitment.
+- Audit append verifies the prior chain and therefore grows with history. That
+  bounded-growth evidence must remain attached to any throughput discussion.
+- The recorded MT4 experiment found that throughput did not scale with
+  concurrency because audit append was the binding constraint. Removing the
+  inference lock was measured and rejected; this is not evidence that arbitrary
+  estimators are concurrently safe.
+- The earlier logistic-regression benchmark is synthetic plumbing evidence, not
+  genuine fraud-model performance.
+
+Use [MT4_CONCURRENCY_EVIDENCE.md](evidence/MT4_CONCURRENCY_EVIDENCE.md) for the
+measured values and environment.
+
+## Security and privacy
+
+- The service has no implemented customer authentication, authorization,
+  enterprise identity, tenant isolation, public rate limiter, WAF, DDoS layer,
+  TLS termination, production key management, or transaction store.
 - Checksum and trusted-root verification reduce artifact substitution risk but
-  do not make untrusted pickle/joblib safe. Only locally produced, reviewed
+  do not make arbitrary pickle/joblib safe. Only locally produced, reviewed
   bundles are eligible.
-- The service returns bounded `human_review` or `below_review_threshold`
-  signals; it does not approve, decline, block, investigate, or report a
-  financial transaction.
-- No PCI DSS, regulatory, bank-grade, penetration-test, availability, or
-  production-customer claim is made.
+- Raw data, model files, environment files, and local artifacts are ignored, but
+  ignore rules are not a data-governance or exfiltration control.
+- The audit allowlist and request logging avoid raw features and common sensitive
+  fields; they do not establish a real-data privacy program.
+- No PCI DSS, SOC 2, ISO 27001, GDPR, RBI, penetration-test, bank-grade, or other
+  compliance/certification claim is made.
+- The repository must not receive real PAN, CVV, customer identity, credentials,
+  or transaction data.
 
-## Operational and deployment limitations
+See [THREAT_MODEL.md](THREAT_MODEL.md) for threats and residual risks.
 
-- The current genuine-model load numbers use the selected historical-reference
-  XGBoost bundle on one loopback Apple M2 process with one fixed input. They do
-  not measure Docker, cloud/server-internal cold start, external network paths,
-  audit persistence overhead, autoscaling, competing traffic, or customers. The
-  prior logistic-regression numbers remain synthetic plumbing evidence only.
-- The container release target is `linux/amd64` only. That architecture is
-  built, smoke-tested, vulnerability-scanned, and SBOM-generated in CI. A native
-  arm64 image has passed the same restricted startup, liveness, readiness, and
-  synthetic inference smoke locally, but that is a local development
-  convenience, not a released or CI-gated artifact.
-- **No arm64 container support is claimed.** The emulated `linux/arm64` CI leg
-  is deferred: under QEMU on GitHub-hosted runners the container never completes
-  application startup, so the readiness loop exhausts and the job fails. This
-  reproduced deterministically three times, did not reproduce on native arm64 or
-  Rosetta-emulated amd64, and was not root caused. See `docs/CONTAINER.md`.
-- Drift metrics are diagnostic signals. They do not prove model failure and do
-  not trigger automatic retraining, threshold changes, rollback, or deployment.
-- SecureSwipe has no independently verified current release-candidate public
-  deployment. Any prior static URL is not evidence for this candidate. The
-  static dashboard will be deployed and verified only after final CI passes.
+## Operations and deployment
+
+- No public backend is verified by the repository.
+- A reachable static URL does not prove which source revision produced it.
+- No public dashboard may be called the current candidate until the source SHA,
+  build inputs, immutable output identity, and served content are linked by the
+  [P0.5 procedure](DEPLOYMENT.md#p05-deployment-to-source-sha-integrity).
+- Provider authentication, routing, DNS, retention, monitoring ownership,
+  rollback, and cost controls remain external operational decisions.
+- The container release target and architecture-specific evidence must remain
+  attached to the exact CI/container record; local success is not a release.
+- Drift diagnostics open an investigation. They do not automatically retrain,
+  change thresholds, roll back, or deploy.
+
+Current and historical deployment evidence is owned by
+[DEPLOYMENT.md](DEPLOYMENT.md) and the
+[claim-to-evidence matrix](evidence/CLAIM_TO_EVIDENCE_MATRIX.md#8--deployment-status),
+not by this limitations page.
+
+## Separate prototypes and deferred work
+
+- Synthetic order integrity is a pre-model reference using fabricated catalog
+  data. It is not a payment gateway integration, real incident control, fraud
+  metric, PCI control, real-webhook contract, or production workflow.
+- The Razorpay context adapter is deferred and not implemented. No Razorpay API,
+  SDK, MCP, webhook, key, secret, credential, or field mapping is used. No
+  owner-supplied test credential or verified field-to-feature mapping exists.
+- Reference descriptions of queues, shared state, replicas, or hosted monitoring
+  are not implemented architecture.
 
 ## Explicit non-goals
 
 - Real payment authorization or automated adverse action.
-- Raw transaction ingestion, storage, or customer identity processing.
-- Kubernetes, Kafka, Spark, a microservice fleet, online feature stores, or
-  automatic retraining without a demonstrated requirement.
-- Fabricated costs, SLOs, capacity, security certification, or screenshots.
-- Reusing the historical test to select a model, calibrator, threshold, or
-  monitoring policy.
+- Raw transaction ingestion, customer identity processing, or card-data storage.
+- A public fraud-scoring API or live merchant integration.
+- Fabricated costs, SLOs, savings, capacity, security certification, or evidence.
+- Reusing a historical or sealed final result for model selection.
+- Presenting a reference/demo bundle as the Lane A headline model.
 
-## Evidence required to change these limits
+## Evidence required to change a limitation
 
-Changing a limitation requires generated evidence: the authorized original data
-for forward/paired/calibration analysis; a complete reviewed ModelBundle; Docker
-startup/readiness/inference plus image scan/SBOM; remote CI execution; and, for a
-public service, an owner-approved threat/risk review with authentication, TLS,
-rate limits, retention, provider measurement, rollback rehearsal, and cost.
+A limitation changes only when the relevant canonical record receives new,
+reviewed evidence. Depending on the claim, that can require an authorized new
+source; frozen development and final protocols; an exact verified bundle chain;
+direct/single/batch parity; public-network and provider measurement;
+authentication and privacy review; durable shared state; rollback rehearsal; or
+deployment-to-source-SHA proof.
 
-## Lane A sealed evaluation (MT3)
-
-- One evaluation, of one public research dataset, run **exactly once**. It is
-  not live performance and not a forecast.
-- **Not** Razorpay, Indian-payment, live-merchant, or production performance.
-- **Not** human-blind and **not** externally blind: the role was held out
-  programmatically by a frozen partition, not withheld by an independent party.
-- **Not comparable** with Lane B historical evidence — different corpus, base
-  rate, label definition, and feature space. The two are never charted together.
-- The calibrator never emits a value at or above 0.40 on this population, so the
-  upper nine calibration bins are empty. Reported as found.
-
-## Serving benchmarks (MT4)
-
-- **Local loopback only.** No external network, TLS, proxy, or client distance.
-  These are a floor, not a forecast, and never a production SLO or capacity.
-- Single machine, single process, single worker. No multi-replica evidence.
-- Throughput does not scale with concurrency; the binding constraint is audit
-  append cost, not inference. Removing the inference lock was measured and
-  **rejected**.
-- Results serve a **historical demo bundle** and say nothing about the sealed
-  Lane A model's quality.
-
-## Cost explorer (MT5)
-
-- Scenario calculations on published aggregate counts, **not observed merchant
-  costs**. Every monetary input is an illustrative assumption.
-- Costs are linear in the counts by construction; real operations have fixed
-  costs, queueing, staffing steps, and time-varying volume that this does not
-  model.
-- No tier is recommended, optimal, or a merchant default, and no figure is a
-  saving, ROI, or real loss.
-
-## Local state and durability (MT6)
-
-- **Local single-node durability only.** Not immutable or WORM storage, not ACID
-  across services, not multi-writer, not high availability, not multi-region,
-  not cross-host failover.
-- The SQLite prototype is **optional and non-default**; the in-memory registry
-  ships as the default.
-- Concurrent multi-process writing is explicitly unsupported and untested.
-
-## Order-integrity reference (MT7)
-
-- **Synthetic and separate from the fraud model.** It contributes nothing to
-  average precision, ROC-AUC, precision, recall, Brier score, calibration,
-  capacity tiers, or the cost explorer.
-- Not a live Razorpay integration, not evidence about any real incident, not
-  production-ready, not PCI-relevant, and not compatible with any real webhook.
-- No real payment gateway, fulfilment system, merchant catalogue, credential, or
-  incident data was used.
-
-## Razorpay context adapter (MT8)
-
-- **Deferred / not implemented.** No owner-supplied test credentials, and no
-  verified mapping from Razorpay payment or order fields to the model's feature
-  contract exists.
-- No Razorpay API, MCP, SDK, webhook, key, secret, credential, or external
-  payment action is used anywhere in this repository.
+Until that evidence exists, the limitation remains in force.

@@ -35,31 +35,30 @@ export function LaneACapacityWorkbench() {
     <section
       id="lane-a-capacity"
       aria-labelledby="lane-a-capacity-heading"
-      className="rounded-xl border border-slate-700/60 bg-slate-900/40 p-4 sm:p-6"
+      className="command-panel scroll-mt-24 p-5 sm:p-7"
     >
       <header className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2">
-          <Badge className="border-sky-300/30 bg-sky-300/10 text-sky-100">IEEE-CIS Lane A</Badge>
+        <div
+          aria-label="Lane A evidence provenance"
+          className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs leading-5 text-slate-400"
+        >
           <Badge className="border-amber-300/30 bg-amber-300/10 text-amber-100">
             Development evidence
           </Badge>
-          <Badge className="border-emerald-300/30 bg-emerald-300/10 text-emerald-100">
-            Final evaluation sealed
-          </Badge>
-          <Badge className="border-violet-300/30 bg-violet-300/10 text-violet-100">
-            Illustrative capacity
-          </Badge>
-          <Badge className="border-slate-300/30 bg-slate-300/10 text-slate-100">
-            No Razorpay or live-merchant economics
-          </Badge>
-          <Badge className="border-slate-300/30 bg-slate-300/10 text-slate-100">
-            Not comparable with Lane B historical metrics
-          </Badge>
+          <span className="font-medium text-slate-200">IEEE-CIS Lane A</span>
+          <span aria-hidden="true">·</span>
+          <span>Final evaluation sealed</span>
+          <span aria-hidden="true">·</span>
+          <span>Illustrative capacity</span>
+          <span aria-hidden="true">·</span>
+          <span>No Razorpay or live-merchant economics</span>
+          <span aria-hidden="true">·</span>
+          <span>Not comparable with Lane B historical metrics</span>
         </div>
-        <h2 id="lane-a-capacity-heading" className="text-xl font-semibold text-slate-100">
+        <h2 id="lane-a-capacity-heading" className="text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">
           Review-capacity workbench
         </h2>
-        <p className="max-w-3xl text-sm leading-relaxed text-slate-300">
+        <p className="max-w-[48rem] text-sm leading-6 text-slate-300">
           A merchant&apos;s review capacity decides what fraud coverage is reachable. This
           panel shows measured trade-offs on the Lane A{" "}
           <code className="text-slate-200">{LANE_A_EVALUATION.role}</code> partition
@@ -86,10 +85,10 @@ export function LaneACapacityWorkbench() {
               type="button"
               onClick={() => setSelectedCapacity(row.capacityPerDay)}
               aria-pressed={active}
-              className={`rounded-lg border px-3 py-2 text-sm font-medium transition focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400 ${
+              className={`rounded-lg border px-3 py-2 text-sm font-semibold transition focus:outline-none ${
                 active
-                  ? "border-sky-400 bg-sky-400/20 text-sky-50"
-                  : "border-slate-600 bg-slate-800/60 text-slate-200 hover:border-slate-400"
+                  ? "border-[var(--ss-primary)] bg-[var(--ss-primary)] text-[#070b12]"
+                  : "border-[var(--ss-border)] bg-[var(--ss-surface-raised)] text-slate-200 hover:border-blue-400"
               }`}
             >
               {integer(row.capacityPerDay)}/day
@@ -104,7 +103,7 @@ export function LaneACapacityWorkbench() {
         {integer(tier.alertsSelected)} reviews over the development evaluation period.
       </p>
 
-      <dl className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+      <dl className="mt-6 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
         {[
           { term: "Precision", value: percent(tier.precision, 2),
             detail: `95% CI ${percent(tier.precisionCiLow, 1)}–${percent(tier.precisionCiHigh, 1)}` },
@@ -123,7 +122,7 @@ export function LaneACapacityWorkbench() {
           { term: "Model inputs", value: String(LANE_A_EVALUATION.modelInputs),
             detail: LANE_A_EVALUATION.selectedVariant },
         ].map((item) => (
-          <div key={item.term} className="rounded-lg border border-slate-700/60 bg-slate-950/40 p-3">
+          <div key={item.term} className="min-w-0 rounded-lg border border-slate-700/60 bg-slate-950/40 p-3.5">
             <dt className="text-xs uppercase tracking-wide text-slate-400">{item.term}</dt>
             <dd className="mt-1 text-lg font-semibold text-slate-50">{item.value}</dd>
             <dd className="mt-0.5 text-xs text-slate-400">{item.detail}</dd>
@@ -152,7 +151,7 @@ export function LaneACapacityWorkbench() {
               <tr
                 key={row.capacityPerDay}
                 className={`border-b border-slate-800 ${
-                  row.capacityPerDay === selectedCapacity ? "bg-sky-400/10" : ""
+                  row.capacityPerDay === selectedCapacity ? "bg-blue-500/10" : ""
                 }`}
               >
                 <th scope="row" className="py-2 pr-3 font-medium text-slate-200">

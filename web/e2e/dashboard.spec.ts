@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 
-test("production dashboard is keyboard reachable, static, and WCAG-scannable", async ({ page }) => {
+test("product homepage is lightweight, keyboard reachable, static, and WCAG-scannable", async ({ page }) => {
   const predictionRequests: string[] = [];
   page.on("request", (request) => {
     if (request.url().includes("/v1/predict")) predictionRequests.push(request.url());
@@ -9,21 +9,18 @@ test("production dashboard is keyboard reachable, static, and WCAG-scannable", a
 
   await page.goto("/");
   await expect(page).toHaveTitle(/SecureSwipe/);
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.getByText("precomputed · static-first", { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 1, name: /Payment-risk review, made inspectable/i }),
+  ).toBeVisible();
+  await expect(page.locator("[data-product-section]")).toHaveCount(5);
+  await expect(page.getByText(/Payment action stays outside this system/)).toBeVisible();
+  await expect(page.getByText("Historical evaluation command board")).toHaveCount(0);
 
   await page.keyboard.press("Tab");
   const skipLink = page.getByRole("link", { name: "Skip to main content" });
   await expect(skipLink).toBeFocused();
   await page.keyboard.press("Enter");
   await expect(page.locator("#main-content")).toBeFocused();
-
-  const scoreSlider = page.getByRole("slider", { name: "Adjust hypothetical score" });
-  await scoreSlider.focus();
-  await page.keyboard.press("ArrowLeft");
-  await expect(
-    page.getByRole("status", { name: "Hypothetical review decision" }),
-  ).toContainText("Below review threshold");
 
   const accessibility = await new AxeBuilder({ page })
     .withTags(["wcag2a", "wcag2aa", "wcag21a", "wcag21aa"])
@@ -44,25 +41,251 @@ test("production dashboard is keyboard reachable, static, and WCAG-scannable", a
         resources.reduce((total, entry) => total + entry.encodedBodySize, 0),
     };
   });
-  expect(assetBudget.scriptCount).toBeLessThanOrEqual(8);
+  // P0.3 made the Lane A review-strategy surface the homepage's central
+  // interaction, which ships one client-component chunk that the previously
+  // all-static homepage did not carry (8 -> 9 scripts). The byte budgets are
+  // deliberately left untouched so they still catch payload regressions:
+  // measured usage after the change is ~191 KB of a 350 KB script allowance.
+  expect(assetBudget.scriptCount).toBeLessThanOrEqual(9);
   expect(assetBudget.scriptEncodedBytes).toBeLessThanOrEqual(350_000);
   expect(assetBudget.totalRequestCount).toBeLessThanOrEqual(12);
   expect(assetBudget.totalEncodedBytes).toBeLessThanOrEqual(450_000);
 });
 
-test("mobile navigation exposes every dashboard section", async ({ page }) => {
+test("homepage review-strategy surface is interactive and keyboard reachable at 375px", async ({
+  page,
+}) => {
   await page.setViewportSize({ width: 375, height: 812 });
   await page.goto("/");
-  await page.getByText("Sections", { exact: true }).click();
-  const menu = page.locator("details[open]");
-  await expect(menu.getByRole("link", { name: "Thresholds" })).toBeVisible();
-  await expect(menu.getByRole("link", { name: "Explainability" })).toBeVisible();
-  await menu.getByRole("link", { name: "Thresholds" }).click();
-  await expect(page).toHaveURL(/#thresholds$/);
-  await expect(page.locator("#thresholds")).toBeVisible();
+
+  // The hero's primary action reaches the review-strategy surface in-page.
+  const primary = page.getByRole("link", { name: /Explore the review strategy/i });
+  await expect(primary).toHaveAttribute("href", "#review-strategy");
+  await primary.focus();
+  await expect(primary).toBeFocused();
+  await page.keyboard.press("Enter");
+
+  const surface = page.locator("#review-strategy");
+  await expect(surface).toBeVisible();
+
+  // Selector, core metrics and the editable illustrative cost all survive.
+  const group = surface.getByRole("group", {
+    name: /Select a capacity tier for the illustrative cost scenario/i,
+  });
+  const tiers = group.getByRole("button");
+  await expect(tiers).toHaveCount(5);
+  await expect(tiers.nth(0)).toHaveAttribute("aria-pressed", "true");
+
+  await tiers.nth(3).focus();
+  await page.keyboard.press("Enter");
+  await expect(tiers.nth(3)).toHaveAttribute("aria-pressed", "true");
+  await expect(tiers.nth(0)).toHaveAttribute("aria-pressed", "false");
+
+  const breakdown = surface.getByTestId("selected-tier-breakdown");
+  const before = await breakdown.textContent();
+  const missedFraud = surface.getByLabel("Missed-fraud loss per false negative (₹)");
+  await missedFraud.focus();
+  await missedFraud.fill("9000");
+  await expect(breakdown).not.toHaveText(before ?? "");
+
+  // Detail belongs to the evidence route, not the homepage.
+  await expect(surface.getByTestId("all-tier-cost-table")).toHaveCount(0);
+  await expect(surface.getByTestId("sealed-final-metrics")).toHaveCount(0);
+  await expect(page.getByText("95% CI")).toHaveCount(0);
+  await expect(
+    surface.getByRole("link", { name: /Inspect detailed evidence/i }),
+  ).toHaveAttribute("href", "/evidence#lane-a-capacity");
+
+  const widths = await surface.evaluate((element) => ({
+    client: element.clientWidth,
+    scroll: element.scrollWidth,
+  }));
+  expect(widths.scroll).toBeLessThanOrEqual(widths.client);
 });
 
-test("desktop and 375px static views have no page overflow, broken internal links, or console errors", async ({ page }) => {
+test("homepage hero leads with one sealed Lane A headline and no legend", async ({ page }) => {
+  await page.goto("/");
+  const hero = page.locator('[data-product-section="product-promise"]');
+
+  const headline = hero.getByTestId("hero-headline-evidence");
+  await expect(headline).toBeVisible();
+  await expect(headline).toContainText("80.18%");
+  await expect(headline).toContainText("SEALED FINAL EVALUATION — LANE A / IEEE-CIS");
+  await expect(headline).toContainText(
+    "recall in the sealed Lane A final evaluation. Review-capacity and false-positive trade-offs are available below.",
+  );
+  await expect(headline).toContainText("Not Razorpay, live-merchant, or production performance");
+
+  // The capacity tier and its false-positive count must not be combined here.
+  await expect(headline).not.toContainText("1,000 reviews/day");
+  await expect(headline).not.toContainText("28,306");
+
+  // No evidence legend, taxonomy badges, or Lane B metric competes in the hero.
+  await expect(hero.getByRole("note")).toHaveCount(0);
+  await expect(hero.getByText("Historical evaluation", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("0.53")).toHaveCount(0);
+});
+
+test("shared midnight and blue visual tokens remain consistent across both routes", async ({
+  page,
+}) => {
+  for (const route of ["/", "/evidence"]) {
+    await page.goto(route);
+    const visualSystem = await page.locator("#main-content").evaluate((main) => {
+      const rootStyle = getComputedStyle(document.documentElement);
+      const mainStyle = getComputedStyle(main);
+      const gridStyle = getComputedStyle(main, "::before");
+      return {
+        tokens: {
+          background: rootStyle.getPropertyValue("--ss-background").trim(),
+          surface: rootStyle.getPropertyValue("--ss-surface").trim(),
+          raised: rootStyle.getPropertyValue("--ss-surface-raised").trim(),
+          border: rootStyle.getPropertyValue("--ss-border").trim(),
+          primary: rootStyle.getPropertyValue("--ss-primary").trim(),
+          primaryHover: rootStyle.getPropertyValue("--ss-primary-hover").trim(),
+          text: rootStyle.getPropertyValue("--ss-text").trim(),
+          muted: rootStyle.getPropertyValue("--ss-muted").trim(),
+        },
+        backgroundColor: mainStyle.backgroundColor,
+        backgroundImage: gridStyle.backgroundImage,
+        backgroundPointerEvents: gridStyle.pointerEvents,
+        fontFamily: getComputedStyle(document.body).fontFamily,
+      };
+    });
+
+    expect(visualSystem.tokens).toEqual({
+      background: "#070b12",
+      surface: "#0d1420",
+      raised: "#10223a",
+      border: "#243650",
+      primary: "#3b82f6",
+      primaryHover: "#60a5fa",
+      text: "#f8fafc",
+      muted: "#a8b3c7",
+    });
+    expect(visualSystem.backgroundColor).toBe("rgb(7, 11, 18)");
+    expect(visualSystem.backgroundImage).toContain("radial-gradient");
+    expect(visualSystem.backgroundPointerEvents).toBe("none");
+    expect(visualSystem.fontFamily).toContain("ui-sans-serif");
+  }
+
+  await page.goto("/");
+  const primary = page.getByRole("link", { name: /Explore the review strategy/i });
+  const primaryStyles = await primary.evaluate((element) => {
+    const style = getComputedStyle(element);
+    return {
+      background: style.backgroundColor,
+      color: style.color,
+      height: element.getBoundingClientRect().height,
+    };
+  });
+  expect(primaryStyles).toMatchObject({
+    background: "rgb(59, 130, 246)",
+    color: "rgb(7, 11, 18)",
+  });
+  expect(primaryStyles.height).toBeGreaterThanOrEqual(44);
+
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/evidence");
+  const touchTargets = await page
+    .locator('summary, button, input:not([type="range"])')
+    .evaluateAll((elements) =>
+      elements
+        .filter((element) => {
+          const style = getComputedStyle(element);
+          const rect = element.getBoundingClientRect();
+          return style.display !== "none" && style.visibility !== "hidden" && rect.height > 0;
+        })
+        .map((element) => ({
+          label: element.getAttribute("aria-label") ?? element.textContent?.trim(),
+          height: element.getBoundingClientRect().height,
+        })),
+    );
+  expect(touchTargets.every((target) => target.height >= 44)).toBe(true);
+});
+
+test("evidence route preserves the detailed scientific command center", async ({ page }) => {
+  const predictionRequests: string[] = [];
+  page.on("request", (request) => {
+    if (request.url().includes("/v1/predict")) predictionRequests.push(request.url());
+  });
+
+  await page.goto("/evidence");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Scientific evidence and system boundaries" }),
+  ).toBeVisible();
+  await expect(page.getByText("Historical evaluation command board")).toBeVisible();
+  await expect(page.locator("#risk")).toBeVisible();
+  await expect(page.locator("#lane-a-capacity")).toBeVisible();
+  const syntheticDisclosure = page
+    .locator("#synthetic-and-scenarios")
+    .locator('button[aria-controls="synthetic-and-scenarios-content"]');
+  await expect(syntheticDisclosure).toHaveAccessibleName(
+    "Show details: Plumbing test and Lane B cost scenario",
+  );
+  await expect(syntheticDisclosure).toHaveAttribute("aria-expanded", "false");
+  await syntheticDisclosure.focus();
+  await page.keyboard.press("Enter");
+  await expect(syntheticDisclosure).toHaveAttribute("aria-expanded", "true");
+  await expect(syntheticDisclosure).toHaveAccessibleName(
+    "Hide details: Plumbing test and Lane B cost scenario",
+  );
+  await expect(page.locator("#synthetic")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Back to product overview" })).toHaveAttribute(
+    "href",
+    "/",
+  );
+  expect(predictionRequests).toEqual([]);
+});
+
+test("evidence disclosures remain keyboard operable and overflow-safe at 375px", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/evidence");
+
+  const control = page
+    .locator("#historical-analysis")
+    .locator('button[aria-controls="historical-analysis-content"]');
+  await expect(control).toHaveAccessibleName(
+    "Show details: Threshold, curve, and explainability detail",
+  );
+  await control.focus();
+  await expect(control).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(control).toHaveAttribute("aria-expanded", "true");
+  await expect(control).toHaveAccessibleName(
+    "Hide details: Threshold, curve, and explainability detail",
+  );
+  await expect(page.locator("#thresholds")).toBeVisible();
+
+  const widths = await page.locator("#historical-analysis").evaluate((element) => ({
+    client: element.clientWidth,
+    scroll: element.scrollWidth,
+  }));
+  expect(widths.scroll).toBeLessThanOrEqual(widths.client);
+});
+
+test("mobile route navigation is keyboard reachable in both directions", async ({ page }) => {
+  await page.setViewportSize({ width: 375, height: 812 });
+  await page.goto("/");
+  const pagesMenu = page.getByText("Pages", { exact: true });
+  await pagesMenu.focus();
+  await page.keyboard.press("Enter");
+  const menu = page.locator("details[open]");
+  const evidenceLink = menu.getByRole("link", { name: "Evidence" });
+  await expect(evidenceLink).toBeVisible();
+  await evidenceLink.focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/evidence$/);
+  await expect(page.getByRole("link", { name: "Back to product overview" })).toBeVisible();
+
+  await page.getByRole("link", { name: "Back to product overview" }).focus();
+  await page.keyboard.press("Enter");
+  await expect(page).toHaveURL(/\/$/);
+});
+
+test("both routes have no page overflow, broken internal links, or console errors", async ({ page }) => {
   const consoleErrors: string[] = [];
   const pageErrors: string[] = [];
   const failedRequests: string[] = [];
@@ -72,26 +295,27 @@ test("desktop and 375px static views have no page overflow, broken internal link
   page.on("pageerror", (error) => pageErrors.push(error.message));
   page.on("requestfailed", (request) => failedRequests.push(request.url()));
 
-  for (const viewport of [
-    { width: 1280, height: 900 },
-    { width: 375, height: 812 },
-  ]) {
-    await page.setViewportSize(viewport);
-    await page.goto("/");
-    await expect(page.getByText("Track 2: AI Risk Manager", { exact: false })).toBeVisible();
-    const audit = await page.evaluate(() => {
-      const missingTargets = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'))
-        .map((anchor) => anchor.getAttribute("href"))
-        .filter((href): href is string => Boolean(href && href.length > 1))
-        .filter((href) => document.querySelector(href) === null);
-      return {
-        pageClientWidth: document.documentElement.clientWidth,
-        pageScrollWidth: document.documentElement.scrollWidth,
-        missingTargets,
-      };
-    });
-    expect(audit.pageScrollWidth).toBeLessThanOrEqual(audit.pageClientWidth);
-    expect(audit.missingTargets).toEqual([]);
+  for (const route of ["/", "/evidence"]) {
+    for (const viewport of [
+      { width: 1280, height: 900 },
+      { width: 375, height: 812 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto(route);
+      const audit = await page.evaluate(() => {
+        const missingTargets = Array.from(document.querySelectorAll<HTMLAnchorElement>('a[href^="#"]'))
+          .map((anchor) => anchor.getAttribute("href"))
+          .filter((href): href is string => Boolean(href && href.length > 1))
+          .filter((href) => document.querySelector(href) === null);
+        return {
+          pageClientWidth: document.documentElement.clientWidth,
+          pageScrollWidth: document.documentElement.scrollWidth,
+          missingTargets,
+        };
+      });
+      expect(audit.pageScrollWidth).toBeLessThanOrEqual(audit.pageClientWidth);
+      expect(audit.missingTargets).toEqual([]);
+    }
   }
 
   expect(consoleErrors).toEqual([]);
@@ -103,7 +327,14 @@ test("mobile illustrative cost panel exposes its bounded INR evidence without ov
   page,
 }) => {
   await page.setViewportSize({ width: 375, height: 812 });
-  await page.goto("/#illustrative-cost");
+  await page.goto("/evidence#illustrative-cost");
+  const disclosure = page.locator("#synthetic-and-scenarios");
+  const disclosureControl = disclosure.locator(
+    'button[aria-controls="synthetic-and-scenarios-content"]',
+  );
+  await disclosureControl.focus();
+  await page.keyboard.press("Enter");
+  await expect(disclosureControl).toHaveAttribute("aria-expanded", "true");
   const panel = page.locator("#illustrative-cost");
 
   await expect(panel).toBeVisible();
@@ -171,7 +402,7 @@ test("configured production live demo sends one genuine inference request and va
     });
   });
 
-  const navigation = await page.goto("/");
+  const navigation = await page.goto("/evidence");
   expect(navigation?.headers()["content-security-policy"]).toContain(
     "connect-src 'self' http://127.0.0.1:3200",
   );
