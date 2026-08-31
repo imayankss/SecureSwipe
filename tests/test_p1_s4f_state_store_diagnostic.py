@@ -2,8 +2,11 @@
 
 from __future__ import annotations
 
+import asyncio
 import json
+from contextlib import asynccontextmanager
 from pathlib import Path
+from typing import Any
 
 import pytest
 from psycopg_pool import PoolClosed, PoolTimeout
@@ -162,3 +165,38 @@ def test_frozen_reproduction_identity_and_protocol_hash() -> None:
         "a044d90fcd49359e37705bb1b61fb34c3e1ebc380931753f5db8928c307168c3"
     )
     assert _sha256_file(PROTOCOL_PATH) == PROTOCOL_SHA256
+
+
+def test_completion_waits_before_connection_checkout() -> None:
+    settings = PostgresScaleSettings(
+        dsn="postgresql://local@127.0.0.1/secureswipe_test",
+        schema="p1s4f_test",
+        hmac_secret=b"p1-s4f-test-secret-that-is-long-enough",
+    )
+    store = PostgresIdempotencyStore(settings)
+    active = 0
+    maximum_active = 0
+
+    @asynccontextmanager
+    async def observed_checkout(pool: Any) -> Any:
+        nonlocal active, maximum_active
+        del pool
+        active += 1
+        maximum_active = max(maximum_active, active)
+        try:
+            await asyncio.sleep(0.002)
+            yield object()
+        finally:
+            active -= 1
+
+    store._connection = observed_checkout  # type: ignore[method-assign]
+
+    async def exercise() -> None:
+        async def one_completion() -> None:
+            async with store._completion_connection(object()):  # type: ignore[arg-type]
+                await asyncio.sleep(0.002)
+
+        await asyncio.gather(*(one_completion() for _ in range(32)))
+
+    asyncio.run(exercise())
+    assert maximum_active == 1
