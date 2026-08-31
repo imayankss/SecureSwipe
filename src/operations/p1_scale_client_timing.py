@@ -14,14 +14,15 @@ import httpcore
 import httpx
 
 CLIENT_TIMING_FLAG = "SECURESWIPE_SCALE_CLIENT_TIMING"
-CLIENT_TIMING_SCHEMA_VERSION = "p1-s4d-client-timing-v1"
+CLIENT_TIMING_SCHEMA_VERSION = "p1-s4e-client-timing-v2"
 
 PhaseStatus = Literal["observed", "not_observable", "unsupported"]
 ConnectionKind = Literal["new", "reused", "unknown"]
 
 DURATION_METRICS: tuple[str, ...] = (
-    "executor_queue_wait_ms",
+    "scheduler_queue_wait_ms",
     "client_setup_ms",
+    "request_preparation_ms",
     "tcp_connect_ms",
     "request_headers_send_ms",
     "request_body_send_ms",
@@ -29,24 +30,28 @@ DURATION_METRICS: tuple[str, ...] = (
     "response_headers_wait_ms",
     "request_to_response_headers_ms",
     "response_body_read_ms",
-    "client_teardown_ms",
-    "client_e2e_ms",
+    "request_e2e_ms",
     "scheduled_total_ms",
 )
 
 RATIO_METRICS: tuple[str, ...] = (
-    "executor_queue_share_of_scheduled_percent",
+    "scheduler_queue_share_of_scheduled_percent",
     "client_setup_share_of_e2e_percent",
+    "request_preparation_share_of_e2e_percent",
     "tcp_connect_share_of_e2e_percent",
     "request_transmission_share_of_e2e_percent",
     "response_headers_wait_share_of_e2e_percent",
     "request_to_response_headers_share_of_e2e_percent",
     "response_body_read_share_of_e2e_percent",
-    "client_teardown_share_of_e2e_percent",
 )
 
 PHASE_AVAILABILITY: dict[str, dict[str, str]] = {
-    "executor_task_queue": {"status": "observed"},
+    "scheduler_task_queue": {"status": "observed"},
+    "client_setup": {
+        "status": "observed",
+        "scope": "cell_lifecycle_outside_request_e2e",
+    },
+    "request_preparation": {"status": "observed"},
     "connection_pool_acquisition": {
         "status": "not_observable",
         "reason": "no_supported_httpx_httpcore_trace_event",
@@ -58,7 +63,7 @@ PHASE_AVAILABILITY: dict[str, dict[str, str]] = {
         "scope": "combined_transport_ingress_server_wait",
     },
     "response_body_read": {"status": "observed"},
-    "client_e2e": {"status": "observed"},
+    "request_e2e": {"status": "observed"},
 }
 
 TRACE_SPANS: dict[str, str] = {
@@ -127,7 +132,6 @@ class ClientRequestTimer:
             "request_started",
             "headers_received",
             "body_completed",
-            "client_completed",
         }:
             return
         self._marks.setdefault(boundary, self.clock())
@@ -135,8 +139,11 @@ class ClientRequestTimer:
     def durations(self) -> dict[str, float]:
         marks = self._marks
         spans = {
-            "executor_queue_wait_ms": (marks.get("task_started"), self.submitted_at),
-            "client_setup_ms": (marks.get("request_started"), marks.get("task_started")),
+            "scheduler_queue_wait_ms": (marks.get("task_started"), self.submitted_at),
+            "request_preparation_ms": (
+                marks.get("request_started"),
+                marks.get("task_started"),
+            ),
             "request_to_response_headers_ms": (
                 marks.get("headers_received"),
                 marks.get("request_started"),
@@ -145,14 +152,13 @@ class ClientRequestTimer:
                 marks.get("body_completed"),
                 marks.get("headers_received"),
             ),
-            "client_teardown_ms": (
-                marks.get("client_completed"),
+            "request_e2e_ms": (
                 marks.get("body_completed"),
+                marks.get("request_started"),
             ),
-            "client_e2e_ms": (marks.get("client_completed"), marks.get("task_started")),
-            "scheduled_total_ms": (marks.get("client_completed"), self.submitted_at),
+            "scheduled_total_ms": (marks.get("body_completed"), self.submitted_at),
         }
-        durations: dict[str, float] = {}
+        durations: dict[str, float] = {"client_setup_ms": 0.0}
         for name, (later, earlier) in spans.items():
             if later is None or earlier is None or later < earlier:
                 continue
@@ -216,8 +222,18 @@ class HttpTraceRecorder:
 class ClientTimingAggregator:
     """Reduce transient client observations to anonymous aggregates only."""
 
-    def __init__(self, *, timeout_seconds: float) -> None:
+    def __init__(
+        self,
+        *,
+        timeout_seconds: float,
+        max_connections: int,
+        max_keepalive_connections: int,
+        keepalive_expiry_seconds: float,
+    ) -> None:
         self.timeout_seconds = timeout_seconds
+        self.max_connections = max_connections
+        self.max_keepalive_connections = max_keepalive_connections
+        self.keepalive_expiry_seconds = keepalive_expiry_seconds
         self._durations: dict[str, list[float]] = {name: [] for name in DURATION_METRICS}
         self._ratios: dict[str, list[float]] = {name: [] for name in RATIO_METRICS}
         self._connections = {"new": 0, "reused": 0, "unknown": 0}
@@ -255,17 +271,18 @@ class ClientTimingAggregator:
 
     def _record_ratios(self, values: Mapping[str, float]) -> None:
         scheduled = values.get("scheduled_total_ms")
-        e2e = values.get("client_e2e_ms")
+        e2e = values.get("request_e2e_ms")
         if scheduled is not None and scheduled > 0:
-            queue = values.get("executor_queue_wait_ms")
+            queue = values.get("scheduler_queue_wait_ms")
             if queue is not None:
-                self._ratios["executor_queue_share_of_scheduled_percent"].append(
+                self._ratios["scheduler_queue_share_of_scheduled_percent"].append(
                     queue / scheduled * 100.0
                 )
         if e2e is None or e2e <= 0:
             return
         ratio_sources = {
             "client_setup_share_of_e2e_percent": "client_setup_ms",
+            "request_preparation_share_of_e2e_percent": "request_preparation_ms",
             "tcp_connect_share_of_e2e_percent": "tcp_connect_ms",
             "request_transmission_share_of_e2e_percent": "request_transmission_ms",
             "response_headers_wait_share_of_e2e_percent": "response_headers_wait_ms",
@@ -273,7 +290,6 @@ class ClientTimingAggregator:
                 "request_to_response_headers_ms"
             ),
             "response_body_read_share_of_e2e_percent": "response_body_read_ms",
-            "client_teardown_share_of_e2e_percent": "client_teardown_ms",
         }
         for ratio_name, duration_name in ratio_sources.items():
             duration = values.get(duration_name)
@@ -294,8 +310,8 @@ class ClientTimingAggregator:
             recording_failures = self._recording_failures
         return {
             "schema_version": CLIENT_TIMING_SCHEMA_VERSION,
-            "purpose": "diagnose_client_transport_and_combined_response_header_wait",
-            "non_claim": "diagnostic_only_no_scalability_or_capacity_claim",
+            "purpose": "validate_bounded_connection_reusing_scale_harness",
+            "non_claim": "local_loopback_only_no_production_capacity_or_slo_claim",
             "phase_availability": PHASE_AVAILABILITY,
             "client_configuration": {
                 "library": "httpx",
@@ -307,10 +323,13 @@ class ClientTimingAggregator:
                 "follow_redirects": False,
                 "trust_env": True,
                 "timeout_seconds": self.timeout_seconds,
-                "client_scope": "one_new_client_per_request",
-                "max_connections_per_client": 100,
-                "max_keepalive_connections_per_client": 20,
-                "keepalive_expiry_seconds": 5.0,
+                "client_scope": "one_shared_client_per_cell",
+                "created_before_warmup": True,
+                "max_connections_per_client": self.max_connections,
+                "max_keepalive_connections_per_client": (
+                    self.max_keepalive_connections
+                ),
+                "keepalive_expiry_seconds": self.keepalive_expiry_seconds,
                 "trace_interface": "request_extensions_trace",
             },
             "duration_aggregates": durations,

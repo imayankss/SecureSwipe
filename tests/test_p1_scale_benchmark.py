@@ -1,7 +1,11 @@
 from __future__ import annotations
 
 import csv
+import inspect
 import json
+import threading
+import time
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 import httpx
@@ -11,6 +15,11 @@ from scripts.run_p1_scale_benchmark import (
     IncrementalEvidenceLog,
     _api_error_evidence,
     _bounded_contract,
+    _median_matrix_and_gates,
+    _run_bounded_requests,
+    _run_repeat,
+    _run_workload,
+    _validate_harness_gates,
     _write_partial_diagnostic,
 )
 
@@ -24,6 +33,7 @@ from src.operations.p1_scale_benchmark import (
     STATE_BACKEND,
     WORKER_COUNTS,
     RequestOutcome,
+    RequestSpec,
     ScaleBenchmarkError,
     assert_safe_target,
     build_workload,
@@ -159,6 +169,134 @@ def test_runner_contains_no_v1_or_batch_prediction_target() -> None:
     assert '"/v2/predict/batch"' not in runner
     assert '"local-default"' not in runner
     assert "127.0.0.1:5432" not in runner
+
+
+def test_s4e_has_no_per_request_client_construction() -> None:
+    workload_source = inspect.getsource(_run_workload)
+    repeat_source = inspect.getsource(_run_repeat)
+    assert "httpx.Client(" not in workload_source
+    assert repeat_source.count("httpx.Client(") == 1
+    assert repeat_source.index("httpx.Client(") < repeat_source.index(
+        "_run_workload("
+    )
+
+
+def test_bounded_scheduler_never_exceeds_concurrency_or_builds_backlog() -> None:
+    requests = tuple(
+        RequestSpec("valid", f"transient-{index}", {"Time": float(index)})
+        for index in range(40)
+    )
+    active = 0
+    peak = 0
+    lock = threading.Lock()
+
+    def issue(spec: RequestSpec, timer: object) -> RequestOutcome:
+        nonlocal active, peak
+        del timer
+        with lock:
+            active += 1
+            peak = max(peak, active)
+        time.sleep(0.002)
+        with lock:
+            active -= 1
+        return RequestOutcome(spec.kind, 200, 1.0)
+
+    with ThreadPoolExecutor(max_workers=8) as executor:
+        outcomes, max_outstanding = _run_bounded_requests(
+            requests,
+            concurrency=8,
+            executor=executor,
+            issue=issue,
+            timing_enabled=False,
+        )
+
+    assert len(outcomes) == 40
+    assert max_outstanding == 8
+    assert peak <= 8
+
+
+def test_flat_validated_matrix_closes_p1_s4_without_s4f() -> None:
+    runs = []
+    for workers in WORKER_COUNTS:
+        for concurrency in CONCURRENCY_LEVELS:
+            for repeat in REPEAT_NUMBERS:
+                runs.append(
+                    {
+                        "workers": workers,
+                        "concurrency": concurrency,
+                        "repeat": repeat,
+                        "measured": {
+                            "result": {
+                                "successful_rps": 100.0 + workers,
+                                "all_completed_latency": {
+                                    "p50_ms": 10.0,
+                                    "p95_ms": 20.0,
+                                    "p99_ms": 30.0,
+                                },
+                            }
+                        },
+                        "resources": {
+                            "api_process_group_cpu_percent": {"mean": 50.0},
+                            "api_process_group_rss": {"median_mib": 100.0},
+                        },
+                    }
+                )
+
+    evaluation = _median_matrix_and_gates(runs)
+
+    assert evaluation["scaling_demonstrated"] is False
+    assert evaluation["p1_s4_status"] == "complete"
+    assert evaluation["s4f_required"] is False
+    assert evaluation["allowed_conclusion"] == (
+        "validated_local_loopback_harness_did_not_demonstrate_horizontal_scaling"
+    )
+
+
+def _harness_gate_record(*, reuse: int = 10, queue_p99_ms: float = 1.0) -> dict:
+    def timing(*, new: int, reused: int) -> dict:
+        return {
+            "diagnostic_recording_failures": 0,
+            "connection_counts": {"new": new, "reused": reused, "unknown": 0},
+            "duration_aggregates": {
+                "scheduler_queue_wait_ms": {"p99_ms": queue_p99_ms},
+                "client_setup_ms": {"count": 10, "max_ms": 0.0},
+            },
+        }
+
+    return {
+        "concurrency": 8,
+        "client_harness": {
+            "created_before_warmup": True,
+            "per_request_client_construction": False,
+            "limits": {"max_connections": 8, "max_keepalive_connections": 8},
+        },
+        "warmup": {
+            "result": {"attempted": 10, "client_timing": timing(new=8, reused=2)}
+        },
+        "measured": {
+            "result": {
+                "attempted": 10,
+                "all_completed_latency": {"p50_ms": 100.0},
+                "client_timing": timing(new=10 - reuse, reused=reuse),
+                "harness": {
+                    "max_outstanding_observed": 8,
+                    "outstanding_work_limit": 8,
+                },
+            }
+        },
+    }
+
+
+def test_s4e_harness_gates_enforce_queue_setup_reuse_and_warmup() -> None:
+    passed = _validate_harness_gates(_harness_gate_record())
+    assert passed["status"] == "passed"
+    assert passed["measured_connection_reuse_rate"] == 1.0
+    assert passed["per_request_client_setup_max_ms"] == 0.0
+
+    with pytest.raises(ScaleBenchmarkError, match="reuse was below"):
+        _validate_harness_gates(_harness_gate_record(reuse=9))
+    with pytest.raises(ScaleBenchmarkError, match="queue p99"):
+        _validate_harness_gates(_harness_gate_record(queue_p99_ms=10.1))
 
 
 def test_generated_result_directory_is_ignored() -> None:

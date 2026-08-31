@@ -26,37 +26,41 @@ def test_client_timing_requires_exact_opt_in() -> None:
         assert client_timing_enabled(environment) is False
 
 
-def test_executor_queue_and_client_boundaries_use_one_monotonic_clock() -> None:
-    ticks = _clock([1.125, 1.250, 2.250, 2.300, 2.325])
+def test_scheduler_queue_and_request_boundaries_use_one_monotonic_clock() -> None:
+    ticks = _clock([1.125, 1.250, 2.250, 2.300])
     timer = ClientRequestTimer(submitted_at=1.0, clock=lambda: next(ticks))
     for boundary in (
         "task_started",
         "request_started",
         "headers_received",
         "body_completed",
-        "client_completed",
     ):
         timer.mark(boundary)
 
     assert timer.durations() == {
-        "executor_queue_wait_ms": 125.0,
-        "client_setup_ms": 125.0,
+        "scheduler_queue_wait_ms": 125.0,
+        "client_setup_ms": 0.0,
+        "request_preparation_ms": 125.0,
         "request_to_response_headers_ms": 1000.0,
         "response_body_read_ms": pytest.approx(50.0),
-        "client_teardown_ms": pytest.approx(25.0),
-        "client_e2e_ms": pytest.approx(1200.0),
-        "scheduled_total_ms": pytest.approx(1325.0),
+        "request_e2e_ms": pytest.approx(1050.0),
+        "scheduled_total_ms": pytest.approx(1300.0),
     }
 
 
 def test_aggregate_statistics_and_same_request_ratios_are_nearest_rank() -> None:
-    timing = ClientTimingAggregator(timeout_seconds=10.0)
+    timing = ClientTimingAggregator(
+        timeout_seconds=10.0,
+        max_connections=8,
+        max_keepalive_connections=8,
+        keepalive_expiry_seconds=30.0,
+    )
     for value in (1.0, 2.0, 3.0, 4.0, 100.0):
         timing.record(
             {
-                "executor_queue_wait_ms": value,
+                "scheduler_queue_wait_ms": value,
                 "scheduled_total_ms": 200.0,
-                "client_e2e_ms": 100.0,
+                "request_e2e_ms": 100.0,
                 "request_to_response_headers_ms": value,
             },
             {},
@@ -64,7 +68,7 @@ def test_aggregate_statistics_and_same_request_ratios_are_nearest_rank() -> None
         )
 
     snapshot = timing.snapshot()
-    aggregate = snapshot["duration_aggregates"]["executor_queue_wait_ms"]
+    aggregate = snapshot["duration_aggregates"]["scheduler_queue_wait_ms"]
     assert aggregate == {
         "count": 5,
         "min_ms": 1.0,
@@ -112,9 +116,14 @@ def test_supported_trace_events_measure_spans_and_classify_connections() -> None
 
 
 def test_pool_wait_is_honestly_not_observable_and_samples_are_not_persisted() -> None:
-    timing = ClientTimingAggregator(timeout_seconds=10.0)
+    timing = ClientTimingAggregator(
+        timeout_seconds=10.0,
+        max_connections=8,
+        max_keepalive_connections=8,
+        keepalive_expiry_seconds=30.0,
+    )
     timing.record(
-        {"client_e2e_ms": 10.0, "request_to_response_headers_ms": 8.0},
+        {"request_e2e_ms": 10.0, "request_to_response_headers_ms": 8.0},
         {},
         connection_kind="new",
     )
@@ -129,10 +138,15 @@ def test_pool_wait_is_honestly_not_observable_and_samples_are_not_persisted() ->
 
 
 def test_unsafe_values_and_recording_failure_are_inert() -> None:
-    timing = ClientTimingAggregator(timeout_seconds=10.0)
+    timing = ClientTimingAggregator(
+        timeout_seconds=10.0,
+        max_connections=8,
+        max_keepalive_connections=8,
+        keepalive_expiry_seconds=30.0,
+    )
     timing.record(
         {
-            "client_e2e_ms": 2.0,
+            "request_e2e_ms": 2.0,
             "request_id": "must-not-persist",
             "raw_score": 0.99,
             "payload": {"PAN": "must-not-persist"},
