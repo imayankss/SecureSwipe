@@ -1,6 +1,6 @@
 # P1 scalability benchmark harness
 
-Status: **P1-S4e harness validated; final matrix stopped on a service correctness failure**
+Status: **P1-S4f repaired the reproduced state-store defect; postfix harness gate failed; P1-S4 remains incomplete**
 
 The runner implements the workload and measurement contract in
 [P1 scale protocol](P1_SCALE_PROTOCOL.md). It benchmarks only the explicit
@@ -115,6 +115,15 @@ The valid chain contained only the committed events. Because the frozen exact
 status/audit counts did not reconcile, the run is a correctness failure and no
 S4e performance matrix or worker-scaling conclusion is authorized. See the
 [S4e evidence report](P1_S4E_VALIDATED_HARNESS_EVIDENCE.md).
+
+P1-S4f subsequently reproduced the failure as connection-checkout timeout and
+proved that completion transactions waiting on the globally serialized audit
+head had exhausted each worker's four-connection pool. A minimal lifecycle
+repair queues completion before checkout without changing pool size, timeout,
+retry, workload, schema, or public behavior. The first bound postfix run then
+failed the unchanged scheduler-queue harness gate, so its result was invalid,
+the remaining postfix and full-matrix runs were not executed, and P1-S4 remains
+incomplete. See the [S4f evidence report](P1_S4F_STATE_STORE_VERIFICATION_EVIDENCE.md).
 
 Smoke results are always marked `publishable: false`. Full mode refuses a
 tracked dirty tree and requires an explicit flag. Publication remains subject
