@@ -173,7 +173,9 @@ class StageObservation:
             duration_ms=(perf_counter() - self._started) * 1000.0,
             succeeded=True,
             failure=None,
-            pool=_pool_snapshot(self._pool),
+            # Pool statistics are needed at a failure boundary. Querying them
+            # after every successful operation perturbs the hot path under test.
+            pool={},
         )
 
     def failure(self, exc: BaseException) -> None:

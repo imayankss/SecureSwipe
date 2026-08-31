@@ -79,7 +79,20 @@ def test_success_path_does_not_write_until_explicit_flush(tmp_path: Path) -> Non
     assert list(tmp_path.glob("*.json")) == []
     path = aggregator.flush()
     assert path is not None
-    assert json.loads(path.read_text())["stages"]["reserve"]["success_count"] == 30
+    reserve = json.loads(path.read_text())["stages"]["reserve"]
+    assert reserve["success_count"] == 30
+    assert reserve["pool_counters"] == {}
+
+
+def test_pool_counters_are_captured_only_at_failure_boundary(tmp_path: Path) -> None:
+    aggregator = StateStoreDiagnosticAggregator(tmp_path)
+    observation = aggregator.start("connection_checkout", _PoolStats())
+    observation.failure(PoolTimeout("private"))
+
+    pool = aggregator.snapshot()["stages"]["connection_checkout"]["pool_counters"]
+    assert pool["pool_size"]["max"] == 4.0
+    assert pool["pool_available"]["max"] == 0.0
+    assert pool["requests_waiting"]["max"] == 17.0
 
 
 def test_failure_sanitizer_never_retains_exception_text() -> None:
