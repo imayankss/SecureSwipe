@@ -1,19 +1,40 @@
-# Reproducibility guide
+# Reproducibility
 
-SecureSwipe separates three kinds of evidence: the already-observed historical
-random holdout, new development/forward analyses, and serving bundles. They are
-not interchangeable.
+This is the canonical guide to local environments, deterministic checks,
+artifact boundaries, and expected behavior. It does not claim that the sealed
+Lane A evaluation can be rerun from a clean clone: its private rows, score seal,
+and exact serving chain are not committed.
 
-## Clean environment
+Use [EVIDENCE_GUIDE.md](EVIDENCE_GUIDE.md) to decide which category a command
+can support and [CONTRIBUTING.md](../CONTRIBUTING.md) for the maintained quality
+gate.
 
-Use CPython 3.12.10 on CPU. Apple Silicon is supported and CUDA is not required.
+## Prerequisites
+
+| Tool | Required version/source |
+| --- | --- |
+| Python | CPython 3.12.10 |
+| Python dependencies | `requirements/quality.lock` for local quality work |
+| Node.js | 22.13.1, enforced by `web/package.json` |
+| Frontend dependencies | `web/package-lock.json` with `npm ci` |
+| Browser tests | Repository Playwright dependency and Chromium test browser |
+
+Use isolated environments. Do not install project packages globally, commit
+environment files, or place data/model artifacts inside tracked paths.
+
+The Darwin Python locks target Apple Silicon CPU environments. Linux CI and the
+container use their separate `*-linux.lock` closures and `xgboost-cpu`.
+
+## Clean setup
 
 ```bash
 git clone https://github.com/imayankss/SecureSwipe.git
 cd SecureSwipe
+
 python3 -m venv .venv
 .venv/bin/python -m pip install --require-hashes -r requirements/quality.lock
 .venv/bin/python -m pip check
+
 cd web
 nvm install 22.13.1
 nvm use 22.13.1
@@ -23,125 +44,248 @@ npx playwright install --no-shell chromium
 cd ..
 ```
 
-The Darwin locks (`requirements/quality.lock` and `requirements/api.lock`)
-resolve Apple Silicon CPU environments. Linux CI and the container use the
-separately compiled `requirements/quality-linux.lock` and
-`requirements/api-linux.lock`; those closures use `xgboost-cpu` and contain no
-NVIDIA packages. `configs/config.yaml`
-is parsed by strict frozen Pydantic models; unknown keys, invalid thresholds,
-unsafe artifact paths, and inconsistent split settings fail closed. Active
-day-by-day runners derive their data, artifact, report, and seed defaults from
-that contract.
+Dependency-lock regeneration is a maintainer workflow, not part of ordinary
+verification. Its disposable-environment procedure is documented in
+[CONTRIBUTING.md](../CONTRIBUTING.md#local-setup).
 
-Dependency resolution uses a separate disposable environment so the resolver is
-not part of ordinary test/training execution:
+## Data-free deterministic checks
 
-```bash
-lock_env=$(mktemp -d /tmp/secureswipe-lock-tools.XXXXXX)
-python3 -m venv "$lock_env"
-"$lock_env/bin/python" -m pip install --require-hashes \
-  -r requirements/lock-tools.lock
-cd requirements
-for target in api api-linux quality quality-linux; do
-  PIP_DEFAULT_TIMEOUT=120 "$lock_env/bin/python" -m piptools compile \
-    --reuse-hashes --generate-hashes --allow-unsafe --strip-extras \
-    --output-file="$target.lock" "$target.in"
-done
-cd ..
-```
-
-Compile twice and compare all four SHA-256 digests. The current generator lock
-uses pip 26.2.1 and pip-tools 7.6.1; the generator and platform closures are
-reviewed. `--reuse-hashes` avoids re-downloading every platform wheel while the
-resolver still validates the dependency graph.
-
-## Checks that require no private data
+These checks require no raw dataset or trained fraud bundle:
 
 ```bash
 .venv/bin/python -m compileall -q api src scripts tests
 .venv/bin/python -m ruff check api src scripts tests
+.venv/bin/python -m mypy --ignore-missing-imports api src/artifacts \
+  src/inference/risk_scoring.py src/evaluation/statistical_metrics.py \
+  src/evaluation/calibration.py src/evaluation/cost_analysis.py \
+  src/evaluation/temporal_validation.py src/evaluation/historical_lock.py \
+  src/utils/config.py src/utils/run_manifest.py \
+  scripts/run_development_analysis.py scripts/verify_historical_observation.py
 .venv/bin/python -m pytest
-.venv/bin/python scripts/verify_historical_observation.py
+.venv/bin/python -m mypy --no-incremental --ignore-missing-imports \
+  --follow-imports=skip scripts/run_reference_stage.py
 .venv/bin/python scripts/export_web_data.py --check
+.venv/bin/python scripts/verify_historical_observation.py
 .venv/bin/python -m pip_audit -r requirements/quality.lock --disable-pip \
   --progress-spinner off
 .venv/bin/python -m build --no-isolation
 .venv/bin/python scripts/verify_wheel_contents.py dist/*.whl
+
 cd web
-npm ci
 npm test
 npm run build
-npx playwright install --no-shell chromium
 npm run test:e2e
 npm audit --audit-level=high
 ```
 
-The frontend contract requires Node.js 22.13.1. The browser installation is a
-local/CI test tool, not a dashboard runtime dependency.
+Expected evidence boundaries:
 
-The historical verifier checks the recorded final JSON, report, and selected
-validation threshold against `reports/final/historical_observation.lock.json`.
-It never loads rows or a model. `scripts/run_final_evaluation.py` is deliberately
-disabled because the test result has already been observed.
+- `verify_historical_observation.py` checks the older committed historical lock;
+  it does not rerun a model.
+- `export_web_data.py --check` verifies that the checked-in aggregate dashboard
+  data matches its canonical inputs; it must not rewrite files.
+- `pytest` includes tracked and untracked files under `tests/`. A pre-existing
+  untracked work-in-progress test can therefore affect a working-directory run
+  without being part of the committed suite.
+- A local pass is not remote CI evidence for an unpushed commit.
 
-## New development evidence
+## Optional P1-S2/P1-S3 PostgreSQL checks
 
-The known Kaggle `creditcard.csv` may be restored through the official process
-at `data/raw/creditcard.csv` for reference curation/stages only. Never commit it
-or `kaggle.json`. Its holdout was already observed and original row identities
-were not retained, so renaming/restoring it cannot make it new evidence.
+These checks are separate from the default data-free suite. They require a
+dedicated PostgreSQL 16.10 instance bound only to `127.0.0.1:55432`, a dedicated
+non-superuser role, and a database whose name ends in `_test`. Do not point the
+harness at another local or external database.
 
-New decisions require a separately authorized corpus and the checksum-bound
-operator approval described in `SOURCE_APPROVAL.md`. First run
-`scripts/curate_dataset.py --source-kind new_authorized_development
---source-approval <reviewed.json>`, then run the four-role training/bundle
-workflow:
+Set a secret-bearing test DSN only in the invoking environment, then run:
 
 ```bash
+export SECURESWIPE_TEST_POSTGRES_DSN="postgresql://<test-role>:<secret>@127.0.0.1:55432/secureswipe_p1_scale_test"
+.venv/bin/python -m pytest \
+  tests/test_p1_s2_postgres_integration.py \
+  tests/test_p1_s3_postgres_audit.py
+```
+
+The harness validates the loopback/test-database boundary, creates a unique
+`secureswipe_s2_test_*` or `secureswipe_s3_test_*` schema for each case, and
+drops only that schema. It covers concurrent migrations, 64 distinct appends,
+64 identical requests across four spawned processes, one callback/event,
+restart and post-commit replay, pre-commit process death, conflicts, terminal
+states, tamper detection, application-role permissions, API profile isolation,
+and database allowlist/privacy inspection.
+
+For operator-controlled migrations, configure the scale DSN, schema, and HMAC
+secret and invoke `scripts/manage_postgres_migrations.py --apply` explicitly.
+Use `--check` for a non-applying compatibility check. `--apply` requires the
+separate `SECURESWIPE_POSTGRES_MIGRATION_DSN` and non-superuser
+`SECURESWIPE_POSTGRES_APPLICATION_ROLE`; keep
+`SECURESWIPE_POSTGRES_DSN` pointed at the runtime role. API startup never
+applies migrations. Verify the current chain explicitly with:
+
+```bash
+.venv/bin/python scripts/verify_postgres_audit_chain.py
+```
+
+## Static dashboard
+
+The reviewer interface can run without an API:
+
+```bash
+cd web
+nvm use 22.13.1
+npm test
+npm run build
+npm run start -- --hostname 127.0.0.1 --port 3000
+```
+
+Open:
+
+- `http://127.0.0.1:3000/` for the product route;
+- `http://127.0.0.1:3000/evidence` for evidence navigation; and
+- `http://127.0.0.1:3000/demo` for the local walkthrough.
+
+Without `NEXT_PUBLIC_SECURESWIPE_API_URL` at build time, `/demo` must show an
+explicit unavailable state and must not fabricate a model result.
+
+## Local reference-model demonstration
+
+This data-free procedure uses a deterministic synthetic smoke bundle. It proves
+packaging, readiness, bounded API output, audit receipt, replay, and validation
+mechanics. It does **not** prove fraud-model quality and does not serve the sealed
+Lane A model.
+
+Create a temporary bundle and audit location outside the repository:
+
+```bash
+demo_root=$(mktemp -d /tmp/secureswipe-reference-demo.XXXXXX)
+.venv/bin/python scripts/create_synthetic_bundle.py \
+  --output "$demo_root/bundle"
+mkdir "$demo_root/audit"
+printf 'Temporary demo root: %s\n' "$demo_root"
+```
+
+Keep that terminal open and start the API:
+
+```bash
+export SECURESWIPE_ARTIFACT_ROOT="$demo_root"
+export SECURESWIPE_BUNDLE_MANIFEST="$demo_root/bundle/manifest.json"
+export SECURESWIPE_AUDIT_LOG="$demo_root/audit/prediction-events.ndjson"
+export SECURESWIPE_CORS_ORIGINS="http://127.0.0.1:3000"
+.venv/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000
+```
+
+In a second terminal, build the browser application with that explicit local
+origin:
+
+```bash
+cd web
+nvm use 22.13.1
+NEXT_PUBLIC_SECURESWIPE_API_URL=http://127.0.0.1:8000 npm run build
+npm run start -- --hostname 127.0.0.1 --port 3000
+```
+
+Open `http://127.0.0.1:3000/demo` and run the walkthrough.
+
+Expected healthy behavior:
+
+1. the fixed sanitized fixture loads;
+2. readiness and model-info succeed;
+3. the API returns one bounded review outcome;
+4. the API exposes a genuine committed audit-event receipt;
+5. an identical fixed-ID replay returns the same body and original receipt,
+   carries `X-Idempotent-Replay: true`, and creates no second audit event; and
+6. deliberately malformed input returns `422 validation_error` with no decision.
+
+Verify the audit chain:
+
+```bash
+.venv/bin/python scripts/verify_api_audit_log.py \
+  "$demo_root/audit/prediction-events.ndjson"
+```
+
+Expected unavailable behavior:
+
+- stop the API or omit its build-time origin;
+- run the walkthrough again; and
+- confirm that the bounded outcome and audit confirmation are unavailable.
+
+The browser must never hard-code a successful receipt or label a replay as a
+new audit event.
+
+## Direct API smoke
+
+With the synthetic bundle configured as above:
+
+```bash
+curl --fail-with-body http://127.0.0.1:8000/health/live
+curl --fail-with-body http://127.0.0.1:8000/health/ready
+curl --fail-with-body http://127.0.0.1:8000/v1/model-info
+curl --fail-with-body http://127.0.0.1:8000/v1/predict \
+  --header 'Content-Type: application/json' \
+  --header 'X-Request-ID: synthetic-smoke-001' \
+  --data @"$demo_root/bundle/smoke_request.json"
+```
+
+See [API.md](API.md) for the response contract, error vocabulary, batch route,
+and redaction boundary.
+
+## Artifact boundaries
+
+| Artifact | Tracked? | What a clean clone can do |
+| --- | --- | --- |
+| Lane A aggregate evidence | Yes | Verify documents and exported values; do not rerun final evaluation |
+| Historical observation lock | Yes | Verify three committed historical artifacts by SHA-256 |
+| Raw datasets | No | Nothing unless separately obtained and authorized |
+| Exact Lane A model chain | No proven serving chain | Do not reconstruct, substitute, or relabel a bundle |
+| Historical/reference bundle | Intentionally ignored local artifact when available | Verify and run only within its disclosed provenance |
+| Synthetic smoke bundle | Generated locally | Exercise packaging and API mechanics only |
+| Dashboard aggregate JSON | Yes | Verify deterministically with exporter `--check` |
+
+File presence alone is not evidence. A bundle is eligible for loading only after
+trusted-root, manifest, schema, type, runtime, and payload-hash verification.
+
+## Historical reference data
+
+The known Kaggle `creditcard.csv` is already test-observed. Restoring or copying
+it cannot make it new evidence. If obtained through the official source, keep it
+under the ignored `data/raw/` path and use only the declared historical curation
+workflow.
+
+Never commit the CSV, Kaggle credentials, derived row-level artifacts, or model
+payloads.
+
+## New authorized development
+
+New decisions require a genuinely new corpus plus the exact-checksum human
+approval in [SOURCE_APPROVAL.md](SOURCE_APPROVAL.md). The curation and training
+commands reject historical-tainted or unmanifested inputs:
+
+```bash
+.venv/bin/python scripts/curate_dataset.py --help
 .venv/bin/python scripts/run_development_training.py --help
 .venv/bin/python scripts/run_development_analysis.py --help
 ```
 
-The analysis command also requires the originating training `run_manifest.json`
-and recomputes every declared score through its verified bundle. These commands
-require a checksum-matched, decision-eligible curation record and content-derived
-row fingerprints. They write deterministic run manifests containing the Git
-commit/dirty digest, parameters,
-seed, runtime versions, input hashes, and output hashes. It rejects names that
-claim test or historical scope. The original historical AP/ROC-AUC cannot be
-independently regenerated in a clean clone because the original rows, score
-vector, and fitted model were intentionally not committed.
-
-The Day 2–7 modules remain reusable implementation libraries, but their direct
-CLIs refuse unmanifested execution. `scripts/run_reference_stage.py` publishes
-one legacy stage into a new directory via a sibling temporary directory and an
-atomic rename. Failures leave no apparently complete target; existing targets,
-including empty ones, are never overwritten. These runs use explicit
-`legacy_random_*_reference` scopes and are not eligible for new decisions.
-
-## Serving artifact proof
-
-Only bundles created locally by the project are eligible. A bundle couples the
-preprocessor, estimator, optional calibrator, ordered schema, score semantics,
-operating point, runtime metadata, training-data fingerprint, and checksums.
-Loading is restricted to a configured trusted root and verification happens
-before joblib deserialization. Never load an artifact submitted by an API user.
-
-For a data-free smoke fixture:
-
-```bash
-.venv/bin/python scripts/create_synthetic_bundle.py --output /tmp/secureswipe-smoke
-```
-
-See `docs/CONTAINER.md` for the exact build and container smoke commands. Those
-checks require a running Docker daemon; a static Dockerfile check is not
-container execution evidence.
+The workflow records content fingerprints, roles, parameters, seed, runtime,
+Git state, input hashes, and output hashes. Development and reusable forward
+analysis remain development evidence; they do not become Lane A final evidence.
 
 ## Determinism boundary
 
-Deterministic files omit wall-clock timestamps, use sorted strict JSON, fixed
-seeds, stable row identities, and SHA-256 hashes. Hardware and threaded
-estimators can still introduce floating-point variation, so any future model
-training claim must record the actual platform and verify golden predictions
-within its declared precision. Public metrics must come from executable report
-artifacts; documentation must not invent or manually alter results.
+Deterministic artifacts use stable JSON, fixed seeds, sorted fields,
+content-derived row identities, and SHA-256 digests while omitting wall-clock
+timestamps where they would create noise. Atomic publication prevents a failed
+run from looking complete.
+
+Hardware, native libraries, and threaded estimators can still introduce
+floating-point variation. Any future training or benchmark claim must record the
+actual platform, runtime, concurrency, and declared numeric tolerance.
+
+Public metrics must be read from committed aggregate artifacts. Documentation
+must never repair, round into a new value, or manually override evidence.
+
+## Container verification
+
+Container commands, architecture scope, restricted runtime checks, scan, and
+SBOM generation are canonical in [CONTAINER.md](CONTAINER.md). A Dockerfile
+inspection is not container execution evidence, and local native-arm results do
+not imply a released multi-architecture image.

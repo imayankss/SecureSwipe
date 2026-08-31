@@ -2,7 +2,6 @@
 
 import { useMemo, useState } from "react";
 
-import { Badge } from "@/components/ui/badge";
 import {
   FALSE_POSITIVE_MEANING,
   LANE_A_FINAL_CATEGORY,
@@ -44,6 +43,26 @@ const ASSUMPTION_HELP: Record<AssumptionKey, string> = {
     "Illustrative operational cost of handling the chargeback from one missed fraud.",
 };
 
+export type LaneACostExplorerVariant = "detailed" | "compact";
+
+export type LaneACostExplorerProps = {
+  /**
+   * `detailed` (default) is the complete evidence-route panel. `compact` is the
+   * product-facing homepage surface: the same data, selector, assumptions and
+   * arithmetic, without the badge row, sealed-metric interval block, all-tier
+   * comparison table, sensitivity scenarios, or long provenance footnotes.
+   *
+   * Both variants read the same frozen module and the same pure cost model, so
+   * no calculation, selector, or source datum is duplicated between routes.
+   */
+  variant?: LaneACostExplorerVariant;
+  /**
+   * Namespace for element ids so the compact and detailed panels can coexist
+   * without colliding label/`aria-describedby` targets.
+   */
+  idPrefix?: string;
+};
+
 /**
  * Illustrative merchant cost and review-workload explorer for Lane A.
  *
@@ -54,7 +73,12 @@ const ASSUMPTION_HELP: Record<AssumptionKey, string> = {
  * It selects no capacity and no threshold, and it declares no tier better than
  * another. Every monetary figure is an editable illustrative assumption.
  */
-export function LaneACostExplorer() {
+export function LaneACostExplorer({
+  variant = "detailed",
+  idPrefix = "",
+}: LaneACostExplorerProps = {}) {
+  const detailed = variant === "detailed";
+  const fieldId = (key: AssumptionKey) => `${idPrefix}${key}`;
   const [selectedCapacity, setSelectedCapacity] = useState<number>(
     LANE_A_FINAL_TIERS[0].capacityPerDay,
   );
@@ -114,26 +138,19 @@ export function LaneACostExplorer() {
 
   return (
     <section
-      id="lane-a-cost-explorer"
-      aria-labelledby="lane-a-cost-heading"
-      className="mt-8 rounded-xl border border-slate-700/60 bg-slate-950/40 p-4 sm:p-6"
+      id={detailed ? "lane-a-cost-explorer" : `${idPrefix}lane-a-cost-explorer`}
+      aria-labelledby={`${idPrefix}lane-a-cost-heading`}
+      className={
+        detailed
+          ? "mt-9 rounded-xl border border-slate-700/60 bg-slate-950/40 p-5 sm:p-6"
+          : "rounded-xl border border-white/[0.08] bg-slate-950/40 p-4 sm:p-6"
+      }
     >
       <header className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2">
-          <Badge className="border-violet-300/30 bg-violet-300/10 text-violet-100">
-            Illustrative scenario
-          </Badge>
-          <Badge className="border-emerald-300/30 bg-emerald-300/10 text-emerald-100">
-            Sealed Lane A final aggregate evidence
-          </Badge>
-          <Badge className="border-slate-300/30 bg-slate-300/10 text-slate-100">
-            Not Razorpay economics
-          </Badge>
-          <Badge className="border-slate-300/30 bg-slate-300/10 text-slate-100">
-            Not comparable with Lane B
-          </Badge>
-        </div>
-        <h3 id="lane-a-cost-heading" className="text-lg font-semibold text-slate-100">
+        <h3
+          id={`${idPrefix}lane-a-cost-heading`}
+          className="text-lg font-semibold text-slate-100"
+        >
           Illustrative merchant cost &amp; review workload
         </h3>
         <p
@@ -148,6 +165,7 @@ export function LaneACostExplorer() {
         </p>
       </header>
 
+      {detailed ? (
       <section
         aria-labelledby="lane-a-sealed-heading"
         data-testid="sealed-final-metrics"
@@ -204,22 +222,39 @@ export function LaneACostExplorer() {
           explorer below.
         </p>
       </section>
+      ) : (
+        <p
+          data-testid="sealed-final-provenance"
+          className="mt-4 rounded-lg border border-emerald-300/25 bg-emerald-300/[0.06] p-3 text-xs leading-5 text-emerald-50"
+        >
+          {LANE_A_FINAL_CATEGORY} — evaluated exactly once on a programmatically
+          held-out role. Not Razorpay or live-merchant performance, and not
+          comparable with Lane B historical metrics.
+        </p>
+      )}
 
-      <fieldset className="mt-5 rounded-lg border border-slate-700/60 p-3 sm:p-4">
+      <fieldset
+        className={
+          detailed
+            ? "mt-5 rounded-lg border border-slate-700/60 p-3 sm:p-4"
+            : "mt-4 rounded-lg border border-slate-700/60 p-3 sm:p-4"
+        }
+      >
         <legend className="px-1 text-sm font-medium text-slate-200">
           Illustrative starting assumptions (INR, editable)
         </legend>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {ASSUMPTION_ORDER.map((key) => {
             const error = parsed.errors[key];
-            const describedBy = `${key}-help${error ? ` ${key}-error` : ""}`;
+            const id = fieldId(key);
+            const describedBy = `${id}-help${error ? ` ${id}-error` : ""}`;
             return (
               <div key={key} className="flex flex-col gap-1">
-                <label htmlFor={key} className="text-xs font-medium text-slate-200">
+                <label htmlFor={id} className="text-xs font-medium text-slate-200">
                   {ASSUMPTION_LABELS[key]} (₹)
                 </label>
                 <input
-                  id={key}
+                  id={id}
                   name={key}
                   type="text"
                   inputMode="decimal"
@@ -229,13 +264,13 @@ export function LaneACostExplorer() {
                   onChange={(event) =>
                     setRawInputs((current) => ({ ...current, [key]: event.target.value }))
                   }
-                  className="w-full rounded-md border border-slate-600 bg-slate-900 px-2 py-1.5 text-sm text-slate-100 focus:border-sky-400 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
+                  className="w-full rounded-lg border border-[var(--ss-border)] bg-[#0a111c] px-3 py-2 text-sm text-slate-100 focus:border-blue-400 focus:outline-none"
                 />
-                <p id={`${key}-help`} className="text-xs text-slate-400">
+                <p id={`${id}-help`} className={detailed ? "text-xs text-slate-400" : "sr-only"}>
                   {ASSUMPTION_HELP[key]}
                 </p>
                 {error ? (
-                  <p id={`${key}-error`} role="alert" className="text-xs font-medium text-rose-300">
+                  <p id={`${id}-error`} role="alert" className="text-xs font-medium text-rose-300">
                     {error}
                   </p>
                 ) : null}
@@ -263,10 +298,10 @@ export function LaneACostExplorer() {
               type="button"
               aria-pressed={active}
               onClick={() => setSelectedCapacity(row.capacityPerDay)}
-              className={`rounded-md border px-3 py-1.5 text-sm font-medium transition focus:outline-none focus:ring-2 focus:ring-sky-400/50 ${
+              className={`rounded-lg border px-3 py-2 text-sm font-semibold transition focus:outline-none ${
                 active
-                  ? "border-sky-300/60 bg-sky-400/15 text-sky-100"
-                  : "border-slate-600 bg-slate-900 text-slate-300 hover:border-slate-500"
+                  ? "border-[var(--ss-primary)] bg-[var(--ss-primary)] text-[#070b12]"
+                  : "border-[var(--ss-border)] bg-[var(--ss-surface-raised)] text-slate-300 hover:border-blue-400"
               }`}
             >
               {formatCount(row.capacityPerDay)}/day
@@ -294,9 +329,14 @@ export function LaneACostExplorer() {
         <>
           <dl
             data-testid="selected-tier-breakdown"
-            className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4"
+            className={
+              detailed
+                ? "mt-5 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4"
+                : "mt-4 grid grid-cols-1 gap-3 min-[430px]:grid-cols-2 sm:grid-cols-3"
+            }
           >
-            {[
+            {(detailed
+              ? [
               { term: "Review budget", value: formatCount(tier.reviewBudget), detail: "over the evaluation period" },
               { term: "Reviewed", value: formatCount(breakdown.reviewedCount), detail: "TP + FP queued" },
               { term: "True positives", value: formatCount(tier.truePositives), detail: "fraud sent to review" },
@@ -309,7 +349,19 @@ export function LaneACostExplorer() {
               { term: "Legitimate-friction cost", value: formatInr(breakdown.legitimateFrictionCost), detail: "FP × friction cost" },
               { term: "Missed-fraud & chargeback", value: formatInr(breakdown.missedFraudAndChargebackCost), detail: "FN × (loss + chargeback)" },
               { term: "Illustrative total", value: formatInr(breakdown.illustrativeTotalCost), detail: "sum of the three components" },
-            ].map((item) => (
+                ]
+              : [
+              // Compact keeps the coverage / workload / false-positive trade-off
+              // and one illustrative total. The full twelve-cell breakdown,
+              // comparison table and scenarios stay on the evidence route.
+              { term: "Recall", value: formatRate(tier.recall), detail: "of all fraud, sent to review" },
+              { term: "Review budget", value: formatCount(tier.reviewBudget), detail: "queued over the period" },
+              { term: "False positives", value: formatCount(tier.falsePositives), detail: "legitimate, sent to review" },
+              { term: "Precision", value: formatRate(tier.precision), detail: "of reviewed items" },
+              { term: "Missed fraud", value: formatCount(tier.falseNegatives), detail: "fraud not reviewed" },
+              { term: "Illustrative total", value: formatInr(breakdown.illustrativeTotalCost), detail: "editable assumptions above" },
+                ]
+            ).map((item) => (
               <div
                 key={item.term}
                 className="min-w-0 rounded-lg border border-slate-700/60 bg-slate-900/50 p-3"
@@ -323,6 +375,7 @@ export function LaneACostExplorer() {
             ))}
           </dl>
 
+          {detailed ? (
           <div className="mt-6 overflow-x-auto">
             <table
               data-testid="all-tier-cost-table"
@@ -349,7 +402,7 @@ export function LaneACostExplorer() {
                     key={row.capacityPerDay}
                     data-testid={`cost-row-${row.capacityPerDay}`}
                     className={`border-b border-slate-800 ${
-                      row.capacityPerDay === selectedCapacity ? "bg-sky-400/10" : ""
+                      row.capacityPerDay === selectedCapacity ? "bg-blue-500/10" : ""
                     }`}
                   >
                     <th scope="row" className="py-2 pr-3 font-medium text-slate-200">
@@ -368,7 +421,9 @@ export function LaneACostExplorer() {
               </tbody>
             </table>
           </div>
+          ) : null}
 
+          {detailed ? (
           <div className="mt-6 space-y-4">
             <h4 className="text-sm font-semibold text-slate-200">
               Sensitivity scenarios (illustrative)
@@ -404,6 +459,7 @@ export function LaneACostExplorer() {
               </div>
             ))}
           </div>
+          ) : null}
         </>
       ) : (
         <p
@@ -416,6 +472,14 @@ export function LaneACostExplorer() {
         </p>
       )}
 
+      {!detailed ? (
+        <footer className="mt-4 break-words text-xs leading-5 text-slate-400">
+          Scenario arithmetic over sealed aggregate counts, not observed merchant
+          costs. Every monetary input is illustrative and editable. This panel
+          selects no capacity and no threshold, and nothing here approves, blocks,
+          declines, or steps up a payment.
+        </footer>
+      ) : (
       <footer className="mt-6 space-y-2 break-words text-xs leading-relaxed text-slate-400">
         <p>
           <span className="font-medium text-slate-300">Formula:</span> illustrative total
@@ -438,6 +502,7 @@ export function LaneACostExplorer() {
           declines, or steps up a payment.
         </p>
       </footer>
+      )}
     </section>
   );
 }

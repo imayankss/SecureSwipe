@@ -35,6 +35,7 @@ class ModelInfo:
     calibrated: bool
     operating_threshold: float
     feature_schema: tuple[str, ...]
+    model_artifact_sha256: str | None
     training_data_fingerprint: str
     evidence_category: EvidenceCategory
     historical_taint: bool
@@ -82,6 +83,7 @@ class ModelService:
             calibrated=bundle.calibrator is not None,
             operating_threshold=bundle.operating_threshold,
             feature_schema=bundle.feature_schema,
+            model_artifact_sha256=bundle.model_artifact_sha256,
             training_data_fingerprint=bundle.training_data_fingerprint,
             evidence_category=bundle.intended_use.evidence_category,
             historical_taint=bundle.intended_use.historical_taint,
