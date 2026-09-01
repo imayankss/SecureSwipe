@@ -18,6 +18,25 @@
   --ss-shell: 72rem;
   --ss-font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --ss-font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  /* Semantic decision + evidence state tokens.
+     Every state must also carry an icon and a text label: color is never the
+     only signal. Values are picked from the existing palette and checked for
+     contrast against --ss-surface. */
+  --ss-critical: #f87171;
+  --ss-critical-border: rgba(248, 113, 113, 0.34);
+  --ss-critical-surface: rgba(248, 113, 113, 0.1);
+  --ss-warning: #fbbf24;
+  --ss-warning-border: rgba(251, 191, 36, 0.34);
+  --ss-warning-surface: rgba(251, 191, 36, 0.1);
+  --ss-verified: #4ade80;
+  --ss-verified-border: rgba(74, 222, 128, 0.32);
+  --ss-verified-surface: rgba(74, 222, 128, 0.09);
+  --ss-info: #7cb2fb;
+  --ss-info-border: rgba(124, 178, 251, 0.34);
+  --ss-info-surface: rgba(124, 178, 251, 0.1);
+  --ss-neutral: #94a3b8;
+  --ss-neutral-border: rgba(148, 163, 184, 0.3);
+  --ss-neutral-surface: rgba(148, 163, 184, 0.08);
   --ss-focus-shadow: 0 0 0 4px rgba(96, 165, 250, 0.18);
   --ss-hover-shadow: 0 16px 38px rgba(0, 0, 0, 0.22);
 }
@@ -509,4 +528,179 @@ td {
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ---------------------------------------------------------------------------
+   Semantic state surfaces.
+
+   Each state pairs a color token with an icon and a text label at the call
+   site, so color is never the only carrier of meaning.
+   --------------------------------------------------------------------------- */
+
+.ss-state {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  border: 1px solid var(--ss-neutral-border);
+  border-radius: 0.5rem;
+  background: var(--ss-neutral-surface);
+  color: var(--ss-neutral);
+  padding: 0.25rem 0.5rem;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.ss-state[data-state="verified"] {
+  border-color: var(--ss-verified-border);
+  background: var(--ss-verified-surface);
+  color: var(--ss-verified);
+}
+
+.ss-state[data-state="review"],
+.ss-state[data-state="warning"] {
+  border-color: var(--ss-warning-border);
+  background: var(--ss-warning-surface);
+  color: var(--ss-warning);
+}
+
+.ss-state[data-state="critical"] {
+  border-color: var(--ss-critical-border);
+  background: var(--ss-critical-surface);
+  color: var(--ss-critical);
+}
+
+.ss-state[data-state="info"],
+.ss-state[data-state="running"] {
+  border-color: var(--ss-info-border);
+  background: var(--ss-info-surface);
+  color: var(--ss-info);
+}
+
+/* Decision zone band. Renders which zone an outcome landed in and where the
+   operating threshold sits. It deliberately never encodes the suppressed
+   decision score as a position, which would leak it visually. */
+
+.ss-zone-track {
+  display: grid;
+  grid-template-columns: var(--ss-zone-below, 53fr) var(--ss-zone-review, 47fr);
+  overflow: hidden;
+  border: 1px solid var(--ss-border);
+  border-radius: 0.5rem;
+}
+
+.ss-zone-cell {
+  position: relative;
+  min-height: 3rem;
+  padding: 0.5rem 0.625rem;
+  transition: background-color 160ms ease;
+}
+
+.ss-zone-cell[data-zone="below"] {
+  background: var(--ss-verified-surface);
+  border-right: 2px solid var(--ss-info);
+}
+
+.ss-zone-cell[data-zone="review"] {
+  background: var(--ss-warning-surface);
+}
+
+.ss-zone-cell[data-active="false"] {
+  background: transparent;
+}
+
+.ss-zone-cell[data-active="true"]::after {
+  position: absolute;
+  inset: 0;
+  border: 2px solid currentColor;
+  border-radius: 0.25rem;
+  content: "";
+  pointer-events: none;
+}
+
+/* Guided-demo stepper rail. */
+
+.ss-step-rail {
+  display: grid;
+  gap: 0.25rem;
+}
+
+.ss-step-row {
+  display: grid;
+  grid-template-columns: 1.5rem minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 0.625rem;
+  border: 1px solid transparent;
+  border-radius: 0.625rem;
+  padding: 0.5rem 0.625rem;
+  text-align: left;
+  transition: background-color 160ms ease, border-color 160ms ease;
+}
+
+.ss-step-row[data-current="true"] {
+  border-color: var(--ss-info-border);
+  background: var(--ss-info-surface);
+}
+
+.ss-step-row:hover:not([data-current="true"]) {
+  background: var(--ss-surface-raised);
+}
+
+/* Modal drawer used by the decision trace. */
+
+.ss-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(3, 6, 12, 0.72);
+}
+
+.ss-drawer {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-end: 0;
+  z-index: 61;
+  display: flex;
+  width: min(34rem, 100vw);
+  flex-direction: column;
+  overflow: hidden;
+  border-inline-start: 1px solid var(--ss-border);
+  background: var(--ss-surface);
+  box-shadow: -24px 0 60px rgba(0, 0, 0, 0.45);
+}
+
+@media (max-width: 640px) {
+  .ss-drawer {
+    inset-block-start: auto;
+    width: 100vw;
+    max-height: 88vh;
+    border-inline-start: none;
+    border-block-start: 1px solid var(--ss-border);
+    border-start-start-radius: 1rem;
+    border-start-end-radius: 1rem;
+  }
+}
+
+/* Any wide block scrolls inside its own container so the page never does. */
+
+.ss-scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-zone-cell,
+  .ss-step-row {
+    transition: none !important;
+  }
+}
+
+/* Square icon-only action.
+   `.ss-action` sets `padding-inline` and is declared after Tailwind's
+   utilities, so it beats `p-0` at equal specificity and crushes the glyph.
+   This modifier resets the inline padding for icon-only buttons. */
+.ss-action-icon {
+  padding-inline: 0;
 }

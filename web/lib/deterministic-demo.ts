@@ -38,3 +38,31 @@ export const DEMO_FIXTURE = Object.freeze({
 export const INVALID_DEMO_FIXTURE = Object.freeze({
   Time: "invalid-synthetic-value",
 } as const);
+
+
+/**
+ * A recorded reference run.
+ *
+ * This is a fixed transcript of one previously observed response to
+ * `DEMO_FIXTURE`, kept so a reviewer can walk the whole guided journey when no
+ * reference API is running. It is replayed, never recomputed, and the UI always
+ * labels it as a recorded transcript rather than a live inference.
+ *
+ * It deliberately carries no score field. The public response contract
+ * suppresses the decision score, so the transcript does not store one either.
+ */
+export const RECORDED_RUN_LABEL = "Recorded reference run — replayed, not measured now";
+
+export const RECORDED_REFERENCE_RUN = Object.freeze({
+  schema_version: "1.0",
+  request_id: DEMO_REQUEST_ID,
+  score_type: "raw_score",
+  operating_threshold: 0.53,
+  decision: "human_review",
+  model_version: "secureswipe-reference-bundle-1",
+  bundle_format_version: "3",
+  model_artifact_sha256:
+    "960697c52608cb379612adbf0ce3b297a8d1e9b2c311d1f160374e09afd4ef19",
+  audit_event_hash:
+    "0e624d9dec46e9a752c1946a7031e84c6c277d62771e9e887f716f050b8ad90e",
+} as const);
