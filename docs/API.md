@@ -31,6 +31,9 @@ cardholder/customer transactions.
 - When `SECURESWIPE_AUDIT_LOG` is configured, each successful prediction emits
   canonical, redacted, hash-chained NDJSON plus a local count/head anchor. This
   is **tamper-evident append-only audit evidence**, not immutable storage.
+- A successful audited single prediction returns the committed event hash in
+  `X-Audit-Event-Hash`. Same-process replays return `X-Idempotent-Replay: true`;
+  both headers are exposed to explicitly allowed browser origins.
 - If that required audit append is unavailable or fails integrity verification,
   the computed result is not released: the request returns
   `503 audit_unavailable`. A pre-append transient failure removes the unfinished
@@ -49,6 +52,55 @@ cardholder/customer transactions.
   `503 capacity_exceeded` instead of queueing behind the serialized model
   lock. A timed-out request retains its admission slot until the underlying
   prediction worker actually finishes.
+
+## State profiles
+
+`local-default` remains the default and preserves the complete score-bearing V1
+contract described below. It uses the existing in-process registry and optional
+local NDJSON audit sink.
+
+`postgres-scale` is an explicit, non-default shared-state profile. It requires
+`SECURESWIPE_POSTGRES_DSN`, `SECURESWIPE_POSTGRES_SCHEMA`, and a minimum 32-byte
+`SECURESWIPE_IDEMPOTENCY_HMAC_SECRET`. Pool minimum/maximum and connection
+timeout default to `1`, `4`, and `2.0` seconds. Scale-only settings are rejected
+under `local-default`; `SECURESWIPE_AUDIT_LOG` is rejected under
+`postgres-scale`; missing, unreachable, unmigrated, or incompatible PostgreSQL
+state never falls back to memory, SQLite, or NDJSON.
+
+Migrations are operator-controlled:
+
+```bash
+SECURESWIPE_STATE_BACKEND=postgres-scale \
+  SECURESWIPE_POSTGRES_MIGRATION_DSN='<separate-migration-owner-dsn>' \
+  SECURESWIPE_POSTGRES_APPLICATION_ROLE='<runtime-role>' \
+  .venv/bin/python scripts/manage_postgres_migrations.py --apply
+SECURESWIPE_STATE_BACKEND=postgres-scale \
+  .venv/bin/python scripts/manage_postgres_migrations.py --check
+```
+
+`--apply` requires the separate migration-owner DSN and non-superuser runtime
+role. It rejects an owner/superuser/member role relationship that would give the
+runtime role implicit mutation rights on append-only events.
+
+API startup performs only the equivalent read-only migration check and explicit
+full-chain verification. It never applies migrations. A healthy configured
+profile is ready only when the model, schema history, state store, and audit
+chain verify. Failure in any of those boundaries stops startup or readiness;
+there is no in-memory, SQLite, or NDJSON fallback.
+
+`POST /v2/predict` is the only prediction route enabled for `postgres-scale`.
+It accepts the existing single-transaction request schema and returns the
+score-free `postgres-scale-bounded-v1` response: decision plus model, schema,
+intended-use, and threshold-policy provenance derived from the loaded bundle.
+The durable representation contains no plaintext request ID, features, payload,
+or score. The request ID remains in `X-Request-ID`; the original committed event
+hash is returned in `X-Audit-Event-Hash`; exact replays also return
+`X-Idempotent-Replay: true` without rescoring or appending.
+
+Score-bearing `/v1/predict` and `/v1/predict/batch` return
+`503 scale_profile_requires_v2` under this profile. `/v2/predict/batch` is not
+implemented and returns `404`. Under `local-default`, all existing V1 behavior
+is unchanged and `/v2/predict` returns `503 scale_profile_unavailable`.
 
 ## Configure a bundle
 
@@ -158,6 +210,10 @@ Errors use a stable envelope:
 | 503 | `model_unavailable` | No verified bundle is loaded. |
 | 503 | `capacity_exceeded` | In-flight predictions reached the configured admission limit. |
 | 503 | `audit_unavailable` | Required audit evidence could not be recorded; no inference result was released. |
+| 503 | `scale_profile_requires_v2` | A score-bearing V1 route was requested under `postgres-scale`; no V1 inference occurs. |
+| 503 | `scale_profile_unavailable` | The bounded V2 route was requested without the explicit `postgres-scale` profile. |
+| 503 | `idempotency_in_progress` / `idempotency_stale` / `idempotency_failed` | A durable reservation cannot truthfully release a completed response. |
+| 503 | `state_store_unavailable` / `state_integrity_failure` | PostgreSQL state or its stored response/audit linkage failed closed. |
 | 504 | `prediction_timeout` | A single inference call exceeded the configured deadline. |
 | * | `http_error` | Generic HTTP-layer error (e.g. 404 on an unknown route). |
 

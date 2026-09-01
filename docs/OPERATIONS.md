@@ -218,3 +218,142 @@ Required pre-switch evidence:
 
 Exact restricted container commands are in `CONTAINER.md`. Provider routing,
 deployment, DNS, or public rollback actions require explicit owner approval.
+
+## Audit critical-section timing diagnostic (opt-in, local only)
+
+The P1-S4 benchmark showed that adding uvicorn workers does not raise
+throughput. Aggregate throughput cannot say whether completions are *waiting*
+for the single `primary` audit-chain-head row lock or doing work *while holding*
+it, so the `postgres-scale` completion path carries an opt-in timing
+instrument. It is inert by default: with the flag absent no aggregator is
+constructed, no timing call does work, and responses, headers, and status codes
+are unchanged.
+
+Enable it only on a local, task-owned instance:
+
+```bash
+export SECURESWIPE_SCALE_TIMING_DIAGNOSTIC=1
+export SECURESWIPE_SCALE_TIMING_OUTPUT_DIR=/path/to/task-owned/timing
+```
+
+The flag is honoured only for the exact value `1`. Each worker process writes
+`scale-timing-<pid>.json` into the output directory, replaced atomically every
+25 completions and again at process exit. Nine durations are recorded per
+successful completion:
+
+| Metric | Span |
+| --- | --- |
+| `idempotency_lock_wait_ms` | transaction open → idempotency row locked |
+| `head_lock_wait_ms` | chain-head `FOR UPDATE` issued → row locked |
+| `head_lock_hold_ms` | chain-head locked → commit returned |
+| `event_build_ms` | chain-head locked → canonical event built |
+| `event_insert_ms` | event built → audit event inserted |
+| `idempotency_update_ms` | event inserted → completion row updated |
+| `head_update_ms` | completion updated → chain head updated |
+| `commit_ms` | chain head updated → commit returned |
+| `total_completion_ms` | transaction open → commit returned |
+
+Only counts, medians, p95, and p99 are published. Individual samples never
+leave the process, and the recorder accepts nothing but declared duration
+names carrying real numbers, so request identifiers, payloads, features,
+decisions, scores, model output, headers, DSNs, credentials, SQL text, and
+exception text cannot reach the output.
+
+Reading the result: `head_lock_wait_ms` dominating means completions are queued
+behind the global chain-head lock and the critical section itself is cheap;
+`head_lock_hold_ms` (and its `commit_ms` component) dominating means the work
+done under the lock is the cost. Only the second case makes group commit the
+indicated remedy. The diagnostic measures; it authorizes no throughput claim.
+
+Never enable this against a shared or production database, and never leave the
+flag set outside a diagnostic run.
+
+## Full request-lifecycle timing diagnostic (opt-in, local only)
+
+The lifecycle diagnostic measures the remaining server-side path for the
+single-item `postgres-scale` `POST /v2/predict` route. It is a separate,
+strict opt-in from the completion critical-section recorder above and is inert
+for `local-default`. Enable it only with the exact value `1`:
+
+```bash
+export SECURESWIPE_SCALE_LIFECYCLE_TIMING=1
+export SECURESWIPE_SCALE_LIFECYCLE_TIMING_OUTPUT_DIR=/path/to/task-owned/lifecycle-timing
+```
+
+Any other flag value, including an unset value or whitespace around `1`, is
+disabled. If the output directory is omitted, the local default is
+`reports/benchmarks/p1-scale-results/lifecycle-timing/`; the parent results
+directory is Git-ignored. Each API worker atomically replaces one
+`scale-lifecycle-timing-<pid>.json` file every 25 classified requests and at
+shutdown.
+
+The artifact contains only count, minimum, median, p95, p99, and maximum
+durations for validation/handler work before reservation, reservation pool
+checkout and transaction, reservation outcome handling, model scoring,
+bounded-response construction and durable serialization, completion pool
+checkout, the existing completion-transaction duration, and total handler
+time. Reservation outcomes are counts only: owner, completed replay, or
+pending/fail-closed. The completion span is supplied by the existing
+transaction checkpoint recorder rather than measured by a second overlapping
+clock.
+
+Every worker also runs one low-overhead process-level event-loop observation.
+It sleeps on a monotonic clock at a fixed 100 ms interval and aggregates the
+non-negative drift between the scheduled and actual wake-up. This is a
+process-level observation only: it cannot be assigned to an individual
+request, and unexplained request time must not be labelled event-loop
+scheduling without corroborating measurements.
+
+No per-request samples are written. The recorder cannot accept plaintext
+request or idempotency identifiers, payloads, features, response bodies,
+scores, decisions, model values, DSNs, SQL, exception text, secrets, or stack
+traces. Metrics with unknown names, non-numeric values, booleans, negative
+values, NaN, or infinity are discarded. A metric's count can be lower than the
+classified-request count when that path was not executed (for example, a
+completed replay does not score or complete again). Unexpected owner-path
+failures discard that request's partial timing so incomplete spans are not
+presented as a completed lifecycle.
+
+These timings are diagnostic observations, not an SLO, causality proof, or
+scalability claim. Pool checkout includes only the wait until a connection is
+acquired; model scoring includes admission and threadpool scheduling around
+the synchronous estimator call; total handler time also includes framework
+work not represented by the named spans. The named spans are non-overlapping
+where the implementation exposes safe boundaries, so their sum may explain
+only part of total handler time.
+
+After a local diagnostic, stop the API workers before removing the task-owned
+output directory, and unset both lifecycle variables. Never enable this
+recorder against shared or production infrastructure.
+
+## Client transport and response-header timing diagnostic (opt-in, local only)
+
+P1-S4d adds a benchmark-client recorder that is inert unless the exact value
+below is present:
+
+```bash
+export SECURESWIPE_SCALE_CLIENT_TIMING=1
+```
+
+Unset, blank, `0`, `true`, and whitespace-padded values remain disabled. The
+recorder does not change an API route, request, response, header, database
+record, audit event, model decision, timeout, or workload. It uses monotonic
+timestamps around executor submission/task start, client construction,
+request execution, response headers, body consumption, and client teardown.
+Supported HTTPX/HTTPcore request trace events add aggregate TCP-connect and
+HTTP/1.1 header/body-send spans. The installed public trace interface does not
+expose connection-pool acquisition, so that phase is reported as
+`not_observable`; it is not inferred from time to first byte.
+
+Only count, minimum, median, p95, p99, and maximum are retained for allowlisted
+durations. Phase shares are calculated for each request before their ratios
+are aggregated. Connection observations are counts of new, reused, or unknown
+connections. Per-request durations, request IDs, bodies, features, response
+bodies, scores, labels, decisions, credentials, DSNs, and trace payloads are
+never persisted. The combined response-header span can include socket,
+ingress, dispatch, handler, and response-header transport time; it is not
+labelled as precise ingress queue time.
+
+The frozen four-cell procedure and interpretation gates are defined in the
+[P1-S4d client transport protocol](benchmarks/P1_S4D_CLIENT_TRANSPORT_PROTOCOL.md).
+This diagnostic authorizes no tuning, SLO, capacity, or scalability claim.

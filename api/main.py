@@ -31,6 +31,32 @@ from api.audit import (
     sha256_canonical,
 )
 from api.metrics import ApiMetrics
+from api.postgres_idempotency import (
+    DurableIdempotencyConflictError,
+    DurableIdempotencyError,
+    FailedReservationError,
+    PostgresIdempotencyStore,
+    ReservationInProgressError,
+    StaleReservationError,
+    StateStoreUnavailableError,
+    StoredResponseIntegrityError,
+)
+from api.scale_config import (
+    PostgresScaleSettings,
+    StateBackend,
+    state_backend_from_environment,
+)
+from api.scale_lifecycle_timing import (
+    NULL_LIFECYCLE_TIMER,
+    LifecycleTimer,
+    RequestLifecycleTimer,
+)
+from api.scale_response import (
+    BoundedPredictionRepresentation,
+    BoundedResponseIntegrityError,
+    V2_SCHEMA_VERSION,
+    build_bounded_prediction_response,
+)
 from api.schemas import (
     API_SCHEMA_VERSION,
     BatchPredictionRequest,
@@ -53,6 +79,7 @@ KNOWN_ROUTES = {
     "/v1/model-info",
     "/v1/predict",
     "/v1/predict/batch",
+    "/v2/predict",
     "/metrics",
 }
 ERROR_RESPONSE: dict[str, Any] = {"model": ErrorResponse}
@@ -76,6 +103,22 @@ class CapacityExceededError(Exception):
 
 class AuditUnavailableError(Exception):
     """Raised when required audit evidence cannot be recorded safely."""
+
+
+class ScaleProfileUnavailableError(Exception):
+    """Raised when a route does not belong to the selected state profile."""
+
+
+class ScaleProfileRequiresV2Error(Exception):
+    """Raised when postgres-scale callers attempt a score-bearing V1 route."""
+
+
+@dataclass(frozen=True)
+class _IdempotentPrediction:
+    """Cached response plus the receipt for its original committed audit event."""
+
+    prediction: PredictionResponse
+    audit_event_hash: str | None
 
 
 class ConcurrencyGate:
@@ -184,6 +227,8 @@ class ApiSettings:
     prediction_timeout_seconds: float = 5.0
     max_concurrent_predictions: int = 16
     audit_log_path: Path | None = None
+    state_backend: StateBackend = "local-default"
+    postgres_scale: PostgresScaleSettings | None = None
 
     def __post_init__(self) -> None:
         if "*" in self.cors_origins:
@@ -194,6 +239,13 @@ class ApiSettings:
             raise ValueError("prediction_timeout_seconds must be between 0.1 and 30.0.")
         if not 1 <= self.max_concurrent_predictions <= 256:
             raise ValueError("max_concurrent_predictions must be between 1 and 256.")
+        if self.state_backend == "local-default" and self.postgres_scale is not None:
+            raise ValueError("PostgreSQL settings require the postgres-scale backend.")
+        if self.state_backend == "postgres-scale":
+            if self.postgres_scale is None:
+                raise ValueError("postgres-scale requires validated PostgreSQL settings.")
+            if self.audit_log_path is not None:
+                raise ValueError("postgres-scale cannot use the local NDJSON audit configuration.")
 
     @classmethod
     def from_environment(cls) -> "ApiSettings":
@@ -216,6 +268,10 @@ class ApiSettings:
         if not 1 <= max_concurrent <= 256:
             raise ValueError("SECURESWIPE_MAX_CONCURRENT_PREDICTIONS must be between 1 and 256.")
         audit_value = os.getenv("SECURESWIPE_AUDIT_LOG", "").strip()
+        state_backend = state_backend_from_environment()
+        postgres_scale = (
+            PostgresScaleSettings.from_environment() if state_backend == "postgres-scale" else None
+        )
         return cls(
             artifact_root=root,
             bundle_manifest=Path(manifest_value).expanduser() if manifest_value else None,
@@ -224,6 +280,8 @@ class ApiSettings:
             prediction_timeout_seconds=timeout_seconds,
             max_concurrent_predictions=max_concurrent,
             audit_log_path=Path(audit_value).expanduser() if audit_value else None,
+            state_backend=state_backend,
+            postgres_scale=postgres_scale,
         )
 
 
@@ -345,7 +403,23 @@ def create_app(
             application.state.audit_log = AuditLog(configured.audit_log_path)
         else:
             application.state.audit_log = None
-        yield
+        postgres_store: PostgresIdempotencyStore | None = None
+        if configured.state_backend == "postgres-scale":
+            if configured.postgres_scale is None:
+                raise RuntimeError("postgres-scale configuration is incomplete.")
+            postgres_store = PostgresIdempotencyStore(configured.postgres_scale)
+            try:
+                await postgres_store.open()
+            except Exception:
+                raise RuntimeError(
+                    "postgres-scale state store is unavailable or incompatible."
+                ) from None
+        application.state.postgres_idempotency_store = postgres_store
+        try:
+            yield
+        finally:
+            if postgres_store is not None:
+                await postgres_store.close()
 
     application = FastAPI(
         title="SecureSwipe Fraud-Risk Reference API",
@@ -359,7 +433,10 @@ def create_app(
     application.state.metrics = ApiMetrics()
     application.state.concurrency_gate = ConcurrencyGate(configured.max_concurrent_predictions)
     application.state.prediction_timeout_seconds = configured.prediction_timeout_seconds
-    application.state.idempotency_registry = IdempotencyRegistry()
+    application.state.state_backend = configured.state_backend
+    application.state.idempotency_registry = (
+        IdempotencyRegistry() if configured.state_backend == "local-default" else None
+    )
     application.add_middleware(RequestBodyLimitMiddleware, max_bytes=configured.max_request_bytes)
     if configured.cors_origins:
         application.add_middleware(
@@ -368,12 +445,26 @@ def create_app(
             allow_credentials=False,
             allow_methods=["GET", "POST", "OPTIONS"],
             allow_headers=["Content-Type", "X-Request-ID"],
+            expose_headers=["X-Request-ID", "X-Idempotent-Replay", "X-Audit-Event-Hash"],
         )
 
     @application.middleware("http")
     async def request_context(request: Request, call_next: Callable[..., Any]) -> Any:
         request_id = _request_id(request)
         started = time.perf_counter()
+        lifecycle_timer: LifecycleTimer = NULL_LIFECYCLE_TIMER
+        if (
+            configured.state_backend == "postgres-scale"
+            and request.method == "POST"
+            and request.url.path == "/v2/predict"
+        ):
+            store: PostgresIdempotencyStore | None = getattr(
+                application.state, "postgres_idempotency_store", None
+            )
+            lifecycle_aggregator = store.lifecycle_timing_aggregator if store is not None else None
+            if lifecycle_aggregator is not None:
+                lifecycle_timer = RequestLifecycleTimer(lifecycle_aggregator)
+        request.state.scale_lifecycle_timer = lifecycle_timer
         status = 500
         response = None
         try:
@@ -381,6 +472,7 @@ def create_app(
             status = response.status_code
         finally:
             latency = time.perf_counter() - started
+            lifecycle_timer.submit()
             application.state.metrics.observe_request(
                 request.method, request.url.path, status, latency
             )
@@ -471,6 +563,48 @@ def create_app(
             content=_error_payload(_request_id(request), "idempotency_conflict", str(exc)),
         )
 
+    @application.exception_handler(DurableIdempotencyConflictError)
+    async def durable_idempotency_conflict_error(
+        request: Request, exc: DurableIdempotencyConflictError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content=_error_payload(_request_id(request), "idempotency_conflict", str(exc)),
+        )
+
+    @application.exception_handler(DurableIdempotencyError)
+    async def durable_state_error(request: Request, exc: DurableIdempotencyError) -> JSONResponse:
+        if isinstance(exc, ReservationInProgressError):
+            code = "idempotency_in_progress"
+        elif isinstance(exc, StaleReservationError):
+            code = "idempotency_stale"
+        elif isinstance(exc, FailedReservationError):
+            code = "idempotency_failed"
+        elif isinstance(exc, StoredResponseIntegrityError):
+            code = "state_integrity_failure"
+        elif isinstance(exc, StateStoreUnavailableError):
+            code = "state_store_unavailable"
+        else:
+            code = "state_store_failure"
+        return JSONResponse(
+            status_code=503,
+            content=_error_payload(_request_id(request), code, str(exc)),
+        )
+
+    @application.exception_handler(BoundedResponseIntegrityError)
+    async def bounded_response_integrity_error(
+        request: Request, exc: BoundedResponseIntegrityError
+    ) -> JSONResponse:
+        del exc
+        return JSONResponse(
+            status_code=500,
+            content=_error_payload(
+                _request_id(request),
+                "prediction_integrity_error",
+                "The bounded response could not be tied to the loaded bundle.",
+            ),
+        )
+
     @application.exception_handler(AuditUnavailableError)
     async def audit_unavailable_error(request: Request, exc: AuditUnavailableError) -> JSONResponse:
         LOGGER.error(
@@ -482,6 +616,24 @@ def create_app(
         return JSONResponse(
             status_code=503,
             content=_error_payload(_request_id(request), "audit_unavailable", str(exc)),
+        )
+
+    @application.exception_handler(ScaleProfileUnavailableError)
+    async def scale_profile_unavailable_error(
+        request: Request, exc: ScaleProfileUnavailableError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=503,
+            content=_error_payload(_request_id(request), "scale_profile_unavailable", str(exc)),
+        )
+
+    @application.exception_handler(ScaleProfileRequiresV2Error)
+    async def scale_profile_requires_v2_error(
+        request: Request, exc: ScaleProfileRequiresV2Error
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=503,
+            content=_error_payload(_request_id(request), "scale_profile_requires_v2", str(exc)),
         )
 
     @application.exception_handler(StarletteHTTPException)
@@ -516,10 +668,15 @@ def create_app(
     def current_service() -> ModelService:
         return application.state.model_service
 
-    def input_digest(*, route: str, transactions: list[TransactionFeatures]) -> str:
+    def input_digest(
+        *,
+        route: str,
+        transactions: list[TransactionFeatures],
+        schema_version: str = API_SCHEMA_VERSION,
+    ) -> str:
         return sha256_canonical(
             {
-                "api_schema_version": API_SCHEMA_VERSION,
+                "api_schema_version": schema_version,
                 "route": route,
                 "transactions": [transaction.canonical_values() for transaction in transactions],
             }
@@ -531,17 +688,17 @@ def create_app(
         canonical_input_digest: str,
         latency_ms: float,
         results: list[Any],
-    ) -> None:
+    ) -> tuple[str, ...]:
         audit_log: AuditLog | None = application.state.audit_log
         if audit_log is None:
-            return
+            return ()
         model_fingerprint = current_service().model_fingerprint_sha256
         if model_fingerprint is None:
             raise AuditUnavailableError(
                 "Audit evidence is unavailable; no inference result was released."
             )
         try:
-            audit_log.append_inference(
+            return audit_log.append_inference(
                 request_id=request_id,
                 api_schema_version=API_SCHEMA_VERSION,
                 input_digest_sha256=canonical_input_digest,
@@ -574,11 +731,17 @@ def create_app(
     )
     async def health_ready() -> HealthResponse | JSONResponse:
         model_service = current_service()
+        store: PostgresIdempotencyStore | None = getattr(
+            application.state, "postgres_idempotency_store", None
+        )
+        store_ready = configured.state_backend != "postgres-scale" or (
+            store is not None and await store.is_available()
+        )
         health = HealthResponse(
-            status="ready" if model_service.ready else "not_ready",
+            status="ready" if model_service.ready and store_ready else "not_ready",
             model_version=model_service.model_version,
         )
-        if not model_service.ready:
+        if not model_service.ready or not store_ready:
             return JSONResponse(status_code=503, content=health.model_dump(mode="json"))
         return health
 
@@ -597,6 +760,7 @@ def create_app(
             calibrated=info.calibrated,
             operating_threshold=info.operating_threshold,
             feature_schema=list(info.feature_schema),
+            model_artifact_sha256=info.model_artifact_sha256,
             training_data_fingerprint=info.training_data_fingerprint,
             evidence_category=info.evidence_category,
             historical_taint=info.historical_taint,
@@ -604,6 +768,58 @@ def create_app(
             historical_metrics_claimed=info.historical_metrics_claimed,
             evaluation_performed=info.evaluation_performed,
         )
+
+    @application.post(
+        "/v2/predict",
+        response_model=BoundedPredictionRepresentation,
+        responses=INFERENCE_ERROR_RESPONSES,
+        tags=["inference"],
+    )
+    async def predict_v2(
+        transaction: TransactionFeatures, request: Request, response: Response
+    ) -> BoundedPredictionRepresentation:
+        if configured.state_backend != "postgres-scale":
+            raise ScaleProfileUnavailableError(
+                "The bounded V2 route requires the explicit postgres-scale profile."
+            )
+        store: PostgresIdempotencyStore | None = application.state.postgres_idempotency_store
+        if store is None:
+            raise StateStoreUnavailableError("The postgres-scale state store is unavailable.")
+        request_id = _request_id(request)
+        canonical_input_digest = input_digest(
+            route="/v2/predict",
+            transactions=[transaction],
+            schema_version=V2_SCHEMA_VERSION,
+        )
+        lifecycle_timer: LifecycleTimer = request.state.scale_lifecycle_timer
+        lifecycle_timer.mark_pre_reservation_complete()
+
+        async def score_once() -> BoundedPredictionRepresentation:
+            gate: ConcurrencyGate = application.state.concurrency_gate
+            scoring_started = lifecycle_timer.started_at()
+            result = await _run_admitted_inference(
+                current_service().predict_one,
+                transaction,
+                gate=gate,
+                timeout_seconds=application.state.prediction_timeout_seconds,
+            )
+            lifecycle_timer.observe_elapsed("model_scoring_ms", scoring_started)
+            application.state.metrics.observe_scores([result.decision_score])
+            build_started = lifecycle_timer.started_at()
+            bounded = build_bounded_prediction_response(service=current_service(), result=result)
+            lifecycle_timer.observe_elapsed("bounded_response_build_ms", build_started)
+            return bounded
+
+        completed = await store.execute_detailed(
+            request_id=request_id,
+            request_digest=canonical_input_digest,
+            operation=score_once,
+            lifecycle_timer=lifecycle_timer,
+        )
+        response.headers["X-Audit-Event-Hash"] = completed.audit_receipt_sha256
+        if completed.replayed:
+            response.headers["X-Idempotent-Replay"] = "true"
+        return completed.response
 
     @application.post(
         "/v1/predict",
@@ -614,6 +830,10 @@ def create_app(
     async def predict(
         transaction: TransactionFeatures, request: Request, response: Response
     ) -> PredictionResponse:
+        if configured.state_backend == "postgres-scale":
+            raise ScaleProfileRequiresV2Error(
+                "postgres-scale exposes only the score-free /v2/predict contract."
+            )
         request_id = _request_id(request)
         canonical_input_digest = input_digest(route="/v1/predict", transactions=[transaction])
         registry: IdempotencyRegistry = application.state.idempotency_registry
@@ -623,7 +843,12 @@ def create_app(
         )
         if not reservation.owner:
             response.headers["X-Idempotent-Replay"] = "true"
-            return await registry.replay(reservation)
+            cached = await registry.replay(reservation)
+            if not isinstance(cached, _IdempotentPrediction):
+                raise RuntimeError("Cached prediction result has an unexpected type.")
+            if cached.audit_event_hash is not None:
+                response.headers["X-Audit-Event-Hash"] = cached.audit_event_hash
+            return cached.prediction
 
         started = time.perf_counter()
         try:
@@ -636,13 +861,22 @@ def create_app(
             )
             application.state.metrics.observe_scores([result.decision_score])
             prediction = PredictionResponse(request_id=request_id, **result.model_dump())
-            append_audit_evidence(
+            audit_event_hashes = append_audit_evidence(
                 request_id=request_id,
                 canonical_input_digest=canonical_input_digest,
                 latency_ms=(time.perf_counter() - started) * 1000,
                 results=[result],
             )
-            registry.complete(reservation, prediction)
+            audit_event_hash = audit_event_hashes[0] if audit_event_hashes else None
+            if audit_event_hash is not None:
+                response.headers["X-Audit-Event-Hash"] = audit_event_hash
+            registry.complete(
+                reservation,
+                _IdempotentPrediction(
+                    prediction=prediction,
+                    audit_event_hash=audit_event_hash,
+                ),
+            )
             return prediction
         except BaseException as exc:
             await registry.fail(reservation, exc)
@@ -657,6 +891,10 @@ def create_app(
     async def predict_batch(
         batch: BatchPredictionRequest, request: Request, response: Response
     ) -> BatchPredictionResponse:
+        if configured.state_backend == "postgres-scale":
+            raise ScaleProfileRequiresV2Error(
+                "postgres-scale does not expose score-bearing V1 or batch prediction."
+            )
         request_id = _request_id(request)
         canonical_input_digest = input_digest(
             route="/v1/predict/batch", transactions=batch.transactions
