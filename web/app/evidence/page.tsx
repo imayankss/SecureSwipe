@@ -6,6 +6,7 @@ import { Footer } from "@/components/Footer";
 import { Navigation } from "@/components/Navigation";
 import { CommandCenterDashboard } from "@/components/dashboard/CommandCenterDashboard";
 import { LaneACapacityWorkbench } from "@/components/dashboard/LaneACapacityWorkbench";
+import { ReliabilityEvidencePanel } from "@/components/evidence/ReliabilityEvidencePanel";
 
 export const metadata: Metadata = {
   title: "Evidence | SecureSwipe",
@@ -17,6 +18,7 @@ const evidenceAnchors = [
   ["Lane A final", "#lane-a-capacity"],
   ["Lane B historical", "#historical"],
   ["Reference inference", "#risk"],
+  ["Reliability & audit", "#reliability-and-audit"],
   ["Synthetic & scenarios", "#synthetic-and-scenarios"],
   ["Methodology", "#methodology-details"],
   ["Limitations", "#limitations"],
@@ -68,6 +70,9 @@ export default function EvidencePage() {
 
         <div className="ss-page-shell pb-14">
           <LaneACapacityWorkbench />
+          <div className="pt-8">
+            <ReliabilityEvidencePanel />
+          </div>
           <CommandCenterDashboard />
         </div>
         <Footer />

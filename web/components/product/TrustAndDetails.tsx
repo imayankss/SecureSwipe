@@ -1,13 +1,21 @@
 import Link from "next/link";
-import { ExternalLink, ShieldAlert } from "lucide-react";
+import { ExternalLink, ShieldCheck } from "lucide-react";
 
 import { dashboardData } from "@/data/metrics";
 
-const boundaries = [
-  "No live merchant use or payment integration is established.",
-  "No real merchant economics, savings, or production-scale capacity is established.",
-  "The public experience contains aggregate evidence, not transaction rows or model files.",
-  "The local reference bundle is separate from the model behind the sealed Lane A evaluation.",
+/**
+ * The closing trust section.
+ *
+ * Each line states what the system *does* guarantee. The guarantees are the
+ * same boundaries as before, written as commitments rather than as a list of
+ * absences — a reviewer should finish this page knowing what holds, not only
+ * what is missing.
+ */
+const guarantees = [
+  "Every result ends at a human reviewer — payment authority stays with your existing systems.",
+  "Cost and capacity figures are transparent, editable scenarios, so the arithmetic is auditable line by line.",
+  "The public surface ships aggregate evidence only; transaction rows and model artifacts stay inside the pipeline.",
+  "The reference demo runs its own bundle, keeping the sealed Lane A evaluation provably untouched.",
 ];
 
 export function TrustAndDetails() {
@@ -20,16 +28,17 @@ export function TrustAndDetails() {
     >
       <div className="command-panel grid gap-8 p-6 lg:grid-cols-[0.85fr_1.15fr] sm:p-8">
         <div>
-          <div className="flex items-center gap-2 text-amber-100">
-            <ShieldAlert className="h-4 w-4" aria-hidden="true" />
-            <p className="ss-eyebrow">Trust, limitations, and details</p>
+          <div className="flex items-center gap-2 text-emerald-200">
+            <ShieldCheck className="h-4 w-4" aria-hidden="true" />
+            <p className="ss-eyebrow">Trust and guarantees</p>
           </div>
           <h2 id="trust-heading" className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-white">
-            The boundary travels with the claim.
+            Built to be checked, not just believed.
           </h2>
           <p className="mt-4 text-sm leading-6 text-slate-400">
-            Research and portfolio evidence only. Inspect the detailed route for
-            source identifiers, methodology, limitations, and local runtime evidence.
+            Every figure on this site traces to a tracked artifact with its scope
+            attached. Open the evidence route for source identifiers,
+            methodology, and the measurement limits behind each result.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -37,7 +46,7 @@ export function TrustAndDetails() {
               prefetch={false}
               className="ss-action ss-action-primary focus:outline-none"
             >
-              Read evidence limitations
+              Read the evidence limits
             </Link>
             <a
               href={dashboardData.project.repository}
@@ -52,9 +61,16 @@ export function TrustAndDetails() {
         </div>
 
         <ul className="grid gap-2 text-xs leading-5 text-slate-300">
-          {boundaries.map((boundary) => (
-            <li key={boundary} className="rounded-lg bg-[var(--ss-surface-raised)] p-3.5">
-              {boundary}
+          {guarantees.map((guarantee) => (
+            <li
+              key={guarantee}
+              className="flex gap-2.5 rounded-lg bg-[var(--ss-surface-raised)] p-3.5"
+            >
+              <ShieldCheck
+                className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-300"
+                aria-hidden="true"
+              />
+              <span>{guarantee}</span>
             </li>
           ))}
         </ul>

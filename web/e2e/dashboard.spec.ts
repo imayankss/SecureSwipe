@@ -12,7 +12,7 @@ test("product homepage is lightweight, keyboard reachable, static, and WCAG-scan
   await expect(
     page.getByRole("heading", { level: 1, name: /Payment-risk review, made inspectable/i }),
   ).toBeVisible();
-  await expect(page.locator("[data-product-section]")).toHaveCount(5);
+  await expect(page.locator("[data-product-section]")).toHaveCount(7);
   await expect(page.getByText(/Payment action stays outside this system/)).toBeVisible();
   await expect(page.getByText("Historical evaluation command board")).toHaveCount(0);
 
@@ -170,7 +170,12 @@ test("shared midnight and blue visual tokens remain consistent across both route
   }
 
   await page.goto("/");
-  const primary = page.getByRole("link", { name: /Explore the review strategy/i });
+  // The primary action is the guided demo; the review-strategy link remains
+  // present as a secondary in-page jump.
+  await expect(
+    page.getByRole("link", { name: /Explore the review strategy/i }),
+  ).toHaveAttribute("href", "#review-strategy");
+  const primary = page.getByRole("link", { name: /Run the 2-minute demo/i });
   const primaryStyles = await primary.evaluate((element) => {
     const style = getComputedStyle(element);
     return {
@@ -416,4 +421,29 @@ test("configured production live demo sends one genuine inference request and va
   expect(predictionRequests[0].body).toEqual(
     Object.fromEntries(["Time", ...Array.from({ length: 28 }, (_, index) => `V${index + 1}`), "Amount"].map((key) => [key, 0])),
   );
+});
+
+test("footer opens the standalone methodology document without browser errors", async ({ page }) => {
+  const consoleErrors: string[] = [];
+  const pageErrors: string[] = [];
+  const failedRequests: string[] = [];
+  page.on("console", (message) => {
+    if (message.type() === "error") consoleErrors.push(message.text());
+  });
+  page.on("pageerror", (error) => pageErrors.push(error.message));
+  page.on("requestfailed", (request) => {
+    failedRequests.push(`${request.url()} · ${request.failure()?.errorText ?? "unknown"}`);
+  });
+
+  await page.goto("/");
+  const methodology = page.getByRole("link", { name: /Methodology/i });
+  await expect(methodology).toHaveAttribute("href", "/secureswipe-methodology.html");
+  await methodology.click();
+
+  await expect(page).toHaveURL(/\/secureswipe-methodology\.html$/);
+  await expect(page).toHaveTitle("SecureSwipe — Results");
+  await expect(page.getByRole("heading", { level: 1, name: "SecureSwipe" })).toBeVisible();
+  expect(consoleErrors).toEqual([]);
+  expect(pageErrors).toEqual([]);
+  expect(failedRequests).toEqual([]);
 });

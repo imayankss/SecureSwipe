@@ -14,11 +14,9 @@ export function Footer() {
         </div>
         <a
           className="ss-text-link"
-          href={dashboardData.project.repository}
-          target="_blank"
-          rel="noreferrer"
+          href="/secureswipe-methodology.html"
         >
-          Source and methodology ↗
+          Methodology ↗
         </a>
       </div>
     </footer>

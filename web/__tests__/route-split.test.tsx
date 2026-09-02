@@ -44,13 +44,13 @@ function expectLocalAnchorsToResolve(container: HTMLElement) {
 }
 
 describe("product and evidence route split", () => {
-  it("renders exactly five lightweight product sections at the root", () => {
+  it("renders exactly seven lightweight product sections at the root", () => {
     const { container } = render(<Home />);
 
     expect(
       screen.getByRole("heading", { level: 1, name: /Payment-risk review, made inspectable/i }),
     ).toBeInTheDocument();
-    expect(container.querySelectorAll("[data-product-section]")).toHaveLength(5);
+    expect(container.querySelectorAll("[data-product-section]")).toHaveLength(7);
     expect(screen.getByRole("link", { name: "Inspect the evidence" })).toHaveAttribute(
       "href",
       "/evidence",

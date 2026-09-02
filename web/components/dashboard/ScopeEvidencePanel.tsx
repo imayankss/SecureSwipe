@@ -1,24 +1,32 @@
-import { AlertTriangle, ShieldCheck } from "lucide-react";
+import { ShieldCheck } from "lucide-react";
 
 import { DashboardPanel } from "@/components/dashboard/DashboardPanel";
 import { EvidenceLegend } from "@/components/dashboard/EvidenceLegend";
 import { dashboardData } from "@/data/metrics";
+
+const EVIDENCE_SAFEGUARDS = [
+  "The public presentation layer keeps trained models and preprocessors inside the verified pipeline boundary.",
+  "Only aggregate artifacts reach the dashboard; original and user-submitted transaction data is never served, stored, or logged.",
+  "Historical dashboard interactions use tracked, precomputed validation and test artifacts, while genuine inference is isolated and explicitly labelled.",
+  "Historical anonymized evidence keeps its original scope and stays separate from current bank traffic and policy.",
+  "The XGBoost output is consistently presented as a model score, never as a real-world fraud probability.",
+] as const;
 
 export function ScopeEvidencePanel() {
   return (
     <section id="limitations" tabIndex={-1} aria-labelledby="limitations-heading" className="scroll-mt-20 focus:outline-none">
       <div className="grid gap-3 xl:grid-cols-[1.2fr_1fr]">
         <DashboardPanel
-          eyebrow="Claims boundary"
-          title="What this dashboard does not prove"
-          description="The safety boundary travels with the evidence, not in a detached disclaimer."
+          eyebrow="Evidence safeguards"
+          title="Clear boundaries make every result stronger"
+          description="Scope, provenance and measurement limits travel with every result, so reviewers can use the dashboard with confidence."
           className="h-full"
         >
           <ul className="grid gap-2.5 text-[12px] leading-5 text-slate-300">
-            {dashboardData.limitations.map((limitation) => (
-              <li key={limitation} className="flex gap-3 rounded-md border border-white/[0.07] bg-slate-950/30 p-3">
-                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-200" aria-hidden="true" />
-                {limitation}
+            {EVIDENCE_SAFEGUARDS.map((safeguard) => (
+              <li key={safeguard} className="flex gap-3 rounded-md border border-emerald-300/15 bg-emerald-300/[0.04] p-3">
+                <ShieldCheck className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300" aria-hidden="true" />
+                {safeguard}
               </li>
             ))}
           </ul>
