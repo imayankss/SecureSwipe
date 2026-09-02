@@ -1,225 +1,211 @@
-# SecureSwipe — AI Risk Manager
+<div align="center">
 
-SecureSwipe is a defense-only fraud-risk detector and human-review decision aid.
-It connects held-out model evidence to the operational question a reviewer must
-answer: how much suspicious activity can a fixed review team inspect, and what
-legitimate-customer workload comes with that choice?
+# 🛡️ SECURESWIPE
 
-It does **not** authorize, approve, block, capture, or decline payments.
+---
 
-## Demo and video
+### A capacity-aware fraud-risk manager for human review
 
-| Resource | Where to start |
+*Razorpay AI Buildathon 2026 · Track 02 — AI Risk Manager*
+
+[![Quality](https://github.com/imayankss/SecureSwipe/actions/workflows/quality.yml/badge.svg?branch=main)](https://github.com/imayankss/SecureSwipe/actions/workflows/quality.yml)
+![License MIT](https://img.shields.io/badge/License-MIT-2ea44f)
+![Scope defense-only](https://img.shields.io/badge/scope-defense--only-0F766E)
+![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB)
+![Next.js 16](https://img.shields.io/badge/Next.js-16-000000)
+![FastAPI](https://img.shields.io/badge/FastAPI-backend-009688)
+![model XGBoost](https://img.shields.io/badge/model-XGBoost-EB6834)
+
+**[Live dashboard](https://secure-swipe.vercel.app/)** ·
+**[Demo](https://secure-swipe.vercel.app/demo)** ·
+**[Evidence](https://secure-swipe.vercel.app/evidence)** ·
+**[Methodology](https://secure-swipe.vercel.app/secureswipe-methodology.html)** ·
+**[Architecture](docs/ARCHITECTURE.md)** ·
+**[Quick start](#quick-start)**
+
+</div>
+
+---
+
+<p align="justify">
+SecureSwipe ranks suspicious card transactions under a fixed review budget, exposes the
+legitimate-customer workload created by every operating point, and produces bounded, auditable
+decisions <b>without autonomously blocking payments</b>.
+</p>
+
+> **Defense-only.** SecureSwipe supports a risk analyst. It does not authorize, approve, capture,
+> block, or decline a payment. Every outcome is either `human_review` or `below_review_threshold`.
+
+---
+
+## The proof in 30 seconds
+
+| Result | Verified value |
+| --- | ---: |
+| Average precision (AP) | **0.208660** |
+| Recall at 1,000 reviews/day | **80.18%** |
+| Alert precision at that tier | **8.03%** |
+| Evaluation population | **88,581 transactions / 3,083 fraud labels** |
+
+<p align="justify">
+These numbers are unflattering on purpose. An 8.03% alert precision means about eleven legitimate
+customers are reviewed for every fraud caught — and SecureSwipe reports that cost in the headline
+rather than burying it behind an accuracy figure, because a model that predicts "legitimate" for
+every row in this population would score 96.52% accuracy while catching zero fraud.
+</p>
+
+> Sealed **Lane A** held-out evaluation on public IEEE-CIS research data, run exactly once under a
+> pre-declared protocol. Offline ranking evidence — not live Razorpay performance, and not a serving claim.
+> Full record: [Lane A final evaluation](docs/evidence/LANE_A_FINAL_EVALUATION.md).
+
+---
+
+## The core trade-off, measured
+
+<img width="2480" height="1280" alt="capacityfrontierdark" src="https://github.com/user-attachments/assets/f8c79f51-7cdc-47e2-8fcd-9245dc9f021a" />
+
+  <source media="(prefers-color-scheme: dark)" srcset="docs/assets/capacity-frontier-dark.png">
+  <img alt="SecureSwipe capacity frontier: recall rises from 27.18% to 93.84% as review capacity goes from 100 to 2,000 cases per day, while alert precision falls from 27.23% to 4.70%. At the illustrative 1,000-reviews/day tier, 80.18% of fraud is caught, 28,306 legitimate customers are sent to review, and 611 fraud cases are missed. A companion panel shows the true composition of the review queue at each tier." src="docs/assets/capacity-frontier-light.png">
+</picture>
+
+<p align="justify">
+<b>Figure 1 — The capacity frontier.</b> Recall and alert precision are two ends of the same rope.
+Past roughly 500 reviews a day, every additional point of recall is paid for with a queue that is
+overwhelmingly legitimate traffic: doubling capacity from 1,000 to 2,000 recovers 421 more fraud
+cases and adds 30,357 more legitimate customers to the queue. No tier is marked optimal, because
+optimality depends on costs the evaluation does not contain. Every count is drawn from the
+<a href="docs/evidence/LANE_A_FINAL_EVALUATION.md#5--capacity-results">frozen Lane A capacity frontier</a>
+and sums to the sealed population of 88,581 in every row.
+</p>
+
+---
+
+## How SecureSwipe works
+
+```
+score  →  rank under capacity  →  route  →  explain  →  audit  →  replay / fail closed
+```
+
+| Step | What happens | Guarantee |
+| --- | --- | --- |
+| **1 · Score** | A checksum-verified local bundle normalizes fields into its recorded order and runs the estimator | Deterministic · **zero LLM tokens** |
+| **2 · Rank under capacity** | Transactions are ordered by score and the top-*B* are selected for a fixed daily budget *B* | Workload is chosen, not discovered |
+| **3 · Route** | Each case becomes `human_review` or `below_review_threshold` | Never an approve, block, or decline |
+| **4 · Explain** | Score meaning, calibration status, and threshold come from bundle provenance | No browser-side assumptions |
+| **5 · Audit** | A successful decision receives a chained, allowlisted, tamper-evident receipt | No raw body, PAN, CVV, or credentials stored |
+| **6 · Replay / fail closed** | An identical request replays the original response and receipt without re-scoring; a missing, corrupt, or invalid path returns no decision | Idempotent · fails closed |
+
+<p align="justify">
+The three reviewer surfaces are deliberately different: <code>/</code> is the concise product narrative,
+<code>/evidence</code> is the detailed scientific record, and <code>/demo</code> is an opt-in local
+reference walkthrough. The static routes perform no live inference.
+</p>
+
+---
+
+## Evidence boundaries
+
+<p align="justify">
+Every claim in this repository is filed against exactly one evidence category, and each category
+carries an explicit ceiling. This table is the shortest honest summary of what SecureSwipe has and
+has not proven.
+</p>
+
+| Evidence | Proves | Does **not** prove |
+| --- | --- | --- |
+| **Sealed Lane A** | Held-out ranking performance and capacity counts | Live serving parity |
+| **Reference demo** | Bounded execution, audit, and replay mechanics | Lane A inference |
+| **Cost explorer** | Sensitivity under user-entered assumptions | Real savings, ROI, or merchant economics |
+| **Load evidence** | Tested local behavior | Razorpay-scale throughput |
+
+> The exact Lane A serving chain is unavailable and cryptographically unproven; neither the local API
+> nor `/demo` claims to serve the headline model. The final P1-S4 scale matrix
+> [failed closed](docs/benchmarks/P1_S4_TERMINAL_CLOSEOUT_EVIDENCE.md), so no multi-worker
+> scalability or production-capacity claim is made.
+
+---
+
+## Demo and graceful failure
+
+The deterministic walkthrough at `/demo` proves six things in order, and is designed to be as
+convincing when it refuses as when it succeeds:
+
+| # | Step | Observable result |
+| --- | --- | --- |
+| 1 | Readiness probe | Model provenance and bundle checksum reported before any decision |
+| 2 | Bounded decision | One fixed synthetic fixture returns `human_review` or `below_review_threshold` |
+| 3 | Audit receipt | A genuine chained hash is appended and shown |
+| 4 | Idempotent replay | The same request ID returns the same response with **no duplicate event** |
+| 5 | Invalid request | A malformed fixture is rejected `422` with **no decision** |
+| 6 | Missing bundle | Without a verified bundle the system **fails closed** and says so |
+
+---
+
+## Quick start
+
+**Install** — CPython 3.12.10, Node.js 22.13.1. Raw datasets and trained bundles are intentionally absent.
+
+```bash
+python3 -m venv .venv && .venv/bin/python -m pip install --require-hashes -r requirements/quality.lock
+cd web && npm ci && cd ..
+```
+
+**Run the reviewer dashboard** — open `http://127.0.0.1:3000/`, `/evidence`, `/demo`.
+
+```bash
+cd web && npm run build && npm run start -- --hostname 127.0.0.1 --port 3000
+```
+
+**Run the deterministic local demo** — generates a synthetic bundle in a temp directory outside the repo.
+
+```bash
+demo_root=$(mktemp -d) && .venv/bin/python scripts/create_synthetic_bundle.py --output "$demo_root/bundle" && mkdir "$demo_root/audit" && SECURESWIPE_ARTIFACT_ROOT="$demo_root" SECURESWIPE_BUNDLE_MANIFEST="$demo_root/bundle/manifest.json" SECURESWIPE_AUDIT_LOG="$demo_root/audit/prediction-events.ndjson" SECURESWIPE_CORS_ORIGINS="http://127.0.0.1:3000" .venv/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000
+```
+
+**Verify the evidence** — checks aggregates and locks; it does not rerun the sealed evaluation.
+
+```bash
+.venv/bin/python -m pytest && .venv/bin/python scripts/export_web_data.py --check && .venv/bin/python scripts/verify_historical_observation.py
+```
+
+Full environment variants, cleanup, and CI gates: [Reproducibility](docs/REPRODUCIBILITY.md).
+
+---
+
+## Architecture and evidence
+
+| Read next | Purpose |
 | --- | --- |
-| Product dashboard | [Run the static Next.js application locally](docs/REPRODUCIBILITY.md#static-dashboard) |
-| Interactive walkthrough | [Run the local reference-model demonstration](docs/REPRODUCIBILITY.md#local-reference-model-demonstration), then open `/demo` |
-| Evidence route | Open `/evidence` after starting the local dashboard |
+| [Architecture](docs/ARCHITECTURE.md) | Components, data flow, state profiles, and trust boundaries |
+| [Methodology (live)](https://secure-swipe.vercel.app/secureswipe-methodology.html) | The full evaluation argument, figures, and cost model in one page |
+| [Evidence guide](docs/EVIDENCE_GUIDE.md) | Evidence categories and the one-minute reviewer path |
+| [Claim-to-evidence matrix](docs/evidence/CLAIM_TO_EVIDENCE_MATRIX.md) | Admissible wording and the exact proof behind each claim |
+| [Model card](docs/MODEL_CARD.md) | Intended use, inputs, outputs, and model/evidence separation |
+| [Scientific validity](docs/SCIENTIFIC_VALIDITY.md) | Selection, evaluation, and leakage controls |
+| [API guide](docs/API.md) · [Deployment](docs/DEPLOYMENT.md) | V1/V2 contracts, readiness, audit, replay, and source-integrity procedure |
+| [Threat model](docs/THREAT_MODEL.md) · [Limitations](docs/LIMITATIONS.md) | The full security and non-goal boundary |
 
-A verified pitch-video link is not yet available; it will be added before
-submission.
-
-No public dashboard is presented here as the current candidate because its
-source revision has not been independently verified. The integrity procedure is
-documented in [Deployment](docs/DEPLOYMENT.md).
-
-## Problem and intended user
-
-Fraud is rare, so a ranking metric alone does not describe an operationally
-useful detector. A threshold or review budget also changes:
-
-- how many labelled fraud cases reach a reviewer;
-- how many labelled fraud cases are missed;
-- how many legitimate transactions consume review capacity; and
-- how much uncertainty remains outside the available evidence.
-
-SecureSwipe is intended for technical reviewers, risk analysts, and model
-operators evaluating a human-review workflow in a controlled research or local
-reference setting. It is not intended for real customer transactions or
-automated adverse action.
-
-## Headline Lane A result
-
-`SEALED FINAL EVALUATION — LANE A / IEEE-CIS`
-
-| Metric | Result | Committed source |
-| --- | ---: | --- |
-| Average precision | **0.208660** (95% CI `0.195700`–`0.222711`) | [Lane A §3](docs/evidence/LANE_A_FINAL_EVALUATION.md#3--aggregate-metrics) |
-| ROC-AUC | **0.814975** (95% CI `0.806402`–`0.822899`) | [Lane A §3](docs/evidence/LANE_A_FINAL_EVALUATION.md#3--aggregate-metrics) |
-| Recall at 1,000 reviews/day | **80.18%** | [Lane A §5](docs/evidence/LANE_A_FINAL_EVALUATION.md#5--capacity-results) |
-| Alert precision at 1,000 reviews/day | **8.03%** | [Lane A §5](docs/evidence/LANE_A_FINAL_EVALUATION.md#5--capacity-results) |
-| Evaluation population | 88,581 transactions · 3,083 fraud labels | [Lane A §2](docs/evidence/LANE_A_FINAL_EVALUATION.md#2--dataset-composition) |
-
-This was one programmatically held-out IEEE-CIS evaluation, run exactly once
-under a predeclared protocol. It is not human-blind or externally blind, not a
-live-merchant result, and not a forecast.
-
-Lane A is the sole headline evaluation. Older Lane B historical evidence remains
-available for auditability but is not compared with Lane A.
-
-## Product workflow
-
-1. **Inspect the headline evidence.** The product route leads with the sealed
-   Lane A result and its review-capacity implication.
-2. **Choose an illustrative review budget.** The workbench exposes how recall,
-   alert precision, missed fraud, and legitimate reviews move together.
-3. **Change explicit cost assumptions.** The cost explorer performs transparent
-   arithmetic over published aggregate counts; it does not choose a policy.
-4. **Trace every claim.** The evidence route separates sealed evaluation,
-   historical serving, synthetic checks, and illustrative scenarios.
-5. **Exercise the local reference path.** `/demo` sends one fixed sanitized
-   fixture to a configured local API and verifies bounded output, audit receipt,
-   idempotent replay, and fail-closed validation.
-
-The interactive `/demo` is a **local reference-model demonstration** separate
-from the sealed Lane A evaluation. P0.4 found that the exact Lane A serving
-artifacts are unavailable or unproven, so the route does not claim to serve the
-headline model and never substitutes a fabricated result.
-
-## Review-capacity trade-off
-
-At the illustrative 1,000-reviews/day tier, Lane A selected 30,778 transactions
-over the evaluation period. It sent 2,472 labelled fraud cases and 28,306
-legitimate transactions to review, while 611 labelled fraud cases were not
-selected. [Source: sealed Lane A capacity results.](docs/evidence/LANE_A_FINAL_EVALUATION.md#5--capacity-results)
-
-A false positive here means a legitimate transaction sent to a human reviewer.
-It does not mean an automatically rejected payment.
-
-| Reviews/day | Recall | Alert precision | Legitimate reviews | Missed fraud | Source |
-| ---: | ---: | ---: | ---: | ---: | --- |
-| 100 | 27.18% | 27.23% | 2,239 | 2,245 | [Lane A §5](docs/evidence/LANE_A_FINAL_EVALUATION.md#5--capacity-results) |
-| 500 | 64.39% | 12.90% | 13,404 | 1,098 | [Lane A §5](docs/evidence/LANE_A_FINAL_EVALUATION.md#5--capacity-results) |
-| 1,000 | 80.18% | 8.03% | 28,306 | 611 | [Lane A §5](docs/evidence/LANE_A_FINAL_EVALUATION.md#5--capacity-results) |
-| 2,000 | 93.84% | 4.70% | 58,663 | 190 | [Lane A §5](docs/evidence/LANE_A_FINAL_EVALUATION.md#5--capacity-results) |
-
-Higher capacity improves recall while increasing legitimate-customer review
-work. No tier is recommended, optimal, or a merchant default. Monetary outputs
-are illustrative sensitivity calculations—not savings, ROI, or observed costs.
-See the [cost-explorer evidence](docs/evidence/MT5_COST_EXPLORER_EVIDENCE.md).
-
-## Architecture
-
-```text
-sealed Lane A aggregates ──► deterministic export ──► static Next.js UI
-                                                           │
-fixed synthetic fixture ──► local FastAPI ──► verified reference bundle
-                                  │                    │
-                                  ├─ fail-closed guards│
-                                  └─ audit + replay ◄──┘
-```
-
-The paths are intentionally separate:
-
-- **Offline Lane A science** owns the sealed headline evaluation.
-- **Static presentation** receives aggregate evidence, never rows or model
-  bytes.
-- **Local reference serving** loads a checksum-verified bundle and emits only
-  bounded review decisions; it is not the sealed Lane A model.
-- **Optional prototypes** for local durability and synthetic order integrity sit
-  outside the default prediction path.
-
-The complete component, data-flow, concurrency, and trust-boundary explanation
-lives only in [Architecture](docs/ARCHITECTURE.md).
-
-## Run locally
-
-Prerequisites are CPython 3.12.10 and Node.js 22.13.1. Use isolated environments
-and the committed lockfiles; do not install project dependencies globally.
-
-```bash
-python3 -m venv .venv
-.venv/bin/python -m pip install --require-hashes -r requirements/quality.lock
-cd web
-nvm use 22.13.1
-npm ci
-cd ..
-```
-
-Start the static dashboard:
-
-```bash
-cd web
-npm run build
-npm run start -- --hostname 127.0.0.1 --port 3000
-```
-
-For the deterministic local reference-model demo, generate the synthetic bundle,
-enable an audit sink, start the API, and build the frontend with its explicit
-local API origin. Use the exact commands in
-[Reproducibility](docs/REPRODUCIBILITY.md#local-reference-model-demonstration).
-
-The API must remain live-but-unready when no verified bundle is configured.
-Never provide it real cardholder or customer data.
-
-## Evidence and reproducibility
-
-Start with the [Evidence Guide](docs/EVIDENCE_GUIDE.md). It maps reviewer
-questions to the appropriate evidence category and preserves the Lane A/Lane B
-boundary.
-
-| Need | Canonical document |
-| --- | --- |
-| Claim status and admissibility | [Claim-to-evidence matrix](docs/evidence/CLAIM_TO_EVIDENCE_MATRIX.md) |
-| Chronological execution record | [Execution ledger](docs/evidence/EXECUTION_LEDGER.md) |
-| Sealed headline evaluation | [Lane A final evaluation](docs/evidence/LANE_A_FINAL_EVALUATION.md) |
-| Environment and deterministic checks | [Reproducibility](docs/REPRODUCIBILITY.md) |
-| Local API contract | [API guide](docs/API.md) |
-| Model intent and serving boundary | [Model card](docs/MODEL_CARD.md) |
-| Deployment integrity | [Deployment](docs/DEPLOYMENT.md) |
-
-Data-free integrity checks:
-
-```bash
-.venv/bin/python scripts/export_web_data.py --check
-.venv/bin/python scripts/verify_historical_observation.py
-```
-
-These commands verify committed artifacts and cross-file invariants. They do not
-rerun, tune, or reproduce the sealed Lane A evaluation. The exact Lane A model
-chain is not present as a proven serving bundle.
-
-The curation contract keeps `--source-kind historical_kaggle_reference`
-separate from `--source-kind new_authorized_development`; new development uses
-`scripts/run_development_training.py`. For a data-free repository audit, use
-`python3 -m scripts.run_project_audit --allow-missing-model --check`. When a
-verified bundle is available, run `python3 -m scripts.run_project_audit` without `--allow-missing-model`.
+---
 
 ## Limitations
 
-- Lane A is one offline evaluation on a public research dataset. It does not
-  establish performance under domain shift, concept drift, or a live review
-  operation.
-- The held-out role was enforced programmatically, not by an independent party.
-- The local reference bundle is separate from Lane A and must not inherit its
-  metrics.
-- Serving measurements are local loopback evidence, not public-network capacity
-  or an SLO.
-- Scores and attributions do not establish causal explanations, protected-group
-  fairness, or real-world fraud probability.
-- Cost inputs are editable illustrative assumptions and omit real staffing,
-  queueing, delayed labels, and customer-remediation processes.
-- Authentication, authorization, TLS termination, durable remote audit storage,
-  multi-replica state, and a public backend are not established here.
-- No Razorpay API, SDK, webhook, credential, or field integration is implemented.
+<p align="justify">
+Lane A is one offline evaluation on public IEEE-CIS research data — not Razorpay, Indian-payment, or
+live-merchant performance — and it was programmatically held out, not human-blind or externally blind.
+The local reference bundle is <b>not</b> proven to be the sealed Lane A model. Illustrative workload
+and cost inputs omit real staffing, queues, delayed labels, and merchant economics. Authentication,
+TLS termination, high availability, and a verified public backend are not established. SHAP is
+noncausal, and fairness cannot be evaluated without protected attributes and an authorized study design.
+</p>
 
-The authoritative and complete boundary is
-[Limitations and non-goals](docs/LIMITATIONS.md).
+The complete boundary is maintained in [Limitations and non-goals](docs/LIMITATIONS.md).
 
-## Technology and author
+---
 
-| Layer | Components |
-| --- | --- |
-| Modeling | Python, pandas, NumPy, scikit-learn, XGBoost, SHAP |
-| Serving | FastAPI, Uvicorn, Pydantic |
-| Product UI | Next.js, React, TypeScript, Tailwind CSS, Recharts |
-| Verification | pytest, Ruff, mypy, Vitest, Playwright, axe-core |
-| Supply chain | Hash-locked Python dependencies, npm lockfile, GitHub Actions, CodeQL, TruffleHog, Trivy, SPDX SBOM |
+<div align="center">
 
-Repository map: `api/` serving, `src/` model/evidence libraries, `scripts/`
-deterministic commands, `reports/` aggregate artifacts, `docs/` canonical proof,
-and `web/` the static reviewer interface.
+Created by **Mayank Suryavanshi** · Licensed under the [MIT License](LICENSE)
 
-SecureSwipe was created by **Mayank Suryavanshi**. Contributions must preserve
-the evidence boundaries in [Contributing](CONTRIBUTING.md). Security reports
-follow [SECURITY.md](SECURITY.md). The project is available under the
-[MIT License](LICENSE).
+[Contributing](CONTRIBUTING.md) · [Security policy](SECURITY.md)
+
+</div>
