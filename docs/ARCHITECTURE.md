@@ -238,3 +238,13 @@ Raw datasets, fitted model files, local artifacts, environment files, build
 outputs, and caches are excluded from version control. Release and hosting steps
 are intentionally outside this architecture page; use
 [DEPLOYMENT.md](DEPLOYMENT.md).
+
+## Technology stack
+
+| Layer | Technology |
+| --- | --- |
+| Modeling | Python, pandas, NumPy, scikit-learn, XGBoost, SHAP |
+| Serving | FastAPI, Uvicorn, Pydantic; optional PostgreSQL reference substrate |
+| Product UI | Next.js, React, TypeScript, Tailwind CSS, Recharts |
+| Verification | pytest, Ruff, mypy, Vitest, Playwright, axe-core |
+| Supply chain | Hash-locked Python dependencies, npm lockfile, GitHub Actions, CodeQL, TruffleHog, Trivy, SPDX SBOM |
