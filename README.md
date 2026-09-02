@@ -62,7 +62,7 @@ every row in this population would score 96.52% accuracy while catching zero fra
 
 ## The core trade-off, measured
 
-<img width="2480" height="1280" alt="capacityfrontierdark" src="https://github.com/user-attachments/assets/f8c79f51-7cdc-47e2-8fcd-9245dc9f021a" />
+<picture>
 
   <source media="(prefers-color-scheme: dark)" srcset="docs/assets/capacity-frontier-dark.png">
   <img alt="SecureSwipe capacity frontier: recall rises from 27.18% to 93.84% as review capacity goes from 100 to 2,000 cases per day, while alert precision falls from 27.23% to 4.70%. At the illustrative 1,000-reviews/day tier, 80.18% of fraud is caught, 28,306 legitimate customers are sent to review, and 611 fraud cases are missed. A companion panel shows the true composition of the review queue at each tier." src="docs/assets/capacity-frontier-light.png">
