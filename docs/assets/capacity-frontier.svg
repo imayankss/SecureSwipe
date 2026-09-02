@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 640" width="1240" height="640" font-family="IBM Plex Sans, -apple-system, Helvetica Neue, Arial, sans-serif">
+<rect width="1240" height="640" fill="#fcfcfb"/>
+<text x="40" y="46" font-size="21" font-weight="700" fill="#0b0b0b" letter-spacing="-0.2">SecureSwipe — the capacity frontier</text>
+<text x="40" y="70" font-size="14.5" fill="#52514e">Every point of extra fraud recall is bought with legitimate-customer review workload. SecureSwipe prices that trade instead of hiding it.</text>
+<text x="40" y="91" font-size="12.5" fill="#78776f" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">Sealed Lane A held-out evaluation · 88,581 transactions · 3,083 fraud labels · 3.48% prevalence · evaluated once under a pre-declared protocol</text>
+<line x1="40" y1="104" x2="1200" y2="104" stroke="#0b0b0b" stroke-width="1.6"/>
+<line x1="748" y1="126" x2="748" y2="582" stroke="#dcdcd6" stroke-width="1"/>
+<text x="40" y="126" font-size="12" font-weight="700" fill="#78776f" letter-spacing="1.1">A · OPERATING CURVES</text>
+<line x1="100" y1="478.0" x2="690" y2="478.0" stroke="#e6e6e0" stroke-width="1"/>
+<text x="90" y="482.0" font-size="11.5" text-anchor="end" fill="#78776f">0%</text>
+<line x1="100" y1="396.0" x2="690" y2="396.0" stroke="#e6e6e0" stroke-width="1"/>
+<text x="90" y="400.0" font-size="11.5" text-anchor="end" fill="#78776f">25%</text>
+<line x1="100" y1="314.0" x2="690" y2="314.0" stroke="#e6e6e0" stroke-width="1"/>
+<text x="90" y="318.0" font-size="11.5" text-anchor="end" fill="#78776f">50%</text>
+<line x1="100" y1="232.0" x2="690" y2="232.0" stroke="#e6e6e0" stroke-width="1"/>
+<text x="90" y="236.0" font-size="11.5" text-anchor="end" fill="#78776f">75%</text>
+<line x1="100" y1="150.0" x2="690" y2="150.0" stroke="#e6e6e0" stroke-width="1"/>
+<text x="90" y="154.0" font-size="11.5" text-anchor="end" fill="#78776f">100%</text>
+<rect x="527.5" y="150" width="52" height="328" fill="#2a78d614"/>
+<line x1="553.5" y1="150" x2="553.5" y2="478" stroke="#2a78d6" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.85"/>
+<line x1="100" y1="478" x2="690" y2="478" stroke="#b4b4ac" stroke-width="1.3"/>
+<line x1="100.0" y1="478" x2="100.0" y2="484" stroke="#b4b4ac" stroke-width="1.1"/>
+<text x="100.0" y="502" font-size="12" text-anchor="middle" fill="#52514e">100</text>
+<line x1="280.5" y1="478" x2="280.5" y2="484" stroke="#b4b4ac" stroke-width="1.1"/>
+<text x="280.5" y="502" font-size="12" text-anchor="middle" fill="#52514e">250</text>
+<line x1="417.0" y1="478" x2="417.0" y2="484" stroke="#b4b4ac" stroke-width="1.1"/>
+<text x="417.0" y="502" font-size="12" text-anchor="middle" fill="#52514e">500</text>
+<line x1="553.5" y1="478" x2="553.5" y2="484" stroke="#b4b4ac" stroke-width="1.1"/>
+<text x="553.5" y="502" font-size="12" text-anchor="middle" fill="#52514e">1,000</text>
+<line x1="690.0" y1="478" x2="690.0" y2="484" stroke="#b4b4ac" stroke-width="1.1"/>
+<text x="690.0" y="502" font-size="12" text-anchor="middle" fill="#52514e">2,000</text>
+<text x="395.0" y="526" font-size="12.5" text-anchor="middle" fill="#78776f">review capacity — cases per day (log scale)</text>
+<polyline points="100.0,388.8 280.5,328.1 417.0,266.8 553.5,215.0 690.0,170.2" fill="none" stroke="#2a78d6" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<polyline points="100.0,388.7 280.5,417.9 417.0,435.7 553.5,451.7 690.0,462.6" fill="none" stroke="#eb6834" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+<circle cx="100.0" cy="388.8" r="4" fill="#fcfcfb" stroke="#2a78d6" stroke-width="2.4"/>
+<circle cx="100.0" cy="388.7" r="4" fill="#fcfcfb" stroke="#eb6834" stroke-width="2.4"/>
+<circle cx="280.5" cy="328.1" r="4" fill="#fcfcfb" stroke="#2a78d6" stroke-width="2.4"/>
+<circle cx="280.5" cy="417.9" r="4" fill="#fcfcfb" stroke="#eb6834" stroke-width="2.4"/>
+<circle cx="417.0" cy="266.8" r="4" fill="#fcfcfb" stroke="#2a78d6" stroke-width="2.4"/>
+<circle cx="417.0" cy="435.7" r="4" fill="#fcfcfb" stroke="#eb6834" stroke-width="2.4"/>
+<circle cx="553.5" cy="215.0" r="4" fill="#fcfcfb" stroke="#2a78d6" stroke-width="2.4"/>
+<circle cx="553.5" cy="451.7" r="4" fill="#fcfcfb" stroke="#eb6834" stroke-width="2.4"/>
+<circle cx="690.0" cy="170.2" r="4" fill="#fcfcfb" stroke="#2a78d6" stroke-width="2.4"/>
+<circle cx="690.0" cy="462.6" r="4" fill="#fcfcfb" stroke="#eb6834" stroke-width="2.4"/>
+<text x="686.0" y="156.2" font-size="12.5" font-weight="700" text-anchor="end" fill="#2a78d6">recall 93.84%</text>
+<text x="686.0" y="447.6" font-size="12.5" font-weight="700" text-anchor="end" fill="#eb6834">alert precision 4.70%</text>
+<text x="106.0" y="375.8" font-size="12" fill="#2a78d6">27.18%</text>
+<text x="106.0" y="410.7" font-size="12" fill="#eb6834">27.23%</text>
+<rect x="112" y="152" width="296" height="108" rx="3" fill="#f2f2ef" stroke="#dcdcd6" stroke-width="1"/>
+<rect x="112" y="152" width="3.5" height="108" fill="#2a78d6"/>
+<text x="128" y="174" font-size="10.5" font-weight="700" fill="#78776f" letter-spacing="1">ILLUSTRATIVE TIER · 1,000 REVIEWS / DAY</text>
+<text x="128" y="194" font-size="14" font-weight="700" fill="#2a78d6" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">80.18%</text>
+<text x="202" y="194" font-size="12.5" fill="#52514e">of all fraud caught</text>
+<text x="128" y="215" font-size="14" font-weight="700" fill="#eb6834" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">8.03%</text>
+<text x="202" y="215" font-size="12.5" fill="#52514e">alert precision</text>
+<text x="128" y="236" font-size="14" font-weight="700" fill="#0b0b0b" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">28,306</text>
+<text x="202" y="236" font-size="12.5" fill="#52514e">legitimate customers sent to review</text>
+<text x="128" y="257" font-size="14" font-weight="700" fill="#0b0b0b" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">611</text>
+<text x="202" y="257" font-size="12.5" fill="#52514e">fraud cases missed</text>
+<line x1="408" y1="206" x2="526.5" y2="206" stroke="#2a78d6" stroke-width="1" stroke-dasharray="3 3" opacity="0.6"/>
+<text x="762" y="126" font-size="12" font-weight="700" fill="#78776f" letter-spacing="1.1">B · WHAT THE REVIEW QUEUE ACTUALLY CONTAINS</text>
+<text x="812" y="162" font-size="10.5" text-anchor="end" fill="#78776f" letter-spacing="0.8">CAP/DAY</text>
+<text x="820" y="162" font-size="10.5" fill="#78776f" letter-spacing="0.8">QUEUE CONTENTS — BAR WIDTH IS THE TRUE QUEUE SIZE</text>
+<line x1="762" y1="170" x2="1200" y2="170" stroke="#dcdcd6" stroke-width="1"/>
+<text x="812" y="220" font-size="13" text-anchor="end" fill="#52514e" font-weight="400" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">100</text>
+<text x="820" y="196" font-size="11.5" fill="#78776f" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">838 fraud  ·  2,239 legitimate</text>
+<rect x="820" y="200" width="5.2" height="26" fill="#eb6834"/>
+<rect x="825.2" y="200" width="13.8" height="26" fill="#2a78d6" opacity="0.30"/>
+<rect x="820" y="200" width="19.0" height="26" fill="none" stroke="#dcdcd6" stroke-width="0.8"/>
+<text x="812" y="282" font-size="13" text-anchor="end" fill="#52514e" font-weight="400" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">250</text>
+<text x="820" y="258" font-size="11.5" fill="#78776f" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">1,409 fraud  ·  6,285 legitimate</text>
+<rect x="820" y="262" width="8.7" height="26" fill="#eb6834"/>
+<rect x="828.7" y="262" width="38.8" height="26" fill="#2a78d6" opacity="0.30"/>
+<rect x="820" y="262" width="47.5" height="26" fill="none" stroke="#dcdcd6" stroke-width="0.8"/>
+<text x="812" y="344" font-size="13" text-anchor="end" fill="#52514e" font-weight="400" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">500</text>
+<text x="820" y="320" font-size="11.5" fill="#78776f" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">1,985 fraud  ·  13,404 legitimate</text>
+<rect x="820" y="324" width="12.3" height="26" fill="#eb6834"/>
+<rect x="832.3" y="324" width="82.7" height="26" fill="#2a78d6" opacity="0.30"/>
+<rect x="820" y="324" width="95.0" height="26" fill="none" stroke="#dcdcd6" stroke-width="0.8"/>
+<rect x="756" y="364" width="444" height="56" fill="#2a78d614"/>
+<text x="812" y="406" font-size="13" text-anchor="end" fill="#0b0b0b" font-weight="700" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">1,000</text>
+<text x="820" y="382" font-size="11.5" fill="#0b0b0b" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">2,472 fraud  ·  28,306 legitimate</text>
+<rect x="820" y="386" width="15.3" height="26" fill="#eb6834"/>
+<rect x="835.3" y="386" width="174.7" height="26" fill="#2a78d6" opacity="0.30"/>
+<rect x="820" y="386" width="190.0" height="26" fill="none" stroke="#dcdcd6" stroke-width="0.8"/>
+<text x="812" y="468" font-size="13" text-anchor="end" fill="#52514e" font-weight="400" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">2,000</text>
+<text x="820" y="444" font-size="11.5" fill="#78776f" font-family="IBM Plex Mono, ui-monospace, Menlo, monospace">2,893 fraud  ·  58,663 legitimate</text>
+<rect x="820" y="448" width="17.9" height="26" fill="#eb6834"/>
+<rect x="837.9" y="448" width="362.1" height="26" fill="#2a78d6" opacity="0.30"/>
+<rect x="820" y="448" width="380.0" height="26" fill="none" stroke="#dcdcd6" stroke-width="0.8"/>
+<line x1="762" y1="496" x2="1200" y2="496" stroke="#dcdcd6" stroke-width="1"/>
+<text x="762" y="520" font-size="12.5" fill="#52514e">Doubling capacity from 1,000 to 2,000 recovers <tspan font-weight="700" fill="#0b0b0b">421 more fraud cases</tspan></text>
+<text x="762" y="540" font-size="12.5" fill="#52514e">and adds <tspan font-weight="700" fill="#0b0b0b">30,357 more legitimate customers</tspan> to the queue.</text>
+<line x1="40" y1="582" x2="1200" y2="582" stroke="#dcdcd6" stroke-width="1"/>
+<rect x="40" y="601" width="11" height="11" fill="#2a78d6"/>
+<text x="58" y="610" font-size="12" fill="#52514e">recall / legitimate cases in queue</text>
+<rect x="292" y="601" width="11" height="11" fill="#eb6834"/>
+<text x="310" y="610" font-size="12" fill="#52514e">alert precision / fraud cases in queue</text>
+<text x="1200" y="610" font-size="11.5" text-anchor="end" fill="#78776f">No tier is marked optimal. Review-only: a queued case is investigated, never auto-declined.</text>
+</svg>
