@@ -123,7 +123,9 @@ export function ThresholdCards() {
 
           <div className="mt-6 grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
             <div className="h-80 rounded-xl border border-white/10 bg-slate-950/40 p-3">
-              <ResponsiveContainer width="100%" height="100%">
+              {/* A fixed chart height keeps Recharts from measuring 0×0 while
+                  this panel is inside a collapsed evidence disclosure. */}
+              <ResponsiveContainer width="100%" height={272}>
                 <LineChart data={chartData} margin={{ top: 12, right: 16, left: -12, bottom: 4 }}>
                   <CartesianGrid stroke="rgba(148,163,184,0.14)" vertical={false} />
                   <XAxis dataKey="threshold" stroke="#94a3b8" tickLine={false} axisLine={false} />

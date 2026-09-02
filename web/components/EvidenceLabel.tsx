@@ -1,4 +1,5 @@
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
 
 export type EvidenceType =
   | "historical-evaluation"
@@ -34,8 +35,21 @@ const EVIDENCE_COPY: Record<EvidenceType, { label: string; className: string }> 
  */
 export function EvidenceLabel({ type }: { type: EvidenceType }) {
   const { label, className } = EVIDENCE_COPY[type];
+  // A full sentence cannot sit in a single-line pill: it either overflows its
+  // container or wraps awkwardly inside a fully-rounded shape. Long labels get
+  // a block treatment that wraps cleanly instead.
+  const isSentence = label.length > 48;
   return (
-    <Badge role="note" aria-label={label} title={label} className={className}>
+    <Badge
+      role="note"
+      aria-label={label}
+      title={label}
+      className={cn(
+        className,
+        isSentence &&
+          "max-w-full items-start whitespace-normal rounded-lg text-left leading-5 [text-wrap:pretty]",
+      )}
+    >
       {label}
     </Badge>
   );

@@ -88,11 +88,11 @@ export function Navigation({ activePage }: NavigationProps) {
             href={dashboardData.project.repository}
             target="_blank"
             rel="noopener noreferrer"
-            className="ss-action ss-action-secondary ml-auto h-11 w-11 shrink-0 p-0 focus:outline-none"
+            className="ss-action ss-action-secondary ss-action-icon ml-auto h-11 w-11 shrink-0 focus:outline-none"
             aria-label="Open SecureSwipe GitHub repository"
             title="GitHub repository"
           >
-            <GitHubMark className="h-7 w-7" />
+            <GitHubMark className="h-5 w-5" />
           </a>
         </nav>
       </header>

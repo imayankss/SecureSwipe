@@ -23,9 +23,15 @@ function configuredApiOrigin() {
 }
 
 const apiOrigin = configuredApiOrigin();
+const isDevelopment = process.env.NODE_ENV !== "production";
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // The documented visual-review URL uses 127.0.0.1 while Next binds its dev
+  // server as localhost. Next 16 otherwise blocks the client chunks as a
+  // cross-origin development request, leaving server-rendered controls inert.
+  // This option is consulted only by `next dev`.
+  allowedDevOrigins: isDevelopment ? ["127.0.0.1"] : undefined,
   async headers() {
     return [
       {
@@ -43,14 +49,26 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               "base-uri 'self'",
-              "font-src 'self' data:",
+              "font-src 'self' data: https://fonts.gstatic.com",
               "form-action 'self'",
               "frame-ancestors 'none'",
               "img-src 'self' data: blob:",
               "object-src 'none'",
-              "script-src 'self' 'unsafe-inline'",
-              "style-src 'self' 'unsafe-inline'",
-              ["connect-src 'self'", apiOrigin].filter(Boolean).join(" "),
+              // React's development build and Turbopack's HMR runtime both need
+              // eval(). Without it hydration fails in `next dev` and every client
+              // component silently becomes inert. Production stays strict.
+              isDevelopment
+                ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+                : "script-src 'self' 'unsafe-inline'",
+              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+              [
+                "connect-src 'self'",
+                apiOrigin,
+                "https://fonts.googleapis.com",
+                "https://fonts.gstatic.com",
+              ]
+                .filter(Boolean)
+                .join(" "),
               "upgrade-insecure-requests",
             ].join("; "),
           },

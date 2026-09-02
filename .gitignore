@@ -75,6 +75,9 @@ dist/
 build/
 *.tsbuildinfo
 
+# Visual regression output
+web/.visual-review/
+
 # Temporary exports and logs
 web/public/data/*.tmp
 *.log

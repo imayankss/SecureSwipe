@@ -1,0 +1,1569 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SecureSwipe — Results</title>
+<meta name="description" content="Defense-only payment-fraud review: a sealed held-out evaluation at 6.0x the no-skill baseline, 80.18% fraud recall inside a fixed review budget, and a measured capacity-cost frontier.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  color-scheme: light;
+  --surface:        #fcfcfb;
+  --surface-2:      #f2f2ef;
+  --surface-3:      #e8e8e4;
+  --text-primary:   #0b0b0b;
+  --text-secondary: #52514e;
+  --text-muted:     #78776f;
+  --rule:           #dcdcd6;
+  --grid:           #e6e6e0;
+  --axis:           #b4b4ac;
+  --series-1:       #2a78d6;
+  --series-2:       #eb6834;
+  --invalid:        #d03b3b;
+  --series-1-soft:  #2a78d61f;
+
+  --serif: "IBM Plex Serif", Georgia, serif;
+  --sans:  "IBM Plex Sans", -apple-system, "Segoe UI", sans-serif;
+  --mono:  "IBM Plex Mono", ui-monospace, Menlo, monospace;
+  --measure: 40rem;
+  --wide: 60rem;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --surface:        #1a1a19;
+    --surface-2:      #232322;
+    --surface-3:      #2d2d2b;
+    --text-primary:   #ffffff;
+    --text-secondary: #c3c2b7;
+    --text-muted:     #94938a;
+    --rule:           #35352f;
+    --grid:           #2b2b28;
+    --axis:           #55554e;
+    --series-1:       #3987e5;
+    --series-2:       #d95926;
+    --invalid:        #d03b3b;
+    --series-1-soft:  #3987e526;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --surface:        #1a1a19;
+  --surface-2:      #232322;
+  --surface-3:      #2d2d2b;
+  --text-primary:   #ffffff;
+  --text-secondary: #c3c2b7;
+  --text-muted:     #94938a;
+  --rule:           #35352f;
+  --grid:           #2b2b28;
+  --axis:           #55554e;
+  --series-1:       #3987e5;
+  --series-2:       #d95926;
+  --invalid:        #d03b3b;
+  --series-1-soft:  #3987e526;
+}
+
+* { box-sizing: border-box; }
+body {
+  margin: 0; background: var(--surface); color: var(--text-primary);
+  font-family: var(--sans); font-size: 16px; line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: var(--wide); margin: 0 auto; padding: 0 1.5rem 6rem; }
+.col { max-width: var(--measure); }
+.num { font-variant-numeric: tabular-nums; }
+
+/* ---- masthead ---- */
+header.top { padding: 4rem 0 1.75rem; border-bottom: 2px solid var(--text-primary); position: relative; }
+h1 {
+  font-family: var(--serif); font-weight: 600; letter-spacing: -0.02em;
+  font-size: clamp(2.1rem, 5vw, 3rem); line-height: 1.05; margin: 0 0 .5rem;
+}
+.subtitle {
+  font-family: var(--serif); font-size: clamp(1.05rem, 2.2vw, 1.2rem);
+  color: var(--text-secondary); margin: 0 0 1.75rem; max-width: 38rem;
+}
+/* Each dt/dd pair is wrapped in a div so the PAIR is the grid item. Putting
+   display:grid directly on the dl makes every dt and every dd its own item,
+   and a label then flows into a different row from its value. */
+.meta {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: .9rem 1.5rem; font-family: var(--mono); font-size: .74rem;
+  border-top: 1px solid var(--rule); padding-top: 1.1rem;
+}
+.meta > div { min-width: 0; }
+.meta dt { color: var(--text-muted); text-transform: uppercase; letter-spacing: .08em; margin-bottom: .2rem; }
+.meta dd { margin: 0; color: var(--text-primary); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.meta a { color: var(--series-1); }
+
+/* Theme control. The page follows the OS by default; this only overrides it. */
+.themer { position: absolute; top: 4rem; right: 0; }
+.themer button {
+  font-family: var(--mono); font-size: .7rem; letter-spacing: .06em; text-transform: uppercase;
+  background: var(--surface-2); color: var(--text-secondary); border: 1px solid var(--rule);
+  border-radius: 3px; padding: .4rem .7rem; cursor: pointer;
+}
+.themer button:hover { background: var(--surface-3); color: var(--text-primary); }
+@media (max-width: 620px) { .themer { top: 2.5rem; } }
+
+/* ---- sections ---- */
+section { margin: 3.5rem 0; scroll-margin-top: 1rem; }
+h2 {
+  font-family: var(--serif); font-weight: 600; font-size: 1.45rem;
+  letter-spacing: -.01em; margin: 0 0 1rem; display: flex; gap: .7rem; align-items: baseline;
+}
+h2 .sn { font-family: var(--mono); font-size: .8rem; color: var(--text-muted); font-weight: 400; }
+h3 { font-family: var(--sans); font-weight: 600; font-size: .98rem; margin: 2rem 0 .5rem; }
+p { margin: 0 0 1rem; }
+a { color: var(--series-1); text-underline-offset: 2px; }
+a:focus-visible, button:focus-visible, input:focus-visible {
+  outline: 2px solid var(--series-1); outline-offset: 2px;
+}
+code { font-family: var(--mono); font-size: .87em; background: var(--surface-2); padding: .1em .35em; border-radius: 2px; }
+a.srclink { text-decoration: none; }
+a.srclink code { color: var(--series-1); text-decoration: underline;
+  text-decoration-color: color-mix(in oklab, var(--series-1) 45%, transparent);
+  text-underline-offset: 2px; }
+a.srclink:hover code { text-decoration-color: var(--series-1); }
+.lede { font-size: 1.05rem; color: var(--text-secondary); }
+
+/* Intro prose beside a vertical figure panel. Single column below 900px, where
+   a 19rem sidebar would squeeze the measure below readability. */
+.split { display: grid; gap: 2rem 2.5rem; align-items: start; }
+@media (min-width: 900px) { .split { grid-template-columns: minmax(0,1fr) 19rem; } }
+
+.context { border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
+.context h3 {
+  margin: 0; padding: .7rem 1rem; background: var(--surface-2);
+  border-bottom: 1px solid var(--rule);
+  font-family: var(--mono); font-size: .66rem; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--text-muted); font-weight: 500;
+}
+.stat { padding: .95rem 1rem; border-bottom: 1px solid var(--rule); }
+.stat:last-child { border-bottom: 0; }
+.stat b {
+  font-family: var(--mono); font-size: 1.5rem; font-weight: 500; line-height: 1.1;
+  font-variant-numeric: tabular-nums; display: block; margin-bottom: .25rem;
+  letter-spacing: -.02em; color: var(--series-1);
+}
+.stat .what { display: block; font-size: .84rem; line-height: 1.45; color: var(--text-primary); }
+.stat .src { display: block; font-family: var(--mono); font-size: .66rem;
+  color: var(--text-muted); margin-top: .4rem; }
+.stat .src a { color: var(--text-muted); }
+/* The all-negative classifier against the measured operating point, drawn to
+   scale. Both bars are labelled, so the comparison does not rest on length. */
+.mult { margin: .6rem 0 .2rem; display: grid; gap: 4px; font-family: var(--mono); font-size: .66rem; }
+.mult div { display: grid; grid-template-columns: 3.4rem 1fr; align-items: center; gap: .5rem; }
+.mult span { color: var(--text-muted); text-align: right; }
+.mult i { display: block; height: 10px; border-radius: 2px; background: var(--series-1); }
+.mult .full i { opacity: .3; }
+
+/* ---- figures & tables ---- */
+figure { margin: 2rem 0; }
+figcaption {
+  font-size: .82rem; line-height: 1.5; color: var(--text-secondary);
+  margin-top: .85rem; max-width: 42rem;
+}
+figcaption b, .tcap b { font-family: var(--mono); font-size: .76rem; letter-spacing: .05em;
+  text-transform: uppercase; color: var(--text-muted); font-weight: 500; margin-right: .4rem; }
+.tcap { font-size: .82rem; line-height: 1.5; color: var(--text-secondary); margin: 0 0 .8rem; max-width: 42rem; }
+.scroll { overflow-x: auto; }
+/* A dense architecture diagram cannot live inside the prose measure. This
+   breaks out of .wrap up to the viewport width, staying centred, and falls back
+   to horizontal scrolling when even that is not enough. */
+.bleed { width: min(94vw, 1240px); margin-left: calc(50% - min(47vw, 620px)); }
+@media (max-width: 1000px) { .bleed { width: 100% !important; margin-left: 0 !important; } }
+table { width: 100%; border-collapse: collapse; font-family: var(--mono);
+  font-size: .8rem; font-variant-numeric: tabular-nums; min-width: 30rem; }
+th { text-align: right; font-weight: 500; font-size: .7rem; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--text-muted); padding: 0 0 .5rem;
+  border-bottom: 1px solid var(--text-primary); }
+td { text-align: right; padding: .5rem 0; border-bottom: 1px solid var(--rule); }
+th:first-child, td:first-child { text-align: left; font-family: var(--sans); }
+th + th, td + td { padding-left: 1.25rem; }
+tr.is-invalid td { color: var(--invalid); }
+tr.is-ref td { font-weight: 500; }
+/* Wide prose tables (trust boundary, evidence categories) read as text, not as
+   numbers, so they opt out of the tabular mono treatment. */
+table.prose { font-family: var(--sans); font-size: .84rem; }
+table.prose td, table.prose th { text-align: left; vertical-align: top; }
+table.prose td + td, table.prose th + th { padding-left: 1.25rem; }
+table.prose td { padding: .7rem 0; }
+
+/* Interval-method column in the metrics table. */
+td.meth { font-size: .68rem; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); }
+
+/* Trust-boundary cards. A four-column prose table reads as a wall on narrow
+   screens and scrolls sideways; each component gets a compact card instead,
+   so the same content reads as a figure rather than a table. Flex rather than
+   grid, so the final row grows to fill the width instead of leaving a hole. */
+.boundary { display: flex; flex-wrap: wrap; gap: 1px; background: var(--rule);
+  border: 1px solid var(--rule); margin: 1.25rem 0; }
+.boundary > div { flex: 1 1 16rem; min-width: 0; background: var(--surface); padding: 1rem 1.1rem; }
+.boundary h4 { margin: 0 0 .65rem; font-family: var(--sans); font-weight: 600; font-size: .88rem; }
+.boundary dl { margin: 0; font-size: .82rem; line-height: 1.5; }
+.boundary dt { font-family: var(--mono); font-size: .64rem; letter-spacing: .07em; text-transform: uppercase;
+  color: var(--text-muted); margin-top: .6rem; }
+.boundary dt:first-child { margin-top: 0; }
+.boundary dd { margin: .15rem 0 0; color: var(--text-secondary); }
+
+/* Formal-equation variables set in <var>, kept upright rather than the
+   browser's default italic so cr / cl / cm read as labels, not prose. */
+.eq var { font-style: normal; }
+
+/* ---- controls ---- */
+.controls { background: var(--surface-2); border: 1px solid var(--rule);
+  border-radius: 3px; padding: 1.1rem 1.25rem; margin-bottom: 1.25rem; }
+.ctl-row { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; }
+.ctl-label { font-family: var(--mono); font-size: .72rem; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--text-muted); }
+input[type=range] { flex: 1 1 16rem; min-width: 12rem; accent-color: var(--series-1); }
+.seg { display: inline-flex; border: 1px solid var(--rule); border-radius: 3px; overflow: hidden; }
+.seg button {
+  font-family: var(--mono); font-size: .74rem; padding: .45rem .8rem; border: 0;
+  background: var(--surface); color: var(--text-secondary); cursor: pointer;
+  border-right: 1px solid var(--rule);
+}
+.seg button:last-child { border-right: 0; }
+.seg button[aria-pressed="true"] { background: var(--text-primary); color: var(--surface); }
+.linkish { background: none; border: 0; padding: 0; font-family: var(--mono);
+  font-size: .72rem; color: var(--series-1); cursor: pointer; text-decoration: underline; }
+.pipe-note { font-family: var(--mono); font-size: .72rem; color: var(--text-muted); margin-left: .8rem; }
+
+/* Cost assumptions. Each input is a rupee figure the reader sets; none of them
+   is a measured or endorsed value, so they are presented as blanks to fill. */
+.assump { display: grid; gap: .9rem 1.25rem; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr)); }
+.assump label { display: block; font-family: var(--mono); font-size: .68rem;
+  letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: .3rem; }
+.assump .field { display: flex; align-items: center; gap: .35rem; }
+.assump .rupee { font-family: var(--mono); font-size: .85rem; color: var(--text-muted); }
+.assump input[type=number] {
+  width: 100%; min-width: 0; font-family: var(--mono); font-size: .85rem;
+  font-variant-numeric: tabular-nums; padding: .4rem .5rem;
+  background: var(--surface); color: var(--text-primary);
+  border: 1px solid var(--rule); border-radius: 3px;
+}
+
+/* ---- readout tiles ---- */
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+  gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin: 1.25rem 0; }
+.tile { background: var(--surface); padding: .9rem 1rem; }
+.tile .k { font-family: var(--mono); font-size: .66rem; letter-spacing: .07em;
+  text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: .3rem; }
+.tile .v { font-family: var(--mono); font-size: 1.15rem; font-variant-numeric: tabular-nums;
+  display: block; letter-spacing: -.01em; }
+.tile .s { font-size: .72rem; color: var(--text-muted); display: block; margin-top: .15rem; }
+.pos { color: var(--series-1); } .neg { color: var(--invalid); }
+
+/* ---- legend ---- */
+.legend { display: flex; gap: 1.25rem; flex-wrap: wrap; font-family: var(--mono);
+  font-size: .74rem; color: var(--text-secondary); margin-bottom: .6rem; }
+.legend span { display: inline-flex; align-items: center; gap: .4rem; }
+.swatch { width: 11px; height: 11px; border-radius: 2px; display: inline-block; }
+
+svg { display: block; max-width: 100%; height: auto; }
+
+/* Wide two-panel diagrams become illegible when squeezed onto a phone, so each
+   one ships a stacked variant instead of being scaled down. */
+.narrow-only { display: none; }
+@media (max-width: 720px) {
+  .wide-only { display: none; }
+  .narrow-only { display: block; }
+}
+.tick { font-family: var(--mono); font-size: 10px; fill: var(--text-muted); }
+.axlabel { font-family: var(--mono); font-size: 10px; fill: var(--text-secondary);
+  letter-spacing: .06em; text-transform: uppercase; }
+/* Diagram primitives. Nodes are outlined rather than filled so that a single
+   set of shapes reads correctly in both themes. */
+.nb { fill: var(--surface-2); stroke: var(--axis); }
+.nb-sealed { fill: var(--series-1-soft); stroke: var(--series-1); }
+.nb-warn { fill: none; stroke: var(--invalid); }
+.nt { font-family: var(--sans); font-size: 11px; fill: var(--text-primary); }
+.nt-s { font-family: var(--mono); font-size: 9.5px; fill: var(--text-muted); }
+.edge { stroke: var(--axis); fill: none; }
+.edge-cut { stroke: var(--invalid); fill: none; stroke-dasharray: 4 4; }
+.lane { fill: none; stroke: var(--rule); }
+.lanelabel { font-family: var(--mono); font-size: 9px; fill: var(--text-muted);
+  letter-spacing: .09em; text-transform: uppercase; }
+
+/* ---- numbered workflow ---- */
+ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 1.25rem 0; }
+ol.steps li { counter-increment: s; position: relative; padding-left: 2.2rem; margin-bottom: .85rem; }
+ol.steps li::before {
+  content: counter(s); position: absolute; left: 0; top: .1rem;
+  font-family: var(--mono); font-size: .7rem; color: var(--text-muted);
+  border: 1px solid var(--rule); border-radius: 2px; width: 1.5rem; height: 1.5rem;
+  display: grid; place-items: center;
+}
+ol.steps b { font-weight: 600; }
+
+.note { background: var(--surface-2); border: 1px solid var(--rule);
+  padding: 1.1rem 1.25rem; border-radius: 3px; margin: 1.5rem 0; font-size: .93rem; }
+.note-h { font-family: var(--mono); font-size: .68rem; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--text-muted); margin-bottom: .5rem; }
+.note p:last-child { margin-bottom: 0; }
+.note-warn { border-left: 3px solid var(--invalid); }
+.note-warn .note-h { color: var(--invalid); }
+
+/* Display maths, set without a formula library. */
+.eq { font-family: var(--mono); font-size: .82rem; line-height: 2;
+  background: var(--surface-2); border: 1px solid var(--rule); border-radius: 3px;
+  padding: .9rem 1.1rem; margin: 1.25rem 0; overflow-x: auto; }
+.eq .frac { display: inline-flex; flex-direction: column; vertical-align: middle;
+  text-align: center; margin: 0 .25rem; }
+.eq .frac .den { border-top: 1px solid var(--text-secondary); }
+
+footer { border-top: 2px solid var(--text-primary); margin-top: 4rem; padding-top: 1.5rem;
+  font-size: .82rem; color: var(--text-muted); }
+.byline { display: flex; flex-wrap: wrap; gap: .4rem 1.1rem; align-items: baseline; margin-bottom: 1rem; }
+.byline .who { font-family: var(--serif); font-size: 1.05rem; color: var(--text-primary); font-weight: 500; }
+.byline a { font-family: var(--mono); font-size: .76rem; }
+pre { background: var(--surface-2); border: 1px solid var(--rule); border-radius: 3px;
+  padding: .9rem 1rem; overflow-x: auto; font-family: var(--mono); font-size: .78rem; line-height: 1.7; }
+ul { padding-left: 1.1rem; } li { margin-bottom: .5rem; }
+.err { border: 1px solid var(--invalid); color: var(--invalid); padding: 1rem 1.2rem;
+  border-radius: 3px; font-family: var(--mono); font-size: .82rem; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+@media (max-width: 620px) { body { font-size: 15px; } header.top { padding-top: 2.5rem; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header class="top">
+  <div class="themer"><button id="theme-toggle" type="button" aria-live="polite">Theme</button></div>
+  <h1>SecureSwipe</h1>
+  <p class="subtitle">Ranked fraud review for a finite analyst team &mdash; one sealed held-out
+  evaluation, a measured capacity frontier, and every number traceable to committed evidence.</p>
+  <dl class="meta">
+    <div><dt>Track</dt><dd>Razorpay AI Buildathon 2026 &middot; Track 2</dd></div>
+    <div><dt>Evidence lane</dt><dd>Sealed Lane A final evaluation</dd></div>
+    <div><dt>Corpus</dt><dd>Public IEEE-CIS research data</dd></div>
+    <div><dt>Role</dt><dd>final_test — programmatically held out</dd></div>
+    <div><dt>Evaluated</dt><dd>Exactly once, predeclared protocol</dd></div>
+    <div><dt>Scope</dt><dd>Defense only — no payment action</dd></div>
+    <div><dt>Result manifest</dt><dd>65fd02bb…d401d20c</dd></div>
+    <div><dt>Licence</dt><dd>MIT</dd></div>
+  </dl>
+</header>
+
+<section id="abstract">
+  <div class="split">
+    <div>
+      <p class="lede">A fraud detector is easy to make look good. On the population evaluated here,
+      96.52% of transactions are legitimate &mdash; so a model that answers
+      <em>&ldquo;legitimate&rdquo;</em> to every row scores 96.52% accuracy and catches nothing.
+      SecureSwipe is built against exactly that trap.</p>
+
+      <p>It ranks suspicious transactions so a finite team of analysts spends the day on the ones most
+      likely to be fraud. Against a sealed held-out population of 88,581 transactions it ranks at
+      <strong>6.0&times; the no-skill baseline</strong>, surfaces <strong>80.18% of all fraud</strong>
+      inside a 1,000-review daily budget, and returns probabilities calibrated to within
+      <strong>0.36 percentage points</strong>. The payment decision stays with the analyst: the system
+      does not authorize, approve, capture, block, or decline.</p>
+
+      <p>Capacity is the second constraint, and it is the real product. A team works a fixed number of
+      cases a day, and every point of recall above that line is bought with analyst hours. Section 4 puts
+      that control in your hands; Section 5 prices it under assumptions you set.</p>
+
+      <p>Every number here is transcribed from committed aggregate evidence in <code>docs/evidence/</code>
+      and the exported dashboard data under <code>web/data/</code>. No row, score vector, or model binary
+      appears on this page &mdash; and none is needed to check the arithmetic.</p>
+
+      <figure style="margin:1.75rem 0 0">
+        <svg viewBox="0 0 520 175" role="img" aria-label="A classifier predicting legitimate for every row scores 96.52 percent accuracy and 0 percent recall. SecureSwipe ranking at 1,000 reviews per day scores 67.36 percent accuracy and 80.18 percent recall.">
+          <g class="tick">
+            <line x1="150" y1="16" x2="150" y2="158" style="stroke:var(--axis)"/>
+            <line x1="315" y1="16" x2="315" y2="158" style="stroke:var(--grid)"/>
+            <line x1="480" y1="16" x2="480" y2="158" style="stroke:var(--grid)"/>
+            <text x="315" y="171" text-anchor="middle">50%</text>
+            <text x="480" y="171" text-anchor="middle">100%</text>
+
+            <text x="150" y="12" class="axlabel">predict &ldquo;legitimate&rdquo; for every row</text>
+            <rect x="150" y="20" width="318.5" height="13" style="fill:var(--axis)"/>
+            <text x="145" y="30" text-anchor="end" style="fill:var(--text-secondary)">accuracy</text>
+            <text x="474" y="30" text-anchor="end" style="fill:var(--surface)">96.52%</text>
+
+            <line x1="150" y1="40" x2="150" y2="53" style="stroke:var(--invalid)" stroke-width="2"/>
+            <text x="145" y="50" text-anchor="end" style="fill:var(--text-secondary)">fraud caught</text>
+            <text x="157" y="50" style="fill:var(--invalid)">0.00% &mdash; nothing is detected</text>
+
+            <text x="150" y="82" class="axlabel">secureswipe ranking &middot; 1,000 reviews/day</text>
+            <rect x="150" y="90" width="222.3" height="13" style="fill:var(--axis)"/>
+            <text x="145" y="100" text-anchor="end" style="fill:var(--text-secondary)">accuracy</text>
+            <text x="378" y="100" style="fill:var(--text-muted)">67.36%</text>
+
+            <rect x="150" y="110" width="264.6" height="13" style="fill:var(--series-1)"/>
+            <text x="145" y="120" text-anchor="end" style="fill:var(--text-secondary)">fraud caught</text>
+            <text x="420" y="120" style="fill:var(--series-1)">80.18%</text>
+
+            <text x="150" y="146" style="fill:var(--text-muted)">2,472 of 3,083 frauds surfaced, instead of none.</text>
+          </g>
+        </svg>
+        <figcaption style="margin-top:.6rem"><b>Figure 1</b> Why accuracy is the wrong headline. Both rows
+        are measured on the same sealed population of 88,581 transactions. The all-negative classifier wins
+        on accuracy by 29 points and detects nothing; the ranked queue gives up that accuracy to surface
+        four fraud cases in five. Accuracy is reported here only to retire it.</figcaption>
+      </figure>
+    </div>
+
+    <aside class="context">
+      <h3>Sealed Lane A — final evaluation</h3>
+
+      <div class="stat">
+        <b>6.0&times;</b>
+        <span class="what">Ranking lift over the no-skill floor. Average precision
+        <span class="num">0.208660</span>, 95% CI <span class="num">0.1957&ndash;0.2227</span>, against a
+        base rate of <span class="num">0.034804</span>.</span>
+        <span class="src">LANE_A_FINAL_EVALUATION.md Section 3</span>
+      </div>
+
+      <div class="stat">
+        <b>80.18%</b>
+        <span class="what">Of all fraud in the population, surfaced inside a 1,000-review daily budget
+        &mdash; <span class="num">2,472</span> of <span class="num">3,083</span> cases.</span>
+        <span class="src">LANE_A_FINAL_EVALUATION.md Section 5</span>
+      </div>
+
+      <div class="stat">
+        <b>0.8150</b>
+        <span class="what">ROC-AUC, 95% CI <span class="num">0.8064&ndash;0.8229</span>. Pairwise ranking
+        discrimination across the full population.</span>
+        <span class="src">LANE_A_FINAL_EVALUATION.md Section 3</span>
+      </div>
+
+      <div class="stat">
+        <b>88,581</b>
+        <div class="mult" aria-hidden="true">
+          <div class="full"><span>legit</span><i style="width:100%"></i></div>
+          <div><span>fraud</span><i style="width:3.6%"></i></div>
+        </div>
+        <span class="what">Transactions in the held-out population, of which <strong>3,083</strong> are
+        fraud — a prevalence of 3.4804%, or roughly <span class="num">27.7 : 1</span>.</span>
+        <span class="src">LANE_A_FINAL_EVALUATION.md Section 2</span>
+      </div>
+
+      <div class="stat">
+        <b>0.0036</b>
+        <span class="what">Expected calibration error after Platt scaling, with a Brier score of 0.0305.
+        The scores behave like probabilities &mdash; which is what makes the capacity arithmetic in
+        Section 4 legible.</span>
+        <span class="src">LANE_A_FINAL_EVALUATION.md Section 3</span>
+      </div>
+
+      <div class="stat">
+        <b>Once</b>
+        <span class="what">Times the held-out role was evaluated. Scores were sealed before labels were
+        opened; the protocol closed to tuning the moment the run finished.</span>
+        <span class="src">2,000 bootstrap resamples &middot; seed 42</span>
+      </div>
+    </aside>
+  </div>
+
+  <div class="note col">
+    <div class="note-h">Reading the two lanes correctly</div>
+    <p>The metrics above come from the sealed offline evaluation. The local API and the
+    <code>/demo</code> walkthrough run a separate <em>reference</em> bundle that demonstrates the serving
+    mechanics &mdash; validation, thresholds, replay, audit &mdash; and does not inherit those metrics.
+    Sections 1, 6 and 8 describe that reference path.</p>
+  </div>
+</section>
+
+<section id="workflow">
+  <h2><span class="sn">01</span> Architecture and decision path</h2>
+  <div class="col">
+    <p>Three lanes are kept apart by design: the offline science that produced the sealed result, the
+    static pages that present it, and an optional local API that demonstrates the serving mechanics.
+    Nothing crosses between them except sanitized aggregates.</p>
+
+    <ol class="steps">
+      <li><b>Accept only authorized or sanitized input.</b> The static surfaces read committed aggregates;
+      the optional demo sends one fixed synthetic fixture to an explicitly configured local API.</li>
+      <li><b>Validate before scoring.</b> Strict named schemas reject unknown, malformed, non-finite, or
+      oversized input. Missing or invalid bundles fail closed.</li>
+      <li><b>Score deterministically.</b> A verified local bundle normalizes fields into its recorded order
+      and executes the estimator. There is no LLM call on this path and it consumes zero tokens.</li>
+      <li><b>Apply the recorded policy.</b> Score meaning, calibration status, and the operating threshold
+      come from bundle provenance — not from browser assumptions.</li>
+      <li><b>Return a bounded outcome.</b> A valid result is <code>human_review</code> or
+      <code>below_review_threshold</code>; errors return no decision at all. Neither outcome is a payment
+      action.</li>
+      <li><b>Record and replay truthfully.</b> When audit is configured a successful decision receives a
+      chained receipt, and an identical request replays the original response without scoring or appending
+      again.</li>
+    </ol>
+  </div>
+
+  <figure class="bleed">
+    <div class="scroll">
+    <svg viewBox="0 0 1180 500" style="min-width:900px" role="img" aria-label="Architecture. Offline science curates an authorized IEEE-CIS source, freezes chronological roles, runs a sealed Lane A evaluation, and emits aggregates and digests only. Static presentation exports sanitized dashboard JSON to the Next.js routes a reviewer reads. An opt-in local demonstration sends a fixed fixture through FastAPI against a verified reference bundle that is explicitly not the Lane A model, producing a bounded outcome and an optional tamper-evident audit record. There is no provenance link between the sealed model and the served bundle.">
+      <defs>
+        <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" style="fill:var(--axis)"/>
+        </marker>
+      </defs>
+
+      <!-- lane 1 : offline science -->
+      <rect class="lane" x="30" y="22" width="1146" height="120" rx="3"/>
+      <text class="lanelabel" text-anchor="middle" transform="translate(12,82) rotate(-90)">offline science</text>
+      <text class="lanelabel" text-anchor="middle" transform="translate(23,82) rotate(-90)">private · local</text>
+      <g>
+        <rect class="nb" x="48"  y="62" width="118" height="42" rx="3"/>
+        <text class="nt" x="107" y="79"  text-anchor="middle">Authorized IEEE-CIS</text>
+        <text class="nt" x="107" y="93"  text-anchor="middle">research source</text>
+
+        <rect class="nb" x="200" y="62" width="118" height="42" rx="3"/>
+        <text class="nt" x="259" y="87"  text-anchor="middle">Manifested curation</text>
+
+        <rect class="nb" x="352" y="62" width="118" height="42" rx="3"/>
+        <text class="nt" x="411" y="79"  text-anchor="middle">Chronological</text>
+        <text class="nt" x="411" y="93"  text-anchor="middle">development roles</text>
+
+        <rect class="nb-sealed" x="504" y="62" width="118" height="42" rx="3"/>
+        <text class="nt" x="563" y="79"  text-anchor="middle">SEALED Lane A</text>
+        <text class="nt" x="563" y="93"  text-anchor="middle">evaluation</text>
+
+        <rect class="nb" x="900" y="62" width="140" height="42" rx="3"/>
+        <text class="nt" x="970" y="79"  text-anchor="middle">Aggregates + digests</text>
+        <text class="nt" x="970" y="93"  text-anchor="middle">only — no rows</text>
+
+        <line class="edge" x1="166" y1="83" x2="196" y2="83" marker-end="url(#a1)"/>
+        <line class="edge" x1="318" y1="83" x2="348" y2="83" marker-end="url(#a1)"/>
+        <line class="edge" x1="470" y1="83" x2="500" y2="83" marker-end="url(#a1)"/>
+        <line class="edge" x1="622" y1="83" x2="896" y2="83" marker-end="url(#a1)"/>
+      </g>
+
+      <!-- lane 2 : static presentation -->
+      <rect class="lane" x="30" y="154" width="1146" height="142" rx="3"/>
+      <text class="lanelabel" text-anchor="middle" transform="translate(12,225) rotate(-90)">static presentation</text>
+      <text class="lanelabel" text-anchor="middle" transform="translate(23,225) rotate(-90)">no live inference</text>
+      <g>
+        <rect class="nb" x="504" y="204" width="118" height="42" rx="3"/>
+        <text class="nt" x="563" y="221" text-anchor="middle">Deterministic</text>
+        <text class="nt" x="563" y="235" text-anchor="middle">exporter</text>
+
+        <rect class="nb" x="656" y="204" width="128" height="42" rx="3"/>
+        <text class="nt" x="720" y="221" text-anchor="middle">Sanitized</text>
+        <text class="nt" x="720" y="235" text-anchor="middle">dashboard JSON</text>
+
+        <rect class="nb" x="838" y="178" width="118" height="32" rx="3"/>
+        <text class="nt" x="897" y="198" text-anchor="middle">Next.js /</text>
+
+        <rect class="nb" x="838" y="240" width="118" height="32" rx="3"/>
+        <text class="nt" x="897" y="260" text-anchor="middle">Next.js /evidence</text>
+
+        <rect class="nb" x="1010" y="204" width="110" height="42" rx="3"/>
+        <text class="nt" x="1065" y="229" text-anchor="middle">Reviewer</text>
+
+        <line class="edge" x1="622" y1="225" x2="652" y2="225" marker-end="url(#a1)"/>
+        <path  class="edge" d="M784,225 H812 V194 H834" marker-end="url(#a1)"/>
+        <path  class="edge" d="M784,225 H812 V256 H834" marker-end="url(#a1)"/>
+        <path  class="edge" d="M956,194 H982 V225 H1006" marker-end="url(#a1)"/>
+        <path  class="edge" d="M956,256 H982 V225 H1006" marker-end="url(#a1)"/>
+        <line class="edge" x1="563" y1="104" x2="563" y2="200" marker-end="url(#a1)"/>
+      </g>
+
+      <!-- lane 3 : opt-in local reference demonstration -->
+      <rect class="lane" x="30" y="308" width="1146" height="170" rx="3"/>
+      <text class="lanelabel" text-anchor="middle" transform="translate(12,393) rotate(-90)">opt-in local</text>
+      <text class="lanelabel" text-anchor="middle" transform="translate(23,393) rotate(-90)">reference demo</text>
+      <g>
+        <rect class="nb" x="48"  y="380" width="118" height="42" rx="3"/>
+        <text class="nt" x="107" y="397" text-anchor="middle">Fixed sanitized</text>
+        <text class="nt" x="107" y="411" text-anchor="middle">fixture</text>
+
+        <rect class="nb" x="200" y="380" width="118" height="42" rx="3"/>
+        <text class="nt" x="259" y="405" text-anchor="middle">Next.js /demo</text>
+
+        <rect class="nb" x="390" y="380" width="118" height="42" rx="3"/>
+        <text class="nt" x="449" y="405" text-anchor="middle">FastAPI V1</text>
+
+        <rect class="nb-warn" x="352" y="324" width="194" height="36" rx="3"/>
+        <text class="nt" x="449" y="339" text-anchor="middle" style="fill:var(--invalid)">Verified reference bundle</text>
+        <text class="nt" x="449" y="353" text-anchor="middle" style="fill:var(--invalid)">— NOT the Lane A model</text>
+
+        <rect class="nb" x="560" y="380" width="118" height="42" rx="3"/>
+        <text class="nt" x="619" y="397" text-anchor="middle">Bounded</text>
+        <text class="nt" x="619" y="411" text-anchor="middle">outcome</text>
+
+        <rect class="nb" x="738" y="380" width="196" height="42" rx="3"/>
+        <text class="nt" x="836" y="397" text-anchor="middle">Human reviewer decides any</text>
+        <text class="nt" x="836" y="411" text-anchor="middle">payment action outside SecureSwipe</text>
+
+        <rect class="nb" x="560" y="436" width="196" height="32" rx="3"/>
+        <text class="nt" x="658" y="456" text-anchor="middle">Local tamper-evident audit</text>
+
+        <line class="edge" x1="166" y1="401" x2="196" y2="401" marker-end="url(#a1)"/>
+        <line class="edge" x1="318" y1="401" x2="386" y2="401" marker-end="url(#a1)"/>
+        <line class="edge" x1="449" y1="360" x2="449" y2="376" marker-end="url(#a1)"/>
+        <line class="edge" x1="508" y1="401" x2="556" y2="401" marker-end="url(#a1)"/>
+        <line class="edge" x1="678" y1="401" x2="734" y2="401" marker-end="url(#a1)"/>
+        <path  class="edge" d="M470,422 V452 H556" marker-end="url(#a1)" stroke-dasharray="4 4"/>
+        <text class="nt-s" x="478" y="446">when configured</text>
+      </g>
+
+      <!-- the claim the diagram exists to make -->
+      <path class="edge-cut" d="M504,83 H460 V342 H348"/>
+      <g stroke="var(--invalid)" stroke-width="2">
+        <line x1="454" y1="209" x2="466" y2="221"/>
+        <line x1="466" y1="209" x2="454" y2="221"/>
+      </g>
+      <text class="nt-s" x="442" y="202" text-anchor="end" style="fill:var(--invalid)">no provenance linkage —</text>
+      <text class="nt-s" x="442" y="215" text-anchor="end" style="fill:var(--invalid)">/demo does not serve</text>
+      <text class="nt-s" x="442" y="228" text-anchor="end" style="fill:var(--invalid)">the sealed Lane A model</text>
+    </svg>
+    </div>
+    <figcaption><b>Figure 2</b> Three boundaries, drawn to be checked. Aggregates and digests are the only
+    thing that leaves offline science; no model binary is shipped to the static routes; and the bundle the
+    demo API loads is deliberately not the sealed model. The crossed connector is the point of the
+    diagram — it marks a link that does <em>not</em> exist.</figcaption>
+  </figure>
+</section>
+
+<section id="sealing">
+  <h2><span class="sn">02</span> Sealed evaluation protocol</h2>
+  <div class="col">
+    <p>A held-out number is only worth reading if nobody could have peeked. The corpus is split by time,
+    not at random: roles are assigned chronologically, and every tunable choice &mdash; model family,
+    variant, calibrator, capacity policy &mdash; is made inside a development boundary that never sees the
+    <code>final_test</code> rows.</p>
+
+    <p>When that work finished, the pipeline, its 24-input schema, and the capacity policy were frozen and
+    bound to a digest. Only then did a guarded runner score the held-out role once, seal the scores, and
+    open the labels. The protocol then closed: no re-tuning, no second run, no quiet re-fit. It is a
+    <em>programmatic</em> hold-out, enforced in code rather than by an external party.</p>
+  </div>
+
+  <figure class="bleed">
+    <div class="scroll">
+    <svg viewBox="0 0 1030 400" style="min-width:820px" role="img" aria-label="Evaluation lifecycle. An approved IEEE-CIS source is curated and split into chronological roles. Training, validation threshold, calibration fit and calibration evaluation roles sit inside a development boundary where tuning is permitted, producing a frozen pipeline, a frozen 24-input schema and a frozen capacity policy bound to a digest. The final test role is quarantined throughout. A one-time guarded runner then computes and seals scores, opens the final labels, and emits sealed aggregate metrics, intervals, counts and digests, after which the protocol is closed to further tuning or reruns.">
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" style="fill:var(--axis)"/>
+        </marker>
+      </defs>
+
+      <!-- row 1 : development -->
+      <g>
+        <rect class="nb" x="8"   y="100" width="110" height="44" rx="3"/>
+        <text class="nt" x="63"  y="117" text-anchor="middle">Approved IEEE-CIS</text>
+        <text class="nt" x="63"  y="131" text-anchor="middle">source</text>
+
+        <rect class="nb" x="142" y="100" width="110" height="44" rx="3"/>
+        <text class="nt" x="197" y="117" text-anchor="middle">Manifested</text>
+        <text class="nt" x="197" y="131" text-anchor="middle">curation</text>
+
+        <rect class="nb" x="276" y="100" width="110" height="44" rx="3"/>
+        <text class="nt" x="331" y="117" text-anchor="middle">Chronological</text>
+        <text class="nt" x="331" y="131" text-anchor="middle">role assignment</text>
+
+        <line class="edge" x1="118" y1="122" x2="138" y2="122" marker-end="url(#a2)"/>
+        <line class="edge" x1="252" y1="122" x2="272" y2="122" marker-end="url(#a2)"/>
+        <line class="edge" x1="386" y1="122" x2="410" y2="122" marker-end="url(#a2)"/>
+      </g>
+
+      <rect class="lane" x="414" y="40" width="290" height="176" rx="3" stroke-dasharray="4 4"/>
+      <text class="lanelabel" x="424" y="56">development boundary — tuning permitted</text>
+      <g>
+        <rect class="nb" x="424" y="66"  width="124" height="24" rx="3"/>
+        <text class="nt-s" x="486" y="81" text-anchor="middle" style="fill:var(--text-primary)">training</text>
+        <rect class="nb" x="424" y="100" width="124" height="24" rx="3"/>
+        <text class="nt-s" x="486" y="115" text-anchor="middle" style="fill:var(--text-primary)">validation_threshold</text>
+        <rect class="nb" x="424" y="134" width="124" height="24" rx="3"/>
+        <text class="nt-s" x="486" y="149" text-anchor="middle" style="fill:var(--text-primary)">calibration_fit</text>
+        <rect class="nb" x="424" y="168" width="124" height="24" rx="3"/>
+        <text class="nt-s" x="486" y="183" text-anchor="middle" style="fill:var(--text-primary)">calibration_eval</text>
+
+        <rect class="nb" x="570" y="94"  width="120" height="68" rx="3"/>
+        <text class="nt" x="630" y="112" text-anchor="middle">Select variant E</text>
+        <text class="nt" x="630" y="126" text-anchor="middle">XGBoost · 24 inputs</text>
+        <text class="nt" x="630" y="140" text-anchor="middle">seed 42, then fit</text>
+        <text class="nt" x="630" y="154" text-anchor="middle">Platt calibrator</text>
+
+        <line class="edge" x1="548" y1="78"  x2="566" y2="112" marker-end="url(#a2)"/>
+        <line class="edge" x1="548" y1="112" x2="566" y2="120" marker-end="url(#a2)"/>
+        <line class="edge" x1="548" y1="146" x2="566" y2="132" marker-end="url(#a2)"/>
+        <line class="edge" x1="548" y1="180" x2="566" y2="142" marker-end="url(#a2)"/>
+      </g>
+
+      <g>
+        <rect class="nb" x="730" y="62"  width="124" height="44" rx="3"/>
+        <text class="nt" x="792" y="79"  text-anchor="middle">Freeze pipeline +</text>
+        <text class="nt" x="792" y="93"  text-anchor="middle">24-input schema</text>
+
+        <rect class="nb" x="730" y="146" width="124" height="44" rx="3"/>
+        <text class="nt" x="792" y="163" text-anchor="middle">Freeze capacity</text>
+        <text class="nt" x="792" y="177" text-anchor="middle">policy</text>
+
+        <rect class="nb-sealed" x="880" y="104" width="130" height="44" rx="3"/>
+        <text class="nt" x="945" y="121" text-anchor="middle">Digest-bound</text>
+        <text class="nt" x="945" y="135" text-anchor="middle">authorization</text>
+
+        <line class="edge" x1="704" y1="112" x2="726" y2="90"  marker-end="url(#a2)"/>
+        <line class="edge" x1="704" y1="144" x2="726" y2="166" marker-end="url(#a2)"/>
+        <path  class="edge" d="M854,84 H866 V126 H876" marker-end="url(#a2)"/>
+        <path  class="edge" d="M854,168 H866 V126 H876" marker-end="url(#a2)"/>
+      </g>
+
+      <!-- row 2 : the one-time sealed run -->
+      <g>
+        <rect class="nb-warn" x="8"   y="306" width="130" height="44" rx="3"/>
+        <text class="nt" x="73"  y="323" text-anchor="middle" style="fill:var(--invalid)">final_test —</text>
+        <text class="nt" x="73"  y="337" text-anchor="middle" style="fill:var(--invalid)">quarantined</text>
+
+        <rect class="nb" x="166" y="306" width="124" height="44" rx="3"/>
+        <text class="nt" x="228" y="323" text-anchor="middle">One-time</text>
+        <text class="nt" x="228" y="337" text-anchor="middle">guarded runner</text>
+
+        <rect class="nb" x="318" y="306" width="124" height="44" rx="3"/>
+        <text class="nt" x="380" y="323" text-anchor="middle">Compute and</text>
+        <text class="nt" x="380" y="337" text-anchor="middle">seal scores</text>
+
+        <rect class="nb" x="470" y="306" width="124" height="44" rx="3"/>
+        <text class="nt" x="532" y="331" text-anchor="middle">Open final labels</text>
+
+        <rect class="nb" x="622" y="306" width="160" height="44" rx="3"/>
+        <text class="nt" x="702" y="323" text-anchor="middle">Sealed aggregate metrics,</text>
+        <text class="nt" x="702" y="337" text-anchor="middle">intervals, counts, digests</text>
+
+        <rect class="nb-sealed" x="810" y="306" width="150" height="44" rx="3"/>
+        <text class="nt" x="885" y="323" text-anchor="middle">CLOSED — no tuning,</text>
+        <text class="nt" x="885" y="337" text-anchor="middle">no rerun</text>
+
+        <line class="edge" x1="138" y1="328" x2="162" y2="328" marker-end="url(#a2)"/>
+        <line class="edge" x1="290" y1="328" x2="314" y2="328" marker-end="url(#a2)"/>
+        <line class="edge" x1="442" y1="328" x2="466" y2="328" marker-end="url(#a2)"/>
+        <line class="edge" x1="594" y1="328" x2="618" y2="328" marker-end="url(#a2)"/>
+        <line class="edge" x1="782" y1="328" x2="806" y2="328" marker-end="url(#a2)"/>
+      </g>
+
+      <path class="edge-cut" d="M331,144 V262 H73 V302" marker-end="url(#a2)"/>
+      <text class="nt-s" x="90" y="256" style="fill:var(--invalid)">held out from the first split — never read during development</text>
+
+      <path class="edge" d="M945,148 V240 H228 V302" marker-end="url(#a2)"/>
+      <text class="nt-s" x="246" y="234">frozen configuration, bound to a digest</text>
+    </svg>
+    </div>
+    <figcaption><b>Figure 3</b> The evaluation lifecycle. Everything tunable happens on the left of the
+    dashed boundary; the held-out role travels along the red path and is not read until a frozen,
+    digest-bound configuration exists. The run at the bottom happened once.</figcaption>
+  </figure>
+</section>
+
+<section id="results">
+  <h2><span class="sn">03</span> Held-out performance</h2>
+  <div class="col">
+    <p>These are the numbers the sealed protocol produced, on a population where fraud is 3.4804% of
+    traffic. Average precision reads against that base rate, not against 1.0: a signal-free ranker scores
+    0.034804 here, so <strong>0.208660 is 6.0&times; the no-skill floor</strong>. ROC-AUC of 0.814975
+    confirms the same separation pairwise across all 88,581 rows, and an expected calibration error of
+    0.003556 means the reported probabilities hold to within 0.36 percentage points.</p>
+    <p>Ranking intervals are 95% bootstrap confidence intervals over 2,000 resamples at seed 42.
+    Calibration intervals are analytic normal approximations at the same sample size, labelled in the
+    final column and derived below the table.</p>
+  </div>
+
+  <p class="tcap"><b>Table 1</b> Sealed Lane A final metrics, with the interval method stated per row.</p>
+  <div class="scroll"><table id="t-metrics"></table></div>
+  <p class="tcap" style="margin:.8rem 0 0">Analytic intervals use the Wald normal approximation at
+  <span class="num">n&nbsp;=&nbsp;88,581</span>. For the Brier score and the calibration error, per-row
+  variance is bounded conservatively at <span class="num">&mu;(1&minus;&mu;)</span> for a statistic on
+  [0,&nbsp;1], so those two intervals are upper bounds on the true width. The log-loss interval assumes a
+  per-row dispersion of <span class="num">&sigma;&nbsp;&asymp;&nbsp;3&mu;</span>, typical of a calibrated
+  model at this prevalence. All three are computed for this page; the frozen record stores those measures
+  as point estimates.</p>
+  <div class="tiles" id="tiles-population"></div>
+
+  <div class="note col">
+    <div class="note-h">Lane B is a different corpus, and is not a comparison</div>
+    <p>The repository also preserves an older record on a separate credit-card corpus &mdash; 284,807 rows
+    at 0.1727% prevalence, average precision near 0.8288. That number is higher than everything in Table 1
+    and it means nothing here: different corpus, base rate, label definition, feature space, and a random
+    rather than chronological split. It is kept for provenance, never as a comparison.</p>
+  </div>
+</section>
+
+<section id="capacity">
+  <h2><span class="sn">04</span> The review-capacity frontier</h2>
+  <div class="col">
+    <p>A score is half a decision. The other half is how many cases a team can review in a day &mdash;
+    that budget, not the model, is what fixes the threshold. Take the top <em>N</em> ranked transactions
+    per day and every increase in <em>N</em> buys recall with analyst hours.</p>
+
+    <p>Move the control. These five tiers are the frozen frontier from the sealed evaluation: measured
+    points, never interpolated, never recomputed in the browser.</p>
+  </div>
+
+  <div class="controls">
+    <div class="ctl-row">
+      <label class="ctl-label" for="cap">Review capacity</label>
+      <input type="range" id="cap" min="0" max="4" value="3" step="1" aria-describedby="cap-readout">
+      <span class="ctl-label num" id="cap-readout"></span>
+    </div>
+    <div class="ctl-row" style="margin-top:.9rem">
+      <span class="ctl-label">Frozen tiers</span>
+      <div class="seg" id="cap-seg" role="group" aria-label="Select a frozen capacity tier"></div>
+      <span class="pipe-note">measured points only — no interpolation</span>
+    </div>
+  </div>
+
+  <div class="tiles" id="tiles-capacity"></div>
+
+  <div class="note col">
+    <div class="note-h">What a false positive is here</div>
+    <p>A false positive is a legitimate transaction sent to <strong>human review</strong>. It is not an
+    automatic decline, a blocked card, or a lost customer. Whether it becomes any of those depends on what
+    the reviewing analyst does next, which is outside this system entirely.</p>
+  </div>
+
+  <figure>
+    <div class="legend">
+      <span><i class="swatch" style="background:var(--series-1)"></i> recall — fraud caught</span>
+      <span><i class="swatch" style="background:var(--series-2)"></i> alert precision — share of the queue that is fraud</span>
+    </div>
+    <svg id="fig-frontier" viewBox="0 0 620 250" role="img" aria-label="Capacity frontier. As reviews per day rise from 100 to 2000, recall rises from 27.18 to 93.84 percent while alert precision falls from 27.23 to 4.70 percent."></svg>
+    <figcaption><b>Figure 4</b> The frontier, on a logarithmic capacity axis. The two curves cross near the
+    smallest tier and then diverge sharply: past roughly 500 reviews a day, each additional point of recall
+    is paid for with a queue that is overwhelmingly legitimate traffic. No tier on this chart is marked
+    optimal, because optimality depends on costs the evaluation does not contain.</figcaption>
+  </figure>
+
+  <p class="tcap"><b>Table 2</b> The complete frozen capacity frontier. Counts sum to the sealed population
+  of 88,581 in every row.</p>
+  <div class="scroll"><table id="t-capacity" class="queue"></table></div>
+</section>
+
+<section id="cost">
+  <h2><span class="sn">05</span> The capacity&ndash;cost model</h2>
+  <div class="col">
+    <p>Section 4 produces a workload. Pricing it takes constants the evaluation cannot supply, so the
+    model is stated as symbols first and the numbers are left to you.</p>
+
+    <p>For a review capacity <var>B</var>, SecureSwipe selects the top-<var>B</var> ranked transactions
+    &mdash; the rule behind Figure 4 and Table 2:</p>
+
+    <div class="eq">Q<sub>B</sub> &nbsp;=&nbsp; Top<sub>B</sub>{ s<sub>i</sub> }</div>
+
+    <p>That selection fixes four counts &mdash; TP<sub>B</sub>, FP<sub>B</sub>, FN<sub>B</sub>, TN<sub>B</sub>
+    &mdash; and with them the two operating curves already plotted in Figure 4:</p>
+
+    <div class="eq">
+      Recall(B) &nbsp;=&nbsp; <span class="frac">TP<sub>B</sub><span class="den">TP<sub>B</sub> + FN<sub>B</sub></span></span>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+      AlertPrecision(B) &nbsp;=&nbsp; <span class="frac">TP<sub>B</sub><span class="den">TP<sub>B</sub> + FP<sub>B</sub></span></span>
+    </div>
+
+    <p>Pricing the queue adds three assumed constants, none of them measured by the sealed evaluation:
+    <var>c<sub>r</sub></var>, the analyst-review cost per alert; <var>c<sub>l</sub></var>, the additional
+    legitimate-customer friction per false alert; and <var>c<sub>m</sub></var>, the assumed cost of a
+    missed labelled fraud. The illustrative total cost at capacity <var>B</var> is then:</p>
+
+    <div class="eq">C(B) &nbsp;=&nbsp; c<sub>r</sub>(TP<sub>B</sub> + FP<sub>B</sub>) &nbsp;+&nbsp; c<sub>l</sub>&middot;FP<sub>B</sub> &nbsp;+&nbsp; c<sub>m</sub>&middot;FN<sub>B</sub></div>
+
+    <p>So c<sub>r</sub>, c<sub>l</sub>, and c<sub>m</sub> are inputs, not findings. The calculator asks
+    for four rupee values rather than three &mdash; missed-fraud loss and chargeback handling are entered
+    separately, then summed into c<sub>m</sub>. Replace the placeholders with your own and the chart
+    recomputes C(B) at every frozen tier.</p>
+  </div>
+
+  <div class="controls">
+    <div class="assump">
+      <div>
+        <label for="c-review">Review cost, per case</label>
+        <div class="field"><span class="rupee">&#8377;</span><input type="number" id="c-review" value="40" min="0" step="1"></div>
+      </div>
+      <div>
+        <label for="c-friction">Friction, per legitimate case</label>
+        <div class="field"><span class="rupee">&#8377;</span><input type="number" id="c-friction" value="250" min="0" step="1"></div>
+      </div>
+      <div>
+        <label for="c-loss">Loss, per missed fraud</label>
+        <div class="field"><span class="rupee">&#8377;</span><input type="number" id="c-loss" value="6000" min="0" step="1"></div>
+      </div>
+      <div>
+        <label for="c-chargeback">Chargeback handling</label>
+        <div class="field"><span class="rupee">&#8377;</span><input type="number" id="c-chargeback" value="1500" min="0" step="1"></div>
+      </div>
+    </div>
+    <div class="ctl-row" style="margin-top:1rem">
+      <button class="linkish" type="button" id="c-reset">reset to placeholders</button>
+      <span class="pipe-note">these four values are yours, not the project's and not Razorpay's</span>
+    </div>
+  </div>
+
+  <div class="tiles" id="tiles-cost"></div>
+
+  <figure>
+    <svg id="fig-cost" viewBox="0 0 620 252" role="img" aria-label="Illustrative total cost at each frozen capacity tier, recomputed from the assumptions entered above."></svg>
+    <figcaption><b>Figure 5</b> Illustrative total cost per tier under the assumptions currently entered,
+    split into review cost, customer friction, and the cost of fraud that was missed. The shape of this
+    chart is entirely determined by your four inputs; change them and the cheapest tier changes with them.
+    That sensitivity is the finding — the rupee totals are not.</figcaption>
+  </figure>
+
+  <div class="note col">
+    <div class="note-h">How to read C(B)</div>
+    <p>No displayed capacity is claimed to be optimal. C(B) is sensitivity arithmetic over published
+    aggregate counts under constants you supply &mdash; not Razorpay economics, observed merchant cost, or
+    ROI. The sensitivity is the finding; the rupee totals are yours.</p>
+  </div>
+</section>
+
+<section id="boundary">
+  <h2><span class="sn">06</span> Trust boundary</h2>
+  <div class="col">
+    <p>A boundary is worth more written down than promised. Every component is listed below with what it
+    sees, what it cannot reach, and what it emits. None of them touches a PAN, a CVV, live Razorpay
+    traffic, or a real customer, and none performs a payment action.</p>
+  </div>
+
+  <figure>
+    <div class="boundary">
+      <div>
+        <h4>Sealed Lane A variant E</h4>
+        <dl>
+          <dt>Can see</dt><dd>24 frozen IEEE-CIS inputs: 12 base fields, <code>R_emaildomain</code>, <code>M1–M9</code>, <code>DeviceInfo</code>, and one derived identity-presence flag</dd>
+          <dt>Cannot see or establish</dt><dd>PAN/CVV, Razorpay traffic, customer intent, or a proven deployable bundle</dd>
+          <dt>Output</dt><dd>Sealed calibrated scores, reduced to aggregate metrics and capacity counts</dd>
+        </dl>
+      </div>
+      <div>
+        <h4>Local reference API</h4>
+        <dl>
+          <dt>Can see</dt><dd><code>Time</code>, anonymized <code>V1–V28</code>, and <code>Amount</code> from synthetic or separately authorized local requests</dd>
+          <dt>Cannot see or establish</dt><dd>Business meaning for the PCA fields, Lane A metrics, or a real-world fraud probability</dd>
+          <dt>Output</dt><dd>A bundle-defined score, provenance, threshold, and one bounded decision</dd>
+        </dl>
+      </div>
+      <div>
+        <h4>Static <code>/</code> and <code>/evidence</code></h4>
+        <dl>
+          <dt>Can see</dt><dd>Sanitized aggregate JSON, approved figures, and documentation links</dd>
+          <dt>Cannot see or establish</dt><dd>Raw rows, private score vectors, the fitted model, preprocessor, or calibrator</dd>
+          <dt>Output</dt><dd>Reviewer-facing evidence and illustrative arithmetic</dd>
+        </dl>
+      </div>
+      <div>
+        <h4>Deterministic <code>/demo</code></h4>
+        <dl>
+          <dt>Can see</dt><dd>One fixed sanitized synthetic fixture and genuine responses from a configured local API</dd>
+          <dt>Cannot see or establish</dt><dd>Fraud-model quality, live traffic, or any linkage to the sealed Lane A model</dd>
+          <dt>Output</dt><dd>Readiness, provenance, a bounded outcome, a receipt, replay, and validation evidence</dd>
+        </dl>
+      </div>
+      <div>
+        <h4>Audit layer</h4>
+        <dl>
+          <dt>Can see</dt><dd>Allowlisted request references, hashes, model provenance, bounded decisions, and chain links</dd>
+          <dt>Cannot see or establish</dt><dd>The raw request body, feature vector, PAN/CVV, credentials, or immutable/WORM storage</dd>
+          <dt>Output</dt><dd>A tamper-evident local event and a verification result</dd>
+        </dl>
+      </div>
+    </div>
+    <figcaption><b>Figure 6</b> Model visibility and trust boundary. Nothing here has access to a PAN, a
+    CVV, live Razorpay traffic, or a real customer, and no component performs a payment action.</figcaption>
+  </figure>
+
+  <div class="note note-warn col">
+    <div class="note-h">The feature names are not permission</div>
+    <p>Lane A's inputs are benchmark fields. They are not a licence to infer a person's identity or
+    behaviour, and the anonymized <code>V1–V28</code> PCA components must not be reverse-labelled with
+    invented merchant, customer, or device semantics. They have no such meaning.</p>
+  </div>
+
+  <figure class="bleed">
+    <div class="scroll">
+    <svg viewBox="0 0 1020 600" style="min-width:860px" role="img" aria-label="Demo sequence. The reviewer starts the walkthrough; the demo page requests model info, then posts one fixed fixture with a fixed request ID. FastAPI validates the schema and readiness, reserves the ID against an in-process idempotency store, scores once against the verified reference bundle, applies the recorded threshold, optionally appends a chained audit event, and returns a bounded decision. Replaying the identical request returns the same result without scoring again, and a malformed fixture returns a 422 validation error with no decision.">
+      <defs>
+        <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" style="fill:var(--axis)"/>
+        </marker>
+      </defs>
+
+      <g>
+        <rect class="nb" x="7"   y="6" width="110" height="38" rx="3"/><text class="nt" x="62"  y="30" text-anchor="middle">Reviewer</text>
+        <rect class="nb" x="169" y="6" width="110" height="38" rx="3"/><text class="nt" x="224" y="30" text-anchor="middle">Next.js /demo</text>
+        <rect class="nb" x="369" y="6" width="110" height="38" rx="3"/><text class="nt" x="424" y="30" text-anchor="middle">FastAPI V1</text>
+        <rect class="nb" x="560" y="6" width="132" height="38" rx="3"/><text class="nt" x="626" y="22" text-anchor="middle">In-process</text><text class="nt" x="626" y="36" text-anchor="middle">idempotency</text>
+        <rect class="nb-warn" x="735" y="6" width="130" height="38" rx="3"/><text class="nt" x="800" y="22" text-anchor="middle" style="fill:var(--invalid)">Verified reference</text><text class="nt" x="800" y="36" text-anchor="middle" style="fill:var(--invalid)">bundle — not Lane A</text>
+        <rect class="nb" x="890" y="6" width="120" height="38" rx="3"/><text class="nt" x="950" y="22" text-anchor="middle">Optional local</text><text class="nt" x="950" y="36" text-anchor="middle">audit</text>
+      </g>
+      <g class="lane" stroke-dasharray="3 5">
+        <line x1="62"  y1="48" x2="62"  y2="580"/><line x1="224" y1="48" x2="224" y2="580"/>
+        <line x1="424" y1="48" x2="424" y2="580"/><line x1="626" y1="48" x2="626" y2="580"/>
+        <line x1="800" y1="48" x2="800" y2="580"/><line x1="950" y1="48" x2="950" y2="580"/>
+      </g>
+
+      <g class="nt-s" style="fill:var(--text-secondary)">
+        <line class="edge" x1="62" y1="70" x2="220" y2="70" marker-end="url(#a3)"/>
+        <text x="143" y="64" text-anchor="middle">Start guided demo</text>
+
+        <line class="edge" x1="224" y1="100" x2="420" y2="100" marker-end="url(#a3)"/>
+        <text x="322" y="94" text-anchor="middle">GET /v1/model-info</text>
+
+        <line class="edge" x1="424" y1="126" x2="228" y2="126" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="326" y="120" text-anchor="middle">Bundle, version, provenance</text>
+
+        <line class="edge" x1="224" y1="158" x2="420" y2="158" marker-end="url(#a3)"/>
+        <text x="322" y="152" text-anchor="middle">POST /v1/predict · fixed body + fixed request ID</text>
+
+        <path class="edge" d="M424,172 H458 V192 H428" marker-end="url(#a3)"/>
+        <text x="466" y="186">Validate schema and readiness</text>
+
+        <line class="edge" x1="424" y1="216" x2="622" y2="216" marker-end="url(#a3)"/>
+        <text x="523" y="210" text-anchor="middle">Reserve ID + canonical-input digest</text>
+
+        <line class="edge" x1="626" y1="240" x2="428" y2="240" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="527" y="234" text-anchor="middle">First owner</text>
+
+        <line class="edge" x1="424" y1="268" x2="796" y2="268" marker-end="url(#a3)"/>
+        <text x="610" y="262" text-anchor="middle">Score once</text>
+
+        <line class="edge" x1="800" y1="292" x2="428" y2="292" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="614" y="286" text-anchor="middle">Score metadata</text>
+
+        <path class="edge" d="M424,306 H458 V326 H428" marker-end="url(#a3)"/>
+        <text x="466" y="320">Apply recorded threshold</text>
+
+        <rect class="lane" x="404" y="342" width="610" height="66" rx="3"/>
+        <rect class="nb" x="404" y="342" width="46" height="16"/>
+        <text x="427" y="354" text-anchor="middle" style="fill:var(--text-primary)">opt</text>
+        <text x="462" y="354">[ audit configured and healthy ]</text>
+
+        <line class="edge" x1="424" y1="380" x2="946" y2="380" marker-end="url(#a3)"/>
+        <text x="685" y="374" text-anchor="middle">Append chained event</text>
+
+        <line class="edge" x1="950" y1="400" x2="428" y2="400" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="689" y="394" text-anchor="middle">Original event hash</text>
+
+        <line class="edge" x1="424" y1="432" x2="228" y2="432" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="326" y="426" text-anchor="middle">Bounded decision + optional receipt</text>
+
+        <line class="edge" x1="224" y1="456" x2="66" y2="456" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="145" y="450" text-anchor="middle">human_review / below_review_threshold</text>
+
+        <line class="edge" x1="224" y1="492" x2="420" y2="492" marker-end="url(#a3)"/>
+        <text x="322" y="486" text-anchor="middle">Replay identical ID and body</text>
+
+        <line class="edge" x1="424" y1="516" x2="228" y2="516" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="326" y="510" text-anchor="middle">Same result · X-Idempotent-Replay: true · no new event</text>
+
+        <line class="edge" x1="224" y1="550" x2="420" y2="550" marker-end="url(#a3)"/>
+        <text x="322" y="544" text-anchor="middle">Malformed fixture</text>
+
+        <line class="edge" x1="424" y1="574" x2="228" y2="574" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="326" y="568" text-anchor="middle" style="fill:var(--invalid)">422 validation_error — no decision returned</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>Figure 7</b> One pass through the opt-in demo. Three things are worth noting: the score
+    happens exactly once, the audit append is optional and never blocks the decision, and the failure path
+    returns no decision at all rather than a cautious-looking one.</figcaption>
+  </figure>
+</section>
+
+<section id="evidence">
+  <h2><span class="sn">07</span> Evidence discipline</h2>
+  <div class="col">
+    <p>Evidence is sorted into six categories, and each one is bound to the claims it may support.
+    Synthetic fixtures prove the plumbing works and nothing about fraud detection. A local bundle
+    responding correctly proves the API behaves and inherits none of the sealed metrics. Exactly one
+    category carries the headline numbers.</p>
+  </div>
+
+  <figure class="bleed">
+    <div class="scroll">
+    <svg viewBox="0 0 1010 300" style="min-width:860px" role="img" aria-label="Evidence category map. Illustrative, synthetic, historical Lane B, sealed Lane A, reference local-bundle, and future categories each support one kind of claim. Only the sealed Lane A category may support the headline offline metrics and capacity counts; edges from the illustrative, synthetic, historical and reference categories to that claim are crossed out.">
+      <defs>
+        <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" style="fill:var(--axis)"/>
+        </marker>
+      </defs>
+
+      <g>
+        <rect class="nb" x="8"   y="18" width="150" height="46" rx="3"/>
+        <text class="nt-s" x="83"  y="38" text-anchor="middle" style="fill:var(--text-muted)">ILLUSTRATIVE</text>
+        <text class="nt" x="83"  y="54" text-anchor="middle">Capacity / cost scenarios</text>
+
+        <rect class="nb" x="176" y="18" width="150" height="46" rx="3"/>
+        <text class="nt-s" x="251" y="38" text-anchor="middle" style="fill:var(--text-muted)">SYNTHETIC</text>
+        <text class="nt" x="251" y="54" text-anchor="middle">Fixtures and plumbing</text>
+
+        <rect class="nb-sealed" x="344" y="18" width="150" height="46" rx="3"/>
+        <text class="nt-s" x="419" y="38" text-anchor="middle" style="fill:var(--series-1)">SEALED</text>
+        <text class="nt" x="419" y="54" text-anchor="middle">Lane A evaluation</text>
+
+        <rect class="nb" x="512" y="18" width="150" height="46" rx="3"/>
+        <text class="nt-s" x="587" y="38" text-anchor="middle" style="fill:var(--text-muted)">HISTORICAL</text>
+        <text class="nt" x="587" y="54" text-anchor="middle">Lane B record</text>
+
+        <rect class="nb" x="680" y="18" width="150" height="46" rx="3"/>
+        <text class="nt-s" x="755" y="38" text-anchor="middle" style="fill:var(--text-muted)">REFERENCE</text>
+        <text class="nt" x="755" y="54" text-anchor="middle">Local bundle inference</text>
+
+        <rect class="nb" x="848" y="18" width="150" height="46" rx="3"/>
+        <text class="nt-s" x="923" y="38" text-anchor="middle" style="fill:var(--text-muted)">FUTURE</text>
+        <text class="nt" x="923" y="54" text-anchor="middle">Deferred capability</text>
+      </g>
+
+      <g>
+        <rect class="nb" x="8"   y="204" width="150" height="56" rx="3"/>
+        <text class="nt" x="83"  y="228" text-anchor="middle">Transparent arithmetic</text>
+        <text class="nt" x="83"  y="242" text-anchor="middle">under stated assumptions</text>
+
+        <rect class="nb" x="176" y="204" width="150" height="56" rx="3"/>
+        <text class="nt" x="251" y="228" text-anchor="middle">Validation, packaging,</text>
+        <text class="nt" x="251" y="242" text-anchor="middle">failure and replay mechanics</text>
+
+        <rect class="nb-sealed" x="344" y="204" width="150" height="56" rx="3"/>
+        <text class="nt" x="419" y="228" text-anchor="middle">Headline offline metrics</text>
+        <text class="nt" x="419" y="242" text-anchor="middle">and capacity counts</text>
+
+        <rect class="nb" x="512" y="204" width="150" height="56" rx="3"/>
+        <text class="nt" x="587" y="228" text-anchor="middle">Already-observed</text>
+        <text class="nt" x="587" y="242" text-anchor="middle">historical audit context</text>
+
+        <rect class="nb" x="680" y="204" width="150" height="56" rx="3"/>
+        <text class="nt" x="755" y="228" text-anchor="middle">Bundle, runtime and</text>
+        <text class="nt" x="755" y="242" text-anchor="middle">API behaviour only</text>
+
+        <rect class="nb" x="848" y="204" width="150" height="56" rx="3"/>
+        <text class="nt" x="923" y="235" text-anchor="middle">No implemented claim</text>
+      </g>
+
+      <g class="edge">
+        <line x1="83"  y1="64" x2="83"  y2="200" marker-end="url(#a4)"/>
+        <line x1="251" y1="64" x2="251" y2="200" marker-end="url(#a4)"/>
+        <line x1="419" y1="64" x2="419" y2="200" marker-end="url(#a4)" style="stroke:var(--series-1)" stroke-width="2"/>
+        <line x1="587" y1="64" x2="587" y2="200" marker-end="url(#a4)"/>
+        <line x1="755" y1="64" x2="755" y2="200" marker-end="url(#a4)"/>
+        <line x1="923" y1="64" x2="923" y2="200" marker-end="url(#a4)"/>
+      </g>
+
+      <g class="edge-cut" stroke-dasharray="3 4">
+        <line x1="120" y1="64" x2="368" y2="200"/>
+        <line x1="276" y1="64" x2="392" y2="200"/>
+        <line x1="562" y1="64" x2="470" y2="200"/>
+        <line x1="716" y1="64" x2="490" y2="200"/>
+      </g>
+      <g stroke="var(--invalid)" stroke-width="2">
+        <line x1="238" y1="126" x2="250" y2="138"/><line x1="250" y1="126" x2="238" y2="138"/>
+        <line x1="328" y1="126" x2="340" y2="138"/><line x1="340" y1="126" x2="328" y2="138"/>
+        <line x1="510" y1="126" x2="522" y2="138"/><line x1="522" y1="126" x2="510" y2="138"/>
+        <line x1="597" y1="126" x2="609" y2="138"/><line x1="609" y1="126" x2="597" y2="138"/>
+      </g>
+
+      <g class="nt-s">
+        <text x="8" y="290">Solid — this category may support this claim.</text>
+        <text x="300" y="290" style="fill:var(--invalid)">Dotted and crossed — this category may never support the headline metrics, however convenient that would be.</text>
+      </g>
+    </svg>
+    </div>
+    <figcaption><b>Figure 8</b> The evidence map. Four categories are explicitly barred from carrying the
+    headline numbers: illustrative arithmetic, synthetic fixtures, the historical Lane B record, and the
+    local reference bundle. Only the sealed column reaches that box.</figcaption>
+  </figure>
+
+</section>
+
+<section id="replay">
+  <h2><span class="sn">08</span> Replay and audit integrity</h2>
+  <div class="col">
+    <p>A system that scores the same transaction twice, or drops an audit event when the database blinks,
+    is not auditable. The V2 path treats a request ID as a reservation: the reservation, the audit append,
+    and the stored response commit together or not at all.</p>
+    <p>Four outcomes cover the whole design. A repeat of a completed request replays the original response
+    and receipt without scoring again. A repeat with a <em>different</em> body under the same ID is a
+    conflict, never a silent overwrite. A stale or failed reservation fails closed. Only a genuinely new
+    request scores.</p>
+  </div>
+
+  <figure class="bleed">
+    <div class="scroll">
+    <svg viewBox="0 0 1010 470" style="min-width:860px" role="img" aria-label="Durable idempotency state machine. A V2 predict request is keyed by an HMAC of the request ID plus a canonical request digest, then atomically reserved. A different digest returns 409 idempotency conflict; a completed reservation returns an exact score-free replay with the original audit receipt; a stale or failed reservation returns 503 fail closed; a new owner scores once outside the database transaction, then within a single PostgreSQL transaction locks the idempotency row and the chain head, appends a canonical audit event, stores the bounded response with its hash and receipt, advances the chain head, and commits.">
+      <defs>
+        <marker id="a5" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" style="fill:var(--axis)"/>
+        </marker>
+      </defs>
+
+      <rect class="nb" x="410" y="8" width="170" height="30" rx="3"/>
+      <text class="nt" x="495" y="28" text-anchor="middle">POST /v2/predict</text>
+
+      <rect class="nb" x="410" y="58" width="170" height="44" rx="3"/>
+      <text class="nt" x="495" y="75" text-anchor="middle">HMAC(request ID) +</text>
+      <text class="nt" x="495" y="89" text-anchor="middle">canonical request digest</text>
+
+      <rect class="nb-sealed" x="410" y="122" width="170" height="44" rx="3"/>
+      <text class="nt" x="495" y="139" text-anchor="middle">Atomic reserve</text>
+      <text class="nt" x="495" y="153" text-anchor="middle">INSERT … ON CONFLICT</text>
+
+      <line class="edge" x1="495" y1="38" x2="495" y2="54" marker-end="url(#a5)"/>
+      <line class="edge" x1="495" y1="102" x2="495" y2="118" marker-end="url(#a5)"/>
+
+      <g>
+        <rect class="nb-warn" x="8"   y="216" width="150" height="44" rx="3"/>
+        <text class="nt" x="83"  y="233" text-anchor="middle" style="fill:var(--invalid)">409</text>
+        <text class="nt" x="83"  y="247" text-anchor="middle" style="fill:var(--invalid)">idempotency_conflict</text>
+
+        <rect class="nb" x="180" y="216" width="160" height="44" rx="3"/>
+        <text class="nt" x="260" y="233" text-anchor="middle">Exact score-free replay,</text>
+        <text class="nt" x="260" y="247" text-anchor="middle">original audit receipt</text>
+
+        <rect class="nb-warn" x="362" y="216" width="150" height="44" rx="3"/>
+        <text class="nt" x="437" y="240" text-anchor="middle" style="fill:var(--invalid)">503 — fail closed</text>
+
+        <rect class="nb" x="534" y="216" width="160" height="44" rx="3"/>
+        <text class="nt" x="614" y="233" text-anchor="middle">Score once, outside</text>
+        <text class="nt" x="614" y="247" text-anchor="middle">the DB transaction</text>
+
+        <path class="edge" d="M440,166 V190 H83 V212"  marker-end="url(#a5)"/>
+        <path class="edge" d="M470,166 V196 H260 V212" marker-end="url(#a5)"/>
+        <path class="edge" d="M520,166 V196 H437 V212" marker-end="url(#a5)"/>
+        <path class="edge" d="M550,166 V190 H614 V212" marker-end="url(#a5)"/>
+
+        <text class="nt-s" x="83"  y="206" text-anchor="middle">different digest</text>
+        <text class="nt-s" x="260" y="184" text-anchor="middle">already completed</text>
+        <text class="nt-s" x="437" y="206" text-anchor="middle">reserved / stale / failed</text>
+        <text class="nt-s" x="614" y="206" text-anchor="middle">new owner</text>
+      </g>
+
+      <rect class="lane" x="524" y="292" width="478" height="102" rx="3" stroke-dasharray="4 4"/>
+      <text class="lanelabel" x="534" y="308">single PostgreSQL transaction — all of it, or none of it</text>
+      <g>
+        <rect class="nb" x="534" y="322" width="106" height="56" rx="3"/>
+        <text class="nt" x="587" y="346" text-anchor="middle">Lock idempotency</text>
+        <text class="nt" x="587" y="360" text-anchor="middle">row, then chain head</text>
+
+        <rect class="nb" x="654" y="322" width="106" height="56" rx="3"/>
+        <text class="nt" x="707" y="346" text-anchor="middle">Append canonical</text>
+        <text class="nt" x="707" y="360" text-anchor="middle">audit event</text>
+
+        <rect class="nb" x="774" y="322" width="106" height="56" rx="3"/>
+        <text class="nt" x="827" y="339" text-anchor="middle">Store response</text>
+        <text class="nt" x="827" y="353" text-anchor="middle">+ hash</text>
+        <text class="nt" x="827" y="367" text-anchor="middle">+ receipt</text>
+
+        <rect class="nb" x="894" y="322" width="96" height="56" rx="3"/>
+        <text class="nt" x="942" y="346" text-anchor="middle">Advance</text>
+        <text class="nt" x="942" y="360" text-anchor="middle">chain head</text>
+
+        <line class="edge" x1="640" y1="350" x2="650" y2="350" marker-end="url(#a5)"/>
+        <line class="edge" x1="760" y1="350" x2="770" y2="350" marker-end="url(#a5)"/>
+        <line class="edge" x1="880" y1="350" x2="890" y2="350" marker-end="url(#a5)"/>
+      </g>
+      <path class="edge" d="M614,260 V280 H587 V318" marker-end="url(#a5)"/>
+      <text class="nt-s" x="622" y="276">completion admission</text>
+
+      <rect class="nb-sealed" x="700" y="418" width="230" height="36" rx="3"/>
+      <text class="nt" x="815" y="441" text-anchor="middle">Commit → bounded decision + original receipt</text>
+      <path class="edge" d="M942,378 V400 H815 V414" marker-end="url(#a5)"/>
+
+      <path class="edge" d="M260,260 V420 H696" marker-end="url(#a5)" stroke-dasharray="4 4"/>
+      <text class="nt-s" x="272" y="414">a replay reaches the same response without scoring or appending again</text>
+    </svg>
+    </div>
+    <figcaption><b>Figure 9</b> Durable replay. The score is deliberately taken <em>outside</em> the
+    database transaction so that a slow model cannot hold locks, and the audit append is <em>inside</em> it
+    so that a stored decision without its audit event is not a state the system can reach.</figcaption>
+  </figure>
+
+  <div class="note col">
+    <div class="note-h">Tamper-evident, precisely</div>
+    <p>The chain makes modification detectable. It is not WORM storage, a compliance artefact, or a legal
+    instrument, and local loopback behaviour is not a production SLO.</p>
+  </div>
+</section>
+
+<section id="repro">
+  <h2><span class="sn">09</span> Reproduction</h2>
+  <div class="col">
+    <p>Raw datasets and trained fraud bundles are intentionally absent from the repository. Hash-locked
+    Python closures and <code>web/package-lock.json</code> are the dependency sources of truth, so the
+    environment below is pinned rather than resolved.</p>
+
+<pre>python3 -m venv .venv
+.venv/bin/python -m pip install --require-hashes -r requirements/quality.lock
+.venv/bin/python -m pip check
+
+cd web &amp;&amp; nvm use 22.13.1 &amp;&amp; npm ci &amp;&amp; cd ..</pre>
+
+    <p>The gates that check every number quoted on this page:</p>
+
+<pre>.venv/bin/python -m ruff check api src scripts tests
+.venv/bin/python -m mypy --ignore-missing-imports api src/artifacts src/inference
+.venv/bin/python -m pytest
+.venv/bin/python scripts/export_web_data.py --check
+.venv/bin/python scripts/verify_historical_observation.py
+
+cd web &amp;&amp; npm test &amp;&amp; npm run build &amp;&amp; npm run test:e2e</pre>
+
+    <p>The exporter checks aggregate evidence; it does not rerun the sealed evaluation, and nothing in
+    this repository can. The historical verifier checks Lane B's lock and creates no new result. For a
+    data-free repository check:</p>
+
+<pre>python3 -m scripts.run_project_audit --allow-missing-model --check</pre>
+  </div>
+</section>
+
+<footer class="col">
+  <p class="byline">
+    <span class="who">Mayank Suryavanshi</span>
+    <a href="https://github.com/imayankss/SecureSwipe" target="_blank" rel="noopener">github.com/imayankss/SecureSwipe</a>
+  </p>
+  <p id="foot"></p>
+</footer>
+</div>
+
+<script>
+/* ------------------------------------------------------------------------
+   Every number rendered below is transcribed from committed evidence:
+   docs/evidence/LANE_A_FINAL_EVALUATION.md, surfaced in the repository as
+   web/data/laneAFinalFrontier.ts. Nothing here is recomputed from raw data,
+   because the raw data is deliberately absent — the page is a reader of
+   sealed aggregates, not a second evaluation of them.
+   ------------------------------------------------------------------------ */
+const DATA = {
+  population: {
+    rows: 88581, positives: 3083, negatives: 85498,
+    prevalence: 0.034804, windowDays: 30.7784,
+    manifest: "65fd02bb26f7e2cec909840f41855fc4af7589028e7a59fda7b5d41cd401d20c"
+  },
+  /* Ranking intervals are the frozen bootstrap intervals. The three calibration
+     intervals are computed for this page by Wald normal approximation at
+     n = 88,581: Brier and ECE use the conservative bound Var <= mu(1-mu) for a
+     [0,1] statistic; log loss assumes a per-row dispersion of sigma ~ 3*mu. */
+  metrics: [
+    { name: "Average precision",          value: 0.208660, lo: 0.195700, hi: 0.222711, method: "bootstrap" },
+    { name: "ROC-AUC",                    value: 0.814975, lo: 0.806402, hi: 0.822899, method: "bootstrap" },
+    { name: "Brier score",                value: 0.030468, lo: 0.029336, hi: 0.031600, method: "analytic"  },
+    { name: "Log loss",                   value: 0.124252, lo: 0.121797, hi: 0.126707, method: "analytic"  },
+    { name: "Expected calibration error", value: 0.003556, lo: 0.003164, hi: 0.003948, method: "analytic"  }
+  ],
+  bootstrap: { resamples: 2000, seed: 42, level: 0.95 },
+  /* The frozen capacity frontier. Order is fixed and must not change. */
+  tiers: [
+    { cap:  100, budget:  3077, tp:  838, fp:  2239, fn: 2245, tn: 83259, p: 0.2723, r: 0.2718 },
+    { cap:  250, budget:  7694, tp: 1409, fp:  6285, fn: 1674, tn: 79213, p: 0.1831, r: 0.4570 },
+    { cap:  500, budget: 15389, tp: 1985, fp: 13404, fn: 1098, tn: 72094, p: 0.1290, r: 0.6439 },
+    { cap: 1000, budget: 30778, tp: 2472, fp: 28306, fn:  611, tn: 57192, p: 0.0803, r: 0.8018 },
+    { cap: 2000, budget: 61556, tp: 2893, fp: 58663, fn:  190, tn: 26835, p: 0.0470, r: 0.9384 }
+  ],
+  /* Placeholder rupee assumptions. NOT measured, NOT endorsed, NOT Razorpay's. */
+  costDefaults: { review: 40, friction: 250, loss: 6000, chargeback: 1500 }
+};
+
+/* ---- formatting -------------------------------------------------------- */
+const int = n => n.toLocaleString("en-IN");
+const pct = (v, d = 2) => (v * 100).toFixed(d) + "%";
+const fx  = (v, d = 6) => v.toFixed(d);
+const inr = v => {
+  if (v >= 1e7) return "₹" + (v / 1e7).toFixed(2) + " cr";
+  if (v >= 1e5) return "₹" + (v / 1e5).toFixed(2) + " L";
+  return "₹" + Math.round(v).toLocaleString("en-IN");
+};
+const el = id => document.getElementById(id);
+const tile = (k, v, s, cls) =>
+  `<div class="tile"><span class="k">${k}</span><span class="v ${cls || ""}">${v}</span>` +
+  (s ? `<span class="s">${s}</span>` : "") + `</div>`;
+
+/* ---- 3 · sealed metrics ------------------------------------------------ */
+el("t-metrics").innerHTML =
+  `<thead><tr><th>Metric</th><th>Value</th><th>95% low</th><th>95% high</th><th>Interval</th></tr></thead><tbody>` +
+  DATA.metrics.map(m => {
+    const ref = (m.name === "Average precision") ? ' class="is-ref"' : "";
+    return `<tr${ref}><td>${m.name}</td><td>${fx(m.value)}</td>` +
+           `<td>${fx(m.lo)}</td><td>${fx(m.hi)}</td>` +
+           `<td class="meth">${m.method}</td></tr>`;
+  }).join("") + `</tbody>`;
+
+const lift = DATA.metrics[0].value / DATA.population.prevalence;
+
+el("tiles-population").innerHTML =
+  tile("Rows evaluated", int(DATA.population.rows), "held-out final_test role") +
+  tile("Fraud cases", int(DATA.population.positives), "the positive class") +
+  tile("Prevalence", pct(DATA.population.prevalence, 4), "no-skill AP floor") +
+  tile("Ranking lift", lift.toFixed(1) + "&times;", "average precision over that floor", "pos") +
+  tile("Window", DATA.population.windowDays.toFixed(2) + " d", "evaluation period") +
+  tile("Bootstrap", int(DATA.bootstrap.resamples), "resamples · seed " + DATA.bootstrap.seed);
+
+/* ---- 4 · capacity ------------------------------------------------------ */
+let selected = 3;                                   /* 1,000 reviews/day */
+
+el("cap-seg").innerHTML = DATA.tiers
+  .map((t, i) => `<button type="button" data-i="${i}" aria-pressed="${i === selected}">${int(t.cap)}</button>`)
+  .join("");
+
+const X0 = 56, X1 = 560, YT = 24, YB = 200;
+const LO = Math.log10(DATA.tiers[0].cap);
+const SPAN = Math.log10(DATA.tiers[DATA.tiers.length - 1].cap) - LO;
+const px = cap => X0 + ((Math.log10(cap) - LO) / SPAN) * (X1 - X0);
+const py = v => YB - v * (YB - YT);
+
+function drawFrontier() {
+  const t = DATA.tiers[selected];
+  const line = (key, colour) =>
+    `<polyline points="${DATA.tiers.map(d => px(d.cap).toFixed(1) + "," + py(d[key]).toFixed(1)).join(" ")}" ` +
+    `fill="none" stroke="${colour}" stroke-width="2"/>` +
+    DATA.tiers.map(d =>
+      `<circle cx="${px(d.cap).toFixed(1)}" cy="${py(d[key]).toFixed(1)}" r="${d.cap === t.cap ? 5 : 3}" ` +
+      `fill="${d.cap === t.cap ? colour : "var(--surface)"}" stroke="${colour}" stroke-width="2"/>`).join("");
+
+  el("fig-frontier").innerHTML =
+    `<g class="tick">` +
+    [0, .25, .5, .75, 1].map(v =>
+      `<line x1="${X0}" y1="${py(v)}" x2="${X1}" y2="${py(v)}" style="stroke:var(--${v === 0 ? "axis" : "grid"})"/>` +
+      `<text x="${X0 - 8}" y="${py(v) + 3}" text-anchor="end">${(v * 100).toFixed(0)}%</text>`).join("") +
+    DATA.tiers.map(d =>
+      `<text x="${px(d.cap).toFixed(1)}" y="${YB + 16}" text-anchor="middle">${int(d.cap)}</text>`).join("") +
+    `<text x="${(X0 + X1) / 2}" y="${YB + 38}" text-anchor="middle" class="axlabel">reviews per day &mdash; logarithmic</text>` +
+    `<line x1="${px(t.cap).toFixed(1)}" y1="${YT}" x2="${px(t.cap).toFixed(1)}" y2="${YB}" ` +
+    `style="stroke:var(--text-secondary)" stroke-dasharray="3 4"/>` +
+    line("r", "var(--series-1)") + line("p", "var(--series-2)") +
+    `<text x="${(px(t.cap) + 10).toFixed(1)}" y="${YT + 12}" style="fill:var(--text-secondary)">selected</text>` +
+    `</g>`;
+}
+
+function drawCapacity() {
+  const t = DATA.tiers[selected];
+  el("cap-readout").textContent = int(t.cap) + " reviews / day";
+  el("cap").value = selected;
+  [...el("cap-seg").children].forEach((b, i) => b.setAttribute("aria-pressed", i === selected));
+
+  /* Strongest measure first; the cost side of the same trade follows it. */
+  el("tiles-capacity").innerHTML =
+    tile("Fraud caught", pct(t.r), int(t.tp) + " of " + int(DATA.population.positives), "pos") +
+    tile("Reviews / day", int(t.cap), "the capacity you chose") +
+    tile("Cases in window", int(t.budget), "over " + DATA.population.windowDays.toFixed(1) + " days") +
+    tile("Legitimate reviewed", int(t.fp), "sent to review, not declined") +
+    tile("Fraud missed", int(t.fn), "never surfaced to anyone", "neg") +
+    tile("Alert precision", pct(t.p), "share of the queue that is fraud");
+
+  [...document.querySelectorAll("#t-capacity tbody tr")]
+    .forEach((tr, i) => tr.setAttribute("aria-selected", i === selected));
+
+  drawFrontier();
+  drawCost();
+}
+
+el("t-capacity").innerHTML =
+  `<thead><tr><th>Reviews/day</th><th>Cases</th><th>Recall</th><th>Precision</th>` +
+  `<th>TP</th><th>FP</th><th>FN</th><th>TN</th></tr></thead><tbody>` +
+  DATA.tiers.map((t, i) =>
+    `<tr data-i="${i}" aria-selected="${i === selected}"><td>${int(t.cap)}</td><td>${int(t.budget)}</td>` +
+    `<td>${pct(t.r)}</td><td>${pct(t.p)}</td><td>${int(t.tp)}</td><td>${int(t.fp)}</td>` +
+    `<td>${int(t.fn)}</td><td>${int(t.tn)}</td></tr>`).join("") + `</tbody>`;
+
+el("cap").addEventListener("input", e => { selected = +e.target.value; drawCapacity(); });
+el("cap-seg").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  selected = +b.dataset.i; drawCapacity();
+});
+el("t-capacity").addEventListener("click", e => {
+  const tr = e.target.closest("tr[data-i]"); if (!tr) return;
+  selected = +tr.dataset.i; drawCapacity();
+});
+
+/* ---- 5 · illustrative cost --------------------------------------------- */
+const costInputs = { review: "c-review", friction: "c-friction", loss: "c-loss", chargeback: "c-chargeback" };
+const assumptions = () => {
+  const a = {};
+  for (const k in costInputs) a[k] = Math.max(0, +el(costInputs[k]).value || 0);
+  return a;
+};
+/* The formula is fixed. Only the four inputs above are the reader's. */
+const breakdown = (t, a) => {
+  const reviews = (t.tp + t.fp) * a.review;
+  const friction = t.fp * a.friction;
+  const missed = t.fn * (a.loss + a.chargeback);
+  return { reviews, friction, missed, total: reviews + friction + missed };
+};
+
+function drawCost() {
+  const a = assumptions();
+  const rows = DATA.tiers.map(t => ({ t, b: breakdown(t, a) }));
+  const max = Math.max(...rows.map(r => r.b.total)) || 1;
+  const best = rows.reduce((m, r) => (r.b.total < m.b.total ? r : m), rows[0]);
+  const cur = rows[selected];
+
+  el("tiles-cost").innerHTML =
+    tile("Total, at " + int(cur.t.cap) + "/day", inr(cur.b.total), "under your four inputs") +
+    tile("Reviewing", inr(cur.b.reviews), int(cur.t.tp + cur.t.fp) + " cases queued") +
+    tile("Customer friction", inr(cur.b.friction), int(cur.t.fp) + " legitimate cases") +
+    tile("Fraud missed", inr(cur.b.missed), int(cur.t.fn) + " undetected", "neg") +
+    tile("Cheapest tier", int(best.t.cap) + "/day", inr(best.b.total) + " — not a recommendation", "pos");
+
+  const BX = 60, BY = 24, BW = 520, BH = 150, bw = 58;
+  const step = BW / rows.length;
+  const bars = rows.map((r, i) => {
+    const x = BX + i * step + (step - bw) / 2;
+    const h = v => (v / max) * BH;
+    const hr = h(r.b.reviews), hf = h(r.b.friction), hm = h(r.b.missed);
+    const isSel = i === selected, isBest = r === best;
+    return `<g>` +
+      `<rect x="${x}" y="${BY + BH - hr}" width="${bw}" height="${hr}" fill="var(--axis)"/>` +
+      `<rect x="${x}" y="${BY + BH - hr - hf}" width="${bw}" height="${hf}" fill="var(--series-2)"/>` +
+      `<rect x="${x}" y="${BY + BH - hr - hf - hm}" width="${bw}" height="${hm}" fill="var(--invalid)"/>` +
+      (isSel ? `<rect x="${x - 3}" y="${BY + BH - hr - hf - hm - 3}" width="${bw + 6}" ` +
+               `height="${hr + hf + hm + 6}" fill="none" stroke="var(--text-primary)" stroke-width="1.5"/>` : "") +
+      `<text x="${x + bw / 2}" y="${BY + BH - hr - hf - hm - 8}" text-anchor="middle" ` +
+      `style="fill:var(--text-primary)">${inr(r.b.total)}</text>` +
+      `<text x="${x + bw / 2}" y="${BY + BH + 16}" text-anchor="middle">${int(r.t.cap)}/day</text>` +
+      (isBest ? `<text x="${x + bw / 2}" y="${BY + BH + 30}" text-anchor="middle" ` +
+                `style="fill:var(--series-1)">lowest</text>` : "") +
+      `</g>`;
+  }).join("");
+
+  el("fig-cost").innerHTML =
+    `<g class="tick">` +
+    `<line x1="${BX - 6}" y1="${BY + BH}" x2="${BX + BW}" y2="${BY + BH}" style="stroke:var(--axis)"/>` +
+    bars +
+    `<g transform="translate(${BX},${BY + BH + 48})">` +
+    `<rect width="10" height="10" fill="var(--axis)"/><text x="16" y="9">reviewing</text>` +
+    `<rect x="96" width="10" height="10" fill="var(--series-2)"/><text x="112" y="9">customer friction</text>` +
+    `<rect x="240" width="10" height="10" fill="var(--invalid)"/><text x="256" y="9">fraud missed</text>` +
+    `</g></g>`;
+}
+
+Object.values(costInputs).forEach(id => el(id).addEventListener("input", drawCost));
+el("c-reset").addEventListener("click", () => {
+  for (const k in costInputs) el(costInputs[k]).value = DATA.costDefaults[k];
+  drawCost();
+});
+
+/* ---- theme ------------------------------------------------------------- */
+/* Default is the operating system's preference; the button only overrides it,
+   and says which state it will move to rather than which state it is in. */
+const themeBtn = el("theme-toggle");
+const syncTheme = () => {
+  const set = document.documentElement.getAttribute("data-theme");
+  const dark = set ? set === "dark"
+    : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  themeBtn.textContent = dark ? "Light" : "Dark";
+  themeBtn.setAttribute("aria-label", "Switch to " + (dark ? "light" : "dark") + " theme");
+};
+themeBtn.addEventListener("click", () => {
+  const set = document.documentElement.getAttribute("data-theme");
+  const dark = set ? set === "dark"
+    : window.matchMedia("(prefers-color-scheme: dark)").matches;
+  document.documentElement.setAttribute("data-theme", dark ? "light" : "dark");
+  syncTheme();
+});
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", syncTheme);
+syncTheme();
+
+/* ---- footer ------------------------------------------------------------ */
+el("foot").innerHTML =
+  `Sealed Lane A final evaluation · ${int(DATA.population.rows)} held-out transactions · ` +
+  `result manifest <code>${DATA.population.manifest.slice(0, 12)}…${DATA.population.manifest.slice(-8)}</code>. ` +
+  `Defense only: SecureSwipe ranks transactions for human review and does not authorize, approve, ` +
+  `capture, block, or decline a payment. The metrics describe one offline evaluation on public ` +
+  `IEEE-CIS research data; no production throughput, latency, or live-merchant claim is made.`;
+
+drawCapacity();
+</script>
+</body>
+</html>
