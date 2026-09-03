@@ -213,7 +213,7 @@ export function LaneACostExplorer({
             </div>
           ))}
         </dl>
-        <p className="mt-3 text-xs text-slate-400">
+        <p className="ss-prose mt-3 text-xs text-slate-400">
           At 1,000 reviews/day this model reaches{" "}
           <span className="font-medium text-slate-200">80.18% recall</span> at{" "}
           <span className="font-medium text-slate-200">8.03% alert precision</span> —
@@ -315,7 +315,7 @@ export function LaneACostExplorer({
         aria-live="polite"
         aria-atomic="true"
         aria-label="Illustrative cost scenario summary"
-        className="sr-only"
+        className="ss-prose sr-only"
       >
         {breakdown
           ? `Illustrative scenario at ${formatCount(tier.capacityPerDay)} reviews per day: ` +
@@ -480,7 +480,7 @@ export function LaneACostExplorer({
           declines, or steps up a payment.
         </footer>
       ) : (
-      <footer className="mt-6 space-y-2 break-words text-xs leading-relaxed text-slate-400">
+      <footer className="ss-prose mt-6 space-y-2 break-words text-xs leading-relaxed text-slate-400">
         <p>
           <span className="font-medium text-slate-300">Formula:</span> illustrative total
           = (TP + FP) × review cost + FP × legitimate-customer friction cost + FN ×

@@ -22,7 +22,7 @@ export function Hero() {
           <p className="mt-4 max-w-3xl text-xl font-medium text-teal-100">
             SecureSwipe fraud detection and transaction risk analytics
           </p>
-          <p className="mt-5 max-w-2xl text-base leading-7 text-slate-300">
+          <p className="ss-prose mt-5 max-w-2xl text-base leading-7 text-slate-300">
             Explore tracked validation and already-observed random-holdout summaries:
             model comparison, threshold trade-offs, PR-focused evaluation, and
             non-causal SHAP artifacts whose original output units remain unverified.

@@ -130,6 +130,37 @@ a.srclink code { color: var(--series-1); text-decoration: underline;
 a.srclink:hover code { text-decoration-color: var(--series-1); }
 .lede { font-size: 1.05rem; color: var(--text-secondary); }
 
+/* ---- justified prose ----------------------------------------------------
+   Justification is applied only to running prose inside the 40rem measure,
+   never to headings, tables, labels, or numeric cells. Automatic hyphenation
+   is required: without it, justifying a measure this narrow opens rivers of
+   whitespace between words. Below 620px the measure is too narrow for
+   justification to stay even, so it reverts to a ragged right edge. */
+.col p,
+.split > p,
+.note p,
+.lede,
+figcaption,
+.tcap {
+  text-align: justify;
+  text-justify: inter-word;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  hyphenate-limit-chars: 7 3 3;
+}
+@media (max-width: 620px) {
+  .col p,
+  .split > p,
+  .note p,
+  .lede,
+  figcaption,
+  .tcap {
+    text-align: left;
+    -webkit-hyphens: manual;
+    hyphens: manual;
+  }
+}
+
 /* Intro prose beside a vertical figure panel. Single column below 900px, where
    a 19rem sidebar would squeeze the measure below readability. */
 .split { display: grid; gap: 2rem 2.5rem; align-items: start; }

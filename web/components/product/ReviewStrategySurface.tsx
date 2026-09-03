@@ -33,7 +33,7 @@ export function ReviewStrategySurface() {
           >
             More coverage also means more review work.
           </h2>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-400">
+          <p className="ss-prose mt-4 max-w-2xl text-sm leading-6 text-slate-400">
             Pick a review capacity to see what it buys and what it costs. A false
             positive is a legitimate transaction sent to human review — it is not
             automatically declined. No tier is a default or a recommendation.

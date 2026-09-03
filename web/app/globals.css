@@ -159,6 +159,32 @@ td {
   text-wrap: pretty;
 }
 
+/* Justified running prose.
+
+   Applied deliberately rather than to every <p>: of 183 paragraphs in this
+   app, 131 are single-line labels and 30 wrap to exactly two lines, where
+   justification stretches the first line into visible rivers. Only genuine
+   multi-line prose carries .ss-prose.
+
+   Automatic hyphenation is part of the rule, not an extra: justified text
+   without it opens uneven word gaps. Below 640px the column is too narrow to
+   justify evenly, so the text returns to a ragged right edge. */
+.ss-prose {
+  text-align: justify;
+  text-justify: inter-word;
+  -webkit-hyphens: auto;
+  hyphens: auto;
+  hyphenate-limit-chars: 7 3 3;
+}
+
+@media (max-width: 640px) {
+  .ss-prose {
+    text-align: left;
+    -webkit-hyphens: manual;
+    hyphens: manual;
+  }
+}
+
 .ss-page-shell {
   width: 100%;
   max-width: var(--ss-shell);

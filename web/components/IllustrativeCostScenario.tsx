@@ -120,7 +120,7 @@ export function IllustrativeCostScenario() {
               </select>
             </label>
             <p
-              className="max-w-2xl text-xs leading-5 text-slate-400"
+              className="ss-prose max-w-2xl text-xs leading-5 text-slate-400"
               id="illustrative-currency-note"
             >
               All four editable assumptions use an illustrative INR basis. Fixed
@@ -234,7 +234,7 @@ export function IllustrativeCostScenario() {
               <p className="mt-2 font-mono text-xs text-teal-100">
                 {scenario.formula}
               </p>
-              <p className="mt-3">
+              <p className="ss-prose mt-3">
                 Display currency: {displayCurrency}. Arithmetic stays in its
                 canonical illustrative INR basis; the selector changes
                 display only and does not alter historical counts, thresholds,

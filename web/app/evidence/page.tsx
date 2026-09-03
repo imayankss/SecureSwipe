@@ -45,7 +45,7 @@ export default function EvidencePage() {
           <h1 className="mt-3 max-w-4xl text-4xl leading-[1.06] tracking-[-0.04em] sm:text-5xl">
             Scientific evidence and system boundaries
           </h1>
-          <p className="mt-5 max-w-[46rem] text-base leading-7 text-slate-300">
+          <p className="ss-prose mt-5 max-w-[46rem] text-base leading-7 text-slate-300">
             Inspect locked historical evaluation, local reference inference,
             synthetic plumbing and reliability evidence, illustrative scenarios,
             methodology, provenance, and limitations without merging their claims.

@@ -33,7 +33,7 @@ export default function DemoPage() {
               <h1 className="mt-2.5 max-w-3xl text-3xl leading-[1.08] tracking-[-0.04em] sm:text-4xl">
                 Local reference-model demonstration
               </h1>
-              <p className="mt-3.5 max-w-[46rem] text-sm leading-6 text-slate-300">
+              <p className="ss-prose mt-3.5 max-w-[46rem] text-sm leading-6 text-slate-300">
                 Run one fixed, sanitized synthetic request through the configured
                 reference API and inspect its bounded outcome, decision evidence,
                 audit receipt, replay behavior, and fail-closed validation.
