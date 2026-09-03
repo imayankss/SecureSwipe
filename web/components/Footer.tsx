@@ -1,5 +1,6 @@
 import { ShieldCheck } from "lucide-react";
 import { dashboardData } from "@/data/metrics";
+import { BuildProvenance } from "@/components/system/BuildProvenance";
 
 export function Footer() {
   return (
@@ -12,12 +13,15 @@ export function Footer() {
           </p>
           <p className="mt-3 leading-6">{dashboardData.project.disclaimer}</p>
         </div>
-        <a
-          className="ss-text-link"
-          href="/secureswipe-methodology.html"
-        >
-          Methodology ↗
-        </a>
+        <div className="flex flex-col gap-2 sm:items-end">
+          <a
+            className="ss-text-link"
+            href="/secureswipe-methodology.html"
+          >
+            Methodology ↗
+          </a>
+          <BuildProvenance repository={dashboardData.project.repository} />
+        </div>
       </div>
     </footer>
   );

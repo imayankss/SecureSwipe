@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1020 600" width="1020" height="600" role="img" aria-labelledby="t d">
+  <title id="t">Deterministic request, audit, and idempotent replay sequence</title>
+  <desc id="d">Demo sequence. The reviewer starts the walkthrough; the demo page requests model info, then posts one fixed fixture with a fixed request ID. FastAPI validates the schema and readiness, reserves the ID against an in-process idempotency store, scores once against the verified reference bundle, applies the recorded threshold, optionally appends a chained audit event, and returns a bounded decision. Replaying the identical request returns the same result without scoring again, and a malformed fixture returns a 422 validation error with no decision.</desc>
+  <style>
+    svg {
+      --surface:#fcfcfb; --surface-2:#f2f2ef; --surface-3:#e8e8e4;
+      --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#78776f;
+      --rule:#dcdcd6; --grid:#e6e6e0; --axis:#b4b4ac;
+      --series-1:#2a78d6; --series-2:#eb6834; --invalid:#d03b3b;
+      --series-1-soft:#2a78d61f;
+      --sans:"IBM Plex Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+      --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --surface:#1a1a19; --surface-2:#232322; --surface-3:#2d2d2b;
+        --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#94938a;
+        --rule:#35352f; --grid:#2b2b28; --axis:#55554e;
+        --series-1:#3987e5; --series-2:#d95926; --invalid:#d03b3b;
+        --series-1-soft:#3987e526;
+      }
+    }
+    .bg   { fill: var(--surface); }
+    .nb   { fill: var(--surface-2); stroke: var(--axis); }
+    .nb-sealed { fill: var(--series-1-soft); stroke: var(--series-1); }
+    .nb-warn   { fill: none; stroke: var(--invalid); }
+    .nt   { font-family: var(--sans); font-size: 11px; fill: var(--text-primary); }
+    .nt-s { font-family: var(--mono); font-size: 9.5px; fill: var(--text-muted); }
+    .edge { stroke: var(--axis); fill: none; }
+    .edge-cut { stroke: var(--invalid); fill: none; stroke-dasharray: 4 4; }
+    .lane { fill: none; stroke: var(--rule); }
+    .lanelabel { font-family: var(--mono); font-size: 9px; fill: var(--text-muted);
+      letter-spacing: .09em; text-transform: uppercase; }
+    .tick { font-family: var(--mono); font-size: 10px; fill: var(--text-muted); }
+    .axlabel { font-family: var(--mono); font-size: 10px; fill: var(--text-secondary);
+      letter-spacing: .06em; text-transform: uppercase; }
+  </style>
+  <rect class="bg" x="0" y="0" width="1020" height="600"/>
+
+      <defs>
+        <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" style="fill:var(--axis)"/>
+        </marker>
+      </defs>
+
+      <g>
+        <rect class="nb" x="7"   y="6" width="110" height="38" rx="3"/><text class="nt" x="62"  y="30" text-anchor="middle">Reviewer</text>
+        <rect class="nb" x="169" y="6" width="110" height="38" rx="3"/><text class="nt" x="224" y="30" text-anchor="middle">Next.js /demo</text>
+        <rect class="nb" x="369" y="6" width="110" height="38" rx="3"/><text class="nt" x="424" y="30" text-anchor="middle">FastAPI V1</text>
+        <rect class="nb" x="560" y="6" width="132" height="38" rx="3"/><text class="nt" x="626" y="22" text-anchor="middle">In-process</text><text class="nt" x="626" y="36" text-anchor="middle">idempotency</text>
+        <rect class="nb-warn" x="735" y="6" width="130" height="38" rx="3"/><text class="nt" x="800" y="22" text-anchor="middle" style="fill:var(--invalid)">Verified reference</text><text class="nt" x="800" y="36" text-anchor="middle" style="fill:var(--invalid)">bundle — not Lane A</text>
+        <rect class="nb" x="890" y="6" width="120" height="38" rx="3"/><text class="nt" x="950" y="22" text-anchor="middle">Optional local</text><text class="nt" x="950" y="36" text-anchor="middle">audit</text>
+      </g>
+      <g class="lane" stroke-dasharray="3 5">
+        <line x1="62"  y1="48" x2="62"  y2="580"/><line x1="224" y1="48" x2="224" y2="580"/>
+        <line x1="424" y1="48" x2="424" y2="580"/><line x1="626" y1="48" x2="626" y2="580"/>
+        <line x1="800" y1="48" x2="800" y2="580"/><line x1="950" y1="48" x2="950" y2="580"/>
+      </g>
+
+      <g class="nt-s" style="fill:var(--text-secondary)">
+        <line class="edge" x1="62" y1="70" x2="220" y2="70" marker-end="url(#a3)"/>
+        <text x="143" y="64" text-anchor="middle">Start guided demo</text>
+
+        <line class="edge" x1="224" y1="100" x2="420" y2="100" marker-end="url(#a3)"/>
+        <text x="322" y="94" text-anchor="middle">GET /v1/model-info</text>
+
+        <line class="edge" x1="424" y1="126" x2="228" y2="126" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="326" y="120" text-anchor="middle">Bundle, version, provenance</text>
+
+        <line class="edge" x1="224" y1="158" x2="420" y2="158" marker-end="url(#a3)"/>
+        <text x="322" y="152" text-anchor="middle">POST /v1/predict · fixed body + fixed request ID</text>
+
+        <path class="edge" d="M424,172 H458 V192 H428" marker-end="url(#a3)"/>
+        <text x="466" y="186">Validate schema and readiness</text>
+
+        <line class="edge" x1="424" y1="216" x2="622" y2="216" marker-end="url(#a3)"/>
+        <text x="523" y="210" text-anchor="middle">Reserve ID + canonical-input digest</text>
+
+        <line class="edge" x1="626" y1="240" x2="428" y2="240" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="527" y="234" text-anchor="middle">First owner</text>
+
+        <line class="edge" x1="424" y1="268" x2="796" y2="268" marker-end="url(#a3)"/>
+        <text x="610" y="262" text-anchor="middle">Score once</text>
+
+        <line class="edge" x1="800" y1="292" x2="428" y2="292" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="614" y="286" text-anchor="middle">Score metadata</text>
+
+        <path class="edge" d="M424,306 H458 V326 H428" marker-end="url(#a3)"/>
+        <text x="466" y="320">Apply recorded threshold</text>
+
+        <rect class="lane" x="404" y="342" width="610" height="66" rx="3"/>
+        <rect class="nb" x="404" y="342" width="46" height="16"/>
+        <text x="427" y="354" text-anchor="middle" style="fill:var(--text-primary)">opt</text>
+        <text x="462" y="354">[ audit configured and healthy ]</text>
+
+        <line class="edge" x1="424" y1="380" x2="946" y2="380" marker-end="url(#a3)"/>
+        <text x="685" y="374" text-anchor="middle">Append chained event</text>
+
+        <line class="edge" x1="950" y1="400" x2="428" y2="400" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="689" y="394" text-anchor="middle">Original event hash</text>
+
+        <line class="edge" x1="424" y1="432" x2="228" y2="432" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="326" y="426" text-anchor="middle">Bounded decision + optional receipt</text>
+
+        <line class="edge" x1="224" y1="456" x2="66" y2="456" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="145" y="450" text-anchor="middle">human_review / below_review_threshold</text>
+
+        <line class="edge" x1="224" y1="492" x2="420" y2="492" marker-end="url(#a3)"/>
+        <text x="322" y="486" text-anchor="middle">Replay identical ID and body</text>
+
+        <line class="edge" x1="424" y1="516" x2="228" y2="516" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="326" y="510" text-anchor="middle">Same result · X-Idempotent-Replay: true · no new event</text>
+
+        <line class="edge" x1="224" y1="550" x2="420" y2="550" marker-end="url(#a3)"/>
+        <text x="322" y="544" text-anchor="middle">Malformed fixture</text>
+
+        <line class="edge" x1="424" y1="574" x2="228" y2="574" marker-end="url(#a3)" stroke-dasharray="4 3"/>
+        <text x="326" y="568" text-anchor="middle" style="fill:var(--invalid)">422 validation_error — no decision returned</text>
+      </g>
+    </svg>

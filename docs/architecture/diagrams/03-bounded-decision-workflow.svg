@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1140 430" width="1140" height="430" role="img" aria-labelledby="t d">
+  <title id="t">Bounded decision workflow</title>
+  <desc id="d">A validated request is scored once by a verified bundle, ranked under a frozen review capacity, and routed by the recorded threshold to either below_review_threshold or human_review. Both outcomes receive a chained audit receipt. Only human_review is queued for a human reviewer, and payment authorization, decline, and capture always remain outside SecureSwipe. Below review threshold does not mean approved, safe, or legitimate.</desc>
+  <style>
+    svg {
+      --surface:#fcfcfb; --surface-2:#f2f2ef; --surface-3:#e8e8e4;
+      --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#78776f;
+      --rule:#dcdcd6; --grid:#e6e6e0; --axis:#b4b4ac;
+      --series-1:#2a78d6; --series-2:#eb6834; --invalid:#d03b3b;
+      --series-1-soft:#2a78d61f;
+      --sans:"IBM Plex Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+      --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --surface:#1a1a19; --surface-2:#232322; --surface-3:#2d2d2b;
+        --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#94938a;
+        --rule:#35352f; --grid:#2b2b28; --axis:#55554e;
+        --series-1:#3987e5; --series-2:#d95926; --invalid:#d03b3b;
+        --series-1-soft:#3987e526;
+      }
+    }
+    .bg   { fill: var(--surface); }
+    .nb   { fill: var(--surface-2); stroke: var(--axis); }
+    .nb-sealed { fill: var(--series-1-soft); stroke: var(--series-1); }
+    .nb-warn   { fill: none; stroke: var(--invalid); }
+    .nt   { font-family: var(--sans); font-size: 11px; fill: var(--text-primary); }
+    .nt-s { font-family: var(--mono); font-size: 9.5px; fill: var(--text-muted); }
+    .nt-w { font-family: var(--mono); font-size: 9.5px; fill: var(--invalid); }
+    .nt-h { font-family: var(--sans); font-size: 11.5px; font-weight: 600; fill: var(--invalid); }
+    .edge { stroke: var(--axis); fill: none; }
+    .edge-cut { stroke: var(--invalid); fill: none; stroke-dasharray: 4 4; }
+    .edge-rep { stroke: var(--series-1); fill: none; stroke-dasharray: 4 3; }
+    .lane { fill: none; stroke: var(--rule); }
+    .lanelabel { font-family: var(--mono); font-size: 9px; fill: var(--text-muted);
+      letter-spacing: .09em; text-transform: uppercase; }
+  </style>
+  <defs>
+    <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><polygon points="0,1 9,5 0,9" style="fill:var(--axis)"/></marker>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><polygon points="0,1 9,5 0,9" style="fill:var(--invalid)"/></marker>
+    <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><polygon points="0,1 9,5 0,9" style="fill:var(--series-1)"/></marker>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1140" height="430"/>
+  <rect class="lane" x="30" y="20" width="1080" height="225" rx="3"/>
+  <text class="lanelabel" text-anchor="middle" transform="translate(19,132) rotate(-90)">bounded decision · inside secureswipe</text>
+  <rect class="lane" x="30" y="262" width="1080" height="138" rx="3"/>
+  <text class="lanelabel" text-anchor="middle" transform="translate(19,331) rotate(-90)">outside secureswipe</text>
+  <rect class="nb" x="48" y="110" width="136" height="44" rx="3"/>
+  <text class="nt" x="116.0" y="129" text-anchor="middle">Validated request</text>
+  <text class="nt-s" x="116.0" y="145" text-anchor="middle">strict schema</text>
+  <rect class="nb" x="204" y="110" width="132" height="44" rx="3"/>
+  <text class="nt" x="270.0" y="129" text-anchor="middle">Score once</text>
+  <text class="nt-s" x="270.0" y="145" text-anchor="middle">0 LLM tokens</text>
+  <rect class="nb" x="356" y="110" width="152" height="44" rx="3"/>
+  <text class="nt" x="432.0" y="129" text-anchor="middle">Rank under capacity</text>
+  <text class="nt-s" x="432.0" y="145" text-anchor="middle">top-B · B frozen</text>
+  <rect class="nb" x="528" y="110" width="160" height="44" rx="3"/>
+  <text class="nt" x="608.0" y="129" text-anchor="middle">Apply threshold</text>
+  <text class="nt-s" x="608.0" y="145" text-anchor="middle">bundle provenance</text>
+  <rect class="nb" x="716" y="62" width="176" height="44" rx="3"/>
+  <text class="nt" x="804.0" y="88" text-anchor="middle">below_review_threshold</text>
+  <rect class="nb-sealed" x="716" y="158" width="176" height="44" rx="3"/>
+  <text class="nt" x="804.0" y="184" text-anchor="middle">human_review</text>
+  <rect class="nb" x="936" y="110" width="156" height="44" rx="3"/>
+  <text class="nt" x="1014.0" y="129" text-anchor="middle">Chained audit receipt</text>
+  <text class="nt-s" x="1014.0" y="145" text-anchor="middle">allowlisted fields</text>
+  <rect class="nb" x="716" y="300" width="376" height="52" rx="3"/>
+  <text class="nt" x="904.0" y="319" text-anchor="middle">Human reviewer investigates and decides</text>
+  <text class="nt-s" x="904.0" y="343" text-anchor="middle">authorize · decline · capture never performed by SecureSwipe</text>
+  <path class="edge" d="M184 132 H200" marker-end="url(#a1)"/>
+  <path class="edge" d="M336 132 H352" marker-end="url(#a1)"/>
+  <path class="edge" d="M508 132 H524" marker-end="url(#a1)"/>
+  <path class="edge" d="M688 132 H702 V84 H712" marker-end="url(#a1)"/>
+  <path class="edge" d="M688 132 H702 V180 H712" marker-end="url(#a1)"/>
+  <path class="edge" d="M892 84 H916 V132 H932" marker-end="url(#a1)"/>
+  <path class="edge" d="M892 180 H916 V132 H932" marker-end="url(#a1)"/>
+  <path class="edge" d="M804 202 V296" marker-end="url(#a1)"/>
+  <text class="nt-w" x="716" y="128">&#8800; approved, safe, or legitimate</text>
+  <text class="nt-s" x="812" y="238">queued for human judgement</text>
+</svg>
