@@ -169,6 +169,19 @@ demo_root=$(mktemp -d) && .venv/bin/python scripts/create_synthetic_bundle.py --
 
 Full environment variants, cleanup, and CI gates: [Reproducibility](docs/REPRODUCIBILITY.md).
 
+**Intake modes stay separate.** The quarantined historical reference corpus, a new authorized
+corpus, and the repository audit are never the same command — this separation is enforced by a test,
+not just documented.
+
+```bash
+.venv/bin/python scripts/curate_dataset.py --source-kind historical_kaggle_reference   # quarantined reference only
+.venv/bin/python scripts/curate_dataset.py --source-kind new_authorized_development    # a new approved corpus
+.venv/bin/python scripts/run_development_training.py                                   # then train on it
+```
+
+For a data-free repository check, run `python3 -m scripts.run_project_audit --allow-missing-model --check`.
+For a model-required audit, run `python3 -m scripts.run_project_audit` without `--allow-missing-model`.
+
 ---
 
 ## Architecture and evidence
@@ -176,6 +189,7 @@ Full environment variants, cleanup, and CI gates: [Reproducibility](docs/REPRODU
 | Read next | Purpose |
 | --- | --- |
 | [Architecture](docs/ARCHITECTURE.md) | Components, data flow, state profiles, and trust boundaries |
+| [Architecture gallery](docs/architecture/README.md) | Seven diagrams of the verified boundaries — what each one proves, and what it deliberately does not |
 | [Methodology (live)](https://secure-swipe.vercel.app/secureswipe-methodology.html) | The full evaluation argument, figures, and cost model in one page |
 | [Evidence guide](docs/EVIDENCE_GUIDE.md) | Evidence categories and the one-minute reviewer path |
 | [Claim-to-evidence matrix](docs/evidence/CLAIM_TO_EVIDENCE_MATRIX.md) | Admissible wording and the exact proof behind each claim |

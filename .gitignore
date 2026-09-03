@@ -81,3 +81,8 @@ web/.visual-review/
 # Temporary exports and logs
 web/public/data/*.tmp
 *.log
+
+# Tool caches
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/

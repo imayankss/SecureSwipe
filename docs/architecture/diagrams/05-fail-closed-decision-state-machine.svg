@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1060 400" width="1060" height="400" role="img" aria-labelledby="t d">
+  <title id="t">Fail-closed decision state machine</title>
+  <desc id="d">A request is validated, reserved against an idempotency key, scored once, and routed by the recorded threshold to a bounded outcome with a receipt. Any failure along that path - 422 validation_error, 503 model_unavailable, 409 idempotency_conflict, 503 capacity_exceeded, or 503 audit_unavailable - terminates in a fail-closed state that releases no decision, appends no audit event, and takes no payment action. An identical request ID with the same canonical digest replays the original response exactly without re-scoring.</desc>
+  <style>
+    svg {
+      --surface:#fcfcfb; --surface-2:#f2f2ef; --surface-3:#e8e8e4;
+      --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#78776f;
+      --rule:#dcdcd6; --grid:#e6e6e0; --axis:#b4b4ac;
+      --series-1:#2a78d6; --series-2:#eb6834; --invalid:#d03b3b;
+      --series-1-soft:#2a78d61f;
+      --sans:"IBM Plex Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+      --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --surface:#1a1a19; --surface-2:#232322; --surface-3:#2d2d2b;
+        --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#94938a;
+        --rule:#35352f; --grid:#2b2b28; --axis:#55554e;
+        --series-1:#3987e5; --series-2:#d95926; --invalid:#d03b3b;
+        --series-1-soft:#3987e526;
+      }
+    }
+    .bg   { fill: var(--surface); }
+    .nb   { fill: var(--surface-2); stroke: var(--axis); }
+    .nb-sealed { fill: var(--series-1-soft); stroke: var(--series-1); }
+    .nb-warn   { fill: none; stroke: var(--invalid); }
+    .nt   { font-family: var(--sans); font-size: 11px; fill: var(--text-primary); }
+    .nt-s { font-family: var(--mono); font-size: 9.5px; fill: var(--text-muted); }
+    .nt-w { font-family: var(--mono); font-size: 9.5px; fill: var(--invalid); }
+    .nt-h { font-family: var(--sans); font-size: 11.5px; font-weight: 600; fill: var(--invalid); }
+    .edge { stroke: var(--axis); fill: none; }
+    .edge-cut { stroke: var(--invalid); fill: none; stroke-dasharray: 4 4; }
+    .edge-rep { stroke: var(--series-1); fill: none; stroke-dasharray: 4 3; }
+    .lane { fill: none; stroke: var(--rule); }
+    .lanelabel { font-family: var(--mono); font-size: 9px; fill: var(--text-muted);
+      letter-spacing: .09em; text-transform: uppercase; }
+  </style>
+  <defs>
+    <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><polygon points="0,1 9,5 0,9" style="fill:var(--axis)"/></marker>
+    <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><polygon points="0,1 9,5 0,9" style="fill:var(--invalid)"/></marker>
+    <marker id="a3" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><polygon points="0,1 9,5 0,9" style="fill:var(--series-1)"/></marker>
+  </defs>
+  <rect class="bg" x="0" y="0" width="1060" height="400"/>
+  <circle cx="48" cy="133" r="6" style="fill:var(--text-primary)"/>
+  <text class="nt-s" x="30" y="160">start</text>
+  <rect class="nb" x="74" y="110" width="148" height="46" rx="3"/>
+  <text class="nt" x="148.0" y="129" text-anchor="middle">Validate</text>
+  <text class="nt-s" x="148.0" y="147" text-anchor="middle">schema · readiness</text>
+  <rect class="nb" x="258" y="110" width="140" height="46" rx="3"/>
+  <text class="nt" x="328.0" y="129" text-anchor="middle">Reserve ID</text>
+  <text class="nt-s" x="328.0" y="147" text-anchor="middle">idempotency key</text>
+  <rect class="nb" x="434" y="110" width="136" height="46" rx="3"/>
+  <text class="nt" x="502.0" y="129" text-anchor="middle">Score once</text>
+  <text class="nt-s" x="502.0" y="147" text-anchor="middle">verified bundle</text>
+  <rect class="nb" x="606" y="110" width="148" height="46" rx="3"/>
+  <text class="nt" x="680.0" y="129" text-anchor="middle">Apply threshold</text>
+  <text class="nt-s" x="680.0" y="147" text-anchor="middle">recorded policy</text>
+  <rect class="nb-sealed" x="790" y="98" width="230" height="70" rx="3"/>
+  <text class="nt-s" x="905" y="118" text-anchor="middle">BOUNDED OUTCOME + RECEIPT</text>
+  <text class="nt" x="905" y="137" text-anchor="middle">human_review</text>
+  <text class="nt" x="905" y="155" text-anchor="middle">below_review_threshold</text>
+  <path class="edge" d="M54 133 H70" marker-end="url(#a1)"/>
+  <path class="edge" d="M222 133 H254" marker-end="url(#a1)"/>
+  <path class="edge" d="M398 133 H430" marker-end="url(#a1)"/>
+  <path class="edge" d="M570 133 H602" marker-end="url(#a1)"/>
+  <path class="edge" d="M754 133 H786" marker-end="url(#a1)"/>
+  <rect class="nb-warn" x="74" y="300" width="946" height="66" rx="3"/>
+  <text class="nt-h" x="94" y="326">FAIL CLOSED</text>
+  <text class="nt" x="192" y="326">no decision released · no audit event appended · no payment action taken</text>
+  <text class="nt-s" x="94" y="347">The caller receives a typed error. A missing, corrupt, unverified, overloaded, or conflicting path never degrades into an approve-like answer.</text>
+  <path class="edge-cut" d="M148 156 V296" marker-end="url(#a2)"/>
+  <text class="nt-w" x="154" y="200">422 validation_error</text>
+  <text class="nt-w" x="154" y="216">503 model_unavailable</text>
+  <path class="edge-cut" d="M328 156 V296" marker-end="url(#a2)"/>
+  <text class="nt-w" x="334" y="200">409 idempotency_conflict</text>
+  <path class="edge-cut" d="M502 156 V296" marker-end="url(#a2)"/>
+  <text class="nt-w" x="508" y="200">503 capacity_exceeded</text>
+  <path class="edge-cut" d="M680 156 V296" marker-end="url(#a2)"/>
+  <text class="nt-w" x="686" y="200">503 audit_unavailable</text>
+  <path class="edge-rep" d="M905 98 V64 H328 V106" marker-end="url(#a3)"/>
+  <text class="nt-s" x="420" y="58" style="fill:var(--series-1)">identical request ID + canonical digest &#8594; exact replay, no re-score, no duplicate audit event</text>
+</svg>

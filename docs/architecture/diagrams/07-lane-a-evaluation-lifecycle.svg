@@ -1,0 +1,145 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1030 400" width="1030" height="400" role="img" aria-labelledby="t d">
+  <title id="t">Lane A leakage-controlled evaluation lifecycle and seal</title>
+  <desc id="d">Evaluation lifecycle. An approved IEEE-CIS source is curated and split into chronological roles. Training, validation threshold, calibration fit and calibration evaluation roles sit inside a development boundary where tuning is permitted, producing a frozen pipeline, a frozen 24-input schema and a frozen capacity policy bound to a digest. The final test role is quarantined throughout. A one-time guarded runner then computes and seals scores, opens the final labels, and emits sealed aggregate metrics, intervals, counts and digests, after which the protocol is closed to further tuning or reruns.</desc>
+  <style>
+    svg {
+      --surface:#fcfcfb; --surface-2:#f2f2ef; --surface-3:#e8e8e4;
+      --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#78776f;
+      --rule:#dcdcd6; --grid:#e6e6e0; --axis:#b4b4ac;
+      --series-1:#2a78d6; --series-2:#eb6834; --invalid:#d03b3b;
+      --series-1-soft:#2a78d61f;
+      --sans:"IBM Plex Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+      --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --surface:#1a1a19; --surface-2:#232322; --surface-3:#2d2d2b;
+        --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#94938a;
+        --rule:#35352f; --grid:#2b2b28; --axis:#55554e;
+        --series-1:#3987e5; --series-2:#d95926; --invalid:#d03b3b;
+        --series-1-soft:#3987e526;
+      }
+    }
+    .bg   { fill: var(--surface); }
+    .nb   { fill: var(--surface-2); stroke: var(--axis); }
+    .nb-sealed { fill: var(--series-1-soft); stroke: var(--series-1); }
+    .nb-warn   { fill: none; stroke: var(--invalid); }
+    .nt   { font-family: var(--sans); font-size: 11px; fill: var(--text-primary); }
+    .nt-s { font-family: var(--mono); font-size: 9.5px; fill: var(--text-muted); }
+    .edge { stroke: var(--axis); fill: none; }
+    .edge-cut { stroke: var(--invalid); fill: none; stroke-dasharray: 4 4; }
+    .lane { fill: none; stroke: var(--rule); }
+    .lanelabel { font-family: var(--mono); font-size: 9px; fill: var(--text-muted);
+      letter-spacing: .09em; text-transform: uppercase; }
+    .tick { font-family: var(--mono); font-size: 10px; fill: var(--text-muted); }
+    .axlabel { font-family: var(--mono); font-size: 10px; fill: var(--text-secondary);
+      letter-spacing: .06em; text-transform: uppercase; }
+  </style>
+  <rect class="bg" x="0" y="0" width="1030" height="400"/>
+
+      <defs>
+        <marker id="a2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" style="fill:var(--axis)"/>
+        </marker>
+      </defs>
+
+      <!-- row 1 : development -->
+      <g>
+        <rect class="nb" x="8"   y="100" width="110" height="44" rx="3"/>
+        <text class="nt" x="63"  y="117" text-anchor="middle">Approved IEEE-CIS</text>
+        <text class="nt" x="63"  y="131" text-anchor="middle">source</text>
+
+        <rect class="nb" x="142" y="100" width="110" height="44" rx="3"/>
+        <text class="nt" x="197" y="117" text-anchor="middle">Manifested</text>
+        <text class="nt" x="197" y="131" text-anchor="middle">curation</text>
+
+        <rect class="nb" x="276" y="100" width="110" height="44" rx="3"/>
+        <text class="nt" x="331" y="117" text-anchor="middle">Chronological</text>
+        <text class="nt" x="331" y="131" text-anchor="middle">role assignment</text>
+
+        <line class="edge" x1="118" y1="122" x2="138" y2="122" marker-end="url(#a2)"/>
+        <line class="edge" x1="252" y1="122" x2="272" y2="122" marker-end="url(#a2)"/>
+        <line class="edge" x1="386" y1="122" x2="410" y2="122" marker-end="url(#a2)"/>
+      </g>
+
+      <rect class="lane" x="414" y="40" width="290" height="176" rx="3" stroke-dasharray="4 4"/>
+      <text class="lanelabel" x="424" y="56">development boundary — tuning permitted</text>
+      <g>
+        <rect class="nb" x="424" y="66"  width="124" height="24" rx="3"/>
+        <text class="nt-s" x="486" y="81" text-anchor="middle" style="fill:var(--text-primary)">training</text>
+        <rect class="nb" x="424" y="100" width="124" height="24" rx="3"/>
+        <text class="nt-s" x="486" y="115" text-anchor="middle" style="fill:var(--text-primary)">validation_threshold</text>
+        <rect class="nb" x="424" y="134" width="124" height="24" rx="3"/>
+        <text class="nt-s" x="486" y="149" text-anchor="middle" style="fill:var(--text-primary)">calibration_fit</text>
+        <rect class="nb" x="424" y="168" width="124" height="24" rx="3"/>
+        <text class="nt-s" x="486" y="183" text-anchor="middle" style="fill:var(--text-primary)">calibration_eval</text>
+
+        <rect class="nb" x="570" y="94"  width="120" height="68" rx="3"/>
+        <text class="nt" x="630" y="112" text-anchor="middle">Select variant E</text>
+        <text class="nt" x="630" y="126" text-anchor="middle">XGBoost · 24 inputs</text>
+        <text class="nt" x="630" y="140" text-anchor="middle">seed 42, then fit</text>
+        <text class="nt" x="630" y="154" text-anchor="middle">Platt calibrator</text>
+
+        <line class="edge" x1="548" y1="78"  x2="566" y2="112" marker-end="url(#a2)"/>
+        <line class="edge" x1="548" y1="112" x2="566" y2="120" marker-end="url(#a2)"/>
+        <line class="edge" x1="548" y1="146" x2="566" y2="132" marker-end="url(#a2)"/>
+        <line class="edge" x1="548" y1="180" x2="566" y2="142" marker-end="url(#a2)"/>
+      </g>
+
+      <g>
+        <rect class="nb" x="730" y="62"  width="124" height="44" rx="3"/>
+        <text class="nt" x="792" y="79"  text-anchor="middle">Freeze pipeline +</text>
+        <text class="nt" x="792" y="93"  text-anchor="middle">24-input schema</text>
+
+        <rect class="nb" x="730" y="146" width="124" height="44" rx="3"/>
+        <text class="nt" x="792" y="163" text-anchor="middle">Freeze capacity</text>
+        <text class="nt" x="792" y="177" text-anchor="middle">policy</text>
+
+        <rect class="nb-sealed" x="880" y="104" width="130" height="44" rx="3"/>
+        <text class="nt" x="945" y="121" text-anchor="middle">Digest-bound</text>
+        <text class="nt" x="945" y="135" text-anchor="middle">authorization</text>
+
+        <line class="edge" x1="704" y1="112" x2="726" y2="90"  marker-end="url(#a2)"/>
+        <line class="edge" x1="704" y1="144" x2="726" y2="166" marker-end="url(#a2)"/>
+        <path  class="edge" d="M854,84 H866 V126 H876" marker-end="url(#a2)"/>
+        <path  class="edge" d="M854,168 H866 V126 H876" marker-end="url(#a2)"/>
+      </g>
+
+      <!-- row 2 : the one-time sealed run -->
+      <g>
+        <rect class="nb-warn" x="8"   y="306" width="130" height="44" rx="3"/>
+        <text class="nt" x="73"  y="323" text-anchor="middle" style="fill:var(--invalid)">final_test —</text>
+        <text class="nt" x="73"  y="337" text-anchor="middle" style="fill:var(--invalid)">quarantined</text>
+
+        <rect class="nb" x="166" y="306" width="124" height="44" rx="3"/>
+        <text class="nt" x="228" y="323" text-anchor="middle">One-time</text>
+        <text class="nt" x="228" y="337" text-anchor="middle">guarded runner</text>
+
+        <rect class="nb" x="318" y="306" width="124" height="44" rx="3"/>
+        <text class="nt" x="380" y="323" text-anchor="middle">Compute and</text>
+        <text class="nt" x="380" y="337" text-anchor="middle">seal scores</text>
+
+        <rect class="nb" x="470" y="306" width="124" height="44" rx="3"/>
+        <text class="nt" x="532" y="331" text-anchor="middle">Open final labels</text>
+
+        <rect class="nb" x="622" y="306" width="160" height="44" rx="3"/>
+        <text class="nt" x="702" y="323" text-anchor="middle">Sealed aggregate metrics,</text>
+        <text class="nt" x="702" y="337" text-anchor="middle">intervals, counts, digests</text>
+
+        <rect class="nb-sealed" x="810" y="306" width="150" height="44" rx="3"/>
+        <text class="nt" x="885" y="323" text-anchor="middle">CLOSED — no tuning,</text>
+        <text class="nt" x="885" y="337" text-anchor="middle">no rerun</text>
+
+        <line class="edge" x1="138" y1="328" x2="162" y2="328" marker-end="url(#a2)"/>
+        <line class="edge" x1="290" y1="328" x2="314" y2="328" marker-end="url(#a2)"/>
+        <line class="edge" x1="442" y1="328" x2="466" y2="328" marker-end="url(#a2)"/>
+        <line class="edge" x1="594" y1="328" x2="618" y2="328" marker-end="url(#a2)"/>
+        <line class="edge" x1="782" y1="328" x2="806" y2="328" marker-end="url(#a2)"/>
+      </g>
+
+      <path class="edge-cut" d="M331,144 V262 H73 V302" marker-end="url(#a2)"/>
+      <text class="nt-s" x="90" y="256" style="fill:var(--invalid)">held out from the first split — never read during development</text>
+
+      <path class="edge" d="M945,148 V240 H228 V302" marker-end="url(#a2)"/>
+      <text class="nt-s" x="246" y="234">frozen configuration, bound to a digest</text>
+    </svg>

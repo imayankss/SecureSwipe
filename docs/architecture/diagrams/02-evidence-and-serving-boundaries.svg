@@ -1,0 +1,123 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1010 300" width="1010" height="300" role="img" aria-labelledby="t d">
+  <title id="t">Evidence category map: which category may support which claim</title>
+  <desc id="d">Evidence category map. Illustrative, synthetic, historical Lane B, sealed Lane A, reference local-bundle, and future categories each support one kind of claim. Only the sealed Lane A category may support the headline offline metrics and capacity counts; edges from the illustrative, synthetic, historical and reference categories to that claim are crossed out.</desc>
+  <style>
+    svg {
+      --surface:#fcfcfb; --surface-2:#f2f2ef; --surface-3:#e8e8e4;
+      --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#78776f;
+      --rule:#dcdcd6; --grid:#e6e6e0; --axis:#b4b4ac;
+      --series-1:#2a78d6; --series-2:#eb6834; --invalid:#d03b3b;
+      --series-1-soft:#2a78d61f;
+      --sans:"IBM Plex Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+      --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --surface:#1a1a19; --surface-2:#232322; --surface-3:#2d2d2b;
+        --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#94938a;
+        --rule:#35352f; --grid:#2b2b28; --axis:#55554e;
+        --series-1:#3987e5; --series-2:#d95926; --invalid:#d03b3b;
+        --series-1-soft:#3987e526;
+      }
+    }
+    .bg   { fill: var(--surface); }
+    .nb   { fill: var(--surface-2); stroke: var(--axis); }
+    .nb-sealed { fill: var(--series-1-soft); stroke: var(--series-1); }
+    .nb-warn   { fill: none; stroke: var(--invalid); }
+    .nt   { font-family: var(--sans); font-size: 11px; fill: var(--text-primary); }
+    .nt-s { font-family: var(--mono); font-size: 9.5px; fill: var(--text-muted); }
+    .edge { stroke: var(--axis); fill: none; }
+    .edge-cut { stroke: var(--invalid); fill: none; stroke-dasharray: 4 4; }
+    .lane { fill: none; stroke: var(--rule); }
+    .lanelabel { font-family: var(--mono); font-size: 9px; fill: var(--text-muted);
+      letter-spacing: .09em; text-transform: uppercase; }
+    .tick { font-family: var(--mono); font-size: 10px; fill: var(--text-muted); }
+    .axlabel { font-family: var(--mono); font-size: 10px; fill: var(--text-secondary);
+      letter-spacing: .06em; text-transform: uppercase; }
+  </style>
+  <rect class="bg" x="0" y="0" width="1010" height="300"/>
+
+      <defs>
+        <marker id="a4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" style="fill:var(--axis)"/>
+        </marker>
+      </defs>
+
+      <g>
+        <rect class="nb" x="8"   y="18" width="150" height="46" rx="3"/>
+        <text class="nt-s" x="83"  y="38" text-anchor="middle" style="fill:var(--text-muted)">ILLUSTRATIVE</text>
+        <text class="nt" x="83"  y="54" text-anchor="middle">Capacity / cost scenarios</text>
+
+        <rect class="nb" x="176" y="18" width="150" height="46" rx="3"/>
+        <text class="nt-s" x="251" y="38" text-anchor="middle" style="fill:var(--text-muted)">SYNTHETIC</text>
+        <text class="nt" x="251" y="54" text-anchor="middle">Fixtures and plumbing</text>
+
+        <rect class="nb-sealed" x="344" y="18" width="150" height="46" rx="3"/>
+        <text class="nt-s" x="419" y="38" text-anchor="middle" style="fill:var(--series-1)">SEALED</text>
+        <text class="nt" x="419" y="54" text-anchor="middle">Lane A evaluation</text>
+
+        <rect class="nb" x="512" y="18" width="150" height="46" rx="3"/>
+        <text class="nt-s" x="587" y="38" text-anchor="middle" style="fill:var(--text-muted)">HISTORICAL</text>
+        <text class="nt" x="587" y="54" text-anchor="middle">Lane B record</text>
+
+        <rect class="nb" x="680" y="18" width="150" height="46" rx="3"/>
+        <text class="nt-s" x="755" y="38" text-anchor="middle" style="fill:var(--text-muted)">REFERENCE</text>
+        <text class="nt" x="755" y="54" text-anchor="middle">Local bundle inference</text>
+
+        <rect class="nb" x="848" y="18" width="150" height="46" rx="3"/>
+        <text class="nt-s" x="923" y="38" text-anchor="middle" style="fill:var(--text-muted)">FUTURE</text>
+        <text class="nt" x="923" y="54" text-anchor="middle">Deferred capability</text>
+      </g>
+
+      <g>
+        <rect class="nb" x="8"   y="204" width="150" height="56" rx="3"/>
+        <text class="nt" x="83"  y="228" text-anchor="middle">Transparent arithmetic</text>
+        <text class="nt" x="83"  y="242" text-anchor="middle">under stated assumptions</text>
+
+        <rect class="nb" x="176" y="204" width="150" height="56" rx="3"/>
+        <text class="nt" x="251" y="228" text-anchor="middle">Validation, packaging,</text>
+        <text class="nt" x="251" y="242" text-anchor="middle">failure and replay mechanics</text>
+
+        <rect class="nb-sealed" x="344" y="204" width="150" height="56" rx="3"/>
+        <text class="nt" x="419" y="228" text-anchor="middle">Headline offline metrics</text>
+        <text class="nt" x="419" y="242" text-anchor="middle">and capacity counts</text>
+
+        <rect class="nb" x="512" y="204" width="150" height="56" rx="3"/>
+        <text class="nt" x="587" y="228" text-anchor="middle">Already-observed</text>
+        <text class="nt" x="587" y="242" text-anchor="middle">historical audit context</text>
+
+        <rect class="nb" x="680" y="204" width="150" height="56" rx="3"/>
+        <text class="nt" x="755" y="228" text-anchor="middle">Bundle, runtime and</text>
+        <text class="nt" x="755" y="242" text-anchor="middle">API behaviour only</text>
+
+        <rect class="nb" x="848" y="204" width="150" height="56" rx="3"/>
+        <text class="nt" x="923" y="235" text-anchor="middle">No implemented claim</text>
+      </g>
+
+      <g class="edge">
+        <line x1="83"  y1="64" x2="83"  y2="200" marker-end="url(#a4)"/>
+        <line x1="251" y1="64" x2="251" y2="200" marker-end="url(#a4)"/>
+        <line x1="419" y1="64" x2="419" y2="200" marker-end="url(#a4)" style="stroke:var(--series-1)" stroke-width="2"/>
+        <line x1="587" y1="64" x2="587" y2="200" marker-end="url(#a4)"/>
+        <line x1="755" y1="64" x2="755" y2="200" marker-end="url(#a4)"/>
+        <line x1="923" y1="64" x2="923" y2="200" marker-end="url(#a4)"/>
+      </g>
+
+      <g class="edge-cut" stroke-dasharray="3 4">
+        <line x1="120" y1="64" x2="368" y2="200"/>
+        <line x1="276" y1="64" x2="392" y2="200"/>
+        <line x1="562" y1="64" x2="470" y2="200"/>
+        <line x1="716" y1="64" x2="490" y2="200"/>
+      </g>
+      <g stroke="var(--invalid)" stroke-width="2">
+        <line x1="238" y1="126" x2="250" y2="138"/><line x1="250" y1="126" x2="238" y2="138"/>
+        <line x1="328" y1="126" x2="340" y2="138"/><line x1="340" y1="126" x2="328" y2="138"/>
+        <line x1="510" y1="126" x2="522" y2="138"/><line x1="522" y1="126" x2="510" y2="138"/>
+        <line x1="597" y1="126" x2="609" y2="138"/><line x1="609" y1="126" x2="597" y2="138"/>
+      </g>
+
+      <g class="nt-s">
+        <text x="8" y="290">Solid — this category may support this claim.</text>
+        <text x="300" y="290" style="fill:var(--invalid)">Dotted and crossed — this category may never support the headline metrics, however convenient that would be.</text>
+      </g>
+    </svg>

@@ -1,0 +1,154 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 500" width="1180" height="500" role="img" aria-labelledby="t d">
+  <title id="t">SecureSwipe system context: offline science, static presentation, and opt-in local reference serving</title>
+  <desc id="d">Architecture. Offline science curates an authorized IEEE-CIS source, freezes chronological roles, runs a sealed Lane A evaluation, and emits aggregates and digests only. Static presentation exports sanitized dashboard JSON to the Next.js routes a reviewer reads. An opt-in local demonstration sends a fixed fixture through FastAPI against a verified reference bundle that is explicitly not the Lane A model, producing a bounded outcome and an optional tamper-evident audit record. There is no provenance link between the sealed model and the served bundle.</desc>
+  <style>
+    svg {
+      --surface:#fcfcfb; --surface-2:#f2f2ef; --surface-3:#e8e8e4;
+      --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#78776f;
+      --rule:#dcdcd6; --grid:#e6e6e0; --axis:#b4b4ac;
+      --series-1:#2a78d6; --series-2:#eb6834; --invalid:#d03b3b;
+      --series-1-soft:#2a78d61f;
+      --sans:"IBM Plex Sans",-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;
+      --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+    }
+    @media (prefers-color-scheme: dark) {
+      svg {
+        --surface:#1a1a19; --surface-2:#232322; --surface-3:#2d2d2b;
+        --text-primary:#ffffff; --text-secondary:#c3c2b7; --text-muted:#94938a;
+        --rule:#35352f; --grid:#2b2b28; --axis:#55554e;
+        --series-1:#3987e5; --series-2:#d95926; --invalid:#d03b3b;
+        --series-1-soft:#3987e526;
+      }
+    }
+    .bg   { fill: var(--surface); }
+    .nb   { fill: var(--surface-2); stroke: var(--axis); }
+    .nb-sealed { fill: var(--series-1-soft); stroke: var(--series-1); }
+    .nb-warn   { fill: none; stroke: var(--invalid); }
+    .nt   { font-family: var(--sans); font-size: 11px; fill: var(--text-primary); }
+    .nt-s { font-family: var(--mono); font-size: 9.5px; fill: var(--text-muted); }
+    .edge { stroke: var(--axis); fill: none; }
+    .edge-cut { stroke: var(--invalid); fill: none; stroke-dasharray: 4 4; }
+    .lane { fill: none; stroke: var(--rule); }
+    .lanelabel { font-family: var(--mono); font-size: 9px; fill: var(--text-muted);
+      letter-spacing: .09em; text-transform: uppercase; }
+    .tick { font-family: var(--mono); font-size: 10px; fill: var(--text-muted); }
+    .axlabel { font-family: var(--mono); font-size: 10px; fill: var(--text-secondary);
+      letter-spacing: .06em; text-transform: uppercase; }
+  </style>
+  <rect class="bg" x="0" y="0" width="1180" height="500"/>
+
+      <defs>
+        <marker id="a1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+          <polygon points="0,1 9,5 0,9" style="fill:var(--axis)"/>
+        </marker>
+      </defs>
+
+      <!-- lane 1 : offline science -->
+      <rect class="lane" x="30" y="22" width="1146" height="120" rx="3"/>
+      <text class="lanelabel" text-anchor="middle" transform="translate(12,82) rotate(-90)">offline science</text>
+      <text class="lanelabel" text-anchor="middle" transform="translate(23,82) rotate(-90)">private · local</text>
+      <g>
+        <rect class="nb" x="48"  y="62" width="118" height="42" rx="3"/>
+        <text class="nt" x="107" y="79"  text-anchor="middle">Authorized IEEE-CIS</text>
+        <text class="nt" x="107" y="93"  text-anchor="middle">research source</text>
+
+        <rect class="nb" x="200" y="62" width="118" height="42" rx="3"/>
+        <text class="nt" x="259" y="87"  text-anchor="middle">Manifested curation</text>
+
+        <rect class="nb" x="352" y="62" width="118" height="42" rx="3"/>
+        <text class="nt" x="411" y="79"  text-anchor="middle">Chronological</text>
+        <text class="nt" x="411" y="93"  text-anchor="middle">development roles</text>
+
+        <rect class="nb-sealed" x="504" y="62" width="118" height="42" rx="3"/>
+        <text class="nt" x="563" y="79"  text-anchor="middle">SEALED Lane A</text>
+        <text class="nt" x="563" y="93"  text-anchor="middle">evaluation</text>
+
+        <rect class="nb" x="900" y="62" width="140" height="42" rx="3"/>
+        <text class="nt" x="970" y="79"  text-anchor="middle">Aggregates + digests</text>
+        <text class="nt" x="970" y="93"  text-anchor="middle">only — no rows</text>
+
+        <line class="edge" x1="166" y1="83" x2="196" y2="83" marker-end="url(#a1)"/>
+        <line class="edge" x1="318" y1="83" x2="348" y2="83" marker-end="url(#a1)"/>
+        <line class="edge" x1="470" y1="83" x2="500" y2="83" marker-end="url(#a1)"/>
+        <line class="edge" x1="622" y1="83" x2="896" y2="83" marker-end="url(#a1)"/>
+      </g>
+
+      <!-- lane 2 : static presentation -->
+      <rect class="lane" x="30" y="154" width="1146" height="142" rx="3"/>
+      <text class="lanelabel" text-anchor="middle" transform="translate(12,225) rotate(-90)">static presentation</text>
+      <text class="lanelabel" text-anchor="middle" transform="translate(23,225) rotate(-90)">no live inference</text>
+      <g>
+        <rect class="nb" x="504" y="204" width="118" height="42" rx="3"/>
+        <text class="nt" x="563" y="221" text-anchor="middle">Deterministic</text>
+        <text class="nt" x="563" y="235" text-anchor="middle">exporter</text>
+
+        <rect class="nb" x="656" y="204" width="128" height="42" rx="3"/>
+        <text class="nt" x="720" y="221" text-anchor="middle">Sanitized</text>
+        <text class="nt" x="720" y="235" text-anchor="middle">dashboard JSON</text>
+
+        <rect class="nb" x="838" y="178" width="118" height="32" rx="3"/>
+        <text class="nt" x="897" y="198" text-anchor="middle">Next.js /</text>
+
+        <rect class="nb" x="838" y="240" width="118" height="32" rx="3"/>
+        <text class="nt" x="897" y="260" text-anchor="middle">Next.js /evidence</text>
+
+        <rect class="nb" x="1010" y="204" width="110" height="42" rx="3"/>
+        <text class="nt" x="1065" y="229" text-anchor="middle">Reviewer</text>
+
+        <line class="edge" x1="622" y1="225" x2="652" y2="225" marker-end="url(#a1)"/>
+        <path  class="edge" d="M784,225 H812 V194 H834" marker-end="url(#a1)"/>
+        <path  class="edge" d="M784,225 H812 V256 H834" marker-end="url(#a1)"/>
+        <path  class="edge" d="M956,194 H982 V225 H1006" marker-end="url(#a1)"/>
+        <path  class="edge" d="M956,256 H982 V225 H1006" marker-end="url(#a1)"/>
+        <line class="edge" x1="563" y1="104" x2="563" y2="200" marker-end="url(#a1)"/>
+      </g>
+
+      <!-- lane 3 : opt-in local reference demonstration -->
+      <rect class="lane" x="30" y="308" width="1146" height="170" rx="3"/>
+      <text class="lanelabel" text-anchor="middle" transform="translate(12,393) rotate(-90)">opt-in local</text>
+      <text class="lanelabel" text-anchor="middle" transform="translate(23,393) rotate(-90)">reference demo</text>
+      <g>
+        <rect class="nb" x="48"  y="380" width="118" height="42" rx="3"/>
+        <text class="nt" x="107" y="397" text-anchor="middle">Fixed sanitized</text>
+        <text class="nt" x="107" y="411" text-anchor="middle">fixture</text>
+
+        <rect class="nb" x="200" y="380" width="118" height="42" rx="3"/>
+        <text class="nt" x="259" y="405" text-anchor="middle">Next.js /demo</text>
+
+        <rect class="nb" x="390" y="380" width="118" height="42" rx="3"/>
+        <text class="nt" x="449" y="405" text-anchor="middle">FastAPI V1</text>
+
+        <rect class="nb-warn" x="352" y="324" width="194" height="36" rx="3"/>
+        <text class="nt" x="449" y="339" text-anchor="middle" style="fill:var(--invalid)">Verified reference bundle</text>
+        <text class="nt" x="449" y="353" text-anchor="middle" style="fill:var(--invalid)">— NOT the Lane A model</text>
+
+        <rect class="nb" x="560" y="380" width="118" height="42" rx="3"/>
+        <text class="nt" x="619" y="397" text-anchor="middle">Bounded</text>
+        <text class="nt" x="619" y="411" text-anchor="middle">outcome</text>
+
+        <rect class="nb" x="738" y="380" width="196" height="42" rx="3"/>
+        <text class="nt" x="836" y="397" text-anchor="middle">Human reviewer decides any</text>
+        <text class="nt" x="836" y="411" text-anchor="middle">payment action outside SecureSwipe</text>
+
+        <rect class="nb" x="560" y="436" width="196" height="32" rx="3"/>
+        <text class="nt" x="658" y="456" text-anchor="middle">Local tamper-evident audit</text>
+
+        <line class="edge" x1="166" y1="401" x2="196" y2="401" marker-end="url(#a1)"/>
+        <line class="edge" x1="318" y1="401" x2="386" y2="401" marker-end="url(#a1)"/>
+        <line class="edge" x1="449" y1="360" x2="449" y2="376" marker-end="url(#a1)"/>
+        <line class="edge" x1="508" y1="401" x2="556" y2="401" marker-end="url(#a1)"/>
+        <line class="edge" x1="678" y1="401" x2="734" y2="401" marker-end="url(#a1)"/>
+        <path  class="edge" d="M470,422 V452 H556" marker-end="url(#a1)" stroke-dasharray="4 4"/>
+        <text class="nt-s" x="478" y="446">when configured</text>
+      </g>
+
+      <!-- the claim the diagram exists to make -->
+      <path class="edge-cut" d="M504,83 H460 V342 H348"/>
+      <g stroke="var(--invalid)" stroke-width="2">
+        <line x1="454" y1="209" x2="466" y2="221"/>
+        <line x1="466" y1="209" x2="454" y2="221"/>
+      </g>
+      <text class="nt-s" x="442" y="202" text-anchor="end" style="fill:var(--invalid)">no provenance linkage —</text>
+      <text class="nt-s" x="442" y="215" text-anchor="end" style="fill:var(--invalid)">/demo does not serve</text>
+      <text class="nt-s" x="442" y="228" text-anchor="end" style="fill:var(--invalid)">the sealed Lane A model</text>
+    </svg>
