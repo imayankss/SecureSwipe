@@ -101,7 +101,7 @@ export function ReliabilityEvidencePanel() {
               </li>
             ))}
           </ul>
-          <p className="mt-3 text-[11px] leading-5 text-slate-500">
+          <p className="ss-prose mt-3 text-[11px] leading-5 text-slate-500">
             Verified reliability behaviour, local-environment performance
             observations, and the production reference architecture are three
             different things and are never merged into one claim.

@@ -58,7 +58,7 @@ export function LaneACapacityWorkbench() {
         <h2 id="lane-a-capacity-heading" className="text-2xl font-semibold tracking-[-0.03em] text-white sm:text-3xl">
           Review-capacity workbench
         </h2>
-        <p className="max-w-[48rem] text-sm leading-6 text-slate-300">
+        <p className="ss-prose max-w-[48rem] text-sm leading-6 text-slate-300">
           A merchant&apos;s review capacity decides what fraud coverage is reachable. This
           panel shows measured trade-offs on the Lane A{" "}
           <code className="text-slate-200">{LANE_A_EVALUATION.role}</code> partition
@@ -169,7 +169,7 @@ export function LaneACapacityWorkbench() {
         </table>
       </div>
 
-      <footer className="mt-5 space-y-2 text-xs leading-relaxed text-slate-400">
+      <footer className="ss-prose mt-5 space-y-2 text-xs leading-relaxed text-slate-400">
         <p>
           <span className="font-medium text-slate-300">Derived coverage reference:</span>{" "}
           reaching 80% recall on this partition needs{" "}

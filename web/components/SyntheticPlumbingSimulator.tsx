@@ -151,7 +151,7 @@ export function SyntheticPlumbingSimulator() {
               </select>
             </label>
             <p
-              className="max-w-2xl text-xs leading-5 text-slate-400"
+              className="ss-prose max-w-2xl text-xs leading-5 text-slate-400"
               id="synthetic-currency-note"
             >
               INR is the default for fabricated example amounts. USD is a fixed
@@ -195,7 +195,7 @@ export function SyntheticPlumbingSimulator() {
               Reset demo session
             </button>
           </div>
-          <p className="flex items-start gap-2 rounded-xl border border-violet-200/15 bg-violet-300/[0.04] p-3 text-xs leading-5 text-slate-300">
+          <p className="ss-prose flex items-start gap-2 rounded-xl border border-violet-200/15 bg-violet-300/[0.04] p-3 text-xs leading-5 text-slate-300">
             <AlertOctagon
               className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-200"
               aria-hidden="true"

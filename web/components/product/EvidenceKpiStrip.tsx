@@ -76,7 +76,7 @@ export function EvidenceKpiStrip() {
           >
             What the sealed evaluation actually measured.
           </h2>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-400">
+          <p className="ss-prose mt-3 max-w-2xl text-sm leading-6 text-slate-400">
             All four figures come from the same one-time Lane A final evaluation
             at a review capacity of {integer.format(tier.capacityPerDay)} per day,
             over {integer.format(LANE_A_FINAL_EVIDENCE.rows)} held-out rows. They

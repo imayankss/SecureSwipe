@@ -35,7 +35,7 @@ export function TrustAndDetails() {
           <h2 id="trust-heading" className="mt-3 text-3xl font-semibold tracking-[-0.035em] text-white">
             Built to be checked, not just believed.
           </h2>
-          <p className="mt-4 text-sm leading-6 text-slate-400">
+          <p className="ss-prose mt-4 text-sm leading-6 text-slate-400">
             Every figure on this site traces to a tracked artifact with its scope
             attached. Open the evidence route for source identifiers,
             methodology, and the measurement limits behind each result.

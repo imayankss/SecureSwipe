@@ -898,7 +898,7 @@ export function DeterministicJudgeDemo({
                       </div>
                     ))}
                   </dl>
-                  <p className="mt-3 rounded-lg border border-[var(--ss-border)] bg-[var(--ss-background)] p-3 text-xs leading-5 text-slate-400">
+                  <p className="ss-prose mt-3 rounded-lg border border-[var(--ss-border)] bg-[var(--ss-background)] p-3 text-xs leading-5 text-slate-400">
                     This contract publishes the comparison that produced the
                     outcome, not per-feature attribution, and it withholds the
                     decision score itself. Historical global feature ranking is
