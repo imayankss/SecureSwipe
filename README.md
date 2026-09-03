@@ -40,18 +40,24 @@ decisions <b>without autonomously blocking payments</b>.
 
 ## The proof in 30 seconds
 
-| Result | Verified value |
-| --- | ---: |
-| Average precision (AP) | **0.208660** |
-| Recall at 1,000 reviews/day | **80.18%** |
-| Alert precision at that tier | **8.03%** |
-| Evaluation population | **88,581 transactions / 3,083 fraud labels** |
+| Result | Verified value | Read it against |
+| --- | ---: | --- |
+| Average precision (AP) | **0.208660** | **6.0× the no-skill baseline** of 0.034804 |
+| Recall at 1,000 reviews/day | **80.18%** | 2,472 of 3,083 fraud caught |
+| Alert precision at that tier | **8.03%** | 28,306 legitimate customers reviewed |
+| Evaluation population | **88,581** transactions | **3,083** fraud labels · 3.48% prevalence |
 
 <p align="justify">
 These numbers are unflattering on purpose. An 8.03% alert precision means about eleven legitimate
 customers are reviewed for every fraud caught — and SecureSwipe reports that cost in the headline
 rather than burying it behind an accuracy figure, because a model that predicts "legitimate" for
 every row in this population would score 96.52% accuracy while catching zero fraud.
+</p>
+
+<p align="justify">
+<b>Average precision is not comparable across datasets.</b> Its floor is the fraud rate of the
+population it was measured on, so an AP from a corpus with a different base rate says nothing about
+this one. The honest comparable is the lift over that floor: <b>6.0×</b> at a 3.48% prevalence.
 </p>
 
 > Sealed **Lane A** held-out evaluation on public IEEE-CIS research data, run exactly once under a
