@@ -175,6 +175,36 @@ demo_root=$(mktemp -d) && .venv/bin/python scripts/create_synthetic_bundle.py --
 
 Full environment variants, cleanup, and CI gates: [Reproducibility](docs/REPRODUCIBILITY.md).
 
+---
+
+## How this is verified
+
+<p align="justify">
+The claims above are cheap to make and expensive to keep true, so the repository is built to be
+checked rather than believed. Every number below is reproducible from a clean checkout.
+</p>
+
+| Gate | Scale | What it protects |
+| --- | ---: | --- |
+| Python test suite | **1,427 tests** | Curation, evaluation, bundle integrity, API contracts, audit chain, idempotent replay |
+| Frontend suite | **133 tests** + 4 Playwright specs | Route split, deterministic demo, accessibility (axe-core), evidence rendering |
+| Static analysis | `ruff` · `mypy` · `eslint` · `tsc --noEmit` | Type and lint correctness across Python and TypeScript |
+| Supply chain | `--require-hashes` installs · `npm ci` lockfile · SPDX SBOM | A build cannot silently pull a different dependency than the one reviewed |
+| Security scanning | **CodeQL** · **TruffleHog** · **Trivy** | Code vulnerabilities, committed secrets, and container CVEs, on every pull request |
+| Evidence integrity | `export_web_data.py --check` · `verify_historical_observation.py` | The dashboard cannot drift from the committed aggregates, and the historical lock cannot be edited silently |
+| Documentation | **61** documents · claim-to-evidence matrix | Every headline claim is traceable to the exact record that supports it |
+
+<p align="justify">
+GitHub Actions are pinned by commit SHA rather than by tag, so a moved tag cannot change what runs
+in CI. Core XGBoost inference is deterministic and consumes <b>zero LLM tokens</b> — the model is a
+gradient-boosted tree, not a prompt, and its output does not vary between runs.
+</p>
+
+> **Explainability.** Global SHAP attributions over the historical reference model are exported to
+> the evidence route as committed aggregates. SHAP is *noncausal*: it explains what the model
+> weighted, never why a transaction is fraudulent, and it is never presented as a reason a customer
+> was reviewed. See the [model card](docs/MODEL_CARD.md).
+
 **Intake modes stay separate.** The quarantined historical reference corpus, a new authorized
 corpus, and the repository audit are never the same command — this separation is enforced by a test,
 not just documented.
