@@ -41,3 +41,18 @@ vulnerabilities:
   - id: CVE-2026-9538
     expired_at: 2026-09-20
     statement: Debian deferred the fix; Perl is never invoked or exposed through the API.
+  - id: CVE-2026-76642
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is a failed external mount helper retaining privilege, reachable only through a mount(8) invocation. The service invokes no util-linux binary; api/ and src/ contain zero mount, nsenter, unshare, setns, and losetup references, and the repository's only subprocess call runs git and is not imported by api/. Mounting requires CAP_SYS_ADMIN, and the runtime is non-root uid 10001 with --cap-drop ALL, --read-only, and no-new-privileges. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
+  - id: CVE-2026-78408
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is nsenter --join-cgroup leaking root privilege. nsenter is never invoked by the service and joining a namespace requires CAP_SYS_ADMIN, which --cap-drop ALL removes; no-new-privileges additionally blocks setuid escalation. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
+  - id: CVE-2026-78409
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is X-mount.subdir resolving against a detached tree, reachable only through a mount(8) invocation carrying that option. The service performs no mount operation and holds no capability permitting one. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
+  - id: CVE-2026-78410
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is restricted bind mounts failing to pin their target. Creating a bind mount requires CAP_SYS_ADMIN, which the runtime drops entirely; the container mounts nothing at runtime and its root filesystem is read-only. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
+  - id: CVE-2026-16742
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fixed version at libsystemd0 257.13-1~deb13u1. The affected path is a systemd-homed local privilege escalation, and the systemd-homed daemon is not present in the image; the SBOM records exactly two systemd-family packages, libsystemd0 and libudev1, both shared libraries, with no systemd or systemd-homed package among the 117 installed. The vulnerable binary therefore does not exist in the runtime. The container additionally has no init system, no homed-managed accounts, and runs non-root uid 10001 with --cap-drop ALL, --read-only, and no-new-privileges, which blocks privilege escalation directly. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
