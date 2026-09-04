@@ -3,6 +3,24 @@
 Pitch script, form answers, and the final read-only checklist for Razorpay AI
 Builder Internship Track 2 (AI Risk Manager).
 
+> **Superseded — historical MT9 artifact.** This package was frozen before the
+> sealed Lane A evaluation. Its headline figures are **Lane B historical**
+> (random holdout, different corpus, feature space, label definition, and base
+> rate); they are preserved here as a record and **must not be presented as the
+> submission headline**.
+>
+> The authoritative result is the sealed
+> [Lane A final evaluation](LANE_A_FINAL_EVALUATION.md): average precision
+> **0.208660** — 6.0x the no-skill baseline of 0.034804 — over **88,581**
+> transactions containing **3,083** fraud labels. At an illustrative capacity of
+> 1,000 reviews/day across the 30.78-day evaluation window: recall **80.18%** at
+> alert precision **8.03%**, being 2,472 fraud caught, 28,306 legitimate
+> customers reviewed, and 611 fraud cases missed.
+>
+> Lane A and Lane B are not comparable. See the
+> [evidence guide](../EVIDENCE_GUIDE.md#lane-a-and-lane-b-are-not-comparable).
+> Build obstacles are recorded in [Build challenges](../BUILD_CHALLENGES.md).
+
 Every claim below traces to [`CLAIM_TO_EVIDENCE_MATRIX.md`](CLAIM_TO_EVIDENCE_MATRIX.md);
 the bracketed IDs are matrix rows. Nothing here may be spoken or submitted
 unless its matrix row is satisfied.
@@ -41,6 +59,9 @@ approve-or-block action anywhere in the project. I removed the ambiguous value
 authorization. [1.3]
 
 ### The results, stated precisely (~60s)
+
+> **Superseded.** The spoken figures below are Lane B historical. Deliver the
+> sealed Lane A result in the banner at the top of this file instead.
 
 On the single locked held-out test at threshold 0.53: precision 69.66 percent,
 recall 83.78 percent, PR-AUC 0.8288, ROC-AUC 0.9613. The confusion matrix is
@@ -143,6 +164,8 @@ TypeScript dashboard; Docker; GitHub Actions with ruff, mypy, pytest, vitest,
 Playwright, pip-audit, npm audit, TruffleHog, CodeQL, and Trivy.
 
 **Results.**
+*Superseded — Lane B historical. Submit the sealed Lane A figures from the
+banner at the top of this file.* Retained for the record:
 One locked held-out test at threshold 0.53: precision 69.66%, recall 83.78%,
 PR-AUC 0.8288, ROC-AUC 0.9613; TP/FP/FN/TN = 62/27/12/42,621 over 42,722 rows
 containing 74 fraud cases. Verified from a tamper-evident lock file. [2.1, 2.2]
