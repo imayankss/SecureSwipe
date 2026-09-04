@@ -127,7 +127,7 @@ def test_container_image_declares_source_revision_binding() -> None:
 def test_container_scan_exceptions_are_narrow_documented_and_expiring() -> None:
     payload = yaml.safe_load((ROOT / ".trivyignore.yaml").read_text(encoding="utf-8"))
     exceptions = payload["vulnerabilities"]
-    assert len(exceptions) == 14
+    assert len(exceptions) == 19
     assert len({item["id"] for item in exceptions}) == len(exceptions)
     assert all(set(item) == {"id", "expired_at", "statement"} for item in exceptions)
     assert all(str(item["expired_at"]) == "2026-09-20" for item in exceptions)

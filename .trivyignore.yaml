@@ -53,3 +53,6 @@ vulnerabilities:
   - id: CVE-2026-78410
     expired_at: 2026-09-20
     statement: Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is restricted bind mounts failing to pin their target. Creating a bind mount requires CAP_SYS_ADMIN, which the runtime drops entirely; the container mounts nothing at runtime and its root filesystem is read-only. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
+  - id: CVE-2026-16742
+    expired_at: 2026-09-20
+    statement: Debian 13 has no fixed version at libsystemd0 257.13-1~deb13u1. The affected path is a systemd-homed local privilege escalation, and the systemd-homed daemon is not present in the image; the SBOM records exactly two systemd-family packages, libsystemd0 and libudev1, both shared libraries, with no systemd or systemd-homed package among the 117 installed. The vulnerable binary therefore does not exist in the runtime. The container additionally has no init system, no homed-managed accounts, and runs non-root uid 10001 with --cap-drop ALL, --read-only, and no-new-privileges, which blocks privilege escalation directly. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
