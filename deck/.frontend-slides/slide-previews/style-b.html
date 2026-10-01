@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureSwipe</title>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400;1,8..60,600&family=DM+Sans:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#1C2644; --navy-alt:#232F55; --cream:#F0ECE3; --cream-alt:#E6E0D4;
+  --gold:#C8A870; --text-warm:#E2DCD0; --muted-dark:#8A96A8; --hint-dark:#4E5A6E; --ink:#1A2030;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:#000}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:var(--navy)}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;display:block;visibility:hidden;opacity:0;pointer-events:none}
+.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+
+.title-slide{background:var(--navy);padding:76px 104px;display:flex;flex-direction:column;justify-content:space-between}
+/* near-invisible 80px grid fingerprint on every dark slide */
+.title-slide::after{content:'';position:absolute;inset:0;pointer-events:none;
+  background:linear-gradient(rgba(200,168,112,.045) 1px,transparent 1px) 0 0/80px 80px,
+             linear-gradient(90deg,rgba(200,168,112,.045) 1px,transparent 1px) 0 0/80px 80px}
+
+.masthead{display:flex;justify-content:space-between;align-items:baseline;
+  border-bottom:1px solid rgba(200,168,112,.32);padding-bottom:22px;
+  font-family:'IBM Plex Mono',monospace;font-size:19px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted-dark)}
+.masthead .l{color:var(--gold)}
+/* double-rule under the masthead */
+.rule2{height:1px;background:rgba(200,168,112,.32);margin-top:5px}
+
+.center{max-width:1380px}
+h1{font-family:'Source Serif 4',serif;font-weight:600;font-size:158px;line-height:.94;
+  letter-spacing:-.028em;color:var(--cream);margin-bottom:40px}
+h1 em{font-style:italic;color:var(--gold);font-weight:600}
+.standfirst{font-family:'DM Sans',sans-serif;font-weight:400;font-size:36px;line-height:1.5;
+  color:var(--text-warm);max-width:31ch}
+.standfirst i{font-family:'Source Serif 4',serif;font-style:italic;color:var(--gold)}
+
+.figures{display:flex;gap:0;border-top:1px solid rgba(200,168,112,.28);padding-top:30px}
+.fig{flex:1;padding-right:52px;border-right:1px solid rgba(138,150,168,.18)}
+.fig:last-child{border-right:none;padding-right:0}
+.fig .k{font-family:'IBM Plex Mono',monospace;font-size:15px;letter-spacing:.17em;text-transform:uppercase;
+  color:var(--hint-dark);margin-bottom:14px}
+.fig .v{font-family:'Source Serif 4',serif;font-weight:600;font-size:62px;color:var(--gold);
+  line-height:1;letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.fig .n{font-family:'DM Sans',sans-serif;font-size:17px;color:var(--muted-dark);margin-top:11px;line-height:1.45}
+
+.colophon{display:flex;justify-content:space-between;align-items:baseline;
+  font-family:'IBM Plex Mono',monospace;font-size:17px;color:var(--hint-dark);letter-spacing:.08em;
+  border-top:1px solid rgba(138,150,168,.18);padding-top:20px}
+
+.r{opacity:0;transform:translateY(24px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.slide.visible .r{opacity:1;transform:none}
+.r:nth-child(1){transition-delay:.1s}.r:nth-child(2){transition-delay:.24s}
+.r:nth-child(3){transition-delay:.38s}.r:nth-child(4){transition-delay:.52s}
+.gold-wipe{position:absolute;left:104px;bottom:0;height:3px;width:calc(100% - 208px);background:var(--gold);
+  transform:scaleX(0);transform-origin:0 50%;animation:gw 1.4s var(--ease) .7s forwards}
+@keyframes gw{to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.2s!important}}
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+  <main class="deck-stage" id="stage">
+    <section class="slide title-slide active visible">
+
+      <div class="r">
+        <div class="masthead">
+          <span class="l">SecureSwipe</span>
+          <span>Razorpay AI Buildathon 2026 &nbsp;·&nbsp; Track 02 — AI Risk Manager</span>
+        </div>
+        <div class="rule2"></div>
+      </div>
+
+      <div class="center r">
+        <h1>Ranking fraud under a <em>fixed</em> review budget.</h1>
+        <p class="standfirst">A capacity-aware fraud-risk manager that exposes the legitimate-customer
+          workload created by every operating point — and <i>never</i> blocks a payment on its own.</p>
+      </div>
+
+      <div class="figures r">
+        <div class="fig"><div class="k">Recall at 1,000 reviews/day</div><div class="v">80.18%</div>
+          <div class="n">Wilson 95% CI · 78.74 – 81.55</div></div>
+        <div class="fig"><div class="k">Alert precision</div><div class="v">8.03%</div>
+          <div class="n">≈ 11 legitimate customers reviewed per fraud caught</div></div>
+        <div class="fig"><div class="k">Sealed evaluation</div><div class="v">88,581</div>
+          <div class="n">transactions · 3,083 fraud labels · run exactly once</div></div>
+      </div>
+
+      <div class="colophon r">
+        <span>Mayank Suryavanshi</span>
+        <span>Defense-only · every outcome is human_review or below_review_threshold</span>
+      </div>
+
+      <div class="gold-wipe"></div>
+    </section>
+  </main>
+</div>
+<script>
+const stage=document.getElementById('stage');
+function fit(){const f=Math.min(innerWidth/1920,innerHeight/1080);
+  stage.style.transform=`translate(${(innerWidth-1920*f)/2}px,${(innerHeight-1080*f)/2}px) scale(${f})`;}
+fit();addEventListener('resize',fit);
+</script>
+</body>
+</html>

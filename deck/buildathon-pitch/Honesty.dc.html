@@ -1,0 +1,198 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+  <style>
+  :root {
+    --paper: #fbfbf9;
+    --panel: #f2f2ee;
+    --ink: #12181f;
+    --ink-2: #4b5663;
+    --muted: #838d98;
+    --rule: #dcdcd5;
+    --hair: #e8e8e1;
+    --accent: #2950da;
+    --accent-tint: rgba(41, 80, 218, 0.07);
+    --warm: #eb6834;
+    --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: #1c3aa8; }
+  .slide {
+    width: 1280px;
+    height: 720px;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    padding: 50px 88px 38px;
+    overflow: hidden;
+  }
+  .eyebrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 13px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .eyebrow b { color: var(--ink); font-weight: 500; }
+  .body { flex-grow: 1; display: flex; flex-direction: column; padding-top: 38px; }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 13px;
+    border-top: 1px solid var(--rule);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    line-height: 1.05;
+    font-size: 52px;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h2.sm { font-size: 40px; }
+  .lede {
+    font-size: 18px;
+    line-height: 1.58;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    background: var(--accent-tint);
+    padding: 5px 10px;
+    border: 1px solid rgba(41, 80, 218, 0.22);
+  }
+  .rule { height: 1px; background: var(--rule); border: 0; margin: 0; }
+
+  .nots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px 48px; margin-top: 28px; }
+  .not { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 16px; padding: 13px 0;
+         border-top: 1px solid var(--hair); }
+  .not .x { font-family: var(--mono); font-size: 15px; color: var(--warm); line-height: 1.4; }
+  .not h4 { font-size: 15.5px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 5px; }
+  .not p { font-size: 14px; line-height: 1.52; color: var(--ink-2); margin: 0; }
+  .closing {
+    font-family: var(--serif);
+    font-size: 22px;
+    line-height: 1.45;
+    color: var(--ink);
+    border-left: 2px solid var(--accent);
+    padding-left: 20px;
+    margin: 0;
+    max-width: 62ch;
+  }
+
+  </style>
+</helmet>
+<div class="slide">
+  <div class="eyebrow">
+    <span><b>08</b> &nbsp; The boundary</span>
+    <span>4:20 &ndash; 4:38</span>
+  </div>
+  <div class="body">
+    <h2 class="sm">What this does not prove.</h2>
+    <div class="nots">
+      <div class="not">
+        <span class="x">&times;</span>
+        <div>
+          <h4>Not Razorpay performance</h4>
+          <p>One offline evaluation on public IEEE-CIS research data. Not live-merchant behaviour,
+            not Indian-payment economics, not a production SLO.</p>
+        </div>
+      </div>
+      <div class="not">
+        <span class="x">&times;</span>
+        <div>
+          <h4>Not a blind evaluation</h4>
+          <p>The final-test role was held out <em>programmatically</em> by a frozen partition, not withheld
+            by an independent party. It is not human-blind and never may be called that.</p>
+        </div>
+      </div>
+      <div class="not">
+        <span class="x">&times;</span>
+        <div>
+          <h4>Not a proven serving chain</h4>
+          <p>The local reference bundle is not proven to be the sealed Lane A model, and there is no
+            verified public scoring backend.</p>
+        </div>
+      </div>
+      <div class="not">
+        <span class="x">&times;</span>
+        <div>
+          <h4>Not savings or ROI</h4>
+          <p>The cost explorer is sensitivity arithmetic over published counts under constants you type in.
+            The sensitivity is the finding; the rupee totals are yours.</p>
+        </div>
+      </div>
+      <div class="not">
+        <span class="x">&times;</span>
+        <div>
+          <h4>Not a scalability claim</h4>
+          <p>The final scale matrix failed closed, so no multi-worker throughput or production-capacity
+            claim is made anywhere in the repository.</p>
+        </div>
+      </div>
+      <div class="not">
+        <span class="x">&times;</span>
+        <div>
+          <h4>Not a fairness result</h4>
+          <p>SHAP is noncausal, and fairness cannot be evaluated without protected attributes and an
+            authorized study design.</p>
+        </div>
+      </div>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <p class="closing">I would rather hand you these six than have you find them.</p>
+  </div>
+  <div class="foot">
+    <span>SecureSwipe</span>
+    <span>Razorpay AI Buildathon 2026 &middot; Track 02</span>
+    <span>09 / 10</span>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

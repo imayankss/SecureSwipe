@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureSwipe</title>
+<link rel="stylesheet" href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@800,700,500&display=swap">
+<link href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0A0D13; --surface:#121722; --surface-2:#171E2B;
+  --hairline:rgba(120,131,154,.22); --hairline-soft:rgba(120,131,154,.10);
+  --ink:#E9EDF4; --ink-dim:#9AA6BC; --ink-faint:#5D6880;
+  --signal:#F5B841; --safe:#2DD4A7; --alert:#FF5C5C; --legit:#3E5C8A;
+  --font-display:'Cabinet Grotesk',sans-serif; --font-mono:'Chivo Mono',monospace;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:#000}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:var(--bg)}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;display:block;visibility:hidden;opacity:0;pointer-events:none}
+.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+
+.title-slide{
+  background:
+    linear-gradient(rgba(120,131,154,.05) 1px,transparent 1px) 0 0/64px 64px,
+    linear-gradient(90deg,rgba(120,131,154,.05) 1px,transparent 1px) 0 0/64px 64px,
+    radial-gradient(1100px 620px at 12% -8%, rgba(245,184,65,.10), transparent 62%),
+    radial-gradient(900px 560px at 104% 108%, rgba(45,212,167,.08), transparent 60%),
+    var(--bg);
+  padding:70px 96px;display:flex;flex-direction:column;justify-content:space-between;
+  font-family:var(--font-mono);
+}
+
+.topbar{display:flex;justify-content:space-between;align-items:center;
+  font-size:19px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-faint);
+  border-bottom:1px solid var(--hairline);padding-bottom:20px}
+.topbar .brand{color:var(--signal)}
+.topbar .status{display:flex;align-items:center;gap:11px;color:var(--safe)}
+.topbar .status i{width:8px;height:8px;border-radius:50%;background:var(--safe);
+  box-shadow:0 0 0 0 rgba(45,212,167,.6);animation:ping 2.4s ease-out infinite}
+@keyframes ping{0%{box-shadow:0 0 0 0 rgba(45,212,167,.55)}70%,100%{box-shadow:0 0 0 16px rgba(45,212,167,0)}}
+
+.hero{display:grid;grid-template-columns:1fr 660px;gap:80px;align-items:center}
+h1{font-family:var(--font-display);font-weight:800;font-size:150px;line-height:.9;
+  letter-spacing:-.045em;color:var(--ink);margin-bottom:34px}
+h1 span{color:var(--signal)}
+.lede{font-size:30px;line-height:1.62;color:var(--ink-dim);max-width:30ch;font-weight:300}
+.lede b{color:var(--ink);font-weight:500}
+
+/* live frontier motif — the deck's signature graphic device */
+.frontier{border:1px solid var(--hairline);background:linear-gradient(180deg,var(--surface-2),var(--surface));
+  border-radius:3px;padding:26px 28px 22px;position:relative;overflow:hidden}
+.frontier::before{content:'';position:absolute;top:0;left:0;height:2px;width:100%;
+  background:linear-gradient(90deg,var(--signal),transparent 72%);
+  transform:scaleX(0);transform-origin:0 50%;animation:wipe 1.3s var(--ease) .8s forwards}
+@keyframes wipe{to{transform:scaleX(1)}}
+.fr-head{display:flex;justify-content:space-between;font-size:14px;letter-spacing:.16em;
+  text-transform:uppercase;color:var(--ink-faint);margin-bottom:18px}
+.fr-svg{width:100%;height:auto;overflow:visible}
+.fr-path{fill:none;stroke-width:3;stroke-linecap:round;
+  stroke-dasharray:var(--len);stroke-dashoffset:var(--len);animation:draw 2s var(--ease) 1s forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+.fr-grid{stroke:var(--hairline-soft);stroke-width:1}
+.fr-axis{stroke:var(--hairline);stroke-width:1}
+.fr-t{font-family:var(--font-mono);font-size:11px;fill:var(--ink-faint);letter-spacing:.08em}
+.fr-legend{display:flex;gap:26px;font-size:13px;color:var(--ink-dim);margin-top:14px}
+.fr-legend i{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:8px}
+
+.metrics{display:flex;gap:0;border-top:1px solid var(--hairline);padding-top:26px}
+.m{flex:1;padding-right:56px;border-right:1px solid var(--hairline-soft)}
+.m:last-child{border-right:none;padding-right:0}
+.m .k{font-size:14px;letter-spacing:.17em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:13px}
+.m .v{font-family:var(--font-display);font-weight:800;font-size:60px;line-height:1;letter-spacing:-.03em;
+  color:var(--ink);font-variant-numeric:tabular-nums}
+.m.a .v{color:var(--safe)} .m.b .v{color:var(--signal)}
+.m .n{font-size:15px;color:var(--ink-faint);margin-top:11px;line-height:1.5}
+
+.footbar{display:flex;justify-content:space-between;align-items:center;font-size:16px;
+  color:var(--ink-faint);letter-spacing:.06em;border-top:1px solid var(--hairline-soft);padding-top:18px}
+.chip{border:1px solid var(--hairline);padding:9px 17px;border-radius:2px;font-size:14px;
+  letter-spacing:.14em;text-transform:uppercase;color:var(--ink-dim)}
+.chip.safe{border-color:rgba(45,212,167,.42);color:var(--safe)}
+
+.r{opacity:0;transform:translateY(26px);transition:opacity .9s var(--ease),transform .9s var(--ease)}
+.slide.visible .r{opacity:1;transform:none}
+.r:nth-child(1){transition-delay:.1s}.r:nth-child(2){transition-delay:.26s}
+.r:nth-child(3){transition-delay:.42s}.r:nth-child(4){transition-delay:.58s}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.2s!important}}
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+  <main class="deck-stage" id="stage">
+    <section class="slide title-slide active visible">
+
+      <div class="topbar r">
+        <span class="brand">SecureSwipe</span>
+        <span>Razorpay AI Buildathon 2026 · Track 02 — AI Risk Manager</span>
+        <span class="status"><i></i>Bundle verified · fail closed</span>
+      </div>
+
+      <div class="hero r">
+        <div>
+          <h1>Fraud has a <span>budget.</span></h1>
+          <p class="lede">SecureSwipe ranks suspicious transactions under a <b>fixed daily review
+            capacity</b>, and reports the legitimate customers that capacity costs — in the headline,
+            not the footnote.</p>
+        </div>
+
+        <div class="frontier">
+          <div class="fr-head"><span>Capacity frontier</span><span>Lane A · sealed</span></div>
+          <svg class="fr-svg" viewBox="0 0 560 250">
+            <line class="fr-grid" x1="52" y1="34"  x2="548" y2="34"/>
+            <line class="fr-grid" x1="52" y1="92"  x2="548" y2="92"/>
+            <line class="fr-grid" x1="52" y1="150" x2="548" y2="150"/>
+            <line class="fr-axis" x1="52" y1="208" x2="548" y2="208"/>
+            <line class="fr-axis" x1="52" y1="22"  x2="52"  y2="208"/>
+            <text class="fr-t" x="14" y="38">100%</text>
+            <text class="fr-t" x="22" y="154">50%</text>
+            <text class="fr-t" x="38" y="212">0</text>
+            <text class="fr-t" x="44"  y="228">100</text>
+            <text class="fr-t" x="168" y="228">500</text>
+            <text class="fr-t" x="300" y="228">1,000</text>
+            <text class="fr-t" x="500" y="228">2,000</text>
+            <text class="fr-t" x="222" y="245">REVIEWS PER DAY</text>
+            <path id="p1" class="fr-path" style="stroke:#2DD4A7"
+                  d="M 58 155.6 C 120 130, 190 108, 300 76.6 S 460 44, 545 40.2"/>
+            <path id="p2" class="fr-path" style="stroke:#F5B841"
+                  d="M 58 155.4 C 130 178, 200 190, 300 197.5 S 470 205, 545 206"/>
+            <circle cx="300" cy="76.6" r="6.5" fill="#2DD4A7" stroke="#0A0D13" stroke-width="3"/>
+            <circle cx="300" cy="197.5" r="6.5" fill="#F5B841" stroke="#0A0D13" stroke-width="3"/>
+            <line x1="300" y1="22" x2="300" y2="208" stroke="#5D6880" stroke-width="1" stroke-dasharray="3 4" opacity=".7"/>
+          </svg>
+          <div class="fr-legend">
+            <span><i style="background:#2DD4A7"></i>Fraud recall</span>
+            <span><i style="background:#F5B841"></i>Alert precision</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="metrics r">
+        <div class="m a"><div class="k">Recall @ 1,000/day</div><div class="v">80.18%</div>
+          <div class="n">Wilson 95% CI · 78.74 – 81.55</div></div>
+        <div class="m b"><div class="k">Alert precision</div><div class="v">8.03%</div>
+          <div class="n">≈ 11 legitimate reviewed per fraud caught</div></div>
+        <div class="m"><div class="k">Population</div><div class="v">88,581</div>
+          <div class="n">transactions · 3,083 fraud labels</div></div>
+        <div class="m"><div class="k">Decision path</div><div class="v">0</div>
+          <div class="n">LLM tokens · deterministic scoring</div></div>
+      </div>
+
+      <div class="footbar r">
+        <span>Mayank Suryavanshi</span>
+        <span style="display:flex;gap:10px">
+          <span class="chip safe">human_review</span>
+          <span class="chip safe">below_review_threshold</span>
+          <span class="chip">defense-only</span>
+        </span>
+      </div>
+
+    </section>
+  </main>
+</div>
+<script>
+const stage=document.getElementById('stage');
+function fit(){const f=Math.min(innerWidth/1920,innerHeight/1080);
+  stage.style.transform=`translate(${(innerWidth-1920*f)/2}px,${(innerHeight-1080*f)/2}px) scale(${f})`;}
+fit();addEventListener('resize',fit);
+['p1','p2'].forEach(id=>{const p=document.getElementById(id);p.style.setProperty('--len',p.getTotalLength());});
+</script>
+</body>
+</html>

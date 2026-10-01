@@ -1,0 +1,234 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+  <style>
+  :root {
+    --paper: #fbfbf9;
+    --panel: #f2f2ee;
+    --ink: #12181f;
+    --ink-2: #4b5663;
+    --muted: #838d98;
+    --rule: #dcdcd5;
+    --hair: #e8e8e1;
+    --accent: #2950da;
+    --accent-tint: rgba(41, 80, 218, 0.07);
+    --warm: #eb6834;
+    --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: #1c3aa8; }
+  .slide {
+    width: 1280px;
+    height: 720px;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    padding: 50px 88px 38px;
+    overflow: hidden;
+  }
+  .eyebrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 13px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .eyebrow b { color: var(--ink); font-weight: 500; }
+  .body { flex-grow: 1; display: flex; flex-direction: column; padding-top: 38px; }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 13px;
+    border-top: 1px solid var(--rule);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    line-height: 1.05;
+    font-size: 52px;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h2.sm { font-size: 40px; }
+  .lede {
+    font-size: 18px;
+    line-height: 1.58;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    background: var(--accent-tint);
+    padding: 5px 10px;
+    border: 1px solid rgba(41, 80, 218, 0.22);
+  }
+  .rule { height: 1px; background: var(--rule); border: 0; margin: 0; }
+
+  .lanes { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px; margin-top: 30px; }
+  .lane { border-top: 2px solid var(--ink); padding-top: 14px; }
+  .lane h4 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 4px; }
+  .lane .role {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: block;
+    margin-bottom: 14px;
+  }
+  .lane dl { margin: 0; display: flex; flex-direction: column; gap: 11px; }
+  .lane dt {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .lane dd { margin: 0; font-size: 13.5px; line-height: 1.45; color: var(--ink-2); }
+  .lane dd.no { color: var(--ink); }
+  .banner {
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    border-top: 1px solid var(--rule);
+    padding-top: 16px;
+    margin-top: 0;
+  }
+  .banner .t {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--warm);
+    white-space: nowrap;
+  }
+  .banner p { margin: 0; font-size: 14px; line-height: 1.5; color: var(--ink-2); }
+
+  </style>
+</helmet>
+<div class="slide">
+  <div class="eyebrow">
+    <span><b>04</b> &nbsp; Trust boundary</span>
+    <span>1:48 &ndash; 2:10</span>
+  </div>
+  <div class="body">
+    <h2 class="sm">Three lanes that never borrow each other&rsquo;s credibility.</h2>
+    <div class="lanes">
+      <div class="lane">
+        <h4>Sealed Lane A</h4>
+        <span class="role">Offline science &middot; variant E</span>
+        <dl>
+          <div>
+            <dt>Sees</dt>
+            <dd>24 frozen IEEE-CIS inputs &mdash; 12 base fields, <span class="num">M1&ndash;M9</span>,
+              <span class="num">DeviceInfo</span>, and one identity-presence flag</dd>
+          </div>
+          <div>
+            <dt>Cannot reach</dt>
+            <dd class="no">PAN, CVV, Razorpay traffic, or a proven deployable bundle</dd>
+          </div>
+          <div>
+            <dt>Emits</dt>
+            <dd>Aggregate metrics and capacity counts only</dd>
+          </div>
+        </dl>
+      </div>
+      <div class="lane">
+        <h4>Static reviewer surface</h4>
+        <span class="role">Presentation &middot; no live inference</span>
+        <dl>
+          <div>
+            <dt>Sees</dt>
+            <dd>Sanitized aggregate JSON and approved figures exported deterministically</dd>
+          </div>
+          <div>
+            <dt>Cannot reach</dt>
+            <dd class="no">Any model, any row, any scoring call</dd>
+          </div>
+          <div>
+            <dt>Emits</dt>
+            <dd><span class="num">/</span>, <span class="num">/evidence</span> and a labelled recorded
+              transcript on <span class="num">/demo</span></dd>
+          </div>
+        </dl>
+      </div>
+      <div class="lane">
+        <h4>Local reference API</h4>
+        <span class="role">Opt-in &middot; runs on your machine</span>
+        <dl>
+          <div>
+            <dt>Sees</dt>
+            <dd>A fixed synthetic fixture, or separately authorized local requests</dd>
+          </div>
+          <div>
+            <dt>Cannot reach</dt>
+            <dd class="no">The sealed Lane A model &mdash; it does not claim to serve the headline</dd>
+          </div>
+          <div>
+            <dt>Emits</dt>
+            <dd>A bounded review signal plus a chained audit receipt</dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div class="banner">
+      <span class="t">Defense only</span>
+      <p>No component touches a PAN, a CVV, live Razorpay traffic, or a real customer &mdash; and none of them
+        performs a payment action. The boundary is written down because a promise is worth less than a document.</p>
+    </div>
+  </div>
+  <div class="foot">
+    <span>SecureSwipe</span>
+    <span>Razorpay AI Buildathon 2026 &middot; Track 02</span>
+    <span>05 / 10</span>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

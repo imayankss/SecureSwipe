@@ -422,28 +422,3 @@ test("configured production live demo sends one genuine inference request and va
     Object.fromEntries(["Time", ...Array.from({ length: 28 }, (_, index) => `V${index + 1}`), "Amount"].map((key) => [key, 0])),
   );
 });
-
-test("footer opens the standalone methodology document without browser errors", async ({ page }) => {
-  const consoleErrors: string[] = [];
-  const pageErrors: string[] = [];
-  const failedRequests: string[] = [];
-  page.on("console", (message) => {
-    if (message.type() === "error") consoleErrors.push(message.text());
-  });
-  page.on("pageerror", (error) => pageErrors.push(error.message));
-  page.on("requestfailed", (request) => {
-    failedRequests.push(`${request.url()} · ${request.failure()?.errorText ?? "unknown"}`);
-  });
-
-  await page.goto("/");
-  const methodology = page.getByRole("link", { name: /Methodology/i });
-  await expect(methodology).toHaveAttribute("href", "/secureswipe-methodology.html");
-  await methodology.click();
-
-  await expect(page).toHaveURL(/\/secureswipe-methodology\.html$/);
-  await expect(page).toHaveTitle("SecureSwipe — Results");
-  await expect(page.getByRole("heading", { level: 1, name: "SecureSwipe" })).toBeVisible();
-  expect(consoleErrors).toEqual([]);
-  expect(pageErrors).toEqual([]);
-  expect(failedRequests).toEqual([]);
-});

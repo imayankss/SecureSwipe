@@ -80,14 +80,6 @@ describe("route shell and navigation", () => {
       "#main-content",
     );
   });
-
-  it("links the shared footer to the standalone methodology page", () => {
-    render(<Home />);
-    expect(screen.getByRole("link", { name: /Methodology/i })).toHaveAttribute(
-      "href",
-      "/secureswipe-methodology.html",
-    );
-  });
 });
 
 describe("homepage reviewer path", () => {

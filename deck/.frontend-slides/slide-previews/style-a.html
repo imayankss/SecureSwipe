@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SecureSwipe</title>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-dark:#0A0A0A; --bg-white:#FFFFFF; --accent-blue:#4361EE;
+  --text-dark:#0A0A0A; --text-light:#FFFFFF; --text-mute:#6B7280;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#000}
+.deck-viewport{position:fixed;inset:0;overflow:hidden;background:#000}
+.deck-stage{position:absolute;left:0;top:0;width:1920px;height:1080px;overflow:hidden;transform-origin:0 0;background:var(--bg-white)}
+.slide{position:absolute;inset:0;width:1920px;height:1080px;overflow:hidden;display:block;visibility:hidden;opacity:0;pointer-events:none;background:var(--bg-white)}
+.slide.active,.slide.visible{visibility:visible;opacity:1;pointer-events:auto;z-index:1}
+
+/* two-panel vertical split: white top, blue bottom */
+.panel-top{position:absolute;top:0;left:0;right:0;height:606px;background:var(--bg-white);
+  padding:88px 120px 0;display:flex;flex-direction:column;justify-content:space-between}
+.panel-bot{position:absolute;bottom:0;left:0;right:0;height:474px;background:var(--accent-blue);
+  padding:64px 120px 72px;display:flex;flex-direction:column;justify-content:space-between;
+  clip-path:inset(100% 0 0 0);animation:sweep 1.1s var(--ease) .25s forwards}
+@keyframes sweep{to{clip-path:inset(0 0 0 0)}}
+
+.brandline{display:flex;justify-content:space-between;align-items:center;
+  font-family:'Space Mono',monospace;font-size:19px;letter-spacing:.18em;text-transform:uppercase;color:var(--text-mute)}
+.brandline .mark{color:var(--text-dark);font-weight:700}
+
+h1{font-family:'Manrope',sans-serif;font-weight:800;font-size:206px;line-height:.86;
+  letter-spacing:-.055em;color:var(--text-dark);margin-bottom:34px}
+.tagline{font-family:'Manrope',sans-serif;font-weight:500;font-size:41px;line-height:1.28;
+  color:var(--text-dark);max-width:24ch}
+.tagline b{color:var(--accent-blue);font-weight:800}
+
+.accent-bar{position:absolute;top:0;left:120px;width:196px;height:9px;background:var(--accent-blue);
+  transform:scaleX(0);transform-origin:0 50%;animation:bar .8s var(--ease) .9s forwards}
+@keyframes bar{to{transform:scaleX(1)}}
+
+.stat-row{display:flex;gap:112px}
+.stat .k{font-family:'Space Mono',monospace;font-size:17px;letter-spacing:.16em;text-transform:uppercase;
+  color:rgba(255,255,255,.62);margin-bottom:12px}
+.stat .v{font-family:'Manrope',sans-serif;font-weight:800;font-size:66px;color:var(--text-light);
+  letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+.stat .n{font-family:'Space Mono',monospace;font-size:16px;color:rgba(255,255,255,.55);margin-top:9px}
+
+.bot-foot{display:flex;justify-content:space-between;align-items:flex-end;
+  font-family:'Space Mono',monospace;font-size:18px;color:rgba(255,255,255,.75);letter-spacing:.06em}
+.bot-foot .scope{border:1px solid rgba(255,255,255,.4);padding:11px 20px;letter-spacing:.14em;
+  text-transform:uppercase;font-size:15px}
+
+.r{opacity:0;transform:translateY(28px);transition:opacity .8s var(--ease),transform .8s var(--ease)}
+.slide.visible .r{opacity:1;transform:none}
+.r:nth-of-type(1){transition-delay:.12s}
+.r:nth-of-type(2){transition-delay:.24s}
+.panel-bot .r{transition-delay:.85s}
+.panel-bot .r+.r{transition-delay:1s}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.2s!important}}
+</style>
+</head>
+<body>
+<div class="deck-viewport">
+  <main class="deck-stage" id="stage">
+    <section class="slide title-slide active visible">
+
+      <div class="panel-top">
+        <div class="brandline">
+          <span class="mark">SecureSwipe</span>
+          <span>Razorpay AI Buildathon 2026 · Track 02</span>
+        </div>
+        <div style="padding-bottom:78px">
+          <h1 class="r">SecureSwipe</h1>
+          <p class="tagline r">A capacity-aware fraud-risk manager for <b>human review</b>.</p>
+        </div>
+      </div>
+
+      <div class="panel-bot">
+        <div class="accent-bar"></div>
+        <div class="stat-row r">
+          <div class="stat"><div class="k">Recall @ 1,000 reviews/day</div><div class="v">80.18%</div><div class="n">Wilson 95% CI · 78.74 – 81.55</div></div>
+          <div class="stat"><div class="k">Alert precision</div><div class="v">8.03%</div><div class="n">≈ 11 legitimate reviewed per fraud caught</div></div>
+          <div class="stat"><div class="k">Population</div><div class="v">88,581</div><div class="n">transactions · 3,083 fraud labels</div></div>
+        </div>
+        <div class="bot-foot r">
+          <span>Mayank Suryavanshi</span>
+          <span class="scope">Defense-only · no autonomous block</span>
+        </div>
+      </div>
+
+    </section>
+  </main>
+</div>
+<script>
+const stage=document.getElementById('stage');
+function fit(){const f=Math.min(innerWidth/1920,innerHeight/1080);
+  stage.style.transform=`translate(${(innerWidth-1920*f)/2}px,${(innerHeight-1080*f)/2}px) scale(${f})`;}
+fit();addEventListener('resize',fit);
+</script>
+</body>
+</html>

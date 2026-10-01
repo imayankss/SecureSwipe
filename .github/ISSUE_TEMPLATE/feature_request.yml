@@ -1,0 +1,58 @@
+name: Feature request
+description: Propose a focused improvement to SecureSwipe.
+title: "[Feature]: "
+labels:
+  - "type: feature"
+body:
+  - type: markdown
+    attributes:
+      value: >-
+        Proposals must preserve SecureSwipe's human-review boundary and evidence
+        provenance. Do not submit vulnerabilities or sensitive data here.
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Pre-flight checks
+      options:
+        - label: I searched existing issues and documentation for this proposal.
+          required: true
+        - label: This request does not rely on real cardholder or customer data.
+          required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - API
+        - ML or evaluation
+        - Evidence or documentation
+        - Infrastructure or CI
+        - Web
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What user or engineering problem should be solved?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the smallest useful change and its evidence boundary.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Verification
+      description: How should reviewers verify correctness, safety, and claim provenance?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Note any simpler options or reasons for deferring them.

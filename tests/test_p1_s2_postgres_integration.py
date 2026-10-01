@@ -409,7 +409,7 @@ def test_reserved_stale_and_failed_states_remain_fail_closed() -> None:
 
 def test_unavailable_store_fails_closed_without_secret_disclosure() -> None:
     settings = PostgresScaleSettings(
-        dsn="postgresql://user:private-value@127.0.0.1:1/secureswipe_p1_scale_test",  # trufflehog:ignore — intentionally invalid unreachable test fixture; no real credential
+        dsn="postgresql://user:private-value@127.0.0.1:1/secureswipe_p1_scale_test",  # trufflehog:ignore — intentionally invalid unreachable test fixture; no real credential,
         schema=_schema("unavailable"),
         hmac_secret=_SECRET,
         connect_timeout_seconds=0.1,

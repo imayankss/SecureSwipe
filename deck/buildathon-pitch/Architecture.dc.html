@@ -1,0 +1,209 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+  <style>
+  :root {
+    --paper: #fbfbf9;
+    --panel: #f2f2ee;
+    --ink: #12181f;
+    --ink-2: #4b5663;
+    --muted: #838d98;
+    --rule: #dcdcd5;
+    --hair: #e8e8e1;
+    --accent: #2950da;
+    --accent-tint: rgba(41, 80, 218, 0.07);
+    --warm: #eb6834;
+    --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: #1c3aa8; }
+  .slide {
+    width: 1280px;
+    height: 720px;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    padding: 50px 88px 38px;
+    overflow: hidden;
+  }
+  .eyebrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 13px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .eyebrow b { color: var(--ink); font-weight: 500; }
+  .body { flex-grow: 1; display: flex; flex-direction: column; padding-top: 38px; }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 13px;
+    border-top: 1px solid var(--rule);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    line-height: 1.05;
+    font-size: 52px;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h2.sm { font-size: 40px; }
+  .lede {
+    font-size: 18px;
+    line-height: 1.58;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    background: var(--accent-tint);
+    padding: 5px 10px;
+    border: 1px solid rgba(41, 80, 218, 0.22);
+  }
+  .rule { height: 1px; background: var(--rule); border: 0; margin: 0; }
+
+  .flowline {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--ink-2);
+    background: var(--panel);
+    padding: 12px 18px;
+    margin: 22px 0 0;
+    flex-wrap: wrap;
+  }
+  .flowline em { font-style: normal; color: var(--accent); }
+  .flowline span.sep { color: var(--muted); }
+  .steps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 24px 26px; margin-top: 28px; }
+  .step { border-top: 2px solid var(--ink); padding-top: 12px; }
+  .step .n {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .step h4 { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 7px; }
+  .step p { font-size: 14px; line-height: 1.55; color: var(--ink-2); margin: 0 0 9px; }
+  .step .g {
+    font-family: var(--mono);
+    font-size: 11.5px;
+    line-height: 1.45;
+    color: var(--accent);
+    display: block;
+  }
+
+  </style>
+</helmet>
+<div class="slide">
+  <div class="eyebrow">
+    <span><b>03</b> &nbsp; Architecture</span>
+    <span>1:06 &ndash; 1:48</span>
+  </div>
+  <div class="body">
+    <h2 class="sm">Six stages. Each one carries a guarantee, not a hope.</h2>
+    <p class="flowline">
+      <em>score</em> <span class="sep">&rarr;</span>
+      <em>rank under capacity</em> <span class="sep">&rarr;</span>
+      <em>route</em> <span class="sep">&rarr;</span>
+      <em>explain</em> <span class="sep">&rarr;</span>
+      <em>audit</em> <span class="sep">&rarr;</span>
+      <em>replay / fail closed</em>
+    </p>
+    <div class="steps">
+      <div class="step">
+        <span class="n">01 &mdash; SCORE</span>
+        <h4>Checksum-verified bundle</h4>
+        <p>A local bundle normalizes fields into its own recorded order and runs the estimator.</p>
+        <span class="g">Deterministic &middot; zero LLM tokens</span>
+      </div>
+      <div class="step">
+        <span class="n">02 &mdash; RANK</span>
+        <h4>Top-B under a fixed budget</h4>
+        <p>Transactions are ordered by score; the top <span class="num">B</span> are selected for the day.</p>
+        <span class="g">Workload is chosen, not discovered</span>
+      </div>
+      <div class="step">
+        <span class="n">03 &mdash; ROUTE</span>
+        <h4>Two outcomes only</h4>
+        <p>Each case becomes <span class="num">human_review</span> or <span class="num">below_review_threshold</span>.</p>
+        <span class="g">Never an approve, block, or decline</span>
+      </div>
+      <div class="step">
+        <span class="n">04 &mdash; EXPLAIN</span>
+        <h4>Provenance, not vibes</h4>
+        <p>Score meaning, calibration status and threshold all come from bundle provenance.</p>
+        <span class="g">No browser-side assumptions</span>
+      </div>
+      <div class="step">
+        <span class="n">05 &mdash; AUDIT</span>
+        <h4>Hash-chained receipt</h4>
+        <p>A successful decision gets a chained, allowlisted, tamper-evident record.</p>
+        <span class="g">No raw body, PAN, CVV or credentials</span>
+      </div>
+      <div class="step">
+        <span class="n">06 &mdash; REPLAY</span>
+        <h4>Idempotent, or nothing</h4>
+        <p>An identical request replays the original response without re-scoring; an invalid path returns no decision.</p>
+        <span class="g">Idempotent &middot; fails closed</span>
+      </div>
+    </div>
+  </div>
+  <div class="foot">
+    <span>SecureSwipe</span>
+    <span>Razorpay AI Buildathon 2026 &middot; Track 02</span>
+    <span>04 / 10</span>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

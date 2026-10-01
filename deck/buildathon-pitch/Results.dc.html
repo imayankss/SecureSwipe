@@ -1,0 +1,228 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+  <style>
+  :root {
+    --paper: #fbfbf9;
+    --panel: #f2f2ee;
+    --ink: #12181f;
+    --ink-2: #4b5663;
+    --muted: #838d98;
+    --rule: #dcdcd5;
+    --hair: #e8e8e1;
+    --accent: #2950da;
+    --accent-tint: rgba(41, 80, 218, 0.07);
+    --warm: #eb6834;
+    --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: #1c3aa8; }
+  .slide {
+    width: 1280px;
+    height: 720px;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    padding: 50px 88px 38px;
+    overflow: hidden;
+  }
+  .eyebrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 13px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .eyebrow b { color: var(--ink); font-weight: 500; }
+  .body { flex-grow: 1; display: flex; flex-direction: column; padding-top: 38px; }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 13px;
+    border-top: 1px solid var(--rule);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    line-height: 1.05;
+    font-size: 52px;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h2.sm { font-size: 40px; }
+  .lede {
+    font-size: 18px;
+    line-height: 1.58;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    background: var(--accent-tint);
+    padding: 5px 10px;
+    border: 1px solid rgba(41, 80, 218, 0.22);
+  }
+  .rule { height: 1px; background: var(--rule); border: 0; margin: 0; }
+
+  .split { display: grid; grid-template-columns: 1.45fr 1fr; gap: 56px; margin-top: 30px; }
+  table.metrics { width: 100%; border-collapse: collapse; }
+  table.metrics th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 400;
+    text-align: left;
+    padding: 0 0 10px;
+    border-bottom: 1px solid var(--ink);
+  }
+  table.metrics th.r, table.metrics td.r { text-align: right; }
+  table.metrics td {
+    padding: 13px 0;
+    border-bottom: 1px solid var(--hair);
+    font-size: 15px;
+    color: var(--ink-2);
+  }
+  table.metrics td.name { color: var(--ink); font-weight: 500; }
+  table.metrics td.v {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  table.metrics td.ci {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .facts { display: flex; flex-direction: column; gap: 0; }
+  .facts h4 {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 400;
+    margin: 0 0 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .facts .row {
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 9px 0;
+    border-bottom: 1px solid var(--hair);
+    font-size: 14px;
+  }
+  .facts .row span:first-child { color: var(--ink-2); }
+  .facts .row span:last-child {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--ink);
+  }
+  .seal {
+    font-size: 14px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    margin: 16px 0 0;
+  }
+  .seal b { color: var(--ink); font-weight: 600; }
+
+  </style>
+</helmet>
+<div class="slide">
+  <div class="eyebrow">
+    <span><b>07</b> &nbsp; Sealed Lane A result</span>
+    <span>4:05 &ndash; 4:20</span>
+  </div>
+  <div class="body">
+    <h2 class="sm">Evaluated once, under a protocol written before a single label was read.</h2>
+    <div class="split">
+      <table class="metrics">
+        <thead>
+          <tr>
+            <th>Metric</th>
+            <th class="r">Point</th>
+            <th class="r">95% CI</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td class="name">Average precision</td><td class="v r">0.208660</td><td class="ci r">0.195700 &ndash; 0.222711</td></tr>
+          <tr><td class="name">ROC-AUC</td><td class="v r">0.814975</td><td class="ci r">0.806402 &ndash; 0.822899</td></tr>
+          <tr><td class="name">Brier score</td><td class="v r">0.030468</td><td class="ci r">0.030220 &ndash; 0.030732</td></tr>
+          <tr><td class="name">Log loss</td><td class="v r">0.124252</td><td class="ci r">0.122785 &ndash; 0.125815</td></tr>
+          <tr><td class="name">Calibration error (15 bins)</td><td class="v r">0.003556</td><td class="ci r">not predeclared</td></tr>
+        </tbody>
+      </table>
+      <div class="facts">
+        <h4>Population and protocol</h4>
+        <div class="row"><span>Transactions</span><span>88,581</span></div>
+        <div class="row"><span>Fraud labels</span><span>3,083</span></div>
+        <div class="row"><span>Prevalence</span><span>0.034804</span></div>
+        <div class="row"><span>Evaluation window</span><span>30.78 days</span></div>
+        <div class="row"><span>Frozen inputs</span><span>24 &middot; variant E</span></div>
+        <div class="row"><span>Bootstrap</span><span>2,000 &middot; seed 42</span></div>
+      </div>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <p class="seal">Scores were computed and hashed into an <b>immutable seal before any label was loaded</b>; the
+      label loader takes that seal as a precondition. There is no second run, and no number here was used to tune,
+      refit, reselect or re-report anything.</p>
+  </div>
+  <div class="foot">
+    <span>SecureSwipe</span>
+    <span>Razorpay AI Buildathon 2026 &middot; Track 02</span>
+    <span>08 / 10</span>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

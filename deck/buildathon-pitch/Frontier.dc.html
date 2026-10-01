@@ -1,0 +1,195 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+  <style>
+  :root {
+    --paper: #fbfbf9;
+    --panel: #f2f2ee;
+    --ink: #12181f;
+    --ink-2: #4b5663;
+    --muted: #838d98;
+    --rule: #dcdcd5;
+    --hair: #e8e8e1;
+    --accent: #2950da;
+    --accent-tint: rgba(41, 80, 218, 0.07);
+    --warm: #eb6834;
+    --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: #1c3aa8; }
+  .slide {
+    width: 1280px;
+    height: 720px;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    padding: 50px 88px 38px;
+    overflow: hidden;
+  }
+  .eyebrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 13px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .eyebrow b { color: var(--ink); font-weight: 500; }
+  .body { flex-grow: 1; display: flex; flex-direction: column; padding-top: 38px; }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 13px;
+    border-top: 1px solid var(--rule);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    line-height: 1.05;
+    font-size: 52px;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h2.sm { font-size: 40px; }
+  .lede {
+    font-size: 18px;
+    line-height: 1.58;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    background: var(--accent-tint);
+    padding: 5px 10px;
+    border: 1px solid rgba(41, 80, 218, 0.22);
+  }
+  .rule { height: 1px; background: var(--rule); border: 0; margin: 0; }
+
+  .legend { display: flex; gap: 26px; align-items: center; margin: 0; }
+  .legend span {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    color: var(--ink-2);
+  }
+  .legend i { width: 18px; height: 2.5px; display: block; }
+  .callout {
+    display: grid;
+    grid-template-columns: 200px minmax(0, 1fr);
+    gap: 26px;
+    align-items: baseline;
+    border-top: 1px solid var(--rule);
+    padding-top: 15px;
+  }
+  .callout .t {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .callout p { margin: 0; font-size: 15px; line-height: 1.5; color: var(--ink-2); }
+  .callout b { color: var(--ink); font-weight: 600; }
+
+  </style>
+</helmet>
+<div class="slide">
+  <div class="eyebrow">
+    <span><b>06</b> &nbsp; The core trade-off</span>
+    <span>3:40 &ndash; 4:05</span>
+  </div>
+  <div class="body">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; gap: 40px;">
+      <h2 class="sm" style="max-width: 30ch; font-size: 38px;">Recall and precision are two ends of one rope.</h2>
+      <p class="legend">
+        <span><i style="background: #2950da;"></i>recall</span>
+        <span><i style="background: #eb6834;"></i>alert precision</span>
+      </p>
+    </div>
+    <div style="margin-top: 8px;">
+      <svg viewBox="0 0 1104 330" width="1104" height="330" role="img"
+        aria-label="Recall rises from 27.18 percent to 93.84 percent and alert precision falls from 27.23 percent to 4.70 percent as daily review capacity goes from 100 to 2,000 cases.">
+        <style>
+          .ax { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: 12px; fill: #838d98; }
+          .lbl { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: 12.5px; font-weight: 500; }
+          .cap { font-family: "IBM Plex Mono", ui-monospace, Menlo, monospace; font-size: 11px; fill: #838d98; letter-spacing: 0.1em; }
+        </style>
+        <line x1="92.0" y1="258.0" x2="1000.0" y2="258.0" stroke="#c9c9c1" stroke-width="1"/><text x="80.0" y="262.0" text-anchor="end" class="ax">0%</text><line x1="92.0" y1="199.0" x2="1000.0" y2="199.0" stroke="#e8e8e1" stroke-width="1"/><text x="80.0" y="203.0" text-anchor="end" class="ax">25%</text><line x1="92.0" y1="140.0" x2="1000.0" y2="140.0" stroke="#e8e8e1" stroke-width="1"/><text x="80.0" y="144.0" text-anchor="end" class="ax">50%</text><line x1="92.0" y1="81.0" x2="1000.0" y2="81.0" stroke="#e8e8e1" stroke-width="1"/><text x="80.0" y="85.0" text-anchor="end" class="ax">75%</text><line x1="92.0" y1="22.0" x2="1000.0" y2="22.0" stroke="#e8e8e1" stroke-width="1"/><text x="80.0" y="26.0" text-anchor="end" class="ax">100%</text>
+        <line x1="92.0" y1="258.0" x2="92.0" y2="263.0" stroke="#b4b4ac" stroke-width="1"/><text x="92.0" y="280.0" text-anchor="middle" class="ax">100</text><line x1="369.7" y1="258.0" x2="369.7" y2="263.0" stroke="#b4b4ac" stroke-width="1"/><text x="369.7" y="280.0" text-anchor="middle" class="ax">250</text><line x1="579.8" y1="258.0" x2="579.8" y2="263.0" stroke="#b4b4ac" stroke-width="1"/><text x="579.8" y="280.0" text-anchor="middle" class="ax">500</text><line x1="789.9" y1="258.0" x2="789.9" y2="263.0" stroke="#b4b4ac" stroke-width="1"/><text x="789.9" y="280.0" text-anchor="middle" class="ax">1,000</text><line x1="1000.0" y1="258.0" x2="1000.0" y2="263.0" stroke="#b4b4ac" stroke-width="1"/><text x="1000.0" y="280.0" text-anchor="middle" class="ax">2,000</text>
+        <line x1="789.9" y1="18.0" x2="789.9" y2="258.0" stroke="#12181f" stroke-width="1" stroke-dasharray="3 4"/>
+        <polyline points="92.0,193.7 369.7,214.8 579.8,227.6 789.9,239.0 1000.0,246.9" fill="none" stroke="#eb6834" stroke-width="2.25"
+          stroke-linejoin="round" stroke-linecap="round"/>
+        <polyline points="92.0,193.9 369.7,150.1 579.8,106.0 789.9,68.8 1000.0,36.5" fill="none" stroke="#2950da" stroke-width="2.25"
+          stroke-linejoin="round" stroke-linecap="round"/>
+        <circle cx="92.0" cy="193.7" r="4" fill="#eb6834"/><circle cx="369.7" cy="214.8" r="4" fill="#eb6834"/><circle cx="579.8" cy="227.6" r="4" fill="#eb6834"/><circle cx="789.9" cy="239.0" r="4" fill="#eb6834"/><circle cx="1000.0" cy="246.9" r="4" fill="#eb6834"/><circle cx="92.0" cy="193.9" r="4" fill="#2950da"/><circle cx="369.7" cy="150.1" r="4" fill="#2950da"/><circle cx="579.8" cy="106.0" r="4" fill="#2950da"/><circle cx="789.9" cy="68.8" r="4" fill="#2950da"/><circle cx="1000.0" cy="36.5" r="4" fill="#2950da"/>
+        <text x="1012.0" y="40.5" class="lbl" fill="#2950da">93.8%</text>
+        <text x="1012.0" y="250.9" class="lbl" fill="#eb6834">4.7%</text>
+        <text x="102.0" y="179.9" class="lbl" fill="#12181f">both 27.2%</text>
+        <text x="798.9" y="30.0" class="cap" fill="#12181f">1,000 / DAY</text>
+        <text x="798.9" y="46.0" class="lbl" fill="#2950da">recall 80.18%</text>
+        <text x="798.9" y="63.0" class="lbl" fill="#eb6834">precision 8.03%</text>
+        <text x="92.0" y="303.0" class="cap">REVIEWS PER DAY &#8212; LOGARITHMIC</text>
+      </svg>
+    </div>
+    <div style="flex-grow: 1;"></div>
+    <div class="callout">
+      <span class="t">The price of the last 14 points</span>
+      <p>Doubling capacity from 1,000 to 2,000 reviews a day recovers <b>421 more fraud cases</b> and adds
+        <b>30,357 more legitimate customers</b> to the queue. No tier is marked optimal &mdash; optimality
+        depends on costs this evaluation does not contain.</p>
+    </div>
+  </div>
+  <div class="foot">
+    <span>SecureSwipe</span>
+    <span>Razorpay AI Buildathon 2026 &middot; Track 02</span>
+    <span>07 / 10</span>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

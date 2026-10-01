@@ -16,9 +16,11 @@ export function Footer() {
         <div className="flex flex-col gap-2 sm:items-end">
           <a
             className="ss-text-link"
-            href="/secureswipe-methodology.html"
+            href={dashboardData.project.repository}
+            target="_blank"
+            rel="noreferrer"
           >
-            Methodology ↗
+            Source and methodology ↗
           </a>
           <BuildProvenance repository={dashboardData.project.repository} />
         </div>

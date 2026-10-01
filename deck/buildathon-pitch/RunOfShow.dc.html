@@ -1,0 +1,392 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+  <style>
+  :root {
+    --paper: #fbfbf9;
+    --panel: #f2f2ee;
+    --ink: #12181f;
+    --ink-2: #4b5663;
+    --muted: #838d98;
+    --rule: #dcdcd5;
+    --hair: #e8e8e1;
+    --accent: #2950da;
+    --accent-tint: rgba(41, 80, 218, 0.07);
+    --warm: #eb6834;
+    --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: #1c3aa8; }
+  .slide {
+    width: 1280px;
+    height: 720px;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    padding: 50px 88px 38px;
+    overflow: hidden;
+  }
+  .eyebrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 13px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .eyebrow b { color: var(--ink); font-weight: 500; }
+  .body { flex-grow: 1; display: flex; flex-direction: column; padding-top: 38px; }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 13px;
+    border-top: 1px solid var(--rule);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    line-height: 1.05;
+    font-size: 52px;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h2.sm { font-size: 40px; }
+  .lede {
+    font-size: 18px;
+    line-height: 1.58;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    background: var(--accent-tint);
+    padding: 5px 10px;
+    border: 1px solid rgba(41, 80, 218, 0.22);
+  }
+  .rule { height: 1px; background: var(--rule); border: 0; margin: 0; }
+
+  .doc { width: 100%; max-width: 1000px; padding: 56px 76px 84px; margin: 0 auto; }
+  .doc-top { border-bottom: 2px solid var(--ink); padding-bottom: 20px; margin-bottom: 30px; }
+  .doc-top h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 42px;
+    line-height: 1.06;
+    letter-spacing: -0.025em;
+    margin: 10px 0 8px;
+  }
+  .doc-top .sub { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); margin: 0; }
+  h3 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 400;
+    margin: 40px 0 16px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .doc p { font-size: 15.5px; line-height: 1.65; color: var(--ink-2); margin: 0 0 14px; }
+  .doc p b, .doc li b { color: var(--ink); font-weight: 600; }
+  .warn {
+    border-left: 2px solid var(--warm);
+    padding: 4px 0 4px 18px;
+    margin: 0 0 20px;
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    background: var(--panel);
+    color: var(--ink);
+    padding: 16px 18px;
+    margin: 0 0 14px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+  }
+  .beat { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 26px; padding: 20px 0;
+          border-top: 1px solid var(--hair); }
+  .beat:first-of-type { border-top: 1px solid var(--ink); }
+  .beat .t {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    line-height: 1.5;
+  }
+  .beat .t span { display: block; font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase;
+                  color: var(--muted); font-weight: 400; margin-top: 4px; }
+  .beat h4 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 8px; }
+  .stage {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  .say {
+    font-family: var(--serif);
+    font-size: 16.5px;
+    line-height: 1.6;
+    color: var(--ink);
+    border-left: 2px solid var(--accent);
+    padding-left: 18px;
+    margin: 0 0 12px;
+  }
+  .say + .say { margin-top: -4px; }
+  ul { margin: 0 0 14px; padding-left: 20px; }
+  li { font-size: 15px; line-height: 1.62; color: var(--ink-2); margin-bottom: 8px; }
+  .qa { width: 100%; border-collapse: collapse; }
+  .qa th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 400;
+    text-align: left;
+    padding: 0 0 10px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .qa td { padding: 15px 0; border-bottom: 1px solid var(--hair); font-size: 15px; line-height: 1.58;
+           vertical-align: top; }
+  .qa td.q { color: var(--ink); font-weight: 600; padding-right: 32px; width: 34%; }
+  .qa td.a { color: var(--ink-2); }
+  .land { border-top: 2px solid var(--ink); margin-top: 36px; padding-top: 20px; }
+  .land p { font-family: var(--serif); font-size: 19px; line-height: 1.5; color: var(--ink); margin: 0; }
+
+  </style>
+</helmet>
+<div class="doc">
+  <div class="doc-top">
+    <p class="kicker">Razorpay AI Buildathon 2026 &middot; Track 02 &mdash; AI Risk Manager</p>
+    <h1>Run of show &mdash; 5-minute pitch</h1>
+    <p class="sub">Speech runs 4:45. The remaining 0:15 is slack, and it belongs to the demo.</p>
+  </div>
+
+  <div class="warn">
+    <p><b>Read the numbers off the file before you record.</b> Every figure in this script comes from
+      <span class="num">docs/evidence/LANE_A_FINAL_EVALUATION.md</span>. That record is sealed and must not change &mdash;
+      but if anything on screen ever disagrees with this page, <b>read the screen</b>. Quoting a stale figure is the one
+      mistake that would undo what this project is built on.</p>
+  </div>
+
+  <h3>Setup before you hit record</h3>
+  <pre>cd web &amp;&amp; npm run build &amp;&amp; npm run start -- --hostname 127.0.0.1 --port 3000   # terminal 1</pre>
+  <pre>demo_root=$(mktemp -d)
+.venv/bin/python scripts/create_synthetic_bundle.py --output "$demo_root/bundle"
+mkdir "$demo_root/audit"
+SECURESWIPE_ARTIFACT_ROOT="$demo_root" \
+SECURESWIPE_BUNDLE_MANIFEST="$demo_root/bundle/manifest.json" \
+SECURESWIPE_AUDIT_LOG="$demo_root/audit/prediction-events.ndjson" \
+SECURESWIPE_CORS_ORIGINS="http://127.0.0.1:3000" \
+.venv/bin/uvicorn api.main:app --host 127.0.0.1 --port 8000            # terminal 2</pre>
+  <p>Open <span class="num">http://127.0.0.1:3000</span> at 1440&times;900 with three tabs already loaded:
+    <span class="num">/</span>, <span class="num">/demo</span>, <span class="num">/secureswipe-methodology.html</span>.
+    Close everything else. Hide bookmarks.</p>
+  <p><b>Do one dry run first.</b> Start the API <i>without</i> a bundle once and watch
+    <span class="num">/health/ready</span> return <span class="num">503</span> &mdash; that is the fail-closed beat, and
+    you want to have seen it before the camera is on. Then restart with the bundle above. Record the demo against the
+    <b>local</b> API, never the deployed <span class="num">/demo</span>: the public build has no external API origin in
+    its CSP, so what ships there is a labelled recorded transcript.</p>
+
+  <h3>The beats</h3>
+
+  <div class="beat">
+    <div class="t">0:00 &ndash; 0:20<span>Cover</span></div>
+    <div>
+      <h4>Who, and what this is</h4>
+      <p class="stage">Slide 01. Speak over it; do not read it aloud.</p>
+      <p class="say">&ldquo;I&rsquo;m Mayank Suryavanshi. SecureSwipe is a capacity-aware fraud-risk manager for
+        Track 02 &mdash; and it is defense-only by construction, not by policy. It ranks card transactions for a human
+        queue. It never blocks a payment.&rdquo;</p>
+    </div>
+  </div>
+
+  <div class="beat">
+    <div class="t">0:20 &ndash; 0:48<span>The problem</span></div>
+    <div>
+      <h4>Accuracy rewards the model that does nothing</h4>
+      <p class="stage">Slide 02. The top row is the baseline, not SecureSwipe &mdash; say &ldquo;the model to beat&rdquo;
+        out loud before you say &ldquo;zero&rdquo;, so nobody misreads whose number that is.</p>
+      <p class="say">&ldquo;In my sealed evaluation population, 85,498 of 88,581 transactions are legitimate. So here is
+        the model to beat: predict &lsquo;legitimate&rsquo; for every single row. It scores 96.52% accuracy and catches
+        zero of 3,083 fraud cases.&rdquo;</p>
+      <p class="say">&ldquo;SecureSwipe, ranking under a 1,000-case daily budget, catches 2,472 of those
+        3,083 &mdash; on the same held-out population.&rdquo;</p>
+      <p class="say">&ldquo;So accuracy is not the constraint. The constraint is how many cases a human can actually open
+        today &mdash; and almost nothing in this space reports that number next to the recall it bought.&rdquo;</p>
+    </div>
+  </div>
+
+  <div class="beat">
+    <div class="t">0:48 &ndash; 1:06<span>The decision</span></div>
+    <div>
+      <h4>It ranks. It never blocks.</h4>
+      <p class="stage">Slide 03. Point at the two outcome chips.</p>
+      <p class="say">&ldquo;There are exactly two outcomes in this system: <i>human_review</i> and
+        <i>below_review_threshold</i>. You set a daily review budget B; the system ranks by score and takes the top B.
+        The threshold is an <i>output</i> of that budget, never an input &mdash; which is how a fraud team is actually
+        staffed.&rdquo;</p>
+    </div>
+  </div>
+
+  <div class="beat">
+    <div class="t">1:06 &ndash; 1:48<span>Architecture</span></div>
+    <div>
+      <h4>Six stages, each carrying a guarantee</h4>
+      <p class="stage">Slide 04. Walk the flow line left to right, then stop on stages 05 and 06.</p>
+      <p class="say">&ldquo;Score, rank under capacity, route, explain, audit, replay. Scoring runs from a
+        checksum-verified local bundle in its own recorded field order &mdash; deterministic, and zero LLM tokens on the
+        decision path.&rdquo;</p>
+      <p class="say">&ldquo;Every successful decision gets a hash-chained, allowlisted receipt with no raw body, no PAN,
+        no CVV. Each record commits to the hash of the one before it, so editing any past decision breaks every hash
+        after it. And an identical request replays the original response without re-scoring.&rdquo;</p>
+    </div>
+  </div>
+
+  <div class="beat">
+    <div class="t">1:48 &ndash; 2:10<span>Trust boundary</span></div>
+    <div>
+      <h4>Three lanes that never borrow each other&rsquo;s credibility</h4>
+      <p class="stage">Slide 05.</p>
+      <p class="say">&ldquo;The sealed offline evaluation, the static reviewer site, and the local reference API are
+        three separate lanes. They share contracts and provenance &mdash; they do not share an evidence claim. The
+        static site cannot reach a model. The local API does not claim to serve the sealed one. I say that out loud
+        because the alternative is a demo that quietly implies both.&rdquo;</p>
+    </div>
+  </div>
+
+  <div class="beat">
+    <div class="t">2:10 &ndash; 3:40<span>Live demo</span></div>
+    <div>
+      <h4>Six proofs &mdash; two of them are refusals</h4>
+      <p class="stage">Slide 06 on the second monitor; screen share the local app. Narrate the decision, never the
+        cursor. Do not say &ldquo;now I&rsquo;m clicking&rdquo;.</p>
+      <p class="say"><b>1 &middot; Readiness.</b> &ldquo;Before any decision, the service reports model provenance and
+        the bundle checksum. If it cannot verify those, you get no score.&rdquo;</p>
+      <p class="say"><b>2 &middot; A bounded decision.</b> &ldquo;One fixed fixture, one signal to a human queue. Notice
+        what is absent: there is no approve, no capture, no decline anywhere in this response body.&rdquo;</p>
+      <p class="say"><b>3 &middot; The receipt.</b> &ldquo;A genuine chained hash, appended before the response
+        returns.&rdquo;</p>
+      <p class="say"><b>4 &middot; Replay.</b> &ldquo;Same request ID, same response, and &mdash; the part that matters
+        &mdash; no duplicate event in the chain.&rdquo;</p>
+      <p class="say"><b>5 &middot; Invalid input.</b> &ldquo;A malformed fixture is rejected 422 with no decision. Not a
+        default, not a fallback, not a guess.&rdquo;</p>
+      <p class="say"><b>6 &middot; No bundle.</b> &ldquo;And with the verified bundle removed, readiness returns 503 and
+        the system fails closed &mdash; it tells you exactly which precondition failed. A risk system that cannot refuse
+        cleanly is not a risk system.&rdquo;</p>
+      <p class="stage">This block owns the 15 seconds of slack. If you are behind, cut beat 3 and let the receipt speak
+        for itself in beat 4 &mdash; never cut 5 or 6.</p>
+    </div>
+  </div>
+
+  <div class="beat">
+    <div class="t">3:40 &ndash; 4:05<span>The trade-off</span></div>
+    <div>
+      <h4>The one chart to land</h4>
+      <p class="stage">Slide 07. Trace the blue line up, then the orange line down, with your hand.</p>
+      <p class="say">&ldquo;Blue is recall. Orange is alert precision. At 100 reviews a day they are the same number
+        &mdash; both about 27%. Everything after that is one being paid for with the other.&rdquo;</p>
+      <p class="say">&ldquo;At 1,000 reviews a day I catch 80.18% of fraud at 8.03% alert precision &mdash; roughly
+        eleven legitimate customers reviewed for every fraud caught. Doubling to 2,000 recovers 421 more fraud cases and
+        adds 30,357 more legitimate customers to the queue. I mark no tier optimal, because optimality depends on costs
+        this evaluation does not contain.&rdquo;</p>
+    </div>
+  </div>
+
+  <div class="beat">
+    <div class="t">4:05 &ndash; 4:20<span>The result</span></div>
+    <div>
+      <h4>Evaluated exactly once</h4>
+      <p class="stage">Slide 08.</p>
+      <p class="say">&ldquo;Average precision 0.2087, ROC-AUC 0.8150, with bootstrap intervals. The protocol was written
+        and hashed before a single final-test row was read, and the scores were sealed before any label was loaded. It
+        ran once, for 82 seconds, and there is no second run to choose from.&rdquo;</p>
+    </div>
+  </div>
+
+  <div class="beat">
+    <div class="t">4:20 &ndash; 4:38<span>The boundary</span></div>
+    <div>
+      <h4>What it does not prove</h4>
+      <p class="stage">Slide 09. Do not rush this &mdash; it is the differentiator.</p>
+      <p class="say">&ldquo;This is public IEEE-CIS research data, not Razorpay performance. It was held out
+        programmatically, so it is not blind. The local bundle is not proven to be the sealed model. My scale matrix
+        failed closed, so I make no throughput claim. I&rsquo;d rather hand you those than have you find them.&rdquo;</p>
+    </div>
+  </div>
+
+  <div class="beat">
+    <div class="t">4:38 &ndash; 4:45<span>Close</span></div>
+    <div>
+      <h4>The invitation</h4>
+      <p class="stage">Slide 10.</p>
+      <p class="say">&ldquo;Every number you just saw reconciles to a sealed manifest in the repository. Open the
+        methodology page and check any one of them while I&rsquo;m still here.&rdquo;</p>
+    </div>
+  </div>
+
+  <h3>Recording notes</h3>
+  <ul>
+    <li>Narrate the <b>decision</b>, not the interface. If a sentence starts with &ldquo;now I&rsquo;m&hellip;&rdquo;,
+      cut it.</li>
+    <li>The two refusal beats are the thing most submissions will not have. Give them room.</li>
+    <li>Never say <b>blind</b>, <b>Razorpay performance</b>, <b>savings</b>, <b>ROI</b>, or <b>optimal threshold</b>.
+      Each of those is an explicitly prohibited claim in the sealed record.</li>
+    <li>If a number on screen differs from this page, read the screen. Always.</li>
+  </ul>
+
+  <div class="land">
+    <p><b>If you only land one point:</b> the capacity frontier. Recall is not free, the price is a queue of real
+      customers, and I put that price on the same slide as the win.</p>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

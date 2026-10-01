@@ -1,0 +1,39 @@
+{
+  "pages": [
+    { "id": "deck", "name": "Pitch deck" },
+    { "id": "speaker", "name": "Speaker kit" }
+  ],
+  "artboards": [
+    { "file": "Main.dc.html",         "page": "deck", "x": 0,    "y": 0,    "w": 1280, "h": 720, "title": "01 · Cover" },
+    { "file": "Problem.dc.html",      "page": "deck", "x": 1400, "y": 0,    "w": 1280, "h": 720, "title": "02 · Problem" },
+    { "file": "Thesis.dc.html",       "page": "deck", "x": 2800, "y": 0,    "w": 1280, "h": 720, "title": "03 · Decision" },
+    { "file": "Architecture.dc.html", "page": "deck", "x": 4200, "y": 0,    "w": 1280, "h": 720, "title": "04 · Architecture" },
+    { "file": "Boundary.dc.html",     "page": "deck", "x": 0,    "y": 880,  "w": 1280, "h": 720, "title": "05 · Trust boundary" },
+    { "file": "Demo.dc.html",         "page": "deck", "x": 1400, "y": 880,  "w": 1280, "h": 720, "title": "06 · Live demo" },
+    { "file": "Frontier.dc.html",     "page": "deck", "x": 2800, "y": 880,  "w": 1280, "h": 720, "title": "07 · Capacity frontier" },
+    { "file": "Results.dc.html",      "page": "deck", "x": 4200, "y": 880,  "w": 1280, "h": 720, "title": "08 · Sealed result" },
+    { "file": "Honesty.dc.html",      "page": "deck", "x": 0,    "y": 1760, "w": 1280, "h": 720, "title": "09 · What it does not prove" },
+    { "file": "Close.dc.html",        "page": "deck", "x": 1400, "y": 1760, "w": 1280, "h": 720, "title": "10 · Close" },
+    { "file": "RunOfShow.dc.html",    "page": "speaker", "x": 0,    "y": 0, "w": 1000, "h": 3180, "title": "Run of show", "print": "flow", "expand": "fill" },
+    { "file": "Questions.dc.html",    "page": "speaker", "x": 1120, "y": 0, "w": 1000, "h": 2080, "title": "Likely questions", "print": "flow", "expand": "fill" }
+  ],
+  "annotations": [
+    {
+      "id": "deck-order",
+      "page": "deck",
+      "x": 5620,
+      "y": 1760,
+      "w": 300,
+      "text": "Reads left to right, top to bottom.\nTiming sits in the top-right of every slide.\nSpeech runs 4:45 — the spare 0:15 belongs to the demo block."
+    },
+    {
+      "id": "speaker-note",
+      "page": "speaker",
+      "x": 2240,
+      "y": 0,
+      "w": 300,
+      "text": "Both pages print as flowing PDFs.\nBefore recording, re-read every figure off docs/evidence/LANE_A_FINAL_EVALUATION.md — if the screen and the script disagree, the screen wins."
+    }
+  ],
+  "launch": { "view": "canvas", "page": "deck" }
+}

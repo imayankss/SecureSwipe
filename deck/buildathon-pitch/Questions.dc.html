@@ -1,0 +1,283 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:wght@400;600&display=swap">
+  <style>
+  :root {
+    --paper: #fbfbf9;
+    --panel: #f2f2ee;
+    --ink: #12181f;
+    --ink-2: #4b5663;
+    --muted: #838d98;
+    --rule: #dcdcd5;
+    --hair: #e8e8e1;
+    --accent: #2950da;
+    --accent-tint: rgba(41, 80, 218, 0.07);
+    --warm: #eb6834;
+    --serif: "IBM Plex Serif", Georgia, "Times New Roman", serif;
+    --sans: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, Menlo, Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: #1c3aa8; }
+  .slide {
+    width: 1280px;
+    height: 720px;
+    background: var(--paper);
+    display: flex;
+    flex-direction: column;
+    padding: 50px 88px 38px;
+    overflow: hidden;
+  }
+  .eyebrow {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-bottom: 13px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .eyebrow b { color: var(--ink); font-weight: 500; }
+  .body { flex-grow: 1; display: flex; flex-direction: column; padding-top: 38px; }
+  .foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 24px;
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    padding-top: 13px;
+    border-top: 1px solid var(--rule);
+  }
+  h2 {
+    font-family: var(--serif);
+    font-weight: 600;
+    letter-spacing: -0.022em;
+    line-height: 1.05;
+    font-size: 52px;
+    margin: 0;
+    text-wrap: balance;
+  }
+  h2.sm { font-size: 40px; }
+  .lede {
+    font-size: 18px;
+    line-height: 1.58;
+    color: var(--ink-2);
+    max-width: 62ch;
+    margin: 0;
+    text-wrap: pretty;
+  }
+  .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0;
+  }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--accent);
+    background: var(--accent-tint);
+    padding: 5px 10px;
+    border: 1px solid rgba(41, 80, 218, 0.22);
+  }
+  .rule { height: 1px; background: var(--rule); border: 0; margin: 0; }
+
+  .doc { width: 100%; max-width: 1000px; padding: 56px 76px 84px; margin: 0 auto; }
+  .doc-top { border-bottom: 2px solid var(--ink); padding-bottom: 20px; margin-bottom: 30px; }
+  .doc-top h1 {
+    font-family: var(--serif);
+    font-weight: 600;
+    font-size: 42px;
+    line-height: 1.06;
+    letter-spacing: -0.025em;
+    margin: 10px 0 8px;
+  }
+  .doc-top .sub { font-family: var(--mono); font-size: 12.5px; color: var(--ink-2); margin: 0; }
+  h3 {
+    font-family: var(--mono);
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 400;
+    margin: 40px 0 16px;
+    padding-bottom: 9px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .doc p { font-size: 15.5px; line-height: 1.65; color: var(--ink-2); margin: 0 0 14px; }
+  .doc p b, .doc li b { color: var(--ink); font-weight: 600; }
+  .warn {
+    border-left: 2px solid var(--warm);
+    padding: 4px 0 4px 18px;
+    margin: 0 0 20px;
+  }
+  pre {
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.7;
+    background: var(--panel);
+    color: var(--ink);
+    padding: 16px 18px;
+    margin: 0 0 14px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+  }
+  .beat { display: grid; grid-template-columns: 116px minmax(0, 1fr); gap: 26px; padding: 20px 0;
+          border-top: 1px solid var(--hair); }
+  .beat:first-of-type { border-top: 1px solid var(--ink); }
+  .beat .t {
+    font-family: var(--mono);
+    font-variant-numeric: tabular-nums;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+    line-height: 1.5;
+  }
+  .beat .t span { display: block; font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase;
+                  color: var(--muted); font-weight: 400; margin-top: 4px; }
+  .beat h4 { font-size: 17px; font-weight: 600; letter-spacing: -0.01em; margin: 0 0 8px; }
+  .stage {
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.6;
+    color: var(--muted);
+    margin: 0 0 12px;
+  }
+  .say {
+    font-family: var(--serif);
+    font-size: 16.5px;
+    line-height: 1.6;
+    color: var(--ink);
+    border-left: 2px solid var(--accent);
+    padding-left: 18px;
+    margin: 0 0 12px;
+  }
+  .say + .say { margin-top: -4px; }
+  ul { margin: 0 0 14px; padding-left: 20px; }
+  li { font-size: 15px; line-height: 1.62; color: var(--ink-2); margin-bottom: 8px; }
+  .qa { width: 100%; border-collapse: collapse; }
+  .qa th {
+    font-family: var(--mono);
+    font-size: 10.5px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 400;
+    text-align: left;
+    padding: 0 0 10px;
+    border-bottom: 1px solid var(--ink);
+  }
+  .qa td { padding: 15px 0; border-bottom: 1px solid var(--hair); font-size: 15px; line-height: 1.58;
+           vertical-align: top; }
+  .qa td.q { color: var(--ink); font-weight: 600; padding-right: 32px; width: 34%; }
+  .qa td.a { color: var(--ink-2); }
+  .land { border-top: 2px solid var(--ink); margin-top: 36px; padding-top: 20px; }
+  .land p { font-family: var(--serif); font-size: 19px; line-height: 1.5; color: var(--ink); margin: 0; }
+
+  </style>
+</helmet>
+<div class="doc">
+  <div class="doc-top">
+    <p class="kicker">Speaker kit &middot; hold these to one line each</p>
+    <h1>Likely questions</h1>
+    <p class="sub">Answer, then stop. Every figure below is in the sealed Lane A record.</p>
+  </div>
+
+  <table class="qa">
+    <thead>
+      <tr><th>Question</th><th>Answer</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="q">Average precision 0.2087 &mdash; isn&rsquo;t that low?</td>
+        <td class="a">Prevalence is 0.034804, which is what a no-skill ranker scores. This is about six times that,
+          sealed on the first and only run, with a 95% interval of 0.1957&ndash;0.2227.</td>
+      </tr>
+      <tr>
+        <td class="q">Eleven legitimate customers reviewed per fraud caught?</td>
+        <td class="a">Yes &mdash; 28,306 false positives for 2,472 true positives at the 1,000/day tier. I put that in
+          the headline instead of behind an accuracy figure, because the model that reviews nobody scores 96.52%.</td>
+      </tr>
+      <tr>
+        <td class="q">Why not just pick a good threshold?</td>
+        <td class="a">A threshold tells you nothing about tomorrow&rsquo;s staffing. A budget tells you both: at
+          B = 1,000/day the threshold falls out as a minimum selected score of 0.020188.</td>
+      </tr>
+      <tr>
+        <td class="q">Why does it never block?</td>
+        <td class="a">The track is defense-only and my evidence is offline ranking. Every outcome is
+          <span class="num">human_review</span> or <span class="num">below_review_threshold</span>, and a test enforces
+          that &mdash; not a sentence in the README.</td>
+      </tr>
+      <tr>
+        <td class="q">Why is the deployed demo a recorded transcript?</td>
+        <td class="a">The public CSP carries no external API origin, so there is no verified public scoring backend.
+          Live inference needs the local reference API. Labelling that is cheaper than faking it.</td>
+      </tr>
+      <tr>
+        <td class="q">Is it calibrated?</td>
+        <td class="a">Expected calibration error 0.003556 over 15 bins, Brier 0.030468 &mdash; but bins 7 to 15 are
+          empty: the frozen calibrator never emits a value at or above 0.40 on this population. Reported as found.</td>
+      </tr>
+      <tr>
+        <td class="q">Why evaluate only once?</td>
+        <td class="a">Because a second run makes the first meaningless. It started 07:06:40Z and finished 07:08:02Z on
+          27 August, with the scores hashed into a seal before any label was loaded.</td>
+      </tr>
+      <tr>
+        <td class="q">What data is this?</td>
+        <td class="a">Public IEEE-CIS. 88,581 held-out transactions, 3,083 fraud labels, over a 30.78-day window derived
+          from a relative time offset &mdash; so no calendar or seasonality claim is available.</td>
+      </tr>
+      <tr>
+        <td class="q">Would it hold at Razorpay scale?</td>
+        <td class="a">I don&rsquo;t claim it. The final scale matrix failed closed and I published that instead of
+          quietly dropping it.</td>
+      </tr>
+      <tr>
+        <td class="q">Where does an LLM fit?</td>
+        <td class="a">Nowhere on the decision path. Scoring is a deterministic bundle with zero LLM tokens, which is
+          what makes the audit chain worth having.</td>
+      </tr>
+      <tr>
+        <td class="q">What would you do next?</td>
+        <td class="a">A cryptographically verified serving chain for the sealed bundle, per-merchant capacity policy,
+          delayed-label handling, and a fairness study with protected attributes and an authorized design.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="land">
+    <p><b>If a question presses on a weakness:</b> name the limitation, name where it is documented, then say what you
+      would measure to close it. Do not defend a number the record does not support.</p>
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

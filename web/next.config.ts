@@ -52,7 +52,7 @@ function buildSha() {
   }
 }
 
-/** Pinnable so a rebuild of the same commit reproduces the same footer. */
+/** Pinnable so a rebuild of the same commit can reproduce the same footer. */
 function buildTime() {
   const pinned = process.env.NEXT_PUBLIC_BUILD_TIME?.trim();
   if (pinned && !Number.isNaN(new Date(pinned).getTime())) {
@@ -92,7 +92,7 @@ const nextConfig: NextConfig = {
             value: [
               "default-src 'self'",
               "base-uri 'self'",
-              "font-src 'self' data: https://fonts.gstatic.com",
+              "font-src 'self' data:",
               "form-action 'self'",
               "frame-ancestors 'none'",
               "img-src 'self' data: blob:",
@@ -103,15 +103,8 @@ const nextConfig: NextConfig = {
               isDevelopment
                 ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
                 : "script-src 'self' 'unsafe-inline'",
-              "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-              [
-                "connect-src 'self'",
-                apiOrigin,
-                "https://fonts.googleapis.com",
-                "https://fonts.gstatic.com",
-              ]
-                .filter(Boolean)
-                .join(" "),
+              "style-src 'self' 'unsafe-inline'",
+              ["connect-src 'self'", apiOrigin].filter(Boolean).join(" "),
               "upgrade-insecure-requests",
             ].join("; "),
           },
