@@ -1,10 +1,10 @@
 version: 2
 updates:
-  - package-ecosystem: pip
-    directory: /
-    schedule:
-      interval: weekly
-    open-pull-requests-limit: 5
+  # No pip entry: Python dependencies are pip-compile outputs named `*.lock`
+  # with hashes (requirements/), which Dependabot cannot fetch or regenerate;
+  # the old `pip` entry failed every week opening requirements/quality.lock.
+  # Lock updates follow the reviewed pip-tools procedure in CONTRIBUTING.md,
+  # and the Quality workflow runs pip-audit on the API and quality locks.
   - package-ecosystem: npm
     directory: /web
     schedule:
