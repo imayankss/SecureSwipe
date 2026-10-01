@@ -57,7 +57,7 @@ def test_history_secret_scan_does_not_suppress_unverified_candidates() -> None:
     text = (ROOT / ".github/workflows/security.yml").read_text(encoding="utf-8")
     assert "fetch-depth: 0" in text
     assert "--only-verified" not in text
-    assert "--exclude-detectors=Lob" in text
+    assert "--exclude-detectors=Lob,LaunchDarkly\n" in text
     assert "--exclude-paths" not in text
 
 
