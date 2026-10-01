@@ -1,7 +1,12 @@
 version: 2
 updates:
   - package-ecosystem: pip
-    directory: /
+    # The pins live in requirements/*.in. The root requirements.txt delegates to
+    # requirements/quality.lock, which Dependabot cannot fetch, so a `/` job
+    # failed every week. Dependabot cannot regenerate the hash-locked *.lock
+    # files: after merging a pin bump, recompile the matching locks with the
+    # pip-tools procedure in CONTRIBUTING.md.
+    directory: /requirements
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
