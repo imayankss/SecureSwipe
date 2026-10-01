@@ -1,58 +1,25 @@
 vulnerabilities:
-  - id: CVE-2026-11822
-    expired_at: 2026-09-20
-    statement: Debian 13 has no fixed version and the package cannot be removed because util-linux is Essential and pre-depends on liblastlog2-2, which depends on libsqlite3-0. The affected path is SQLite FTS5 full-text search, which this repository never uses; the serving path loads no sqlite3 at all. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
-  - id: CVE-2026-11824
-    expired_at: 2026-09-20
-    statement: Debian 13 has no fixed version and the package cannot be removed because util-linux is Essential and pre-depends on liblastlog2-2, which depends on libsqlite3-0. The affected path is SQLite FTS5 full-text search, which this repository never uses; the serving path loads no sqlite3 at all. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
-  - id: CVE-2026-41992
-    expired_at: 2026-09-20
-    statement: Debian 13 has no fix; the runtime never accepts or creates gzip archives.
-  - id: CVE-2026-54369
-    expired_at: 2026-09-20
-    statement: Debian 13 has no fix; the non-root read-only service does not manipulate ACLs.
   - id: CVE-2025-69720
-    expired_at: 2026-09-20
-    statement: Debian 13 has no fix; the headless service has no terminal or ncurses input.
-  - id: CVE-2026-14456
-    expired_at: 2026-09-20
-    statement: Debian deferred the fix; this reference container terminates no TLS.
-  - id: CVE-2026-13221
-    expired_at: 2026-09-20
-    statement: Debian 13 has no fix; Perl is never invoked and no user regular expression is evaluated.
-  - id: CVE-2026-42496
-    expired_at: 2026-09-20
-    statement: Debian deferred the fix; Perl Archive-Tar is never invoked and the root filesystem is read-only.
-  - id: CVE-2026-57433
-    expired_at: 2026-09-20
-    statement: Debian 13 has no fix; Perl Storable is never invoked or given user data.
-  - id: CVE-2026-8376
-    expired_at: 2026-09-20
-    statement: Debian 13 has no fix; Perl is never invoked and supported images are not 32-bit runtimes.
-  - id: CVE-2026-42497
-    expired_at: 2026-09-20
-    statement: Debian deferred the fix; Perl Archive-Tar is never invoked and the root filesystem is read-only.
-  - id: CVE-2026-48962
-    expired_at: 2026-09-20
-    statement: Debian 13 has no fix; Perl is never invoked or exposed through the API.
-  - id: CVE-2026-57432
-    expired_at: 2026-09-20
-    statement: Debian 13 has no fix; Perl Storable is never invoked or given user data.
-  - id: CVE-2026-9538
-    expired_at: 2026-09-20
-    statement: Debian deferred the fix; Perl is never invoked or exposed through the API.
+    expired_at: 2026-10-22
+    statement: Debian 13 has no fixed version at ncurses 6.5+20250216-2, and ncurses-bin and ncurses-base are Essential. The affected path is a stack overflow in the infocmp command-line tool; the headless service never runs infocmp or any terminal tool, and the API process loads no ncurses or tinfo library. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
+  - id: CVE-2026-16742
+    expired_at: 2026-10-22
+    statement: Debian 13 has no fixed version at libsystemd0 257.13-1~deb13u1. The affected path is a systemd-homed local privilege escalation, and the systemd-homed daemon is not present in the image; the SBOM records exactly two systemd-family packages, libsystemd0 and libudev1, both shared libraries, with no systemd or systemd-homed package among its 122 entries (87 Debian packages). The vulnerable binary therefore does not exist in the runtime. The container additionally has no init system, no homed-managed accounts, and runs non-root uid 10001 with --cap-drop ALL, --read-only, and no-new-privileges, which blocks privilege escalation directly. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
+  - id: CVE-2026-54369
+    expired_at: 2026-10-22
+    statement: Debian 13 has no fixed version at libacl1 2.3.2-2+b1, and coreutils, sed and tar depend on it, so it cannot be removed. The affected path is symlink traversal in libacl pathname functions called by a privileged process; the API process loads no libacl, the service manipulates no ACLs, and it runs as non-root uid 10001 with --cap-drop ALL, --read-only, and no-new-privileges. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
   - id: CVE-2026-76642
-    expired_at: 2026-09-20
+    expired_at: 2026-10-22
     statement: Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is a failed external mount helper retaining privilege, reachable only through a mount(8) invocation. The service invokes no util-linux binary; api/ and src/ contain zero mount, nsenter, unshare, setns, and losetup references, and the repository's only subprocess call runs git and is not imported by api/. Mounting requires CAP_SYS_ADMIN, and the runtime is non-root uid 10001 with --cap-drop ALL, --read-only, and no-new-privileges. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
   - id: CVE-2026-78408
-    expired_at: 2026-09-20
+    expired_at: 2026-10-22
     statement: Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is nsenter --join-cgroup leaking root privilege. nsenter is never invoked by the service and joining a namespace requires CAP_SYS_ADMIN, which --cap-drop ALL removes; no-new-privileges additionally blocks setuid escalation. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
   - id: CVE-2026-78409
-    expired_at: 2026-09-20
+    expired_at: 2026-10-22
     statement: Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is X-mount.subdir resolving against a detached tree, reachable only through a mount(8) invocation carrying that option. The service performs no mount operation and holds no capability permitting one. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
   - id: CVE-2026-78410
-    expired_at: 2026-09-20
+    expired_at: 2026-10-22
     statement: Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is restricted bind mounts failing to pin their target. Creating a bind mount requires CAP_SYS_ADMIN, which the runtime drops entirely; the container mounts nothing at runtime and its root filesystem is read-only. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
-  - id: CVE-2026-16742
-    expired_at: 2026-09-20
-    statement: Debian 13 has no fixed version at libsystemd0 257.13-1~deb13u1. The affected path is a systemd-homed local privilege escalation, and the systemd-homed daemon is not present in the image; the SBOM records exactly two systemd-family packages, libsystemd0 and libudev1, both shared libraries, with no systemd or systemd-homed package among the 117 installed. The vulnerable binary therefore does not exist in the runtime. The container additionally has no init system, no homed-managed accounts, and runs non-root uid 10001 with --cap-drop ALL, --read-only, and no-new-privileges, which blocks privilege escalation directly. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.
+  - id: CVE-2026-9538
+    expired_at: 2026-10-22
+    statement: Debian marks the fix deferred for perl-base 5.40.1-6+deb13u1 (the newest trixie version) and perl-base is Essential. The affected code is Archive::Tar, which is not installed in the image because perl-modules is absent; the service never invokes perl and accepts JSON, never tar archives. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.

@@ -127,10 +127,10 @@ def test_container_image_declares_source_revision_binding() -> None:
 def test_container_scan_exceptions_are_narrow_documented_and_expiring() -> None:
     payload = yaml.safe_load((ROOT / ".trivyignore.yaml").read_text(encoding="utf-8"))
     exceptions = payload["vulnerabilities"]
-    assert len(exceptions) == 19
+    assert len(exceptions) == 8
     assert len({item["id"] for item in exceptions}) == len(exceptions)
     assert all(set(item) == {"id", "expired_at", "statement"} for item in exceptions)
-    assert all(str(item["expired_at"]) == "2026-09-20" for item in exceptions)
+    assert all(str(item["expired_at"]) == "2026-10-22" for item in exceptions)
     assert all(len(item["statement"]) >= 50 for item in exceptions)
 
 
@@ -179,10 +179,10 @@ def test_durable_container_scan_and_sbom_evidence_is_self_consistent() -> None:
     # The frozen scan record stays internally exact: its findings are precisely
     # its dispositions. It cannot contain CVEs published after it was taken.
     assert {item["VulnerabilityID"] for item in findings} == set(dispositions)
-    # Every scanner exception must still be backed by exactly one disposition,
-    # in the frozen record or in the current unfixed record, and never both.
-    assert set(dispositions).isdisjoint(current)
-    assert set(exceptions) == set(dispositions) | current
+    # Since the 2026-10-01 re-baseline the frozen scan describes the rebuilt image.
+    # Every scanner exception must be both a finding in that raw scan and a full
+    # disposition in the current unfixed record, so nothing fixed stays ignored.
+    assert set(exceptions) == set(dispositions) == current
     assert manifest["scan"]["policy_active_findings"] == 0
     for finding_id, disposition in dispositions.items():
         matching = [item for item in findings if item["VulnerabilityID"] == finding_id]
@@ -308,7 +308,7 @@ def test_unfixed_cve_dispositions_are_bounded_documented_and_reviewable() -> Non
         assert len(item["compensating_controls"]) >= 3
         assert len(item["remediation_attempts"]) >= 2
         # Short, convention-matching expiry, mirrored into the scanner policy.
-        assert item["expires"] == "2026-09-20"
+        assert item["expires"] == "2026-10-22"
         assert item["finding_id"] in exceptions
         assert str(exceptions[item["finding_id"]]["expired_at"]) == item["expires"]
 

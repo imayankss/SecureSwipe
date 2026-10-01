@@ -3,33 +3,33 @@
   "Trivy": {
     "Version": "0.70.0"
   },
-  "ReportID": "01a01ed2-60ad-7676-8d15-4854849e8a20",
-  "CreatedAt": "2026-08-20T10:58:18.925433552Z",
-  "ArtifactID": "sha256:44f508f18bb02995a35fef56e743eb88d55b3988d8c34b53083509cba93d1a52",
+  "ReportID": "01a0f6b5-e73b-70df-a4ee-98df105affa6",
+  "CreatedAt": "2026-10-01T09:05:11.483108261Z",
+  "ArtifactID": "sha256:37d1c4f73d28062ae2a1b874b370fb40460ea643e0b8af7cf55896fe8ba22f7a",
   "ArtifactName": "secureswipe-api:audit-arm64",
   "ArtifactType": "container_image",
   "Metadata": {
-    "Size": 616111104,
+    "Size": 661226496,
     "OS": {
       "Family": "debian",
       "Name": "13.6"
     },
-    "ImageID": "sha256:afb032c3c614edb5a0c743c166a52bbab1f9e265592043cc766ad9c14d9779e7",
+    "ImageID": "sha256:6f2a5e86af792a37877cc1978bb8a0d77249652cade575af3d5b0c1d656ded8a",
     "DiffIDs": [
       "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1",
       "sha256:30bf6dd11127f697a0a8397835b6864f927345a311a8c60f36ee4b90dd815ae9",
       "sha256:f28353dc58c1134df0f08aeb19debe221a69c915efff3053257f2b839cce0a20",
       "sha256:f869b4fd07c513748c823e406165a6d9972ecc450023601a62439584935f078c",
-      "sha256:aa7a46b3569bb32a9c4654072f1f87fa3a47ad96f8a6d85ce1e54fc171137308",
-      "sha256:5c29b2ff48ee51a1997295fdc6fb17559db06297cbfb8ced6ac85df6bd1d9c9d",
-      "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd",
+      "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a",
+      "sha256:0e3e8637307b677840699dbd00b8641eca0a06017dd7088e0adf567783b2b44b",
+      "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1",
       "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
-      "sha256:7eb5aaa56b81b3fb4892667a2da817aba803f23ed4bab558bda47482edc5304d",
-      "sha256:4d684c581960ad6ff890e1e086ba1f69d642d5b947488bac70786a964a304913",
-      "sha256:23c5bdb82bff71afc2b061a8c8b2de0945a9e7700f634f6687fd75df5049e227",
-      "sha256:becc1f63c25172046068528f7fe03fe4e998ea1ef0a8bf165b1f8f79b32a01ce",
-      "sha256:baab8352f1dea2abe64455af0f3ae496a79e9327f5d2820d2ca94aa1af6469d6",
-      "sha256:e278ab128549cb55b19198764a5fe427f8dc000d40e96a276c576579ec1edad3"
+      "sha256:976b8b5c7acd1bfe7c52d6f0f12e2c72bf9e7e939e35b4cfce97edc8162813d0",
+      "sha256:bbff8fe244744e579f3c6070e605d757eead4786bdd2108ff16634c9aae2f864",
+      "sha256:a50e2b89102d0ba57e96ff66105bdc1daff018c89e9464e376552dbc22782fbe",
+      "sha256:f79ab8c6d6d60a10254b6aeb6eafd28232e46f3009dbf52b72cf71c19d30d500",
+      "sha256:f431d339b99bf856913b8e73c0a83b2fa5be66df2c347f4894f3d260dc530992",
+      "sha256:b1e50c0ba00d5deb69103c94f81e666747aca835252ffcd0bdfcc128a54a08b8"
     ],
     "RepoTags": [
       "secureswipe-api:audit-arm64"
@@ -37,7 +37,7 @@
     "Reference": "secureswipe-api:audit-arm64",
     "ImageConfig": {
       "architecture": "arm64",
-      "created": "2026-08-20T10:53:01.54063296Z",
+      "created": "2026-10-01T09:00:37.693912637Z",
       "history": [
         {
           "created": "2026-08-03T00:00:00Z",
@@ -96,93 +96,93 @@
           "empty_layer": true
         },
         {
-          "created": "2026-08-20T10:52:57Z",
-          "created_by": "ARG VCS_REF=050d4f1b2963c0123e265c76b1c9a1f26e1836d5",
+          "created": "2026-10-01T08:59:50Z",
+          "created_by": "ARG VCS_REF=f8368d2e832a0b03ba5f5765c3168dd2752ad8e7",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
         },
         {
-          "created": "2026-08-20T10:52:57Z",
-          "created_by": "LABEL org.opencontainers.image.title=SecureSwipe fraud-risk reference API org.opencontainers.image.description=Portfolio reference service; not a payment authorization system org.opencontainers.image.licenses=MIT org.opencontainers.image.source=https://github.com/imayankss/SecureSwipe org.opencontainers.image.revision=050d4f1b2963c0123e265c76b1c9a1f26e1836d5",
+          "created": "2026-10-01T08:59:50Z",
+          "created_by": "LABEL org.opencontainers.image.title=SecureSwipe fraud-risk reference API org.opencontainers.image.description=Portfolio reference service; not a payment authorization system org.opencontainers.image.licenses=MIT org.opencontainers.image.source=https://github.com/imayankss/SecureSwipe org.opencontainers.image.revision=f8368d2e832a0b03ba5f5765c3168dd2752ad8e7",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
         },
         {
-          "created": "2026-08-20T10:52:57Z",
+          "created": "2026-10-01T08:59:50Z",
           "created_by": "ENV PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 PYTHONPATH=/app SECURESWIPE_ARTIFACT_ROOT=/artifacts SECURESWIPE_MAX_REQUEST_BYTES=65536",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
         },
         {
-          "created": "2026-08-20T10:52:57Z",
-          "created_by": "RUN |1 VCS_REF=050d4f1b2963c0123e265c76b1c9a1f26e1836d5 /bin/sh -c apt-get update     \u0026\u0026 apt-get install --yes --no-install-recommends --only-upgrade         bsdutils=1:2.41.5-0+deb13u1         libblkid1=2.41.5-0+deb13u1         liblastlog2-2=2.41.5-0+deb13u1         libmount1=2.41.5-0+deb13u1         libsmartcols1=2.41.5-0+deb13u1         libuuid1=2.41.5-0+deb13u1         login=1:4.16.0-2+really2.41.5-0+deb13u1         mount=2.41.5-0+deb13u1         util-linux=2.41.5-0+deb13u1     \u0026\u0026 rm -rf /var/lib/apt/lists/* # buildkit",
+          "created": "2026-10-01T08:59:50Z",
+          "created_by": "RUN |1 VCS_REF=f8368d2e832a0b03ba5f5765c3168dd2752ad8e7 /bin/sh -c apt-get update     \u0026\u0026 apt-get install --yes --no-install-recommends --only-upgrade         bsdutils=1:2.41.5-0+deb13u1         gzip=1.13-1+deb13u1         libblkid1=2.41.5-0+deb13u1         liblastlog2-2=2.41.5-0+deb13u1         libmount1=2.41.5-0+deb13u1         libpcre2-8-0=10.46-1~deb13u3         libsmartcols1=2.41.5-0+deb13u1         libsqlite3-0=3.46.1-7+deb13u2         libssl3t64=3.5.7-1~deb13u3         libuuid1=2.41.5-0+deb13u1         login=1:4.16.0-2+really2.41.5-0+deb13u1         mount=2.41.5-0+deb13u1         openssl=3.5.7-1~deb13u3         openssl-provider-legacy=3.5.7-1~deb13u3         perl-base=5.40.1-6+deb13u1         util-linux=2.41.5-0+deb13u1     \u0026\u0026 rm -rf /var/lib/apt/lists/* # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-08-20T10:52:57Z",
-          "created_by": "RUN |1 VCS_REF=050d4f1b2963c0123e265c76b1c9a1f26e1836d5 /bin/sh -c groupadd --gid 10001 secureswipe     \u0026\u0026 useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin secureswipe     \u0026\u0026 mkdir --mode=0755 /app /artifacts     \u0026\u0026 chown 10001:10001 /artifacts # buildkit",
+          "created": "2026-10-01T08:59:51Z",
+          "created_by": "RUN |1 VCS_REF=f8368d2e832a0b03ba5f5765c3168dd2752ad8e7 /bin/sh -c groupadd --gid 10001 secureswipe     \u0026\u0026 useradd --uid 10001 --gid 10001 --no-create-home --shell /usr/sbin/nologin secureswipe     \u0026\u0026 mkdir --mode=0755 /app /artifacts     \u0026\u0026 chown 10001:10001 /artifacts # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-08-20T10:52:59Z",
+          "created": "2026-10-01T09:00:34Z",
           "created_by": "COPY /install /usr/local # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-08-20T10:52:59Z",
+          "created": "2026-10-01T09:00:35Z",
           "created_by": "WORKDIR /app",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-08-20T10:52:59Z",
+          "created": "2026-10-01T09:00:35Z",
           "created_by": "COPY --chown=10001:10001 api ./api # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-08-20T10:52:59Z",
+          "created": "2026-10-01T09:00:35Z",
           "created_by": "COPY --chown=10001:10001 src/__init__.py ./src/__init__.py # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-08-20T10:52:59Z",
+          "created": "2026-10-01T09:00:35Z",
           "created_by": "COPY --chown=10001:10001 src/artifacts ./src/artifacts # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-08-20T10:52:59Z",
+          "created": "2026-10-01T09:00:35Z",
           "created_by": "COPY --chown=10001:10001 src/inference ./src/inference # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-08-20T10:53:00Z",
+          "created": "2026-10-01T09:00:35Z",
           "created_by": "COPY --chown=10001:10001 src/preprocessing ./src/preprocessing # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-08-20T10:53:01Z",
-          "created_by": "RUN |1 VCS_REF=050d4f1b2963c0123e265c76b1c9a1f26e1836d5 /bin/sh -c python -m pip uninstall --yes pip # buildkit",
+          "created": "2026-10-01T09:00:37Z",
+          "created_by": "RUN |1 VCS_REF=f8368d2e832a0b03ba5f5765c3168dd2752ad8e7 /bin/sh -c python -m pip uninstall --yes pip # buildkit",
           "comment": "buildkit.dockerfile.v0"
         },
         {
-          "created": "2026-08-20T10:53:01Z",
+          "created": "2026-10-01T09:00:37Z",
           "created_by": "USER 10001:10001",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
         },
         {
-          "created": "2026-08-20T10:53:01Z",
+          "created": "2026-10-01T09:00:37Z",
           "created_by": "EXPOSE map[8000/tcp:{}]",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
         },
         {
-          "created": "2026-08-20T10:53:01Z",
+          "created": "2026-10-01T09:00:37Z",
           "created_by": "HEALTHCHECK \u0026{[\"CMD\" \"python\" \"-c\" \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/live', timeout=2).read()\"] \"30s\" \"3s\" \"10s\" \"0s\" '\\x03'}",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
         },
         {
-          "created": "2026-08-20T10:53:01Z",
+          "created": "2026-10-01T09:00:37Z",
           "created_by": "CMD [\"python\" \"-m\" \"uvicorn\" \"api.main:app\" \"--host\" \"0.0.0.0\" \"--port\" \"8000\" \"--workers\" \"1\" \"--no-access-log\"]",
           "comment": "buildkit.dockerfile.v0",
           "empty_layer": true
@@ -196,16 +196,16 @@
           "sha256:30bf6dd11127f697a0a8397835b6864f927345a311a8c60f36ee4b90dd815ae9",
           "sha256:f28353dc58c1134df0f08aeb19debe221a69c915efff3053257f2b839cce0a20",
           "sha256:f869b4fd07c513748c823e406165a6d9972ecc450023601a62439584935f078c",
-          "sha256:aa7a46b3569bb32a9c4654072f1f87fa3a47ad96f8a6d85ce1e54fc171137308",
-          "sha256:5c29b2ff48ee51a1997295fdc6fb17559db06297cbfb8ced6ac85df6bd1d9c9d",
-          "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd",
+          "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a",
+          "sha256:0e3e8637307b677840699dbd00b8641eca0a06017dd7088e0adf567783b2b44b",
+          "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1",
           "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef",
-          "sha256:7eb5aaa56b81b3fb4892667a2da817aba803f23ed4bab558bda47482edc5304d",
-          "sha256:4d684c581960ad6ff890e1e086ba1f69d642d5b947488bac70786a964a304913",
-          "sha256:23c5bdb82bff71afc2b061a8c8b2de0945a9e7700f634f6687fd75df5049e227",
-          "sha256:becc1f63c25172046068528f7fe03fe4e998ea1ef0a8bf165b1f8f79b32a01ce",
-          "sha256:baab8352f1dea2abe64455af0f3ae496a79e9327f5d2820d2ca94aa1af6469d6",
-          "sha256:e278ab128549cb55b19198764a5fe427f8dc000d40e96a276c576579ec1edad3"
+          "sha256:976b8b5c7acd1bfe7c52d6f0f12e2c72bf9e7e939e35b4cfce97edc8162813d0",
+          "sha256:bbff8fe244744e579f3c6070e605d757eead4786bdd2108ff16634c9aae2f864",
+          "sha256:a50e2b89102d0ba57e96ff66105bdc1daff018c89e9464e376552dbc22782fbe",
+          "sha256:f79ab8c6d6d60a10254b6aeb6eafd28232e46f3009dbf52b72cf71c19d30d500",
+          "sha256:f431d339b99bf856913b8e73c0a83b2fa5be66df2c347f4894f3d260dc530992",
+          "sha256:b1e50c0ba00d5deb69103c94f81e666747aca835252ffcd0bdfcc128a54a08b8"
         ]
       },
       "config": {
@@ -249,7 +249,7 @@
         "Labels": {
           "org.opencontainers.image.description": "Portfolio reference service; not a payment authorization system",
           "org.opencontainers.image.licenses": "MIT",
-          "org.opencontainers.image.revision": "050d4f1b2963c0123e265c76b1c9a1f26e1836d5",
+          "org.opencontainers.image.revision": "f8368d2e832a0b03ba5f5765c3168dd2752ad8e7",
           "org.opencontainers.image.source": "https://github.com/imayankss/SecureSwipe",
           "org.opencontainers.image.title": "SecureSwipe fraud-risk reference API"
         },
@@ -279,44 +279,44 @@
         "DiffID": "sha256:f869b4fd07c513748c823e406165a6d9972ecc450023601a62439584935f078c"
       },
       {
-        "Size": 11404288,
-        "DiffID": "sha256:aa7a46b3569bb32a9c4654072f1f87fa3a47ad96f8a6d85ce1e54fc171137308"
+        "Size": 31636992,
+        "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
       },
       {
         "Size": 15360,
-        "DiffID": "sha256:5c29b2ff48ee51a1997295fdc6fb17559db06297cbfb8ced6ac85df6bd1d9c9d"
+        "DiffID": "sha256:0e3e8637307b677840699dbd00b8641eca0a06017dd7088e0adf567783b2b44b"
       },
       {
-        "Size": 455927296,
-        "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+        "Size": 480700416,
+        "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
       },
       {
         "Size": 1024,
         "DiffID": "sha256:5f70bf18a086007016e948b04aed3b82103a36bea41755b6cddfaf10ace3c6ef"
       },
       {
-        "Size": 76800,
-        "DiffID": "sha256:7eb5aaa56b81b3fb4892667a2da817aba803f23ed4bab558bda47482edc5304d"
+        "Size": 193536,
+        "DiffID": "sha256:976b8b5c7acd1bfe7c52d6f0f12e2c72bf9e7e939e35b4cfce97edc8162813d0"
       },
       {
         "Size": 3072,
-        "DiffID": "sha256:4d684c581960ad6ff890e1e086ba1f69d642d5b947488bac70786a964a304913"
+        "DiffID": "sha256:bbff8fe244744e579f3c6070e605d757eead4786bdd2108ff16634c9aae2f864"
       },
       {
-        "Size": 52224,
-        "DiffID": "sha256:23c5bdb82bff71afc2b061a8c8b2de0945a9e7700f634f6687fd75df5049e227"
+        "Size": 95232,
+        "DiffID": "sha256:a50e2b89102d0ba57e96ff66105bdc1daff018c89e9464e376552dbc22782fbe"
       },
       {
-        "Size": 18944,
-        "DiffID": "sha256:becc1f63c25172046068528f7fe03fe4e998ea1ef0a8bf165b1f8f79b32a01ce"
+        "Size": 8704,
+        "DiffID": "sha256:f79ab8c6d6d60a10254b6aeb6eafd28232e46f3009dbf52b72cf71c19d30d500"
       },
       {
-        "Size": 75776,
-        "DiffID": "sha256:baab8352f1dea2abe64455af0f3ae496a79e9327f5d2820d2ca94aa1af6469d6"
+        "Size": 35840,
+        "DiffID": "sha256:f431d339b99bf856913b8e73c0a83b2fa5be66df2c347f4894f3d260dc530992"
       },
       {
         "Size": 7680,
-        "DiffID": "sha256:e278ab128549cb55b19198764a5fe427f8dc000d40e96a276c576579ec1edad3"
+        "DiffID": "sha256:b1e50c0ba00d5deb69103c94f81e666747aca835252ffcd0bdfcc128a54a08b8"
       }
     ]
   },
@@ -417,7 +417,7 @@
           "Name": "apt",
           "Identifier": {
             "PURL": "pkg:deb/debian/apt@3.0.3?arch=arm64\u0026distro=debian-13.6",
-            "UID": "74259ba5e5f143fc"
+            "UID": "ddf11ae3ac5e0342"
           },
           "Version": "3.0.3",
           "Arch": "arm64",
@@ -442,7 +442,7 @@
             "libc6@2.41-12+deb13u3",
             "libgcc-s1@14.2.0-19",
             "libseccomp2@2.6.0-2",
-            "libssl3t64@3.5.6-1~deb13u2",
+            "libssl3t64@3.5.7-1~deb13u3",
             "libstdc++6@14.2.0-19",
             "libsystemd0@257.13-1~deb13u1",
             "sqv@1.3.0-3+b2"
@@ -883,7 +883,7 @@
             "Class": "official"
           },
           "Layer": {
-            "DiffID": "sha256:aa7a46b3569bb32a9c4654072f1f87fa3a47ad96f8a6d85ce1e54fc171137308"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/bin/logger",
@@ -917,7 +917,7 @@
           "Name": "ca-certificates",
           "Identifier": {
             "PURL": "pkg:deb/debian/ca-certificates@20250419?arch=all\u0026distro=debian-13.6",
-            "UID": "80d358ddeb1b09c3"
+            "UID": "4f643da9ec9da7b1"
           },
           "Version": "20250419",
           "Arch": "all",
@@ -934,7 +934,7 @@
           },
           "DependsOn": [
             "debconf@1.5.91",
-            "openssl@3.5.6-1~deb13u2"
+            "openssl@3.5.7-1~deb13u3"
           ],
           "Layer": {
             "DiffID": "sha256:30bf6dd11127f697a0a8397835b6864f927345a311a8c60f36ee4b90dd815ae9"
@@ -2242,18 +2242,18 @@
           "AnalyzedBy": "dpkg"
         },
         {
-          "ID": "gzip@1.13-1",
+          "ID": "gzip@1.13-1+deb13u1",
           "Name": "gzip",
           "Identifier": {
-            "PURL": "pkg:deb/debian/gzip@1.13-1?arch=arm64\u0026distro=debian-13.6",
-            "UID": "96c405cbe579d2a5"
+            "PURL": "pkg:deb/debian/gzip@1.13-1%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "2bef18af9c698840"
           },
           "Version": "1.13",
-          "Release": "1",
+          "Release": "1+deb13u1",
           "Arch": "arm64",
           "SrcName": "gzip",
           "SrcVersion": "1.13",
-          "SrcRelease": "1",
+          "SrcRelease": "1+deb13u1",
           "Licenses": [
             "GPL-3.0-or-later",
             "GFDL-1.3+-no-invariant",
@@ -2266,7 +2266,7 @@
             "Class": "official"
           },
           "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/bin/gunzip",
@@ -2416,7 +2416,7 @@
           "Name": "libapt-pkg7.0",
           "Identifier": {
             "PURL": "pkg:deb/debian/libapt-pkg7.0@3.0.3?arch=arm64\u0026distro=debian-13.6",
-            "UID": "6033c205f12a0fc7"
+            "UID": "5ff60043ebb2a061"
           },
           "Version": "3.0.3",
           "Arch": "arm64",
@@ -2439,7 +2439,7 @@
             "libgcc-s1@14.2.0-19",
             "liblz4-1@1.10.0-4",
             "liblzma5@5.8.1-1+deb13u1",
-            "libssl3t64@3.5.6-1~deb13u2",
+            "libssl3t64@3.5.7-1~deb13u3",
             "libstdc++6@14.2.0-19",
             "libsystemd0@257.13-1~deb13u1",
             "libudev1@257.13-1~deb13u1",
@@ -2657,7 +2657,7 @@
             "libc6@2.41-12+deb13u3"
           ],
           "Layer": {
-            "DiffID": "sha256:aa7a46b3569bb32a9c4654072f1f87fa3a47ad96f8a6d85ce1e54fc171137308"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/lib/aarch64-linux-gnu/libblkid.so.1.1.0",
@@ -3582,7 +3582,7 @@
           "Name": "liblastlog2-2",
           "Identifier": {
             "PURL": "pkg:deb/debian/liblastlog2-2@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
-            "UID": "1f296f058fba0b34"
+            "UID": "5ef135cc2d486fa5"
           },
           "Version": "2.41.5",
           "Release": "0+deb13u1",
@@ -3615,10 +3615,10 @@
           },
           "DependsOn": [
             "libc6@2.41-12+deb13u3",
-            "libsqlite3-0@3.46.1-7+deb13u1"
+            "libsqlite3-0@3.46.1-7+deb13u2"
           ],
           "Layer": {
-            "DiffID": "sha256:aa7a46b3569bb32a9c4654072f1f87fa3a47ad96f8a6d85ce1e54fc171137308"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/lib/aarch64-linux-gnu/liblastlog2.so.2.0.0",
@@ -3800,7 +3800,7 @@
             "libselinux1@3.8.1-1"
           ],
           "Layer": {
-            "DiffID": "sha256:aa7a46b3569bb32a9c4654072f1f87fa3a47ad96f8a6d85ce1e54fc171137308"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/lib/aarch64-linux-gnu/libmount.so.1.1.0",
@@ -4292,18 +4292,18 @@
           "AnalyzedBy": "dpkg"
         },
         {
-          "ID": "libpcre2-8-0@10.46-1~deb13u1",
+          "ID": "libpcre2-8-0@10.46-1~deb13u3",
           "Name": "libpcre2-8-0",
           "Identifier": {
-            "PURL": "pkg:deb/debian/libpcre2-8-0@10.46-1~deb13u1?arch=arm64\u0026distro=debian-13.6",
-            "UID": "83fe02f007211c44"
+            "PURL": "pkg:deb/debian/libpcre2-8-0@10.46-1~deb13u3?arch=arm64\u0026distro=debian-13.6",
+            "UID": "e6b656f72673070d"
           },
           "Version": "10.46",
-          "Release": "1~deb13u1",
+          "Release": "1~deb13u3",
           "Arch": "arm64",
           "SrcName": "pcre2",
           "SrcVersion": "10.46",
-          "SrcRelease": "1~deb13u1",
+          "SrcRelease": "1~deb13u3",
           "Licenses": [
             "BSD-3-clause-Cambridge with BINARY LIBRARY-LIKE PACKAGES exception",
             "BSD-3-Clause",
@@ -4319,7 +4319,7 @@
             "libc6@2.41-12+deb13u3"
           ],
           "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/lib/aarch64-linux-gnu/libpcre2-8.so.0.14.0",
@@ -4416,7 +4416,7 @@
           "Name": "libselinux1",
           "Identifier": {
             "PURL": "pkg:deb/debian/libselinux1@3.8.1-1?arch=arm64\u0026distro=debian-13.6",
-            "UID": "c1022c54fc6aff69"
+            "UID": "8e8a3e9a445dc7c2"
           },
           "Version": "3.8.1",
           "Release": "1",
@@ -4434,7 +4434,7 @@
           },
           "DependsOn": [
             "libc6@2.41-12+deb13u3",
-            "libpcre2-8-0@10.46-1~deb13u1"
+            "libpcre2-8-0@10.46-1~deb13u3"
           ],
           "Layer": {
             "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
@@ -4596,7 +4596,7 @@
             "libc6@2.41-12+deb13u3"
           ],
           "Layer": {
-            "DiffID": "sha256:aa7a46b3569bb32a9c4654072f1f87fa3a47ad96f8a6d85ce1e54fc171137308"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/lib/aarch64-linux-gnu/libsmartcols.so.1.1.0",
@@ -4609,18 +4609,18 @@
           "AnalyzedBy": "dpkg"
         },
         {
-          "ID": "libsqlite3-0@3.46.1-7+deb13u1",
+          "ID": "libsqlite3-0@3.46.1-7+deb13u2",
           "Name": "libsqlite3-0",
           "Identifier": {
-            "PURL": "pkg:deb/debian/libsqlite3-0@3.46.1-7%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
-            "UID": "ab497ed2d6c9f210"
+            "PURL": "pkg:deb/debian/libsqlite3-0@3.46.1-7%2Bdeb13u2?arch=arm64\u0026distro=debian-13.6",
+            "UID": "466f6ea99d802150"
           },
           "Version": "3.46.1",
-          "Release": "7+deb13u1",
+          "Release": "7+deb13u2",
           "Arch": "arm64",
           "SrcName": "sqlite3",
           "SrcVersion": "3.46.1",
-          "SrcRelease": "7+deb13u1",
+          "SrcRelease": "7+deb13u2",
           "Licenses": [
             "public-domain",
             "GPL-2.0-or-later",
@@ -4634,7 +4634,7 @@
             "libc6@2.41-12+deb13u3"
           ],
           "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/lib/aarch64-linux-gnu/libsqlite3.so.0.8.6",
@@ -4647,18 +4647,18 @@
           "AnalyzedBy": "dpkg"
         },
         {
-          "ID": "libssl3t64@3.5.6-1~deb13u2",
+          "ID": "libssl3t64@3.5.7-1~deb13u3",
           "Name": "libssl3t64",
           "Identifier": {
-            "PURL": "pkg:deb/debian/libssl3t64@3.5.6-1~deb13u2?arch=arm64\u0026distro=debian-13.6",
-            "UID": "5032c4a6c4018a8d"
+            "PURL": "pkg:deb/debian/libssl3t64@3.5.7-1~deb13u3?arch=arm64\u0026distro=debian-13.6",
+            "UID": "484fbe3955ab34e8"
           },
-          "Version": "3.5.6",
-          "Release": "1~deb13u2",
+          "Version": "3.5.7",
+          "Release": "1~deb13u3",
           "Arch": "arm64",
           "SrcName": "openssl",
-          "SrcVersion": "3.5.6",
-          "SrcRelease": "1~deb13u2",
+          "SrcVersion": "3.5.7",
+          "SrcRelease": "1~deb13u3",
           "Licenses": [
             "Apache-2.0",
             "Artistic-2.0",
@@ -4672,11 +4672,11 @@
           "DependsOn": [
             "libc6@2.41-12+deb13u3",
             "libzstd1@1.5.7+dfsg-1",
-            "openssl-provider-legacy@3.5.6-1~deb13u2",
+            "openssl-provider-legacy@3.5.7-1~deb13u3",
             "zlib1g@1:1.3.dfsg+really1.3.1-1+b1"
           ],
           "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/lib/aarch64-linux-gnu/engines-3/afalg.so",
@@ -4887,7 +4887,7 @@
             "libc6@2.41-12+deb13u3"
           ],
           "Layer": {
-            "DiffID": "sha256:aa7a46b3569bb32a9c4654072f1f87fa3a47ad96f8a6d85ce1e54fc171137308"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/lib/aarch64-linux-gnu/libuuid.so.1.3.0",
@@ -5017,7 +5017,7 @@
             "libpam0g@1.7.0-5"
           ],
           "Layer": {
-            "DiffID": "sha256:aa7a46b3569bb32a9c4654072f1f87fa3a47ad96f8a6d85ce1e54fc171137308"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/bin/login",
@@ -5183,7 +5183,7 @@
             "Class": "official"
           },
           "Layer": {
-            "DiffID": "sha256:aa7a46b3569bb32a9c4654072f1f87fa3a47ad96f8a6d85ce1e54fc171137308"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/bin/mount",
@@ -5374,18 +5374,18 @@
           "AnalyzedBy": "dpkg"
         },
         {
-          "ID": "openssl@3.5.6-1~deb13u2",
+          "ID": "openssl@3.5.7-1~deb13u3",
           "Name": "openssl",
           "Identifier": {
-            "PURL": "pkg:deb/debian/openssl@3.5.6-1~deb13u2?arch=arm64\u0026distro=debian-13.6",
-            "UID": "875e4f2ea5fb4d08"
+            "PURL": "pkg:deb/debian/openssl@3.5.7-1~deb13u3?arch=arm64\u0026distro=debian-13.6",
+            "UID": "886fb9860e98d5f8"
           },
-          "Version": "3.5.6",
-          "Release": "1~deb13u2",
+          "Version": "3.5.7",
+          "Release": "1~deb13u3",
           "Arch": "arm64",
           "SrcName": "openssl",
-          "SrcVersion": "3.5.6",
-          "SrcRelease": "1~deb13u2",
+          "SrcVersion": "3.5.7",
+          "SrcRelease": "1~deb13u3",
           "Licenses": [
             "Apache-2.0",
             "Artistic-2.0",
@@ -5398,10 +5398,10 @@
           },
           "DependsOn": [
             "libc6@2.41-12+deb13u3",
-            "libssl3t64@3.5.6-1~deb13u2"
+            "libssl3t64@3.5.7-1~deb13u3"
           ],
           "Layer": {
-            "DiffID": "sha256:30bf6dd11127f697a0a8397835b6864f927345a311a8c60f36ee4b90dd815ae9"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/bin/c_rehash",
@@ -5647,18 +5647,18 @@
           "AnalyzedBy": "dpkg"
         },
         {
-          "ID": "openssl-provider-legacy@3.5.6-1~deb13u2",
+          "ID": "openssl-provider-legacy@3.5.7-1~deb13u3",
           "Name": "openssl-provider-legacy",
           "Identifier": {
-            "PURL": "pkg:deb/debian/openssl-provider-legacy@3.5.6-1~deb13u2?arch=arm64\u0026distro=debian-13.6",
-            "UID": "25968bf04d827b0a"
+            "PURL": "pkg:deb/debian/openssl-provider-legacy@3.5.7-1~deb13u3?arch=arm64\u0026distro=debian-13.6",
+            "UID": "250a99288e258bf5"
           },
-          "Version": "3.5.6",
-          "Release": "1~deb13u2",
+          "Version": "3.5.7",
+          "Release": "1~deb13u3",
           "Arch": "arm64",
           "SrcName": "openssl",
-          "SrcVersion": "3.5.6",
-          "SrcRelease": "1~deb13u2",
+          "SrcVersion": "3.5.7",
+          "SrcRelease": "1~deb13u3",
           "Licenses": [
             "Apache-2.0",
             "Artistic-2.0",
@@ -5671,10 +5671,10 @@
           },
           "DependsOn": [
             "libc6@2.41-12+deb13u3",
-            "libssl3t64@3.5.6-1~deb13u2"
+            "libssl3t64@3.5.7-1~deb13u3"
           ],
           "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/lib/aarch64-linux-gnu/ossl-modules/legacy.so",
@@ -6057,18 +6057,18 @@
           "AnalyzedBy": "dpkg"
         },
         {
-          "ID": "perl-base@5.40.1-6",
+          "ID": "perl-base@5.40.1-6+deb13u1",
           "Name": "perl-base",
           "Identifier": {
-            "PURL": "pkg:deb/debian/perl-base@5.40.1-6?arch=arm64\u0026distro=debian-13.6",
-            "UID": "b9c070033835aadb"
+            "PURL": "pkg:deb/debian/perl-base@5.40.1-6%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "a68116fb699f38c6"
           },
           "Version": "5.40.1",
-          "Release": "6",
+          "Release": "6+deb13u1",
           "Arch": "arm64",
           "SrcName": "perl",
           "SrcVersion": "5.40.1",
-          "SrcRelease": "6",
+          "SrcRelease": "6+deb13u1",
           "Licenses": [
             "GPL-1.0-or-later",
             "Artistic-2.0",
@@ -6099,7 +6099,7 @@
             "Class": "official"
           },
           "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/bin/perl",
@@ -7554,7 +7554,7 @@
             "Class": "official"
           },
           "Layer": {
-            "DiffID": "sha256:aa7a46b3569bb32a9c4654072f1f87fa3a47ad96f8a6d85ce1e54fc171137308"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "InstalledFiles": [
             "/usr/bin/choom",
@@ -7853,63 +7853,198 @@
       ],
       "Vulnerabilities": [
         {
-          "VulnerabilityID": "CVE-2026-41992",
-          "PkgID": "gzip@1.13-1",
-          "PkgName": "gzip",
+          "VulnerabilityID": "CVE-2026-76642",
+          "PkgID": "bsdutils@1:2.41.5-0+deb13u1",
+          "PkgName": "bsdutils",
           "PkgIdentifier": {
-            "PURL": "pkg:deb/debian/gzip@1.13-1?arch=arm64\u0026distro=debian-13.6",
-            "UID": "96c405cbe579d2a5"
+            "PURL": "pkg:deb/debian/bsdutils@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6\u0026epoch=1",
+            "UID": "65cb7399c04deda2"
           },
-          "InstalledVersion": "1.13-1",
+          "InstalledVersion": "1:2.41.5-0+deb13u1",
           "Status": "affected",
           "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
-          "SeveritySource": "nvd",
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-41992",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-76642",
           "DataSource": {
             "ID": "debian",
             "Name": "Debian Security Tracker",
             "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
           },
-          "Fingerprint": "sha256:efc989d3062d4000632b47938ee655410ea8e7277fbb0d0a0cb788e9cf65ab17",
-          "Title": "GNU gzip contains a global buffer overflow vulnerability in the LZH de ...",
-          "Description": "GNU gzip contains a global buffer overflow vulnerability in the LZH decompression logic caused by improper reuse of shared global state between different decompression formats within a single execution. GNU gzip maintains a global array that is shared across the LZ77, LZW, and LZH decompression routines and is not reinitialized between files processed in the same invocation.\nBy decompressing a specially crafted LZW file followed by a specially crafted LZH file in a single gzip -d command, an attacker can poison the shared global state and subsequently trigger an out‑of‑bounds read in the LZH decoder. The LZH decompression logic follows stale values left in the shared array, causing reads past the end of the allocated global buffer.\n\nThis issue has been fixed in the commit 63dbf6b3b9e6e781df1a6a64e609b10e23969681",
+          "Fingerprint": "sha256:a4a4ff75900dfeba683f102ba5c74c8fc2a1b439a4b0894f0a286ca5a7ca2b00",
+          "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
+          "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
           "Severity": "HIGH",
           "CweIDs": [
-            "CWE-126"
+            "CWE-390"
           ],
           "VendorSeverity": {
             "azure": 2,
-            "julia": 2,
-            "nvd": 3,
-            "ubuntu": 2
+            "photon": 3,
+            "redhat": 3
           },
           "CVSS": {
-            "julia": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
-              "V40Vector": "CVSS:4.0/AV:L/AC:L/AT:N/PR:N/UI:N/VC:H/VI:N/VA:N/SC:N/SI:N/SA:N",
-              "V3Score": 7.5,
-              "V40Score": 6.9
-            },
-            "nvd": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
-              "V3Score": 7.5
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
             }
           },
           "References": [
-            "https://cert.pl/en/posts/2026/04/CVE-2026-41991",
-            "https://cert.pl/en/posts/2026/04/CVE-2026-41991/",
-            "https://cgit.git.savannah.gnu.org/cgit/gzip.git/commit/?id=63dbf6b3b9e6e781df1a6a64e609b10e23969681",
-            "https://github.com/advisories/GHSA-qxh4-rprf-2mmj",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-41992",
-            "https://ubuntu.com/security/notices/USN-8512-1",
-            "https://www.cve.org/CVERecord?id=CVE-2026-41992",
-            "https://www.gnu.org/software/gzip",
-            "https://www.gnu.org/software/gzip/"
+            "https://access.redhat.com/security/cve/CVE-2026-76642",
+            "https://github.com/util-linux/util-linux",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L476",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L892",
+            "https://github.com/util-linux/util-linux/commit/1d14676ea70003e9f5b2a6a76af0cadb1190411a",
+            "https://github.com/util-linux/util-linux/commit/a15c00a9e545aa8b9cf6ec0f888ff6c7b3eaeedc",
+            "https://github.com/util-linux/util-linux/commit/f57cea130839c0af8dc0525274267ae4cfd66bbf",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-m25x-3hj9-m26f",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-76642",
+            "https://www.cve.org/CVERecord?id=CVE-2026-76642",
+            "https://www.vulncheck.com/advisories/util-linux-libmount-privilege-escalation-via-failed-mount-helper"
           ],
-          "PublishedDate": "2026-06-29T12:16:29.94Z",
-          "LastModifiedDate": "2026-07-01T14:02:20.173Z"
+          "PublishedDate": "2026-09-03T13:06:08.44Z",
+          "LastModifiedDate": "2026-09-24T20:28:01.78Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78408",
+          "PkgID": "bsdutils@1:2.41.5-0+deb13u1",
+          "PkgName": "bsdutils",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/bsdutils@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6\u0026epoch=1",
+            "UID": "65cb7399c04deda2"
+          },
+          "InstalledVersion": "1:2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78408",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:2d544e797c8339956939f0639e4a8638697b5aa93ac0840625c50cb849dccd40",
+          "Title": "util-linux: util-linux: nsenter --join-cgroup leaks root cgroup migration authority",
+          "Description": "The nsenter --join-cgroup option opens the target cgroup.procs file as root and leaves that file descriptor open across later namespace and credential changes and across execve(). Because the kernel checks later cgroup migrations using the credentials from the original open, a program run in an attacker-controlled target can inherit root's ability to move host processes between cgroups. After a privileged operator uses --join-cgroup against that target, an unprivileged user can migrate and terminate unrelated root processes.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-775"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:C/C:N/I:H/A:H",
+              "V3Score": 7.9
+            }
+          },
+          "References": [
+            "http://www.openwall.com/lists/oss-security/2026/09/05/2",
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78408",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522497",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-55fx-f4gg-cfhj",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78408",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78408"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.687Z",
+          "LastModifiedDate": "2026-09-05T14:17:23.727Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78409",
+          "PkgID": "bsdutils@1:2.41.5-0+deb13u1",
+          "PkgName": "bsdutils",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/bsdutils@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6\u0026epoch=1",
+            "UID": "65cb7399c04deda2"
+          },
+          "InstalledVersion": "1:2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78409",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:cf8a85486d42117fa9fe0aab482cfac4ad85c443b0708ea95195d8ed17527d91",
+          "Title": "util-linux: util-linux: X-mount.subdir detached-tree resolution can escape via intermediate symlinks",
+          "Description": "The X-mount.subdir option uses a detached-tree fast path on Linux 6.15 and later and passes the configured subdirectory to open_tree() with AT_SYMLINK_NOFOLLOW. That flag does not stop intermediate symlink traversal or keep resolution inside the newly mounted filesystem. A local unprivileged user with an fstab-authorized X-mount.subdir entry can attach a host path at the intended mountpoint.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-59"
+          ],
+          "VendorSeverity": {
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78409",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522607",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-8f2p-47x3-43mv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78409",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78409"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.833Z",
+          "LastModifiedDate": "2026-09-03T18:12:56.407Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78410",
+          "PkgID": "bsdutils@1:2.41.5-0+deb13u1",
+          "PkgName": "bsdutils",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/bsdutils@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6\u0026epoch=1",
+            "UID": "65cb7399c04deda2"
+          },
+          "InstalledVersion": "1:2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78410",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:6d0bf5558aa09dc65cb200d9af897e7b1d2a73a3029a15d9b13939bb70ff322a",
+          "Title": "util-linux: util-linux: restricted bind mounts do not pin the source, allowing X-mount.owner/group/mode redirection",
+          "Description": "A flaw was found in util-linux. Restricted bind mounts take the source path from fstab but do not pin that source before the privileged mount. A local unprivileged user who can replace the authorized source or a writable ancestor can redirect SUID mount(8) to bind another host directory. If the fstab entry also sets X-mount.owner, X-mount.group, or X-mount.mode, root then changes ownership or mode on that redirected inode.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-367"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78410",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522684",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-rh77-686x-2f2m",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78410",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78410"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.983Z",
+          "LastModifiedDate": "2026-09-04T19:17:27.567Z"
         },
         {
           "VulnerabilityID": "CVE-2026-54369",
@@ -7930,7 +8065,7 @@
             "Name": "Debian Security Tracker",
             "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
           },
-          "Fingerprint": "sha256:176b5b78fdf26f81fcb0fddb30420890ac19a448245e5b18aceb74c18f44ac43",
+          "Fingerprint": "sha256:5a58e88685ce83fbefc4e3047a530da0a3f57e22c622f45bed96bf5100af9509",
           "Title": "acl: Symlink traversal privilege escalation via libacl functions",
           "Description": "acl before version 2.4.0 contains a symlink traversal vulnerability in the libacl pathname-based functions acl_get_file(), acl_set_file(), acl_extended_file(), and acl_delete_def_file() that allows local attackers to escalate privileges by replacing any pathname component with a symbolic link. Attackers who control any component of a pathname processed by a privileged caller can redirect ACL read or write operations to arbitrary files or directories, enabling unauthorized manipulation of access control lists and local privilege escalation.",
           "Severity": "HIGH",
@@ -7962,6 +8097,11 @@
             "https://access.redhat.com/errata/RHSA-2026:50205",
             "https://access.redhat.com/errata/RHSA-2026:53371",
             "https://access.redhat.com/errata/RHSA-2026:54769",
+            "https://access.redhat.com/errata/RHSA-2026:58981",
+            "https://access.redhat.com/errata/RHSA-2026:64805",
+            "https://access.redhat.com/errata/RHSA-2026:67140",
+            "https://access.redhat.com/errata/RHSA-2026:67142",
+            "https://access.redhat.com/errata/RHSA-2026:67144",
             "https://access.redhat.com/security/cve/CVE-2026-54369",
             "https://bugzilla.redhat.com/2490277",
             "https://bugzilla.redhat.com/2490279",
@@ -7973,7 +8113,7 @@
             "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-54369",
             "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-54370",
             "https://errata.almalinux.org/9/ALSA-2026-42736.html",
-            "https://errata.rockylinux.org/RLSA-2026:42736",
+            "https://errata.rockylinux.org/RLSA-2026:42739",
             "https://linux.oracle.com/cve/CVE-2026-54369.html",
             "https://linux.oracle.com/errata/ELSA-2026-43420.html",
             "https://nvd.nist.gov/vuln/detail/CVE-2026-54369",
@@ -7982,7 +8122,589 @@
             "https://www.vulncheck.com/advisories/acl-symlink-traversal-privilege-escalation-via-libacl-functions"
           ],
           "PublishedDate": "2026-06-29T14:16:57.487Z",
-          "LastModifiedDate": "2026-08-19T12:18:32.403Z"
+          "LastModifiedDate": "2026-09-14T13:18:40.197Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-76642",
+          "PkgID": "libblkid1@2.41.5-0+deb13u1",
+          "PkgName": "libblkid1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libblkid1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "29f58c19f0007f1d"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-76642",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:c293ab47e6268e47964958e0dfb590bbdf840053e8eee957002e27451419b724",
+          "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
+          "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-390"
+          ],
+          "VendorSeverity": {
+            "azure": 2,
+            "photon": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-76642",
+            "https://github.com/util-linux/util-linux",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L476",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L892",
+            "https://github.com/util-linux/util-linux/commit/1d14676ea70003e9f5b2a6a76af0cadb1190411a",
+            "https://github.com/util-linux/util-linux/commit/a15c00a9e545aa8b9cf6ec0f888ff6c7b3eaeedc",
+            "https://github.com/util-linux/util-linux/commit/f57cea130839c0af8dc0525274267ae4cfd66bbf",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-m25x-3hj9-m26f",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-76642",
+            "https://www.cve.org/CVERecord?id=CVE-2026-76642",
+            "https://www.vulncheck.com/advisories/util-linux-libmount-privilege-escalation-via-failed-mount-helper"
+          ],
+          "PublishedDate": "2026-09-03T13:06:08.44Z",
+          "LastModifiedDate": "2026-09-24T20:28:01.78Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78408",
+          "PkgID": "libblkid1@2.41.5-0+deb13u1",
+          "PkgName": "libblkid1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libblkid1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "29f58c19f0007f1d"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78408",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:8e90f513b780a996be76ceca942ae2db7c1f365d4841016ed4c6b46dfc0510b6",
+          "Title": "util-linux: util-linux: nsenter --join-cgroup leaks root cgroup migration authority",
+          "Description": "The nsenter --join-cgroup option opens the target cgroup.procs file as root and leaves that file descriptor open across later namespace and credential changes and across execve(). Because the kernel checks later cgroup migrations using the credentials from the original open, a program run in an attacker-controlled target can inherit root's ability to move host processes between cgroups. After a privileged operator uses --join-cgroup against that target, an unprivileged user can migrate and terminate unrelated root processes.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-775"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:C/C:N/I:H/A:H",
+              "V3Score": 7.9
+            }
+          },
+          "References": [
+            "http://www.openwall.com/lists/oss-security/2026/09/05/2",
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78408",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522497",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-55fx-f4gg-cfhj",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78408",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78408"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.687Z",
+          "LastModifiedDate": "2026-09-05T14:17:23.727Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78409",
+          "PkgID": "libblkid1@2.41.5-0+deb13u1",
+          "PkgName": "libblkid1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libblkid1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "29f58c19f0007f1d"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78409",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:7f8cc1b488541f6d1c5a840d3432221f7a8ee34e3c42ecf7ded52ed49c79ca4a",
+          "Title": "util-linux: util-linux: X-mount.subdir detached-tree resolution can escape via intermediate symlinks",
+          "Description": "The X-mount.subdir option uses a detached-tree fast path on Linux 6.15 and later and passes the configured subdirectory to open_tree() with AT_SYMLINK_NOFOLLOW. That flag does not stop intermediate symlink traversal or keep resolution inside the newly mounted filesystem. A local unprivileged user with an fstab-authorized X-mount.subdir entry can attach a host path at the intended mountpoint.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-59"
+          ],
+          "VendorSeverity": {
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78409",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522607",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-8f2p-47x3-43mv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78409",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78409"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.833Z",
+          "LastModifiedDate": "2026-09-03T18:12:56.407Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78410",
+          "PkgID": "libblkid1@2.41.5-0+deb13u1",
+          "PkgName": "libblkid1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libblkid1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "29f58c19f0007f1d"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78410",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:3a7ed952d998d0af3cb2598afe7b7ec8a7e45c0bc2c93c40d77f012f944ab3fd",
+          "Title": "util-linux: util-linux: restricted bind mounts do not pin the source, allowing X-mount.owner/group/mode redirection",
+          "Description": "A flaw was found in util-linux. Restricted bind mounts take the source path from fstab but do not pin that source before the privileged mount. A local unprivileged user who can replace the authorized source or a writable ancestor can redirect SUID mount(8) to bind another host directory. If the fstab entry also sets X-mount.owner, X-mount.group, or X-mount.mode, root then changes ownership or mode on that redirected inode.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-367"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78410",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522684",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-rh77-686x-2f2m",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78410",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78410"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.983Z",
+          "LastModifiedDate": "2026-09-04T19:17:27.567Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-76642",
+          "PkgID": "liblastlog2-2@2.41.5-0+deb13u1",
+          "PkgName": "liblastlog2-2",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/liblastlog2-2@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "5ef135cc2d486fa5"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-76642",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:bdd43c12f1ffe8dcafcd3c5489553486d57ec35b5feae26af34b3474aa0f3ab4",
+          "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
+          "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-390"
+          ],
+          "VendorSeverity": {
+            "azure": 2,
+            "photon": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-76642",
+            "https://github.com/util-linux/util-linux",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L476",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L892",
+            "https://github.com/util-linux/util-linux/commit/1d14676ea70003e9f5b2a6a76af0cadb1190411a",
+            "https://github.com/util-linux/util-linux/commit/a15c00a9e545aa8b9cf6ec0f888ff6c7b3eaeedc",
+            "https://github.com/util-linux/util-linux/commit/f57cea130839c0af8dc0525274267ae4cfd66bbf",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-m25x-3hj9-m26f",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-76642",
+            "https://www.cve.org/CVERecord?id=CVE-2026-76642",
+            "https://www.vulncheck.com/advisories/util-linux-libmount-privilege-escalation-via-failed-mount-helper"
+          ],
+          "PublishedDate": "2026-09-03T13:06:08.44Z",
+          "LastModifiedDate": "2026-09-24T20:28:01.78Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78408",
+          "PkgID": "liblastlog2-2@2.41.5-0+deb13u1",
+          "PkgName": "liblastlog2-2",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/liblastlog2-2@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "5ef135cc2d486fa5"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78408",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:e7e9630f764d5df07ce6d2a2e48bb05ce0d88919961898a88140298ca3c99781",
+          "Title": "util-linux: util-linux: nsenter --join-cgroup leaks root cgroup migration authority",
+          "Description": "The nsenter --join-cgroup option opens the target cgroup.procs file as root and leaves that file descriptor open across later namespace and credential changes and across execve(). Because the kernel checks later cgroup migrations using the credentials from the original open, a program run in an attacker-controlled target can inherit root's ability to move host processes between cgroups. After a privileged operator uses --join-cgroup against that target, an unprivileged user can migrate and terminate unrelated root processes.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-775"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:C/C:N/I:H/A:H",
+              "V3Score": 7.9
+            }
+          },
+          "References": [
+            "http://www.openwall.com/lists/oss-security/2026/09/05/2",
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78408",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522497",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-55fx-f4gg-cfhj",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78408",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78408"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.687Z",
+          "LastModifiedDate": "2026-09-05T14:17:23.727Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78409",
+          "PkgID": "liblastlog2-2@2.41.5-0+deb13u1",
+          "PkgName": "liblastlog2-2",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/liblastlog2-2@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "5ef135cc2d486fa5"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78409",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:098e52f8b7efbd7a9a330c6724464f4c15636ed8408bf3fb8d1f83acab48bf7b",
+          "Title": "util-linux: util-linux: X-mount.subdir detached-tree resolution can escape via intermediate symlinks",
+          "Description": "The X-mount.subdir option uses a detached-tree fast path on Linux 6.15 and later and passes the configured subdirectory to open_tree() with AT_SYMLINK_NOFOLLOW. That flag does not stop intermediate symlink traversal or keep resolution inside the newly mounted filesystem. A local unprivileged user with an fstab-authorized X-mount.subdir entry can attach a host path at the intended mountpoint.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-59"
+          ],
+          "VendorSeverity": {
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78409",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522607",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-8f2p-47x3-43mv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78409",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78409"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.833Z",
+          "LastModifiedDate": "2026-09-03T18:12:56.407Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78410",
+          "PkgID": "liblastlog2-2@2.41.5-0+deb13u1",
+          "PkgName": "liblastlog2-2",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/liblastlog2-2@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "5ef135cc2d486fa5"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78410",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:6bcd9369a8d4dc70d72728f42ca1a1f15bcfdbfb8a962189ea2d9935c4319931",
+          "Title": "util-linux: util-linux: restricted bind mounts do not pin the source, allowing X-mount.owner/group/mode redirection",
+          "Description": "A flaw was found in util-linux. Restricted bind mounts take the source path from fstab but do not pin that source before the privileged mount. A local unprivileged user who can replace the authorized source or a writable ancestor can redirect SUID mount(8) to bind another host directory. If the fstab entry also sets X-mount.owner, X-mount.group, or X-mount.mode, root then changes ownership or mode on that redirected inode.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-367"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78410",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522684",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-rh77-686x-2f2m",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78410",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78410"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.983Z",
+          "LastModifiedDate": "2026-09-04T19:17:27.567Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-76642",
+          "PkgID": "libmount1@2.41.5-0+deb13u1",
+          "PkgName": "libmount1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libmount1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "3d52a83629da2d8d"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-76642",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:f7ab017d1b10386d13d015cc59581bec2ca258a0c92ac60b1b353b66b2374b82",
+          "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
+          "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-390"
+          ],
+          "VendorSeverity": {
+            "azure": 2,
+            "photon": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-76642",
+            "https://github.com/util-linux/util-linux",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L476",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L892",
+            "https://github.com/util-linux/util-linux/commit/1d14676ea70003e9f5b2a6a76af0cadb1190411a",
+            "https://github.com/util-linux/util-linux/commit/a15c00a9e545aa8b9cf6ec0f888ff6c7b3eaeedc",
+            "https://github.com/util-linux/util-linux/commit/f57cea130839c0af8dc0525274267ae4cfd66bbf",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-m25x-3hj9-m26f",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-76642",
+            "https://www.cve.org/CVERecord?id=CVE-2026-76642",
+            "https://www.vulncheck.com/advisories/util-linux-libmount-privilege-escalation-via-failed-mount-helper"
+          ],
+          "PublishedDate": "2026-09-03T13:06:08.44Z",
+          "LastModifiedDate": "2026-09-24T20:28:01.78Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78408",
+          "PkgID": "libmount1@2.41.5-0+deb13u1",
+          "PkgName": "libmount1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libmount1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "3d52a83629da2d8d"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78408",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:b5b105c7ba01030209347d7293b6f043a21aa1db711f32dff0aae0cea38f5d7c",
+          "Title": "util-linux: util-linux: nsenter --join-cgroup leaks root cgroup migration authority",
+          "Description": "The nsenter --join-cgroup option opens the target cgroup.procs file as root and leaves that file descriptor open across later namespace and credential changes and across execve(). Because the kernel checks later cgroup migrations using the credentials from the original open, a program run in an attacker-controlled target can inherit root's ability to move host processes between cgroups. After a privileged operator uses --join-cgroup against that target, an unprivileged user can migrate and terminate unrelated root processes.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-775"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:C/C:N/I:H/A:H",
+              "V3Score": 7.9
+            }
+          },
+          "References": [
+            "http://www.openwall.com/lists/oss-security/2026/09/05/2",
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78408",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522497",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-55fx-f4gg-cfhj",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78408",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78408"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.687Z",
+          "LastModifiedDate": "2026-09-05T14:17:23.727Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78409",
+          "PkgID": "libmount1@2.41.5-0+deb13u1",
+          "PkgName": "libmount1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libmount1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "3d52a83629da2d8d"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78409",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:f8abc7a9bdf991fe1bbb63714b9579298cf82bf94620decbe5be06a4286981e0",
+          "Title": "util-linux: util-linux: X-mount.subdir detached-tree resolution can escape via intermediate symlinks",
+          "Description": "The X-mount.subdir option uses a detached-tree fast path on Linux 6.15 and later and passes the configured subdirectory to open_tree() with AT_SYMLINK_NOFOLLOW. That flag does not stop intermediate symlink traversal or keep resolution inside the newly mounted filesystem. A local unprivileged user with an fstab-authorized X-mount.subdir entry can attach a host path at the intended mountpoint.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-59"
+          ],
+          "VendorSeverity": {
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78409",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522607",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-8f2p-47x3-43mv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78409",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78409"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.833Z",
+          "LastModifiedDate": "2026-09-03T18:12:56.407Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78410",
+          "PkgID": "libmount1@2.41.5-0+deb13u1",
+          "PkgName": "libmount1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libmount1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "3d52a83629da2d8d"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78410",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:a37635d90297839ca79188770c9eca2f8a6fe62e55cb08abd337c9a5e9c21f53",
+          "Title": "util-linux: util-linux: restricted bind mounts do not pin the source, allowing X-mount.owner/group/mode redirection",
+          "Description": "A flaw was found in util-linux. Restricted bind mounts take the source path from fstab but do not pin that source before the privileged mount. A local unprivileged user who can replace the authorized source or a writable ancestor can redirect SUID mount(8) to bind another host directory. If the fstab entry also sets X-mount.owner, X-mount.group, or X-mount.mode, root then changes ownership or mode on that redirected inode.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-367"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78410",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522684",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-rh77-686x-2f2m",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78410",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78410"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.983Z",
+          "LastModifiedDate": "2026-09-04T19:17:27.567Z"
         },
         {
           "VulnerabilityID": "CVE-2025-69720",
@@ -8004,7 +8726,7 @@
             "Name": "Debian Security Tracker",
             "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
           },
-          "Fingerprint": "sha256:b800047a8557869dd47311b928c77ca7539b5013f1982cce4bb2787f1282917b",
+          "Fingerprint": "sha256:156f053aa02f83b9996f2b8142c3878c5946c34a1daf094a83c5878e557f6268",
           "Title": "ncurses: ncurses: Buffer overflow vulnerability may lead to arbitrary code execution.",
           "Description": "The infocmp command-line tool in ncurses before 6.5-20251213 has a stack-based buffer overflow in analyze_string in progs/infocmp.c.",
           "Severity": "HIGH",
@@ -8067,52 +8789,247 @@
           "LastModifiedDate": "2026-06-17T10:00:50.423Z"
         },
         {
-          "VulnerabilityID": "CVE-2026-14456",
-          "PkgID": "libssl3t64@3.5.6-1~deb13u2",
-          "PkgName": "libssl3t64",
+          "VulnerabilityID": "CVE-2026-76642",
+          "PkgID": "libsmartcols1@2.41.5-0+deb13u1",
+          "PkgName": "libsmartcols1",
           "PkgIdentifier": {
-            "PURL": "pkg:deb/debian/libssl3t64@3.5.6-1~deb13u2?arch=arm64\u0026distro=debian-13.6",
-            "UID": "5032c4a6c4018a8d"
+            "PURL": "pkg:deb/debian/libsmartcols1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "3692af7bc6588582"
           },
-          "InstalledVersion": "3.5.6-1~deb13u2",
-          "Status": "fix_deferred",
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
           "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-14456",
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-76642",
           "DataSource": {
             "ID": "debian",
             "Name": "Debian Security Tracker",
             "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
           },
-          "Fingerprint": "sha256:4e15dc795d7a7c79f521c5f8e10212cf8ab635c1c72f65e0387907e977385784",
-          "Title": "openssl: OpenSSL: Denial of Service via unbounded memory growth in QUIC server",
-          "Description": "Issue summary: When an OpenSSL QUIC server (Listener SSL object) processes\nvalid QUIC Initial packets for unknown destination connection IDs, it\ncan allocate and queue new incoming channels without enforcing any limit.\n\nImpact summary: A remote peer that can make many Initial packets reach the\nserver listener faster than the application accepts connections, can cause the\nmemory allocated to store the per-channel state to grow without any limits,\npotentially making the QUIC listener unavailable and causing Denial of Service.\n\nCWE: CWE-770: Allocation of Resources Without Limits or Throttling\n\nDescription: The function that handles inbound QUIC packets uses\nConnection-Id from the packet header to find an existing connection\n(QUIC channel). If no existing connection is found and the packet\ntype is INITIAL, the function treats the packet as a new connection. It\nallocates a new channel object and inserts it into a queue where it\nwaits to be accepted by the local application with SSL_accept(3ossl).\nThe memory occupied by these initial channel objects may grow\nwithout bounds if the application is not able to call SSL_accept()\nfrequently enough to serve these inbound connection requests.\n\nThe issue is present since OpenSSL 3.5 when the QUIC server implementation\nwas added.\n\nThe fix introduces a limit for pending connections. The default limit is set\nto 256 pending connections (waiting to be accepted by the local application).\nApplications may change the default by calling SSL_set_value_uint(3ossl).\n\nFIPS impact: no\nThe FIPS module is not affected as the QUIC implementation is outside of\nthe OpenSSL FIPS module boundary.",
+          "Fingerprint": "sha256:4b076a302808aa11995dd020d43c47c6c50628728c22ea532b21128f3e6d60c2",
+          "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
+          "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
           "Severity": "HIGH",
           "CweIDs": [
-            "CWE-770"
+            "CWE-390"
+          ],
+          "VendorSeverity": {
+            "azure": 2,
+            "photon": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-76642",
+            "https://github.com/util-linux/util-linux",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L476",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L892",
+            "https://github.com/util-linux/util-linux/commit/1d14676ea70003e9f5b2a6a76af0cadb1190411a",
+            "https://github.com/util-linux/util-linux/commit/a15c00a9e545aa8b9cf6ec0f888ff6c7b3eaeedc",
+            "https://github.com/util-linux/util-linux/commit/f57cea130839c0af8dc0525274267ae4cfd66bbf",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-m25x-3hj9-m26f",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-76642",
+            "https://www.cve.org/CVERecord?id=CVE-2026-76642",
+            "https://www.vulncheck.com/advisories/util-linux-libmount-privilege-escalation-via-failed-mount-helper"
+          ],
+          "PublishedDate": "2026-09-03T13:06:08.44Z",
+          "LastModifiedDate": "2026-09-24T20:28:01.78Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78408",
+          "PkgID": "libsmartcols1@2.41.5-0+deb13u1",
+          "PkgName": "libsmartcols1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libsmartcols1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "3692af7bc6588582"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78408",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:1d10195eedc38e790da55dfb56abbea9731e1b9e82c3a0d6a7590bff84d0244c",
+          "Title": "util-linux: util-linux: nsenter --join-cgroup leaks root cgroup migration authority",
+          "Description": "The nsenter --join-cgroup option opens the target cgroup.procs file as root and leaves that file descriptor open across later namespace and credential changes and across execve(). Because the kernel checks later cgroup migrations using the credentials from the original open, a program run in an attacker-controlled target can inherit root's ability to move host processes between cgroups. After a privileged operator uses --join-cgroup against that target, an unprivileged user can migrate and terminate unrelated root processes.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-775"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:C/C:N/I:H/A:H",
+              "V3Score": 7.9
+            }
+          },
+          "References": [
+            "http://www.openwall.com/lists/oss-security/2026/09/05/2",
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78408",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522497",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-55fx-f4gg-cfhj",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78408",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78408"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.687Z",
+          "LastModifiedDate": "2026-09-05T14:17:23.727Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78409",
+          "PkgID": "libsmartcols1@2.41.5-0+deb13u1",
+          "PkgName": "libsmartcols1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libsmartcols1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "3692af7bc6588582"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78409",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:58c35a77ad7930ad70b7c533f34b135d53ef45ce6d5cee1c493b2d49da79f6ae",
+          "Title": "util-linux: util-linux: X-mount.subdir detached-tree resolution can escape via intermediate symlinks",
+          "Description": "The X-mount.subdir option uses a detached-tree fast path on Linux 6.15 and later and passes the configured subdirectory to open_tree() with AT_SYMLINK_NOFOLLOW. That flag does not stop intermediate symlink traversal or keep resolution inside the newly mounted filesystem. A local unprivileged user with an fstab-authorized X-mount.subdir entry can attach a host path at the intended mountpoint.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-59"
           ],
           "VendorSeverity": {
             "redhat": 3
           },
           "CVSS": {
             "redhat": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
-              "V3Score": 7.5
+              "V3Vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7
             }
           },
           "References": [
-            "http://www.openwall.com/lists/oss-security/2026/08/13/4",
-            "https://access.redhat.com/security/cve/CVE-2026-14456",
-            "https://github.com/openssl/openssl/commit/08e7756c3900bcfd77a720e7b74e27d6e4ed01a9",
-            "https://github.com/openssl/openssl/commit/4084152e040329ca0194c4c1750b9b46d00a5b6b",
-            "https://github.com/openssl/openssl/commit/f2f1465f2d2e5c61dfeac4d20fd093797d821139",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-14456",
-            "https://openssl-library.org/news/secadv/20260813.txt",
-            "https://www.cve.org/CVERecord?id=CVE-2026-14456"
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78409",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522607",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-8f2p-47x3-43mv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78409",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78409"
           ],
-          "PublishedDate": "2026-08-13T15:19:31.82Z",
-          "LastModifiedDate": "2026-08-13T18:17:18.367Z"
+          "PublishedDate": "2026-09-02T16:17:23.833Z",
+          "LastModifiedDate": "2026-09-03T18:12:56.407Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78410",
+          "PkgID": "libsmartcols1@2.41.5-0+deb13u1",
+          "PkgName": "libsmartcols1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libsmartcols1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "3692af7bc6588582"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78410",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:2ffe2259a2344294ad7bcbb91b6f70216775173675293a54bae3f9e78cd2a5ad",
+          "Title": "util-linux: util-linux: restricted bind mounts do not pin the source, allowing X-mount.owner/group/mode redirection",
+          "Description": "A flaw was found in util-linux. Restricted bind mounts take the source path from fstab but do not pin that source before the privileged mount. A local unprivileged user who can replace the authorized source or a writable ancestor can redirect SUID mount(8) to bind another host directory. If the fstab entry also sets X-mount.owner, X-mount.group, or X-mount.mode, root then changes ownership or mode on that redirected inode.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-367"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78410",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522684",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-rh77-686x-2f2m",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78410",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78410"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.983Z",
+          "LastModifiedDate": "2026-09-04T19:17:27.567Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-16742",
+          "PkgID": "libsystemd0@257.13-1~deb13u1",
+          "PkgName": "libsystemd0",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libsystemd0@257.13-1~deb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "f9f4518ab05c2b0f"
+          },
+          "InstalledVersion": "257.13-1~deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-16742",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:420079fd167d1e57ce9aff2da13d4daea3c516db4fa0966e2af40419092a2339",
+          "Title": "systemd: systemd-homed: Local privilege escalation via missing home-record signature verification",
+          "Description": "systemd-homed contains a local privilege escalation bug via arbitrary system group addition to a local, logged in, homed-managed user",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-269",
+            "CWE-347"
+          ],
+          "VendorSeverity": {
+            "amazon": 3,
+            "azure": 2,
+            "redhat": 3,
+            "ubuntu": 2
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
+              "V3Score": 8.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-16742",
+            "https://github.com/systemd/systemd/security/advisories/GHSA-jm29-p7hh-vjhv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-16742",
+            "https://ubuntu.com/security/notices/USN-8626-1",
+            "https://www.cve.org/CVERecord?id=CVE-2026-16742"
+          ],
+          "PublishedDate": "2026-08-10T14:17:21.277Z",
+          "LastModifiedDate": "2026-09-01T20:54:51.287Z"
         },
         {
           "VulnerabilityID": "CVE-2025-69720",
@@ -8134,7 +9051,7 @@
             "Name": "Debian Security Tracker",
             "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
           },
-          "Fingerprint": "sha256:a73f29f67af1061c4db741c3a82dc18fbe5b5d27fab90eb795451513420abb04",
+          "Fingerprint": "sha256:c61129bddf12e3c18f7928d42392a103e830d013c9edcf7c3c2a1d2c7c93dcf8",
           "Title": "ncurses: ncurses: Buffer overflow vulnerability may lead to arbitrary code execution.",
           "Description": "The infocmp command-line tool in ncurses before 6.5-20251213 has a stack-based buffer overflow in analyze_string in progs/infocmp.c.",
           "Severity": "HIGH",
@@ -8197,6 +9114,637 @@
           "LastModifiedDate": "2026-06-17T10:00:50.423Z"
         },
         {
+          "VulnerabilityID": "CVE-2026-16742",
+          "PkgID": "libudev1@257.13-1~deb13u1",
+          "PkgName": "libudev1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libudev1@257.13-1~deb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "6ad9e3cbb5fcdc33"
+          },
+          "InstalledVersion": "257.13-1~deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-16742",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:7211345bbf039c25eb2e95fe993c9b4e30a68df7603182a8ed6587803e600b92",
+          "Title": "systemd: systemd-homed: Local privilege escalation via missing home-record signature verification",
+          "Description": "systemd-homed contains a local privilege escalation bug via arbitrary system group addition to a local, logged in, homed-managed user",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-269",
+            "CWE-347"
+          ],
+          "VendorSeverity": {
+            "amazon": 3,
+            "azure": 2,
+            "redhat": 3,
+            "ubuntu": 2
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:C/C:H/I:H/A:H",
+              "V3Score": 8.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-16742",
+            "https://github.com/systemd/systemd/security/advisories/GHSA-jm29-p7hh-vjhv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-16742",
+            "https://ubuntu.com/security/notices/USN-8626-1",
+            "https://www.cve.org/CVERecord?id=CVE-2026-16742"
+          ],
+          "PublishedDate": "2026-08-10T14:17:21.277Z",
+          "LastModifiedDate": "2026-09-01T20:54:51.287Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-76642",
+          "PkgID": "libuuid1@2.41.5-0+deb13u1",
+          "PkgName": "libuuid1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libuuid1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "be49eb9c803c4c18"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-76642",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:297c98d92e6054ebaa7cf751d6222737c3c7e349c0afc428df2027db8811184f",
+          "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
+          "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-390"
+          ],
+          "VendorSeverity": {
+            "azure": 2,
+            "photon": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-76642",
+            "https://github.com/util-linux/util-linux",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L476",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L892",
+            "https://github.com/util-linux/util-linux/commit/1d14676ea70003e9f5b2a6a76af0cadb1190411a",
+            "https://github.com/util-linux/util-linux/commit/a15c00a9e545aa8b9cf6ec0f888ff6c7b3eaeedc",
+            "https://github.com/util-linux/util-linux/commit/f57cea130839c0af8dc0525274267ae4cfd66bbf",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-m25x-3hj9-m26f",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-76642",
+            "https://www.cve.org/CVERecord?id=CVE-2026-76642",
+            "https://www.vulncheck.com/advisories/util-linux-libmount-privilege-escalation-via-failed-mount-helper"
+          ],
+          "PublishedDate": "2026-09-03T13:06:08.44Z",
+          "LastModifiedDate": "2026-09-24T20:28:01.78Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78408",
+          "PkgID": "libuuid1@2.41.5-0+deb13u1",
+          "PkgName": "libuuid1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libuuid1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "be49eb9c803c4c18"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78408",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:d8c475e4551a813d49407ea4676b04df121c1e246b49ce8f49b2d5632e0794b9",
+          "Title": "util-linux: util-linux: nsenter --join-cgroup leaks root cgroup migration authority",
+          "Description": "The nsenter --join-cgroup option opens the target cgroup.procs file as root and leaves that file descriptor open across later namespace and credential changes and across execve(). Because the kernel checks later cgroup migrations using the credentials from the original open, a program run in an attacker-controlled target can inherit root's ability to move host processes between cgroups. After a privileged operator uses --join-cgroup against that target, an unprivileged user can migrate and terminate unrelated root processes.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-775"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:C/C:N/I:H/A:H",
+              "V3Score": 7.9
+            }
+          },
+          "References": [
+            "http://www.openwall.com/lists/oss-security/2026/09/05/2",
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78408",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522497",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-55fx-f4gg-cfhj",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78408",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78408"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.687Z",
+          "LastModifiedDate": "2026-09-05T14:17:23.727Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78409",
+          "PkgID": "libuuid1@2.41.5-0+deb13u1",
+          "PkgName": "libuuid1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libuuid1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "be49eb9c803c4c18"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78409",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:e7f01a6066d1d27263d6bab8a11066e8ad6ee563c84730c06b96e31b8890ad8a",
+          "Title": "util-linux: util-linux: X-mount.subdir detached-tree resolution can escape via intermediate symlinks",
+          "Description": "The X-mount.subdir option uses a detached-tree fast path on Linux 6.15 and later and passes the configured subdirectory to open_tree() with AT_SYMLINK_NOFOLLOW. That flag does not stop intermediate symlink traversal or keep resolution inside the newly mounted filesystem. A local unprivileged user with an fstab-authorized X-mount.subdir entry can attach a host path at the intended mountpoint.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-59"
+          ],
+          "VendorSeverity": {
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78409",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522607",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-8f2p-47x3-43mv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78409",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78409"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.833Z",
+          "LastModifiedDate": "2026-09-03T18:12:56.407Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78410",
+          "PkgID": "libuuid1@2.41.5-0+deb13u1",
+          "PkgName": "libuuid1",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/libuuid1@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "be49eb9c803c4c18"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78410",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:81c0f217d437a2ba1164e484a7d2b3a98e58114cb4a93457e65741d96327684a",
+          "Title": "util-linux: util-linux: restricted bind mounts do not pin the source, allowing X-mount.owner/group/mode redirection",
+          "Description": "A flaw was found in util-linux. Restricted bind mounts take the source path from fstab but do not pin that source before the privileged mount. A local unprivileged user who can replace the authorized source or a writable ancestor can redirect SUID mount(8) to bind another host directory. If the fstab entry also sets X-mount.owner, X-mount.group, or X-mount.mode, root then changes ownership or mode on that redirected inode.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-367"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78410",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522684",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-rh77-686x-2f2m",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78410",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78410"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.983Z",
+          "LastModifiedDate": "2026-09-04T19:17:27.567Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-76642",
+          "PkgID": "login@1:4.16.0-2+really2.41.5-0+deb13u1",
+          "PkgName": "login",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/login@4.16.0-2%2Breally2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6\u0026epoch=1",
+            "UID": "a714c27ed597f56d"
+          },
+          "InstalledVersion": "1:4.16.0-2+really2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-76642",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:242e9f0bb4fbeb3900d1f01caaaad7f1f213ad869cb9a35fbad4a48376c0e820",
+          "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
+          "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-390"
+          ],
+          "VendorSeverity": {
+            "azure": 2,
+            "photon": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-76642",
+            "https://github.com/util-linux/util-linux",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L476",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L892",
+            "https://github.com/util-linux/util-linux/commit/1d14676ea70003e9f5b2a6a76af0cadb1190411a",
+            "https://github.com/util-linux/util-linux/commit/a15c00a9e545aa8b9cf6ec0f888ff6c7b3eaeedc",
+            "https://github.com/util-linux/util-linux/commit/f57cea130839c0af8dc0525274267ae4cfd66bbf",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-m25x-3hj9-m26f",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-76642",
+            "https://www.cve.org/CVERecord?id=CVE-2026-76642",
+            "https://www.vulncheck.com/advisories/util-linux-libmount-privilege-escalation-via-failed-mount-helper"
+          ],
+          "PublishedDate": "2026-09-03T13:06:08.44Z",
+          "LastModifiedDate": "2026-09-24T20:28:01.78Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78408",
+          "PkgID": "login@1:4.16.0-2+really2.41.5-0+deb13u1",
+          "PkgName": "login",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/login@4.16.0-2%2Breally2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6\u0026epoch=1",
+            "UID": "a714c27ed597f56d"
+          },
+          "InstalledVersion": "1:4.16.0-2+really2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78408",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:d7edd8a6b35ce27a394c54ee363016f251d4dce452f6943fe37df79838e083a5",
+          "Title": "util-linux: util-linux: nsenter --join-cgroup leaks root cgroup migration authority",
+          "Description": "The nsenter --join-cgroup option opens the target cgroup.procs file as root and leaves that file descriptor open across later namespace and credential changes and across execve(). Because the kernel checks later cgroup migrations using the credentials from the original open, a program run in an attacker-controlled target can inherit root's ability to move host processes between cgroups. After a privileged operator uses --join-cgroup against that target, an unprivileged user can migrate and terminate unrelated root processes.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-775"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:C/C:N/I:H/A:H",
+              "V3Score": 7.9
+            }
+          },
+          "References": [
+            "http://www.openwall.com/lists/oss-security/2026/09/05/2",
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78408",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522497",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-55fx-f4gg-cfhj",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78408",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78408"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.687Z",
+          "LastModifiedDate": "2026-09-05T14:17:23.727Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78409",
+          "PkgID": "login@1:4.16.0-2+really2.41.5-0+deb13u1",
+          "PkgName": "login",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/login@4.16.0-2%2Breally2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6\u0026epoch=1",
+            "UID": "a714c27ed597f56d"
+          },
+          "InstalledVersion": "1:4.16.0-2+really2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78409",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:95e02aa8bec1458c421c6f3e392ddc6499d8171c6ba06f62ed8a84fc7fe0ab27",
+          "Title": "util-linux: util-linux: X-mount.subdir detached-tree resolution can escape via intermediate symlinks",
+          "Description": "The X-mount.subdir option uses a detached-tree fast path on Linux 6.15 and later and passes the configured subdirectory to open_tree() with AT_SYMLINK_NOFOLLOW. That flag does not stop intermediate symlink traversal or keep resolution inside the newly mounted filesystem. A local unprivileged user with an fstab-authorized X-mount.subdir entry can attach a host path at the intended mountpoint.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-59"
+          ],
+          "VendorSeverity": {
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78409",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522607",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-8f2p-47x3-43mv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78409",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78409"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.833Z",
+          "LastModifiedDate": "2026-09-03T18:12:56.407Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78410",
+          "PkgID": "login@1:4.16.0-2+really2.41.5-0+deb13u1",
+          "PkgName": "login",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/login@4.16.0-2%2Breally2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6\u0026epoch=1",
+            "UID": "a714c27ed597f56d"
+          },
+          "InstalledVersion": "1:4.16.0-2+really2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78410",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:90ec9d9db280e07e6265bf872b62e4dea5613a605e4c43f5c9c2e13e7991132a",
+          "Title": "util-linux: util-linux: restricted bind mounts do not pin the source, allowing X-mount.owner/group/mode redirection",
+          "Description": "A flaw was found in util-linux. Restricted bind mounts take the source path from fstab but do not pin that source before the privileged mount. A local unprivileged user who can replace the authorized source or a writable ancestor can redirect SUID mount(8) to bind another host directory. If the fstab entry also sets X-mount.owner, X-mount.group, or X-mount.mode, root then changes ownership or mode on that redirected inode.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-367"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78410",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522684",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-rh77-686x-2f2m",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78410",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78410"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.983Z",
+          "LastModifiedDate": "2026-09-04T19:17:27.567Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-76642",
+          "PkgID": "mount@2.41.5-0+deb13u1",
+          "PkgName": "mount",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/mount@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "4046950578f662c0"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-76642",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:7dd5f644a10b19a65b99d4e1843ad1561c399e1f9048c58ac7df28bfa7e5f83d",
+          "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
+          "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-390"
+          ],
+          "VendorSeverity": {
+            "azure": 2,
+            "photon": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-76642",
+            "https://github.com/util-linux/util-linux",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L476",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L892",
+            "https://github.com/util-linux/util-linux/commit/1d14676ea70003e9f5b2a6a76af0cadb1190411a",
+            "https://github.com/util-linux/util-linux/commit/a15c00a9e545aa8b9cf6ec0f888ff6c7b3eaeedc",
+            "https://github.com/util-linux/util-linux/commit/f57cea130839c0af8dc0525274267ae4cfd66bbf",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-m25x-3hj9-m26f",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-76642",
+            "https://www.cve.org/CVERecord?id=CVE-2026-76642",
+            "https://www.vulncheck.com/advisories/util-linux-libmount-privilege-escalation-via-failed-mount-helper"
+          ],
+          "PublishedDate": "2026-09-03T13:06:08.44Z",
+          "LastModifiedDate": "2026-09-24T20:28:01.78Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78408",
+          "PkgID": "mount@2.41.5-0+deb13u1",
+          "PkgName": "mount",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/mount@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "4046950578f662c0"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78408",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:1ad6c8e5b7e9ca4a80fa8b528df85246a7502514c0bb713609e0e3182c6ede8c",
+          "Title": "util-linux: util-linux: nsenter --join-cgroup leaks root cgroup migration authority",
+          "Description": "The nsenter --join-cgroup option opens the target cgroup.procs file as root and leaves that file descriptor open across later namespace and credential changes and across execve(). Because the kernel checks later cgroup migrations using the credentials from the original open, a program run in an attacker-controlled target can inherit root's ability to move host processes between cgroups. After a privileged operator uses --join-cgroup against that target, an unprivileged user can migrate and terminate unrelated root processes.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-775"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:C/C:N/I:H/A:H",
+              "V3Score": 7.9
+            }
+          },
+          "References": [
+            "http://www.openwall.com/lists/oss-security/2026/09/05/2",
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78408",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522497",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-55fx-f4gg-cfhj",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78408",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78408"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.687Z",
+          "LastModifiedDate": "2026-09-05T14:17:23.727Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78409",
+          "PkgID": "mount@2.41.5-0+deb13u1",
+          "PkgName": "mount",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/mount@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "4046950578f662c0"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78409",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:c7feb14725f6128f3cbdd5b7edcc230937834519e71461074d1b24346f716e22",
+          "Title": "util-linux: util-linux: X-mount.subdir detached-tree resolution can escape via intermediate symlinks",
+          "Description": "The X-mount.subdir option uses a detached-tree fast path on Linux 6.15 and later and passes the configured subdirectory to open_tree() with AT_SYMLINK_NOFOLLOW. That flag does not stop intermediate symlink traversal or keep resolution inside the newly mounted filesystem. A local unprivileged user with an fstab-authorized X-mount.subdir entry can attach a host path at the intended mountpoint.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-59"
+          ],
+          "VendorSeverity": {
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78409",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522607",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-8f2p-47x3-43mv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78409",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78409"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.833Z",
+          "LastModifiedDate": "2026-09-03T18:12:56.407Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78410",
+          "PkgID": "mount@2.41.5-0+deb13u1",
+          "PkgName": "mount",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/mount@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "4046950578f662c0"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78410",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:e62b99cab86a3dfd0b8cf9ed794bc0514175c744770db0a6acfa69c245ddebcd",
+          "Title": "util-linux: util-linux: restricted bind mounts do not pin the source, allowing X-mount.owner/group/mode redirection",
+          "Description": "A flaw was found in util-linux. Restricted bind mounts take the source path from fstab but do not pin that source before the privileged mount. A local unprivileged user who can replace the authorized source or a writable ancestor can redirect SUID mount(8) to bind another host directory. If the fstab entry also sets X-mount.owner, X-mount.group, or X-mount.mode, root then changes ownership or mode on that redirected inode.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-367"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78410",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522684",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-rh77-686x-2f2m",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78410",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78410"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.983Z",
+          "LastModifiedDate": "2026-09-04T19:17:27.567Z"
+        },
+        {
           "VulnerabilityID": "CVE-2025-69720",
           "PkgID": "ncurses-base@6.5+20250216-2",
           "PkgName": "ncurses-base",
@@ -8216,7 +9764,7 @@
             "Name": "Debian Security Tracker",
             "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
           },
-          "Fingerprint": "sha256:3e7cea8399eb87948000ae9c4477baffab4cfa750b78d2ccabbb9efd7ffff8aa",
+          "Fingerprint": "sha256:73ec73cde590750c7f07483674b6f3a042bfab304991fb0e4c7b73f3b924abaa",
           "Title": "ncurses: ncurses: Buffer overflow vulnerability may lead to arbitrary code execution.",
           "Description": "The infocmp command-line tool in ncurses before 6.5-20251213 has a stack-based buffer overflow in analyze_string in progs/infocmp.c.",
           "Severity": "HIGH",
@@ -8298,7 +9846,7 @@
             "Name": "Debian Security Tracker",
             "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
           },
-          "Fingerprint": "sha256:1d8635d175532129389c9f0bd08f5ed3ce49cdb3c5ed6df1e11a56dd3a1b71b0",
+          "Fingerprint": "sha256:b70507c8a54b26a3c2b4cdf31fc66ba81b26fd08db1d984ccbb234c9df2d60b1",
           "Title": "ncurses: ncurses: Buffer overflow vulnerability may lead to arbitrary code execution.",
           "Description": "The infocmp command-line tool in ncurses before 6.5-20251213 has a stack-based buffer overflow in analyze_string in progs/infocmp.c.",
           "Severity": "HIGH",
@@ -8361,519 +9909,17 @@
           "LastModifiedDate": "2026-06-17T10:00:50.423Z"
         },
         {
-          "VulnerabilityID": "CVE-2026-14456",
-          "PkgID": "openssl@3.5.6-1~deb13u2",
-          "PkgName": "openssl",
-          "PkgIdentifier": {
-            "PURL": "pkg:deb/debian/openssl@3.5.6-1~deb13u2?arch=arm64\u0026distro=debian-13.6",
-            "UID": "875e4f2ea5fb4d08"
-          },
-          "InstalledVersion": "3.5.6-1~deb13u2",
-          "Status": "fix_deferred",
-          "Layer": {
-            "DiffID": "sha256:30bf6dd11127f697a0a8397835b6864f927345a311a8c60f36ee4b90dd815ae9"
-          },
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-14456",
-          "DataSource": {
-            "ID": "debian",
-            "Name": "Debian Security Tracker",
-            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
-          },
-          "Fingerprint": "sha256:5ae7a68e6d1a2a8cda6201f4c1645bbae418cc8e3aa78494417a27af1c45855f",
-          "Title": "openssl: OpenSSL: Denial of Service via unbounded memory growth in QUIC server",
-          "Description": "Issue summary: When an OpenSSL QUIC server (Listener SSL object) processes\nvalid QUIC Initial packets for unknown destination connection IDs, it\ncan allocate and queue new incoming channels without enforcing any limit.\n\nImpact summary: A remote peer that can make many Initial packets reach the\nserver listener faster than the application accepts connections, can cause the\nmemory allocated to store the per-channel state to grow without any limits,\npotentially making the QUIC listener unavailable and causing Denial of Service.\n\nCWE: CWE-770: Allocation of Resources Without Limits or Throttling\n\nDescription: The function that handles inbound QUIC packets uses\nConnection-Id from the packet header to find an existing connection\n(QUIC channel). If no existing connection is found and the packet\ntype is INITIAL, the function treats the packet as a new connection. It\nallocates a new channel object and inserts it into a queue where it\nwaits to be accepted by the local application with SSL_accept(3ossl).\nThe memory occupied by these initial channel objects may grow\nwithout bounds if the application is not able to call SSL_accept()\nfrequently enough to serve these inbound connection requests.\n\nThe issue is present since OpenSSL 3.5 when the QUIC server implementation\nwas added.\n\nThe fix introduces a limit for pending connections. The default limit is set\nto 256 pending connections (waiting to be accepted by the local application).\nApplications may change the default by calling SSL_set_value_uint(3ossl).\n\nFIPS impact: no\nThe FIPS module is not affected as the QUIC implementation is outside of\nthe OpenSSL FIPS module boundary.",
-          "Severity": "HIGH",
-          "CweIDs": [
-            "CWE-770"
-          ],
-          "VendorSeverity": {
-            "redhat": 3
-          },
-          "CVSS": {
-            "redhat": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
-              "V3Score": 7.5
-            }
-          },
-          "References": [
-            "http://www.openwall.com/lists/oss-security/2026/08/13/4",
-            "https://access.redhat.com/security/cve/CVE-2026-14456",
-            "https://github.com/openssl/openssl/commit/08e7756c3900bcfd77a720e7b74e27d6e4ed01a9",
-            "https://github.com/openssl/openssl/commit/4084152e040329ca0194c4c1750b9b46d00a5b6b",
-            "https://github.com/openssl/openssl/commit/f2f1465f2d2e5c61dfeac4d20fd093797d821139",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-14456",
-            "https://openssl-library.org/news/secadv/20260813.txt",
-            "https://www.cve.org/CVERecord?id=CVE-2026-14456"
-          ],
-          "PublishedDate": "2026-08-13T15:19:31.82Z",
-          "LastModifiedDate": "2026-08-13T18:17:18.367Z"
-        },
-        {
-          "VulnerabilityID": "CVE-2026-14456",
-          "PkgID": "openssl-provider-legacy@3.5.6-1~deb13u2",
-          "PkgName": "openssl-provider-legacy",
-          "PkgIdentifier": {
-            "PURL": "pkg:deb/debian/openssl-provider-legacy@3.5.6-1~deb13u2?arch=arm64\u0026distro=debian-13.6",
-            "UID": "25968bf04d827b0a"
-          },
-          "InstalledVersion": "3.5.6-1~deb13u2",
-          "Status": "fix_deferred",
-          "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
-          },
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-14456",
-          "DataSource": {
-            "ID": "debian",
-            "Name": "Debian Security Tracker",
-            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
-          },
-          "Fingerprint": "sha256:c7b375873a7d6f8bc5e95ae14a14fb14da71ba3fb15aa087ce1d02dcd0cf5d2f",
-          "Title": "openssl: OpenSSL: Denial of Service via unbounded memory growth in QUIC server",
-          "Description": "Issue summary: When an OpenSSL QUIC server (Listener SSL object) processes\nvalid QUIC Initial packets for unknown destination connection IDs, it\ncan allocate and queue new incoming channels without enforcing any limit.\n\nImpact summary: A remote peer that can make many Initial packets reach the\nserver listener faster than the application accepts connections, can cause the\nmemory allocated to store the per-channel state to grow without any limits,\npotentially making the QUIC listener unavailable and causing Denial of Service.\n\nCWE: CWE-770: Allocation of Resources Without Limits or Throttling\n\nDescription: The function that handles inbound QUIC packets uses\nConnection-Id from the packet header to find an existing connection\n(QUIC channel). If no existing connection is found and the packet\ntype is INITIAL, the function treats the packet as a new connection. It\nallocates a new channel object and inserts it into a queue where it\nwaits to be accepted by the local application with SSL_accept(3ossl).\nThe memory occupied by these initial channel objects may grow\nwithout bounds if the application is not able to call SSL_accept()\nfrequently enough to serve these inbound connection requests.\n\nThe issue is present since OpenSSL 3.5 when the QUIC server implementation\nwas added.\n\nThe fix introduces a limit for pending connections. The default limit is set\nto 256 pending connections (waiting to be accepted by the local application).\nApplications may change the default by calling SSL_set_value_uint(3ossl).\n\nFIPS impact: no\nThe FIPS module is not affected as the QUIC implementation is outside of\nthe OpenSSL FIPS module boundary.",
-          "Severity": "HIGH",
-          "CweIDs": [
-            "CWE-770"
-          ],
-          "VendorSeverity": {
-            "redhat": 3
-          },
-          "CVSS": {
-            "redhat": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:N/A:H",
-              "V3Score": 7.5
-            }
-          },
-          "References": [
-            "http://www.openwall.com/lists/oss-security/2026/08/13/4",
-            "https://access.redhat.com/security/cve/CVE-2026-14456",
-            "https://github.com/openssl/openssl/commit/08e7756c3900bcfd77a720e7b74e27d6e4ed01a9",
-            "https://github.com/openssl/openssl/commit/4084152e040329ca0194c4c1750b9b46d00a5b6b",
-            "https://github.com/openssl/openssl/commit/f2f1465f2d2e5c61dfeac4d20fd093797d821139",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-14456",
-            "https://openssl-library.org/news/secadv/20260813.txt",
-            "https://www.cve.org/CVERecord?id=CVE-2026-14456"
-          ],
-          "PublishedDate": "2026-08-13T15:19:31.82Z",
-          "LastModifiedDate": "2026-08-13T18:17:18.367Z"
-        },
-        {
-          "VulnerabilityID": "CVE-2026-13221",
-          "PkgID": "perl-base@5.40.1-6",
-          "PkgName": "perl-base",
-          "PkgIdentifier": {
-            "PURL": "pkg:deb/debian/perl-base@5.40.1-6?arch=arm64\u0026distro=debian-13.6",
-            "UID": "b9c070033835aadb"
-          },
-          "InstalledVersion": "5.40.1-6",
-          "Status": "affected",
-          "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
-          },
-          "SeveritySource": "nvd",
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-13221",
-          "DataSource": {
-            "ID": "debian",
-            "Name": "Debian Security Tracker",
-            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
-          },
-          "Fingerprint": "sha256:f942a164d6e7c2192913f673ffd395bde8900fd84fb628e60bb7dd8d71b4b6e3",
-          "Title": "perl: Perl: Incorrect regular expression processing via large regular expressions",
-          "Description": "Perl versions through 5.43.9 produce silently incorrect regular expression matches when an alternation of more than 65535 fixed string branches is compiled into a trie in Perl_study_chunk.\n\nWhen such branches are combined into a trie, the delta between the first branch and the shared tail is stored in a 16-bit field. A branch count above 65535 overflows the field, and the trie's match decision table is truncated with no warning or error.\n\nA pattern of this shape produces false positive matches (matching strings it should not) and false negative matches (failing to match strings it should). When such a pattern gates an access or filtering decision, the result is wrong.",
-          "Severity": "CRITICAL",
-          "CweIDs": [
-            "CWE-190"
-          ],
-          "VendorSeverity": {
-            "azure": 2,
-            "nvd": 4,
-            "photon": 4,
-            "redhat": 2
-          },
-          "CVSS": {
-            "nvd": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:H",
-              "V3Score": 9.1
-            },
-            "redhat": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:H/PR:L/UI:N/S:U/C:L/I:H/A:N",
-              "V3Score": 5.9
-            }
-          },
-          "References": [
-            "http://www.openwall.com/lists/oss-security/2026/07/13/5",
-            "https://access.redhat.com/security/cve/CVE-2026-13221",
-            "https://github.com/Perl/perl5/commit/03f74bbbd3a68350d926ee93d56ee4808c28c4c7.patch",
-            "https://github.com/Perl/perl5/issues/23388",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-13221",
-            "https://www.cve.org/CVERecord?id=CVE-2026-13221"
-          ],
-          "PublishedDate": "2026-07-13T17:16:48.923Z",
-          "LastModifiedDate": "2026-07-14T18:15:18.85Z"
-        },
-        {
-          "VulnerabilityID": "CVE-2026-42496",
-          "PkgID": "perl-base@5.40.1-6",
-          "PkgName": "perl-base",
-          "PkgIdentifier": {
-            "PURL": "pkg:deb/debian/perl-base@5.40.1-6?arch=arm64\u0026distro=debian-13.6",
-            "UID": "b9c070033835aadb"
-          },
-          "InstalledVersion": "5.40.1-6",
-          "Status": "fix_deferred",
-          "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
-          },
-          "SeveritySource": "nvd",
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-42496",
-          "DataSource": {
-            "ID": "debian",
-            "Name": "Debian Security Tracker",
-            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
-          },
-          "Fingerprint": "sha256:2773956526b212a05ba4e6cb79eb5fb3445dec0634a7718f9b66284d5cfd59ad",
-          "Title": "perl-archive-tar: perl-archive-tar: Path traversal via crafted symlinks allows arbitrary file access",
-          "Description": "Archive::Tar versions before 3.08 for Perl extract symlinks with attacker controlled targets outside the extraction directory.\n\n_make_special_file() passes the tar header's linkname to symlink() without validating it against absolute paths or .. segments. The secure-extract mode check that guards regular file extraction does not cover the symlink target.\n\nA subsequent open through the extracted name reads or writes the attacker chosen path.",
-          "Severity": "CRITICAL",
-          "CweIDs": [
-            "CWE-59",
-            "CWE-22"
-          ],
-          "VendorSeverity": {
-            "alma": 3,
-            "amazon": 3,
-            "azure": 3,
-            "nvd": 4,
-            "oracle-oval": 3,
-            "redhat": 3,
-            "rocky": 3,
-            "ubuntu": 2
-          },
-          "CVSS": {
-            "nvd": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:N",
-              "V3Score": 9.1
-            },
-            "redhat": {
-              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:C/C:H/I:H/A:H",
-              "V3Score": 8.2
-            }
-          },
-          "References": [
-            "https://access.redhat.com/errata/RHSA-2026:30851",
-            "https://access.redhat.com/errata/RHSA-2026:30852",
-            "https://access.redhat.com/errata/RHSA-2026:30856",
-            "https://access.redhat.com/errata/RHSA-2026:30857",
-            "https://access.redhat.com/security/cve/CVE-2026-42496",
-            "https://bugzilla.redhat.com/2481314",
-            "https://bugzilla.redhat.com/show_bug.cgi?id=2481314",
-            "https://creativecommons.org/licenses/by/4.0/",
-            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-42496",
-            "https://errata.almalinux.org/9/ALSA-2026-30856.html",
-            "https://errata.rockylinux.org/RLSA-2026:30856",
-            "https://github.com/jib/archive-tar-new/commit/17c873492a05eddc0de18c1485e0b2cccd5a9158.patch",
-            "https://linux.oracle.com/cve/CVE-2026-42496.html",
-            "https://linux.oracle.com/errata/ELSA-2026-30857.html",
-            "https://lists.security.metacpan.org/cve-announce/msg/40396459/",
-            "https://metacpan.org/release/BINGOS/Archive-Tar-3.08/changes",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-42496",
-            "https://security.access.redhat.com/data/csaf/v2/vex/2026/cve-2026-42496.json",
-            "https://ubuntu.com/security/notices/USN-8467-1",
-            "https://www.cve.org/CVERecord?id=CVE-2026-42496",
-            "https://www.cve.org/CVERecord?id=CVE-2026-42497"
-          ],
-          "PublishedDate": "2026-05-26T02:16:40.13Z",
-          "LastModifiedDate": "2026-07-24T10:10:00.197Z"
-        },
-        {
-          "VulnerabilityID": "CVE-2026-57433",
-          "PkgID": "perl-base@5.40.1-6",
-          "PkgName": "perl-base",
-          "PkgIdentifier": {
-            "PURL": "pkg:deb/debian/perl-base@5.40.1-6?arch=arm64\u0026distro=debian-13.6",
-            "UID": "b9c070033835aadb"
-          },
-          "InstalledVersion": "5.40.1-6",
-          "Status": "affected",
-          "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
-          },
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-57433",
-          "DataSource": {
-            "ID": "debian",
-            "Name": "Debian Security Tracker",
-            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
-          },
-          "Fingerprint": "sha256:48f379a5b2b5f3187160f9c6f55f5e9fc0a004d3a108e910bc0da915b8b5843a",
-          "Title": "Storable versions before 3.41 for Perl have a signed integer overflow  ...",
-          "Description": "Storable versions before 3.41 for Perl have a signed integer overflow when deserializing a crafted SX_HOOK record.\n\nretrieve_hook_common reads a signed 32-bit item count from an SX_HOOK record and calls av_extend with that count plus one. A count of I32_MAX wraps the addition to a negative value.\n\nA crafted blob passed to thaw or retrieve triggers the overflow; av_extend receives the negative count and dies with a panic, terminating the deserialization.",
-          "Severity": "CRITICAL",
-          "CweIDs": [
-            "CWE-190"
-          ],
-          "VendorSeverity": {
-            "azure": 4
-          },
-          "References": [
-            "http://www.openwall.com/lists/oss-security/2026/07/13/7",
-            "https://github.com/Perl/perl5/commit/e4f681784bcdeaa91ff02a2fa4cdcae5c46779d7.patch",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-57433"
-          ],
-          "PublishedDate": "2026-07-13T17:17:55.783Z",
-          "LastModifiedDate": "2026-07-14T17:47:20.473Z"
-        },
-        {
-          "VulnerabilityID": "CVE-2026-8376",
-          "PkgID": "perl-base@5.40.1-6",
-          "PkgName": "perl-base",
-          "PkgIdentifier": {
-            "PURL": "pkg:deb/debian/perl-base@5.40.1-6?arch=arm64\u0026distro=debian-13.6",
-            "UID": "b9c070033835aadb"
-          },
-          "InstalledVersion": "5.40.1-6",
-          "Status": "affected",
-          "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
-          },
-          "SeveritySource": "nvd",
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-8376",
-          "DataSource": {
-            "ID": "debian",
-            "Name": "Debian Security Tracker",
-            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
-          },
-          "Fingerprint": "sha256:d1877a344304e0af0e4482854c1335fd00ff289bfb7758f0d64938c3e632ab8f",
-          "Title": "perl: Perl: Heap buffer overflow when compiling regular expressions on 32-bit builds",
-          "Description": "Perl versions through 5.43.10 have a heap buffer overflow when compiling regular expressions with a repeated fixed string on 32-bit builds.\n\nPerl_study_chunk in regcomp_study.c checked the size of the joined substring buffer in characters rather than bytes. For a quantified fixed substring with a large minimum count, the byte length mincount * l could overflow SSize_t, producing an undersized SvGROW allocation; the subsequent copy writes past the end of the buffer.\n\nA caller that compiles an attacker-controlled regular expression on a 32-bit perl build triggers a heap buffer overflow at compile time.",
-          "Severity": "CRITICAL",
-          "CweIDs": [
-            "CWE-680"
-          ],
-          "VendorSeverity": {
-            "amazon": 2,
-            "azure": 2,
-            "nvd": 4,
-            "photon": 4,
-            "redhat": 2,
-            "ubuntu": 2
-          },
-          "CVSS": {
-            "nvd": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
-              "V3Score": 9.8
-            },
-            "redhat": {
-              "V3Vector": "CVSS:3.1/AV:L/AC:H/PR:N/UI:N/S:U/C:N/I:L/A:H",
-              "V3Score": 5.7
-            }
-          },
-          "References": [
-            "http://www.openwall.com/lists/oss-security/2026/05/26/1",
-            "https://access.redhat.com/security/cve/CVE-2026-8376",
-            "https://github.com/Perl/perl5/commit/5e7f119eb2bb1181be908701f22bf7068e722f1c.patch",
-            "https://github.com/Perl/perl5/pull/24433",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-8376",
-            "https://ubuntu.com/security/notices/USN-8467-1",
-            "https://www.cve.org/CVERecord?id=CVE-2026-8376"
-          ],
-          "PublishedDate": "2026-05-26T00:16:57.15Z",
-          "LastModifiedDate": "2026-07-23T11:10:00.12Z"
-        },
-        {
-          "VulnerabilityID": "CVE-2026-42497",
-          "PkgID": "perl-base@5.40.1-6",
-          "PkgName": "perl-base",
-          "PkgIdentifier": {
-            "PURL": "pkg:deb/debian/perl-base@5.40.1-6?arch=arm64\u0026distro=debian-13.6",
-            "UID": "b9c070033835aadb"
-          },
-          "InstalledVersion": "5.40.1-6",
-          "Status": "fix_deferred",
-          "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
-          },
-          "SeveritySource": "nvd",
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-42497",
-          "DataSource": {
-            "ID": "debian",
-            "Name": "Debian Security Tracker",
-            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
-          },
-          "Fingerprint": "sha256:da212d59a3ff941434d10760add7c45af5c7e3b4291573174566c9b0d519f532",
-          "Title": "perl-Archive-Tar: perl-Archive-Tar: Arbitrary file modification via crafted hardlinks during archive extraction",
-          "Description": "Archive::Tar versions before 3.08 for Perl extract hardlinks to attacker controlled paths outside the extraction directory.\n\n_make_special_file() passes the tar header's linkname to link() without validating it against absolute paths or .. segments, creating a hardlink that shares the victim file's inode.\n\nA subsequent write through the extracted name modifies the victim file, and the post-extraction chmod, chown, and utime block in _extract_file() (guarded only against symlinks via -l) applies the tar header's mode, owner, and timestamps to the shared inode during extraction alone.",
-          "Severity": "HIGH",
-          "CweIDs": [
-            "CWE-59",
-            "CWE-732"
-          ],
-          "VendorSeverity": {
-            "amazon": 3,
-            "azure": 2,
-            "nvd": 3,
-            "redhat": 2
-          },
-          "CVSS": {
-            "nvd": {
-              "V3Vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:N/I:H/A:N",
-              "V3Score": 7.5
-            },
-            "redhat": {
-              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:U/C:L/I:H/A:H",
-              "V3Score": 6.8
-            }
-          },
-          "References": [
-            "https://access.redhat.com/security/cve/CVE-2026-42497",
-            "https://github.com/jib/archive-tar-new/commit/17c873492a05eddc0de18c1485e0b2cccd5a9158.patch",
-            "https://metacpan.org/release/BINGOS/Archive-Tar-3.08/changes",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-42497",
-            "https://www.cve.org/CVERecord?id=CVE-2026-42496",
-            "https://www.cve.org/CVERecord?id=CVE-2026-42497"
-          ],
-          "PublishedDate": "2026-05-26T02:16:40.25Z",
-          "LastModifiedDate": "2026-07-24T11:10:00.17Z"
-        },
-        {
-          "VulnerabilityID": "CVE-2026-48962",
-          "PkgID": "perl-base@5.40.1-6",
-          "PkgName": "perl-base",
-          "PkgIdentifier": {
-            "PURL": "pkg:deb/debian/perl-base@5.40.1-6?arch=arm64\u0026distro=debian-13.6",
-            "UID": "b9c070033835aadb"
-          },
-          "InstalledVersion": "5.40.1-6",
-          "Status": "affected",
-          "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
-          },
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-48962",
-          "DataSource": {
-            "ID": "debian",
-            "Name": "Debian Security Tracker",
-            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
-          },
-          "Fingerprint": "sha256:9c05f5c862bc6616faa89c2db27b8fe2087309093ec67be2b1c954b2eabd37c5",
-          "Title": "perl-IO-Compress: perl-IO-Compress: Arbitrary code execution via attacker-controlled output glob",
-          "Description": "IO::Compress versions before 2.220 for Perl can execute arbitrary code in File::GlobMapper via an attacker-controlled output glob.\n\n_parseOutputGlob() wraps the caller-supplied output glob string in double quotes and stores it in the parser state; _getFiles() then runs the stored expression through eval STRING. A literal double quote in the output glob closes the dquote wrapper, and the characters that follow are evaluated as Perl.\n\nArbitrary Perl in the output glob executes at the calling process's privilege.",
-          "Severity": "HIGH",
-          "CweIDs": [
-            "CWE-95",
-            "CWE-94"
-          ],
-          "VendorSeverity": {
-            "alma": 3,
-            "amazon": 3,
-            "azure": 3,
-            "oracle-oval": 3,
-            "redhat": 3,
-            "rocky": 3
-          },
-          "CVSS": {
-            "redhat": {
-              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
-              "V3Score": 7.8
-            }
-          },
-          "References": [
-            "http://www.openwall.com/lists/oss-security/2026/05/27/4",
-            "https://access.redhat.com/errata/RHSA-2026:29182",
-            "https://access.redhat.com/errata/RHSA-2026:29210",
-            "https://access.redhat.com/errata/RHSA-2026:29867",
-            "https://access.redhat.com/errata/RHSA-2026:29941",
-            "https://access.redhat.com/errata/RHSA-2026:30085",
-            "https://access.redhat.com/errata/RHSA-2026:30086",
-            "https://access.redhat.com/errata/RHSA-2026:30115",
-            "https://access.redhat.com/errata/RHSA-2026:30843",
-            "https://access.redhat.com/errata/RHSA-2026:30851",
-            "https://access.redhat.com/errata/RHSA-2026:30858",
-            "https://access.redhat.com/errata/RHSA-2026:30859",
-            "https://access.redhat.com/errata/RHSA-2026:30860",
-            "https://access.redhat.com/errata/RHSA-2026:50262",
-            "https://access.redhat.com/security/cve/CVE-2026-48962",
-            "https://bugzilla.redhat.com/2481767",
-            "https://bugzilla.redhat.com/show_bug.cgi?id=2481767",
-            "https://creativecommons.org/licenses/by/4.0/",
-            "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-48962",
-            "https://errata.almalinux.org/9/ALSA-2026-30859.html",
-            "https://errata.rockylinux.org/RLSA-2026:30859",
-            "https://github.com/pmqs/IO-Compress/commit/f2db247bf90d4cc7ee2710be384946081f3b4610.patch",
-            "https://linux.oracle.com/cve/CVE-2026-48962.html",
-            "https://linux.oracle.com/errata/ELSA-2026-30860.html",
-            "https://metacpan.org/release/PMQS/IO-Compress-2.220/changes",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-48962",
-            "https://security.access.redhat.com/data/csaf/v2/vex/2026/cve-2026-48962.json",
-            "https://www.cve.org/CVERecord?id=CVE-2026-48962"
-          ],
-          "PublishedDate": "2026-05-27T04:16:31.333Z",
-          "LastModifiedDate": "2026-08-05T13:23:22.46Z"
-        },
-        {
-          "VulnerabilityID": "CVE-2026-57432",
-          "PkgID": "perl-base@5.40.1-6",
-          "PkgName": "perl-base",
-          "PkgIdentifier": {
-            "PURL": "pkg:deb/debian/perl-base@5.40.1-6?arch=arm64\u0026distro=debian-13.6",
-            "UID": "b9c070033835aadb"
-          },
-          "InstalledVersion": "5.40.1-6",
-          "Status": "affected",
-          "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
-          },
-          "SeveritySource": "nvd",
-          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-57432",
-          "DataSource": {
-            "ID": "debian",
-            "Name": "Debian Security Tracker",
-            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
-          },
-          "Fingerprint": "sha256:8fc26de1e52b817649bb9cf035b7f1d26d10f572ad51a42b2942ced21b18df95",
-          "Title": "perl: Perl: Information disclosure via integer overflow in pack/unpack operations",
-          "Description": "Perl versions through 5.43.10 have an integer overflow in S_measure_struct leading to an out-of-bounds heap read in pack and unpack.\n\nS_measure_struct adds each item's size times its repeat count to a running total with no overflow check, so a large repeat count in a pack or unpack template wraps the signed SSize_t total negative. The @, X, and x position codes then guard their moves with a signed length comparison that passes when the length is negative, advancing the buffer pointer out of bounds.\n\nA template derived from untrusted input can read heap memory past the buffer and return it to the caller.",
-          "Severity": "HIGH",
-          "CweIDs": [
-            "CWE-125",
-            "CWE-190"
-          ],
-          "VendorSeverity": {
-            "azure": 3,
-            "nvd": 3,
-            "photon": 3,
-            "redhat": 2
-          },
-          "CVSS": {
-            "nvd": {
-              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H",
-              "V3Score": 8.4
-            },
-            "redhat": {
-              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:U/C:H/I:N/A:N",
-              "V3Score": 5
-            }
-          },
-          "References": [
-            "http://www.openwall.com/lists/oss-security/2026/07/13/6",
-            "https://access.redhat.com/security/cve/CVE-2026-57432",
-            "https://github.com/Perl/perl5/commit/40754edc72dd3e513d758153c0e2f0215897740e.patch",
-            "https://github.com/Perl/perl5/commit/5f7eb6bbbe0510964e3fb1d6bb691e5445913e55.patch",
-            "https://nvd.nist.gov/vuln/detail/CVE-2026-57432",
-            "https://www.cve.org/CVERecord?id=CVE-2026-57432"
-          ],
-          "PublishedDate": "2026-07-13T17:17:55.67Z",
-          "LastModifiedDate": "2026-07-14T18:04:48.367Z"
-        },
-        {
           "VulnerabilityID": "CVE-2026-9538",
-          "PkgID": "perl-base@5.40.1-6",
+          "PkgID": "perl-base@5.40.1-6+deb13u1",
           "PkgName": "perl-base",
           "PkgIdentifier": {
-            "PURL": "pkg:deb/debian/perl-base@5.40.1-6?arch=arm64\u0026distro=debian-13.6",
-            "UID": "b9c070033835aadb"
+            "PURL": "pkg:deb/debian/perl-base@5.40.1-6%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "a68116fb699f38c6"
           },
-          "InstalledVersion": "5.40.1-6",
+          "InstalledVersion": "5.40.1-6+deb13u1",
           "Status": "fix_deferred",
           "Layer": {
-            "DiffID": "sha256:c01c35a040a25a51cd473910e3212a46d85fb700a6467c687f231d7edd47cbc1"
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
           },
           "SeveritySource": "nvd",
           "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-9538",
@@ -8882,7 +9928,7 @@
             "Name": "Debian Security Tracker",
             "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
           },
-          "Fingerprint": "sha256:57c8fd20be628348e459ec7a1604c899d4c336577ae8ec4d68f4b0cccf71804b",
+          "Fingerprint": "sha256:a00d6cf784a53032ccafbdc9d02148e16892b235ce1b779e3f33dff24b955a25",
           "Title": "perl-Archive-Tar: perl-Archive-Tar: Denial of Service via crafted tar header with large entry size",
           "Description": "Archive::Tar versions before 3.10 for Perl allow memory exhaustion via attacker controlled entry size field in tar header.\n\n_read_tar() reads each entry's payload with $handle-\u003eread($$data, $block), where $block is derived from the entry's 12-byte size field in the tar header with no upper bound on that value.\n\nA crafted header declaring a multi-gigabyte size causes Perl to allocate a scalar of that size.",
           "Severity": "HIGH",
@@ -8895,7 +9941,8 @@
             "nvd": 3,
             "oracle-oval": 3,
             "redhat": 3,
-            "rocky": 3
+            "rocky": 3,
+            "ubuntu": 2
           },
           "CVSS": {
             "nvd": {
@@ -8909,6 +9956,7 @@
           },
           "References": [
             "http://www.openwall.com/lists/oss-security/2026/05/26/4",
+            "https://access.redhat.com/errata/RHSA-2026:49523",
             "https://access.redhat.com/errata/RHSA-2026:49525",
             "https://access.redhat.com/security/cve/CVE-2026-9538",
             "https://bugzilla.redhat.com/2481315",
@@ -8916,16 +9964,212 @@
             "https://creativecommons.org/licenses/by/4.0/",
             "https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2026-9538",
             "https://errata.almalinux.org/9/ALSA-2026-49525.html",
-            "https://errata.rockylinux.org/RLSA-2026:49525",
+            "https://errata.rockylinux.org/RLSA-2026:49523",
             "https://github.com/jib/archive-tar-new/commit/f9af01426038e29d9578825a0cd3626946ab08c7.patch",
             "https://linux.oracle.com/cve/CVE-2026-9538.html",
             "https://linux.oracle.com/errata/ELSA-2026-49525.html",
+            "https://lists.security.metacpan.org/cve-announce/msg/40396448/",
             "https://metacpan.org/release/BINGOS/Archive-Tar-3.10/changes",
             "https://nvd.nist.gov/vuln/detail/CVE-2026-9538",
+            "https://ubuntu.com/security/notices/USN-8684-1",
             "https://www.cve.org/CVERecord?id=CVE-2026-9538"
           ],
           "PublishedDate": "2026-05-26T02:16:41.15Z",
           "LastModifiedDate": "2026-07-23T11:10:00.12Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-76642",
+          "PkgID": "util-linux@2.41.5-0+deb13u1",
+          "PkgName": "util-linux",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/util-linux@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "ce52f84ad5dc8b83"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-76642",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:657e78b6192aa7c93109293bb646fbf04ebac7af488d5f6f71515e11daf9d43a",
+          "Title": "util-linux: util-linux: failed external mount helper still runs privileged X-mount post-hooks",
+          "Description": "util-linux versions through 2.41.5 and 2.42.2 fail to check mount helper exit status before running post-mount hooks, allowing unprivileged users to execute privileged operations on pre-existing filesystems. Attackers can exploit X-mount.idmap or X-mount.owner hooks to clone filesystems with inherited suid bits or modify target inode permissions after a helper fails, achieving privilege escalation.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-390"
+          ],
+          "VendorSeverity": {
+            "azure": 2,
+            "photon": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/security/cve/CVE-2026-76642",
+            "https://github.com/util-linux/util-linux",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L476",
+            "https://github.com/util-linux/util-linux/blob/v2.42.2/libmount/src/context_mount.c#L892",
+            "https://github.com/util-linux/util-linux/commit/1d14676ea70003e9f5b2a6a76af0cadb1190411a",
+            "https://github.com/util-linux/util-linux/commit/a15c00a9e545aa8b9cf6ec0f888ff6c7b3eaeedc",
+            "https://github.com/util-linux/util-linux/commit/f57cea130839c0af8dc0525274267ae4cfd66bbf",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-m25x-3hj9-m26f",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-76642",
+            "https://www.cve.org/CVERecord?id=CVE-2026-76642",
+            "https://www.vulncheck.com/advisories/util-linux-libmount-privilege-escalation-via-failed-mount-helper"
+          ],
+          "PublishedDate": "2026-09-03T13:06:08.44Z",
+          "LastModifiedDate": "2026-09-24T20:28:01.78Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78408",
+          "PkgID": "util-linux@2.41.5-0+deb13u1",
+          "PkgName": "util-linux",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/util-linux@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "ce52f84ad5dc8b83"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78408",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:40d0ac7f2f82a112571177eb0d6a94510e7655b05bf325ebbb5b269d5956aded",
+          "Title": "util-linux: util-linux: nsenter --join-cgroup leaks root cgroup migration authority",
+          "Description": "The nsenter --join-cgroup option opens the target cgroup.procs file as root and leaves that file descriptor open across later namespace and credential changes and across execve(). Because the kernel checks later cgroup migrations using the credentials from the original open, a program run in an attacker-controlled target can inherit root's ability to move host processes between cgroups. After a privileged operator uses --join-cgroup against that target, an unprivileged user can migrate and terminate unrelated root processes.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-775"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:R/S:C/C:N/I:H/A:H",
+              "V3Score": 7.9
+            }
+          },
+          "References": [
+            "http://www.openwall.com/lists/oss-security/2026/09/05/2",
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78408",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522497",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-55fx-f4gg-cfhj",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78408",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78408"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.687Z",
+          "LastModifiedDate": "2026-09-05T14:17:23.727Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78409",
+          "PkgID": "util-linux@2.41.5-0+deb13u1",
+          "PkgName": "util-linux",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/util-linux@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "ce52f84ad5dc8b83"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78409",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:edc7b574ecf1fd36101255680d7a66f6a7b9d8d5210f2df4022fd61ca2a1d4bc",
+          "Title": "util-linux: util-linux: X-mount.subdir detached-tree resolution can escape via intermediate symlinks",
+          "Description": "The X-mount.subdir option uses a detached-tree fast path on Linux 6.15 and later and passes the configured subdirectory to open_tree() with AT_SYMLINK_NOFOLLOW. That flag does not stop intermediate symlink traversal or keep resolution inside the newly mounted filesystem. A local unprivileged user with an fstab-authorized X-mount.subdir entry can attach a host path at the intended mountpoint.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-59"
+          ],
+          "VendorSeverity": {
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:H/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78409",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522607",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-8f2p-47x3-43mv",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78409",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78409"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.833Z",
+          "LastModifiedDate": "2026-09-03T18:12:56.407Z"
+        },
+        {
+          "VulnerabilityID": "CVE-2026-78410",
+          "PkgID": "util-linux@2.41.5-0+deb13u1",
+          "PkgName": "util-linux",
+          "PkgIdentifier": {
+            "PURL": "pkg:deb/debian/util-linux@2.41.5-0%2Bdeb13u1?arch=arm64\u0026distro=debian-13.6",
+            "UID": "ce52f84ad5dc8b83"
+          },
+          "InstalledVersion": "2.41.5-0+deb13u1",
+          "Status": "affected",
+          "Layer": {
+            "DiffID": "sha256:f5c65c55d83fbb91d27eb8fdbde1e6bd9767474d49cf510e679c5f7c8bb1524a"
+          },
+          "PrimaryURL": "https://avd.aquasec.com/nvd/cve-2026-78410",
+          "DataSource": {
+            "ID": "debian",
+            "Name": "Debian Security Tracker",
+            "URL": "https://salsa.debian.org/security-tracker-team/security-tracker"
+          },
+          "Fingerprint": "sha256:bb48bb174fe3a39e24975b478059127bcaa783698a5695bb498b7030df150eda",
+          "Title": "util-linux: util-linux: restricted bind mounts do not pin the source, allowing X-mount.owner/group/mode redirection",
+          "Description": "A flaw was found in util-linux. Restricted bind mounts take the source path from fstab but do not pin that source before the privileged mount. A local unprivileged user who can replace the authorized source or a writable ancestor can redirect SUID mount(8) to bind another host directory. If the fstab entry also sets X-mount.owner, X-mount.group, or X-mount.mode, root then changes ownership or mode on that redirected inode.",
+          "Severity": "HIGH",
+          "CweIDs": [
+            "CWE-367"
+          ],
+          "VendorSeverity": {
+            "azure": 3,
+            "redhat": 3
+          },
+          "CVSS": {
+            "redhat": {
+              "V3Vector": "CVSS:3.1/AV:L/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H",
+              "V3Score": 7.8
+            }
+          },
+          "References": [
+            "https://access.redhat.com/errata/RHSA-2026:63162",
+            "https://access.redhat.com/security/cve/CVE-2026-78410",
+            "https://bugzilla.redhat.com/show_bug.cgi?id=2522684",
+            "https://github.com/util-linux/util-linux/security/advisories/GHSA-rh77-686x-2f2m",
+            "https://nvd.nist.gov/vuln/detail/CVE-2026-78410",
+            "https://www.cve.org/CVERecord?id=CVE-2026-78410"
+          ],
+          "PublishedDate": "2026-09-02T16:17:23.983Z",
+          "LastModifiedDate": "2026-09-04T19:17:27.567Z"
         }
       ]
     },
@@ -8945,7 +10189,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/pyyaml-6.0.3.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -8961,7 +10205,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/annotated_doc-0.0.5.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -8977,7 +10221,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/annotated_types-0.8.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -8993,7 +10237,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/anyio-4.14.2.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9009,7 +10253,7 @@
             "BSD-3-Clause"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/click-8.4.2.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9025,7 +10269,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/fastapi-0.141.1.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9041,7 +10285,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/h11-0.16.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9057,7 +10301,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/httptools-0.8.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9073,7 +10317,7 @@
             "BSD-3-Clause"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/idna-3.18.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9089,7 +10333,7 @@
             "BSD-3-Clause"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/joblib-1.5.3.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9105,7 +10349,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/narwhals-2.24.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9121,7 +10365,7 @@
             "BSD-3-Clause AND 0BSD AND MIT AND Zlib AND CC0-1.0"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/numpy-2.5.2.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9137,9 +10381,57 @@
             "BSD-3-Clause"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/pandas-3.0.5.dist-info/METADATA",
+          "AnalyzedBy": "python-pkg"
+        },
+        {
+          "Name": "psycopg",
+          "Identifier": {
+            "PURL": "pkg:pypi/psycopg@3.3.4",
+            "UID": "c8b52afda1ca390d"
+          },
+          "Version": "3.3.4",
+          "Licenses": [
+            "LGPL-3.0-only"
+          ],
+          "Layer": {
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
+          },
+          "FilePath": "usr/local/lib/python3.12/site-packages/psycopg-3.3.4.dist-info/METADATA",
+          "AnalyzedBy": "python-pkg"
+        },
+        {
+          "Name": "psycopg-binary",
+          "Identifier": {
+            "PURL": "pkg:pypi/psycopg-binary@3.3.4",
+            "UID": "5996c876d1a8784f"
+          },
+          "Version": "3.3.4",
+          "Licenses": [
+            "LGPL-3.0-only"
+          ],
+          "Layer": {
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
+          },
+          "FilePath": "usr/local/lib/python3.12/site-packages/psycopg_binary-3.3.4.dist-info/METADATA",
+          "AnalyzedBy": "python-pkg"
+        },
+        {
+          "Name": "psycopg-pool",
+          "Identifier": {
+            "PURL": "pkg:pypi/psycopg-pool@3.3.1",
+            "UID": "da327b1b21bbb1cf"
+          },
+          "Version": "3.3.1",
+          "Licenses": [
+            "LGPL-3.0-only"
+          ],
+          "Layer": {
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
+          },
+          "FilePath": "usr/local/lib/python3.12/site-packages/psycopg_pool-3.3.1.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
         },
         {
@@ -9153,7 +10445,7 @@
             "Apache-2.0"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/pyarrow-24.0.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9169,7 +10461,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/pydantic-2.13.4.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9185,7 +10477,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/pydantic_core-2.46.4.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9202,7 +10494,7 @@
             "Apache-2.0"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/python_dateutil-2.9.0.post0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9218,7 +10510,7 @@
             "BSD-3-Clause"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/python_dotenv-1.2.2.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9234,7 +10526,7 @@
             "BSD-3-Clause"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/scikit_learn-1.9.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9250,7 +10542,7 @@
             "BSD-3-Clause"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/scipy-1.18.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9266,7 +10558,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/six-1.17.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9282,7 +10574,7 @@
             "BSD-3-Clause"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/starlette-1.6.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9298,7 +10590,7 @@
             "BSD-3-Clause"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/threadpoolctl-3.6.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9314,7 +10606,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/typing_inspection-0.4.4.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9330,7 +10622,7 @@
             "PSF-2.0"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/typing_extensions-4.16.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9346,7 +10638,7 @@
             "BSD-3-Clause"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/uvicorn-0.52.2.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9363,7 +10655,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/uvloop-0.22.1.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9379,7 +10671,7 @@
             "MIT"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/watchfiles-1.2.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9395,7 +10687,7 @@
             "BSD-3-Clause"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/websockets-17.0.1.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
@@ -9411,7 +10703,7 @@
             "Apache-2.0"
           ],
           "Layer": {
-            "DiffID": "sha256:3d4f80b6857107c0603d983f5d3ccc15e2ababc098e57632682d868173d8bccd"
+            "DiffID": "sha256:ff89a920c3c803cf3fdd401f9edd436d422533573fa7aa7086ada9adbfb48ed1"
           },
           "FilePath": "usr/local/lib/python3.12/site-packages/xgboost_cpu-3.3.0.dist-info/METADATA",
           "AnalyzedBy": "python-pkg"
