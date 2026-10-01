@@ -394,3 +394,10 @@ identity. Trivy high/critical scanning has no blanket `ignore-unfixed` switch:
 each residual no-fix Debian advisory is listed separately with a mitigation and
 a 2026-09-20 expiry. Any new, fixed, or expired finding fails the gate and must
 be reviewed against a rebuilt image.
+
+Amended 2026-10-01: the exceptions expired and the gate failed as designed. The
+Dockerfile now pins Debian's published fixes for gzip, pcre2, sqlite, openssl
+and perl-base (17 of 25 findings), the rebuilt arm64 image was rescanned raw with
+Trivy 0.70.0 and given a new SPDX 2.3 SBOM, and only the eight findings with no
+published fix remain as exceptions, each fully dispositioned, expiring
+2026-10-22.

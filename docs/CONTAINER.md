@@ -131,10 +131,14 @@ both evidence-file checksums, and every exception disposition. Do not call this
 gate passed until those records verify against the same final image.
 
 The checked-in `.trivyignore.yaml` is not a blanket `ignore-unfixed` policy. It
-lists only residual Debian findings that had no fix on 2026-08-20, records why
-the affected tool/library is outside this restricted service's input and
-execution paths, and expires every exception on 2026-09-20. CI still fails for
-any unlisted high/critical finding. Rebuild on a newer base or remove an
+lists only residual Debian findings that had no fix at the 2026-10-01 re-review
+(eight, down from nineteen after the Dockerfile pinned the newly published
+fixes), records why the affected tool/library is outside this restricted
+service's input and execution paths, and expires every exception on
+2026-10-22. Each exception must appear both in the frozen raw scan
+(`docs/industrialization/evidence/container/manifest.json`) and in
+`unfixed-cve-dispositions.json`. CI still fails for any unlisted high/critical
+finding. Rebuild on a newer base or remove an
 exception as soon as Debian publishes a fix; never extend an expiry without a
 new scan and review.
 
