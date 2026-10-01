@@ -133,6 +133,11 @@ strict; a passing legacy test suite does not earn credit for unimplemented paths
   0.70.0 found 12 unique no-fix Debian advisories; each has a documented
   mitigation and 2026-09-20 expiry, leaving zero active reviewed findings. The
   SPDX 2.2 SBOM contains 117 packages and hashes to `03559fcf...`.
+- Container re-review batch (2026-10-01): after the 2026-09-20 expiry, Debian
+  fixes for 17 of 25 findings are pinned; the rebuilt arm64 image passes the CI
+  smoke contract, Trivy 0.70.0 finds 8 unique no-fix advisories (44 records),
+  each dispositioned to 2026-10-22, and the Syft 1.51.0 SPDX 2.3 SBOM lists 122
+  packages.
 - Independent-audit P1 correction batch: stable 404/405/runtime/OpenAPI error
   parity, validated cross-origin CSP with exactly one complete-contract browser
   request, and retained/revalidated approval lineage pass focused tests. Image

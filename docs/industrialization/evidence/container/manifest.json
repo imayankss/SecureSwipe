@@ -2,9 +2,9 @@
   "evidence_format_version": "1",
   "image": {
     "architecture": "arm64",
-    "image_id": "sha256:afb032c3c614edb5a0c743c166a52bbab1f9e265592043cc766ad9c14d9779e7",
+    "image_id": "sha256:6f2a5e86af792a37877cc1978bb8a0d77249652cade575af3d5b0c1d656ded8a",
     "oci_labels": {
-      "org.opencontainers.image.revision": "050d4f1b2963c0123e265c76b1c9a1f26e1836d5",
+      "org.opencontainers.image.revision": "f8368d2e832a0b03ba5f5765c3168dd2752ad8e7",
       "org.opencontainers.image.source": "https://github.com/imayankss/SecureSwipe"
     },
     "operating_system": "linux",
@@ -12,156 +12,174 @@
     "repo_digests": []
   },
   "scan": {
-    "artifact_id": "sha256:44f508f18bb02995a35fef56e743eb88d55b3988d8c34b53083509cba93d1a52",
-    "created_at": "2026-08-20T10:58:18.925433552Z",
+    "artifact_id": "sha256:37d1c4f73d28062ae2a1b874b370fb40460ea643e0b8af7cf55896fe8ba22f7a",
+    "created_at": "2026-10-01T09:05:11.483108261Z",
     "database": {
-      "downloaded_at": "2026-08-20T10:57:34.435601878Z",
-      "next_update": "2026-08-21T07:02:00.713536389Z",
+      "downloaded_at": "2026-10-01T09:04:06.080693759Z",
+      "next_update": "2026-10-02T07:23:35.748678298Z",
       "schema_version": 2,
-      "updated_at": "2026-08-20T07:02:00.713536770Z"
+      "updated_at": "2026-10-01T07:23:35.748678538Z"
     },
     "dispositions": [
       {
-        "expires": "2026-09-20",
+        "expires": "2026-10-22",
         "finding_id": "CVE-2025-69720",
         "occurrence_count": 4,
-        "packages": ["libncursesw6", "libtinfo6", "ncurses-base", "ncurses-bin"],
+        "packages": [
+          "libncursesw6",
+          "libtinfo6",
+          "ncurses-base",
+          "ncurses-bin"
+        ],
         "severity": "HIGH",
-        "statement": "Debian 13 has no fix; the headless service has no terminal or ncurses input.",
+        "statement": "Debian 13 has no fixed version at ncurses 6.5+20250216-2, and ncurses-bin and ncurses-base are Essential. The affected path is a stack overflow in the infocmp command-line tool; the headless service never runs infocmp or any terminal tool, and the API process loads no ncurses or tinfo library. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.",
         "status": "temporary_no_fix_exception"
       },
       {
-        "expires": "2026-09-20",
-        "finding_id": "CVE-2026-13221",
-        "occurrence_count": 1,
-        "packages": ["perl-base"],
-        "severity": "CRITICAL",
-        "statement": "Debian 13 has no fix; Perl is never invoked and no user regular expression is evaluated.",
-        "status": "temporary_no_fix_exception"
-      },
-      {
-        "expires": "2026-09-20",
-        "finding_id": "CVE-2026-14456",
-        "occurrence_count": 3,
-        "packages": ["libssl3t64", "openssl", "openssl-provider-legacy"],
+        "expires": "2026-10-22",
+        "finding_id": "CVE-2026-16742",
+        "occurrence_count": 2,
+        "packages": [
+          "libsystemd0",
+          "libudev1"
+        ],
         "severity": "HIGH",
-        "statement": "Debian deferred the fix; this reference container terminates no TLS.",
+        "statement": "Debian 13 has no fixed version at libsystemd0 257.13-1~deb13u1. The affected path is a systemd-homed local privilege escalation, and the systemd-homed daemon is not present in the image; the SBOM records exactly two systemd-family packages, libsystemd0 and libudev1, both shared libraries, with no systemd or systemd-homed package among its 122 entries (87 Debian packages). The vulnerable binary therefore does not exist in the runtime. The container additionally has no init system, no homed-managed accounts, and runs non-root uid 10001 with --cap-drop ALL, --read-only, and no-new-privileges, which blocks privilege escalation directly. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.",
         "status": "temporary_no_fix_exception"
       },
       {
-        "expires": "2026-09-20",
-        "finding_id": "CVE-2026-41992",
-        "occurrence_count": 1,
-        "packages": ["gzip"],
-        "severity": "HIGH",
-        "statement": "Debian 13 has no fix; the runtime never accepts or creates gzip archives.",
-        "status": "temporary_no_fix_exception"
-      },
-      {
-        "expires": "2026-09-20",
-        "finding_id": "CVE-2026-42496",
-        "occurrence_count": 1,
-        "packages": ["perl-base"],
-        "severity": "CRITICAL",
-        "statement": "Debian deferred the fix; Perl Archive-Tar is never invoked and the root filesystem is read-only.",
-        "status": "temporary_no_fix_exception"
-      },
-      {
-        "expires": "2026-09-20",
-        "finding_id": "CVE-2026-42497",
-        "occurrence_count": 1,
-        "packages": ["perl-base"],
-        "severity": "HIGH",
-        "statement": "Debian deferred the fix; Perl Archive-Tar is never invoked and the root filesystem is read-only.",
-        "status": "temporary_no_fix_exception"
-      },
-      {
-        "expires": "2026-09-20",
-        "finding_id": "CVE-2026-48962",
-        "occurrence_count": 1,
-        "packages": ["perl-base"],
-        "severity": "HIGH",
-        "statement": "Debian 13 has no fix; Perl is never invoked or exposed through the API.",
-        "status": "temporary_no_fix_exception"
-      },
-      {
-        "expires": "2026-09-20",
+        "expires": "2026-10-22",
         "finding_id": "CVE-2026-54369",
         "occurrence_count": 1,
-        "packages": ["libacl1"],
+        "packages": [
+          "libacl1"
+        ],
         "severity": "HIGH",
-        "statement": "Debian 13 has no fix; the non-root read-only service does not manipulate ACLs.",
+        "statement": "Debian 13 has no fixed version at libacl1 2.3.2-2+b1, and coreutils, sed and tar depend on it, so it cannot be removed. The affected path is symlink traversal in libacl pathname functions called by a privileged process; the API process loads no libacl, the service manipulates no ACLs, and it runs as non-root uid 10001 with --cap-drop ALL, --read-only, and no-new-privileges. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.",
         "status": "temporary_no_fix_exception"
       },
       {
-        "expires": "2026-09-20",
-        "finding_id": "CVE-2026-57432",
-        "occurrence_count": 1,
-        "packages": ["perl-base"],
+        "expires": "2026-10-22",
+        "finding_id": "CVE-2026-76642",
+        "occurrence_count": 9,
+        "packages": [
+          "bsdutils",
+          "libblkid1",
+          "liblastlog2-2",
+          "libmount1",
+          "libsmartcols1",
+          "libuuid1",
+          "login",
+          "mount",
+          "util-linux"
+        ],
         "severity": "HIGH",
-        "statement": "Debian 13 has no fix; Perl Storable is never invoked or given user data.",
+        "statement": "Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is a failed external mount helper retaining privilege, reachable only through a mount(8) invocation. The service invokes no util-linux binary; api/ and src/ contain zero mount, nsenter, unshare, setns, and losetup references, and the repository's only subprocess call runs git and is not imported by api/. Mounting requires CAP_SYS_ADMIN, and the runtime is non-root uid 10001 with --cap-drop ALL, --read-only, and no-new-privileges. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.",
         "status": "temporary_no_fix_exception"
       },
       {
-        "expires": "2026-09-20",
-        "finding_id": "CVE-2026-57433",
-        "occurrence_count": 1,
-        "packages": ["perl-base"],
-        "severity": "CRITICAL",
-        "statement": "Debian 13 has no fix; Perl Storable is never invoked or given user data.",
+        "expires": "2026-10-22",
+        "finding_id": "CVE-2026-78408",
+        "occurrence_count": 9,
+        "packages": [
+          "bsdutils",
+          "libblkid1",
+          "liblastlog2-2",
+          "libmount1",
+          "libsmartcols1",
+          "libuuid1",
+          "login",
+          "mount",
+          "util-linux"
+        ],
+        "severity": "HIGH",
+        "statement": "Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is nsenter --join-cgroup leaking root privilege. nsenter is never invoked by the service and joining a namespace requires CAP_SYS_ADMIN, which --cap-drop ALL removes; no-new-privileges additionally blocks setuid escalation. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.",
         "status": "temporary_no_fix_exception"
       },
       {
-        "expires": "2026-09-20",
-        "finding_id": "CVE-2026-8376",
-        "occurrence_count": 1,
-        "packages": ["perl-base"],
-        "severity": "CRITICAL",
-        "statement": "Debian 13 has no fix; Perl is never invoked and supported images are not 32-bit runtimes.",
+        "expires": "2026-10-22",
+        "finding_id": "CVE-2026-78409",
+        "occurrence_count": 9,
+        "packages": [
+          "bsdutils",
+          "libblkid1",
+          "liblastlog2-2",
+          "libmount1",
+          "libsmartcols1",
+          "libuuid1",
+          "login",
+          "mount",
+          "util-linux"
+        ],
+        "severity": "HIGH",
+        "statement": "Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is X-mount.subdir resolving against a detached tree, reachable only through a mount(8) invocation carrying that option. The service performs no mount operation and holds no capability permitting one. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.",
         "status": "temporary_no_fix_exception"
       },
       {
-        "expires": "2026-09-20",
+        "expires": "2026-10-22",
+        "finding_id": "CVE-2026-78410",
+        "occurrence_count": 9,
+        "packages": [
+          "bsdutils",
+          "libblkid1",
+          "liblastlog2-2",
+          "libmount1",
+          "libsmartcols1",
+          "libuuid1",
+          "login",
+          "mount",
+          "util-linux"
+        ],
+        "severity": "HIGH",
+        "statement": "Debian 13 has no fixed version at the pinned util-linux 2.41.5-0+deb13u1 and the package is Essential, so it cannot be removed. The affected path is restricted bind mounts failing to pin their target. Creating a bind mount requires CAP_SYS_ADMIN, which the runtime drops entirely; the container mounts nothing at runtime and its root filesystem is read-only. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.",
+        "status": "temporary_no_fix_exception"
+      },
+      {
+        "expires": "2026-10-22",
         "finding_id": "CVE-2026-9538",
         "occurrence_count": 1,
-        "packages": ["perl-base"],
+        "packages": [
+          "perl-base"
+        ],
         "severity": "HIGH",
-        "statement": "Debian deferred the fix; Perl is never invoked or exposed through the API.",
+        "statement": "Debian marks the fix deferred for perl-base 5.40.1-6+deb13u1 (the newest trixie version) and perl-base is Essential. The affected code is Archive::Tar, which is not installed in the image because perl-modules is absent; the service never invokes perl and accepts JSON, never tar archives. See docs/industrialization/evidence/container/unfixed-cve-dispositions.json.",
         "status": "temporary_no_fix_exception"
       }
     ],
     "evidence_file": {
       "filename": "arm64-trivy.json",
-      "sha256": "72e7617b18dcf66088556b82743e4b601e9f47dd6e8990c987872879ecf4366b",
-      "size_bytes": 441549
+      "sha256": "1cdc4a3466f4675fb7ef5bab29e65a09c7f2d23f8a34055ed8e46b8bfdf5330f",
+      "size_bytes": 505556
     },
     "policy_active_findings": 0,
-    "raw_finding_records": 17,
+    "raw_finding_records": 44,
     "scanner": {
       "name": "Trivy",
       "version": "0.70.0"
     },
-    "severities": ["HIGH", "CRITICAL"],
-    "unique_findings": 12
+    "severities": [
+      "HIGH",
+      "CRITICAL"
+    ],
+    "unique_findings": 8
   },
   "sbom": {
-    "created_at": "2026-08-20T10:59:07.128325Z",
-    "document_namespace": "https://anchore.com/syft/image/secureswipe-api-audit-arm64-ab80c7d3-92da-4f45-a2e8-a60a68ee4e08",
+    "created_at": "2026-10-01T09:08:10Z",
+    "document_namespace": "https://anchore.com/syft/image/secureswipe-api-dc13ab2a-794d-4716-ad60-2d00eb499915",
     "evidence_file": {
       "filename": "arm64-sbom.spdx.json",
-      "sha256": "bdd9797cf0f36c75c2c5364d7ca0fe6be0bdde3afb72d9f5fcafa0919016c21d",
-      "size_bytes": 1190339
+      "sha256": "2630f1afe0887958b6589b2bba0a8253e698ece1610b158f6292d862f5a74797",
+      "size_bytes": 2602740
     },
-    "format": "SPDX-2.2",
+    "format": "SPDX-2.3",
     "generator": {
-      "docker_sbom_version": "0.6.0",
       "provider": "syft",
-      "provider_version": "0.43.0"
+      "provider_version": "1.51.0"
     },
-    "package_count": 117
+    "package_count": 122
   },
   "source": {
-    "git_revision": "050d4f1b2963c0123e265c76b1c9a1f26e1836d5",
+    "git_revision": "f8368d2e832a0b03ba5f5765c3168dd2752ad8e7",
     "repository": "https://github.com/imayankss/SecureSwipe.git"
   }
 }

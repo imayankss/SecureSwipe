@@ -76,6 +76,8 @@ Status legend: `[ ]` open, `[~]` in progress, `[x]` verified complete,
 - [x] Rebuild and test linux/arm64 image startup/readiness/inference from the final lock.
 - [x] Scan the rebuilt image and produce an SPDX SBOM; individually reviewed
   no-fix Debian exceptions expire 2026-09-20.
+- [x] 2026-10-01 re-review after expiry: pin the newly published Debian fixes,
+  rescan and re-baseline the evidence; eight no-fix exceptions expire 2026-10-22.
 - [x] Bind the final ARM64 image to its Git revision and retain checksummed raw
   Trivy JSON, SPDX 2.2 JSON, scanner/database metadata, full findings, and every
   exception disposition in durable repository evidence.
